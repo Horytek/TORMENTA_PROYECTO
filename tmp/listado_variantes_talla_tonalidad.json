@@ -1,0 +1,3502 @@
+[
+  {
+    "id_producto": 72,
+    "descripcion": "1 BOTON JEANS / TORMENTA",
+    "id_sku": 184,
+    "sku_label": "1 BOTON JEANS / TORMENTA - Azul Clasico - 30",
+    "tonalidad": "Azul Clasico",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 72,
+    "descripcion": "1 BOTON JEANS / TORMENTA",
+    "id_sku": 185,
+    "sku_label": "1 BOTON JEANS / TORMENTA - Azul Clasico - 32",
+    "tonalidad": "Azul Clasico",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 72,
+    "descripcion": "1 BOTON JEANS / TORMENTA",
+    "id_sku": 186,
+    "sku_label": "1 BOTON JEANS / TORMENTA - Azul Noche - 30",
+    "tonalidad": "Azul Noche",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 72,
+    "descripcion": "1 BOTON JEANS / TORMENTA",
+    "id_sku": 187,
+    "sku_label": "1 BOTON JEANS / TORMENTA - Azul Noche - 32",
+    "tonalidad": "Azul Noche",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 72,
+    "descripcion": "1 BOTON JEANS / TORMENTA",
+    "id_sku": 190,
+    "sku_label": "1 BOTON JEANS / TORMENTA - Blanco Roto - 30",
+    "tonalidad": "Blanco Roto",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 72,
+    "descripcion": "1 BOTON JEANS / TORMENTA",
+    "id_sku": 191,
+    "sku_label": "1 BOTON JEANS / TORMENTA - Blanco Roto - 32",
+    "tonalidad": "Blanco Roto",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 72,
+    "descripcion": "1 BOTON JEANS / TORMENTA",
+    "id_sku": 188,
+    "sku_label": "1 BOTON JEANS / TORMENTA - Celeste - 30",
+    "tonalidad": "Celeste",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 72,
+    "descripcion": "1 BOTON JEANS / TORMENTA",
+    "id_sku": 189,
+    "sku_label": "1 BOTON JEANS / TORMENTA - Celeste - 32",
+    "tonalidad": "Celeste",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 71,
+    "descripcion": "1 BOTON NEGRO / TORMENTA",
+    "id_sku": 192,
+    "sku_label": "1 BOTON NEGRO / TORMENTA - Negro - 30",
+    "tonalidad": "Negro",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 71,
+    "descripcion": "1 BOTON NEGRO / TORMENTA",
+    "id_sku": 193,
+    "sku_label": "1 BOTON NEGRO / TORMENTA - Negro - 32",
+    "tonalidad": "Negro",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 73,
+    "descripcion": "1 BOTON PLOMO / TORMENTA",
+    "id_sku": 196,
+    "sku_label": "1 BOTON PLOMO / TORMENTA - Gris - 28",
+    "tonalidad": "Gris",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 73,
+    "descripcion": "1 BOTON PLOMO / TORMENTA",
+    "id_sku": 197,
+    "sku_label": "1 BOTON PLOMO / TORMENTA - Gris - 30",
+    "tonalidad": "Gris",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 73,
+    "descripcion": "1 BOTON PLOMO / TORMENTA",
+    "id_sku": 194,
+    "sku_label": "1 BOTON PLOMO / TORMENTA - Gris Plomo - 28",
+    "tonalidad": "Gris Plomo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 73,
+    "descripcion": "1 BOTON PLOMO / TORMENTA",
+    "id_sku": 195,
+    "sku_label": "1 BOTON PLOMO / TORMENTA - Gris Plomo - 30",
+    "tonalidad": "Gris Plomo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 88,
+    "descripcion": "BLUSA / TORMENTA",
+    "id_sku": 77,
+    "sku_label": "BLUSA / TORMENTA - Azul - L",
+    "tonalidad": "Azul",
+    "talla": "L",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 88,
+    "descripcion": "BLUSA / TORMENTA",
+    "id_sku": 76,
+    "sku_label": "BLUSA / TORMENTA - Azul - M",
+    "tonalidad": "Azul",
+    "talla": "M",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 88,
+    "descripcion": "BLUSA / TORMENTA",
+    "id_sku": 75,
+    "sku_label": "BLUSA / TORMENTA - Azul - S",
+    "tonalidad": "Azul",
+    "talla": "S",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 88,
+    "descripcion": "BLUSA / TORMENTA",
+    "id_sku": 86,
+    "sku_label": "BLUSA / TORMENTA - Beige - L",
+    "tonalidad": "Beige",
+    "talla": "L",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 88,
+    "descripcion": "BLUSA / TORMENTA",
+    "id_sku": 85,
+    "sku_label": "BLUSA / TORMENTA - Beige - M",
+    "tonalidad": "Beige",
+    "talla": "M",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 88,
+    "descripcion": "BLUSA / TORMENTA",
+    "id_sku": 84,
+    "sku_label": "BLUSA / TORMENTA - Beige - S",
+    "tonalidad": "Beige",
+    "talla": "S",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 88,
+    "descripcion": "BLUSA / TORMENTA",
+    "id_sku": 83,
+    "sku_label": "BLUSA / TORMENTA - Blanco - L",
+    "tonalidad": "Blanco",
+    "talla": "L",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 88,
+    "descripcion": "BLUSA / TORMENTA",
+    "id_sku": 82,
+    "sku_label": "BLUSA / TORMENTA - Blanco - M",
+    "tonalidad": "Blanco",
+    "talla": "M",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 88,
+    "descripcion": "BLUSA / TORMENTA",
+    "id_sku": 81,
+    "sku_label": "BLUSA / TORMENTA - Blanco - S",
+    "tonalidad": "Blanco",
+    "talla": "S",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 88,
+    "descripcion": "BLUSA / TORMENTA",
+    "id_sku": 80,
+    "sku_label": "BLUSA / TORMENTA - Celeste - L",
+    "tonalidad": "Celeste",
+    "talla": "L",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 88,
+    "descripcion": "BLUSA / TORMENTA",
+    "id_sku": 79,
+    "sku_label": "BLUSA / TORMENTA - Celeste - M",
+    "tonalidad": "Celeste",
+    "talla": "M",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 88,
+    "descripcion": "BLUSA / TORMENTA",
+    "id_sku": 78,
+    "sku_label": "BLUSA / TORMENTA - Celeste - S",
+    "tonalidad": "Celeste",
+    "talla": "S",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 78,
+    "descripcion": "CAMISA JEANS MANGA LARGA / TORMENTA",
+    "id_sku": 168,
+    "sku_label": "CAMISA JEANS MANGA LARGA / TORMENTA - Azul Clasico - L",
+    "tonalidad": "Azul Clasico",
+    "talla": "L",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 78,
+    "descripcion": "CAMISA JEANS MANGA LARGA / TORMENTA",
+    "id_sku": 167,
+    "sku_label": "CAMISA JEANS MANGA LARGA / TORMENTA - Azul Clasico - M",
+    "tonalidad": "Azul Clasico",
+    "talla": "M",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 78,
+    "descripcion": "CAMISA JEANS MANGA LARGA / TORMENTA",
+    "id_sku": 166,
+    "sku_label": "CAMISA JEANS MANGA LARGA / TORMENTA - Azul Clasico - S",
+    "tonalidad": "Azul Clasico",
+    "talla": "S",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 78,
+    "descripcion": "CAMISA JEANS MANGA LARGA / TORMENTA",
+    "id_sku": 171,
+    "sku_label": "CAMISA JEANS MANGA LARGA / TORMENTA - Celeste - L",
+    "tonalidad": "Celeste",
+    "talla": "L",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 78,
+    "descripcion": "CAMISA JEANS MANGA LARGA / TORMENTA",
+    "id_sku": 170,
+    "sku_label": "CAMISA JEANS MANGA LARGA / TORMENTA - Celeste - M",
+    "tonalidad": "Celeste",
+    "talla": "M",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 78,
+    "descripcion": "CAMISA JEANS MANGA LARGA / TORMENTA",
+    "id_sku": 169,
+    "sku_label": "CAMISA JEANS MANGA LARGA / TORMENTA - Celeste - S",
+    "tonalidad": "Celeste",
+    "talla": "S",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 78,
+    "descripcion": "CAMISA JEANS MANGA LARGA / TORMENTA",
+    "id_sku": 174,
+    "sku_label": "CAMISA JEANS MANGA LARGA / TORMENTA - Hielo - L",
+    "tonalidad": "Hielo",
+    "talla": "L",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 78,
+    "descripcion": "CAMISA JEANS MANGA LARGA / TORMENTA",
+    "id_sku": 173,
+    "sku_label": "CAMISA JEANS MANGA LARGA / TORMENTA - Hielo - M",
+    "tonalidad": "Hielo",
+    "talla": "M",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 78,
+    "descripcion": "CAMISA JEANS MANGA LARGA / TORMENTA",
+    "id_sku": 172,
+    "sku_label": "CAMISA JEANS MANGA LARGA / TORMENTA - Hielo - S",
+    "tonalidad": "Hielo",
+    "talla": "S",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 23,
+    "descripcion": "CASACA RIGIDA JEANS / TORMENTA",
+    "id_sku": 348,
+    "sku_label": "CASACA RIGIDA JEANS / TORMENTA - Azul Clasico - L",
+    "tonalidad": "Azul Clasico",
+    "talla": "L",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 23,
+    "descripcion": "CASACA RIGIDA JEANS / TORMENTA",
+    "id_sku": 349,
+    "sku_label": "CASACA RIGIDA JEANS / TORMENTA - Azul Clasico - M",
+    "tonalidad": "Azul Clasico",
+    "talla": "M",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 23,
+    "descripcion": "CASACA RIGIDA JEANS / TORMENTA",
+    "id_sku": 347,
+    "sku_label": "CASACA RIGIDA JEANS / TORMENTA - Azul Clasico - S",
+    "tonalidad": "Azul Clasico",
+    "talla": "S",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 23,
+    "descripcion": "CASACA RIGIDA JEANS / TORMENTA",
+    "id_sku": 354,
+    "sku_label": "CASACA RIGIDA JEANS / TORMENTA - Celeste - L",
+    "tonalidad": "Celeste",
+    "talla": "L",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 23,
+    "descripcion": "CASACA RIGIDA JEANS / TORMENTA",
+    "id_sku": 355,
+    "sku_label": "CASACA RIGIDA JEANS / TORMENTA - Celeste - M",
+    "tonalidad": "Celeste",
+    "talla": "M",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 23,
+    "descripcion": "CASACA RIGIDA JEANS / TORMENTA",
+    "id_sku": 353,
+    "sku_label": "CASACA RIGIDA JEANS / TORMENTA - Celeste - S",
+    "tonalidad": "Celeste",
+    "talla": "S",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 23,
+    "descripcion": "CASACA RIGIDA JEANS / TORMENTA",
+    "id_sku": 351,
+    "sku_label": "CASACA RIGIDA JEANS / TORMENTA - Gris - L",
+    "tonalidad": "Gris",
+    "talla": "L",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 23,
+    "descripcion": "CASACA RIGIDA JEANS / TORMENTA",
+    "id_sku": 352,
+    "sku_label": "CASACA RIGIDA JEANS / TORMENTA - Gris - M",
+    "tonalidad": "Gris",
+    "talla": "M",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 23,
+    "descripcion": "CASACA RIGIDA JEANS / TORMENTA",
+    "id_sku": 350,
+    "sku_label": "CASACA RIGIDA JEANS / TORMENTA - Gris - S",
+    "tonalidad": "Gris",
+    "talla": "S",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 23,
+    "descripcion": "CASACA RIGIDA JEANS / TORMENTA",
+    "id_sku": 357,
+    "sku_label": "CASACA RIGIDA JEANS / TORMENTA - Hielo - L",
+    "tonalidad": "Hielo",
+    "talla": "L",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 23,
+    "descripcion": "CASACA RIGIDA JEANS / TORMENTA",
+    "id_sku": 358,
+    "sku_label": "CASACA RIGIDA JEANS / TORMENTA - Hielo - M",
+    "tonalidad": "Hielo",
+    "talla": "M",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 23,
+    "descripcion": "CASACA RIGIDA JEANS / TORMENTA",
+    "id_sku": 356,
+    "sku_label": "CASACA RIGIDA JEANS / TORMENTA - Hielo - S",
+    "tonalidad": "Hielo",
+    "talla": "S",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 77,
+    "descripcion": "CASACA STRESH JEANS / TORMENTA",
+    "id_sku": 175,
+    "sku_label": "CASACA STRESH JEANS / TORMENTA - Azul Clasico - 28",
+    "tonalidad": "Azul Clasico",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 77,
+    "descripcion": "CASACA STRESH JEANS / TORMENTA",
+    "id_sku": 176,
+    "sku_label": "CASACA STRESH JEANS / TORMENTA - Azul Clasico - 30",
+    "tonalidad": "Azul Clasico",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 77,
+    "descripcion": "CASACA STRESH JEANS / TORMENTA",
+    "id_sku": 177,
+    "sku_label": "CASACA STRESH JEANS / TORMENTA - Azul Clasico - 32",
+    "tonalidad": "Azul Clasico",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 77,
+    "descripcion": "CASACA STRESH JEANS / TORMENTA",
+    "id_sku": 181,
+    "sku_label": "CASACA STRESH JEANS / TORMENTA - Celeste - 28",
+    "tonalidad": "Celeste",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 77,
+    "descripcion": "CASACA STRESH JEANS / TORMENTA",
+    "id_sku": 182,
+    "sku_label": "CASACA STRESH JEANS / TORMENTA - Celeste - 30",
+    "tonalidad": "Celeste",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 77,
+    "descripcion": "CASACA STRESH JEANS / TORMENTA",
+    "id_sku": 183,
+    "sku_label": "CASACA STRESH JEANS / TORMENTA - Celeste - 32",
+    "tonalidad": "Celeste",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 77,
+    "descripcion": "CASACA STRESH JEANS / TORMENTA",
+    "id_sku": 178,
+    "sku_label": "CASACA STRESH JEANS / TORMENTA - Gris - 28",
+    "tonalidad": "Gris",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 77,
+    "descripcion": "CASACA STRESH JEANS / TORMENTA",
+    "id_sku": 179,
+    "sku_label": "CASACA STRESH JEANS / TORMENTA - Gris - 30",
+    "tonalidad": "Gris",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 77,
+    "descripcion": "CASACA STRESH JEANS / TORMENTA",
+    "id_sku": 180,
+    "sku_label": "CASACA STRESH JEANS / TORMENTA - Gris - 32",
+    "tonalidad": "Gris",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 65,
+    "descripcion": "FALDA SHORT CARGO JEANS / TORMENTA",
+    "id_sku": 210,
+    "sku_label": "FALDA SHORT CARGO JEANS / TORMENTA - Azul Clasico - 28",
+    "tonalidad": "Azul Clasico",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 65,
+    "descripcion": "FALDA SHORT CARGO JEANS / TORMENTA",
+    "id_sku": 211,
+    "sku_label": "FALDA SHORT CARGO JEANS / TORMENTA - Azul Clasico - 30",
+    "tonalidad": "Azul Clasico",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 65,
+    "descripcion": "FALDA SHORT CARGO JEANS / TORMENTA",
+    "id_sku": 212,
+    "sku_label": "FALDA SHORT CARGO JEANS / TORMENTA - Azul Clasico - 32",
+    "tonalidad": "Azul Clasico",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 65,
+    "descripcion": "FALDA SHORT CARGO JEANS / TORMENTA",
+    "id_sku": 213,
+    "sku_label": "FALDA SHORT CARGO JEANS / TORMENTA - Azul Vintage - 28",
+    "tonalidad": "Azul Vintage",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 65,
+    "descripcion": "FALDA SHORT CARGO JEANS / TORMENTA",
+    "id_sku": 214,
+    "sku_label": "FALDA SHORT CARGO JEANS / TORMENTA - Azul Vintage - 30",
+    "tonalidad": "Azul Vintage",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 65,
+    "descripcion": "FALDA SHORT CARGO JEANS / TORMENTA",
+    "id_sku": 215,
+    "sku_label": "FALDA SHORT CARGO JEANS / TORMENTA - Azul Vintage - 32",
+    "tonalidad": "Azul Vintage",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 65,
+    "descripcion": "FALDA SHORT CARGO JEANS / TORMENTA",
+    "id_sku": 219,
+    "sku_label": "FALDA SHORT CARGO JEANS / TORMENTA - Gris Plomo - 28",
+    "tonalidad": "Gris Plomo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 65,
+    "descripcion": "FALDA SHORT CARGO JEANS / TORMENTA",
+    "id_sku": 220,
+    "sku_label": "FALDA SHORT CARGO JEANS / TORMENTA - Gris Plomo - 30",
+    "tonalidad": "Gris Plomo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 65,
+    "descripcion": "FALDA SHORT CARGO JEANS / TORMENTA",
+    "id_sku": 221,
+    "sku_label": "FALDA SHORT CARGO JEANS / TORMENTA - Gris Plomo - 32",
+    "tonalidad": "Gris Plomo",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 65,
+    "descripcion": "FALDA SHORT CARGO JEANS / TORMENTA",
+    "id_sku": 216,
+    "sku_label": "FALDA SHORT CARGO JEANS / TORMENTA - Hielo - 28",
+    "tonalidad": "Hielo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 65,
+    "descripcion": "FALDA SHORT CARGO JEANS / TORMENTA",
+    "id_sku": 217,
+    "sku_label": "FALDA SHORT CARGO JEANS / TORMENTA - Hielo - 30",
+    "tonalidad": "Hielo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 65,
+    "descripcion": "FALDA SHORT CARGO JEANS / TORMENTA",
+    "id_sku": 218,
+    "sku_label": "FALDA SHORT CARGO JEANS / TORMENTA - Hielo - 32",
+    "tonalidad": "Hielo",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 81,
+    "descripcion": "FALDA SHORT EN PLIEGUES / TORMENTA",
+    "id_sku": 148,
+    "sku_label": "FALDA SHORT EN PLIEGUES / TORMENTA - Azul Clasico - 30",
+    "tonalidad": "Azul Clasico",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 81,
+    "descripcion": "FALDA SHORT EN PLIEGUES / TORMENTA",
+    "id_sku": 149,
+    "sku_label": "FALDA SHORT EN PLIEGUES / TORMENTA - Azul Clasico - 32",
+    "tonalidad": "Azul Clasico",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 81,
+    "descripcion": "FALDA SHORT EN PLIEGUES / TORMENTA",
+    "id_sku": 150,
+    "sku_label": "FALDA SHORT EN PLIEGUES / TORMENTA - Azul Clasico - 34",
+    "tonalidad": "Azul Clasico",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 81,
+    "descripcion": "FALDA SHORT EN PLIEGUES / TORMENTA",
+    "id_sku": 151,
+    "sku_label": "FALDA SHORT EN PLIEGUES / TORMENTA - Celeste - 30",
+    "tonalidad": "Celeste",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 81,
+    "descripcion": "FALDA SHORT EN PLIEGUES / TORMENTA",
+    "id_sku": 152,
+    "sku_label": "FALDA SHORT EN PLIEGUES / TORMENTA - Celeste - 32",
+    "tonalidad": "Celeste",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 81,
+    "descripcion": "FALDA SHORT EN PLIEGUES / TORMENTA",
+    "id_sku": 153,
+    "sku_label": "FALDA SHORT EN PLIEGUES / TORMENTA - Celeste - 34",
+    "tonalidad": "Celeste",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 81,
+    "descripcion": "FALDA SHORT EN PLIEGUES / TORMENTA",
+    "id_sku": 154,
+    "sku_label": "FALDA SHORT EN PLIEGUES / TORMENTA - Gris - 30",
+    "tonalidad": "Gris",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 81,
+    "descripcion": "FALDA SHORT EN PLIEGUES / TORMENTA",
+    "id_sku": 155,
+    "sku_label": "FALDA SHORT EN PLIEGUES / TORMENTA - Gris - 32",
+    "tonalidad": "Gris",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 81,
+    "descripcion": "FALDA SHORT EN PLIEGUES / TORMENTA",
+    "id_sku": 156,
+    "sku_label": "FALDA SHORT EN PLIEGUES / TORMENTA - Gris - 34",
+    "tonalidad": "Gris",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 81,
+    "descripcion": "FALDA SHORT EN PLIEGUES / TORMENTA",
+    "id_sku": 157,
+    "sku_label": "FALDA SHORT EN PLIEGUES / TORMENTA - Gris Plomo - 30",
+    "tonalidad": "Gris Plomo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 81,
+    "descripcion": "FALDA SHORT EN PLIEGUES / TORMENTA",
+    "id_sku": 158,
+    "sku_label": "FALDA SHORT EN PLIEGUES / TORMENTA - Gris Plomo - 32",
+    "tonalidad": "Gris Plomo",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 81,
+    "descripcion": "FALDA SHORT EN PLIEGUES / TORMENTA",
+    "id_sku": 159,
+    "sku_label": "FALDA SHORT EN PLIEGUES / TORMENTA - Gris Plomo - 34",
+    "tonalidad": "Gris Plomo",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 107,
+    "descripcion": "FRESHTERRY JEAN / WOMAN",
+    "id_sku": 52,
+    "sku_label": "FRESHTERRY JEAN / WOMAN - Azul Clasico - 30",
+    "tonalidad": "Azul Clasico",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 107,
+    "descripcion": "FRESHTERRY JEAN / WOMAN",
+    "id_sku": 53,
+    "sku_label": "FRESHTERRY JEAN / WOMAN - Azul Clasico - 34",
+    "tonalidad": "Azul Clasico",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 107,
+    "descripcion": "FRESHTERRY JEAN / WOMAN",
+    "id_sku": 54,
+    "sku_label": "FRESHTERRY JEAN / WOMAN - Azul Pizarra - 30",
+    "tonalidad": "Azul Pizarra",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 107,
+    "descripcion": "FRESHTERRY JEAN / WOMAN",
+    "id_sku": 55,
+    "sku_label": "FRESHTERRY JEAN / WOMAN - Azul Pizarra - 34",
+    "tonalidad": "Azul Pizarra",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 107,
+    "descripcion": "FRESHTERRY JEAN / WOMAN",
+    "id_sku": 56,
+    "sku_label": "FRESHTERRY JEAN / WOMAN - Azul Vintage - 30",
+    "tonalidad": "Azul Vintage",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 107,
+    "descripcion": "FRESHTERRY JEAN / WOMAN",
+    "id_sku": 57,
+    "sku_label": "FRESHTERRY JEAN / WOMAN - Azul Vintage - 34",
+    "tonalidad": "Azul Vintage",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 222,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Azul Clasico - 26",
+    "tonalidad": "Azul Clasico",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 223,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Azul Clasico - 30",
+    "tonalidad": "Azul Clasico",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 224,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Azul Clasico - 34",
+    "tonalidad": "Azul Clasico",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 225,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Azul Noche - 26",
+    "tonalidad": "Azul Noche",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 226,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Azul Noche - 30",
+    "tonalidad": "Azul Noche",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 227,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Azul Noche - 34",
+    "tonalidad": "Azul Noche",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 228,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Azul Pizarra - 26",
+    "tonalidad": "Azul Pizarra",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 229,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Azul Pizarra - 30",
+    "tonalidad": "Azul Pizarra",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 230,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Azul Pizarra - 34",
+    "tonalidad": "Azul Pizarra",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 231,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Celeste - 26",
+    "tonalidad": "Celeste",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 232,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Celeste - 30",
+    "tonalidad": "Celeste",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 233,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Celeste - 34",
+    "tonalidad": "Celeste",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 234,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Gris - 26",
+    "tonalidad": "Gris",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 235,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Gris - 30",
+    "tonalidad": "Gris",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 236,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Gris - 34",
+    "tonalidad": "Gris",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 237,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Hielo - 26",
+    "tonalidad": "Hielo",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 238,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Hielo - 30",
+    "tonalidad": "Hielo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "id_sku": 239,
+    "sku_label": "FRESHTERRY JEANS / TORMENTA - Hielo - 34",
+    "tonalidad": "Hielo",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 89,
+    "descripcion": "JEANPEAR JEANS / TORMENTA",
+    "id_sku": 67,
+    "sku_label": "JEANPEAR JEANS / TORMENTA - Azul Clasico - 26",
+    "tonalidad": "Azul Clasico",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 89,
+    "descripcion": "JEANPEAR JEANS / TORMENTA",
+    "id_sku": 68,
+    "sku_label": "JEANPEAR JEANS / TORMENTA - Azul Clasico - 28",
+    "tonalidad": "Azul Clasico",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 89,
+    "descripcion": "JEANPEAR JEANS / TORMENTA",
+    "id_sku": 69,
+    "sku_label": "JEANPEAR JEANS / TORMENTA - Azul Noche - 26",
+    "tonalidad": "Azul Noche",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 89,
+    "descripcion": "JEANPEAR JEANS / TORMENTA",
+    "id_sku": 70,
+    "sku_label": "JEANPEAR JEANS / TORMENTA - Azul Noche - 28",
+    "tonalidad": "Azul Noche",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 89,
+    "descripcion": "JEANPEAR JEANS / TORMENTA",
+    "id_sku": 71,
+    "sku_label": "JEANPEAR JEANS / TORMENTA - Azul Pizarra - 26",
+    "tonalidad": "Azul Pizarra",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 89,
+    "descripcion": "JEANPEAR JEANS / TORMENTA",
+    "id_sku": 72,
+    "sku_label": "JEANPEAR JEANS / TORMENTA - Azul Pizarra - 28",
+    "tonalidad": "Azul Pizarra",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 89,
+    "descripcion": "JEANPEAR JEANS / TORMENTA",
+    "id_sku": 73,
+    "sku_label": "JEANPEAR JEANS / TORMENTA - Azul Vintage - 26",
+    "tonalidad": "Azul Vintage",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 89,
+    "descripcion": "JEANPEAR JEANS / TORMENTA",
+    "id_sku": 74,
+    "sku_label": "JEANPEAR JEANS / TORMENTA - Azul Vintage - 28",
+    "tonalidad": "Azul Vintage",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 49,
+    "descripcion": "MINIFALDA 3 LINEAS / TORMENTA",
+    "id_sku": 307,
+    "sku_label": "MINIFALDA 3 LINEAS / TORMENTA - Azul Clasico - 26",
+    "tonalidad": "Azul Clasico",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 49,
+    "descripcion": "MINIFALDA 3 LINEAS / TORMENTA",
+    "id_sku": 308,
+    "sku_label": "MINIFALDA 3 LINEAS / TORMENTA - Azul Clasico - 28",
+    "tonalidad": "Azul Clasico",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 49,
+    "descripcion": "MINIFALDA 3 LINEAS / TORMENTA",
+    "id_sku": 309,
+    "sku_label": "MINIFALDA 3 LINEAS / TORMENTA - Azul Noche - 26",
+    "tonalidad": "Azul Noche",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 49,
+    "descripcion": "MINIFALDA 3 LINEAS / TORMENTA",
+    "id_sku": 310,
+    "sku_label": "MINIFALDA 3 LINEAS / TORMENTA - Azul Noche - 28",
+    "tonalidad": "Azul Noche",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 49,
+    "descripcion": "MINIFALDA 3 LINEAS / TORMENTA",
+    "id_sku": 313,
+    "sku_label": "MINIFALDA 3 LINEAS / TORMENTA - Celeste - 26",
+    "tonalidad": "Celeste",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 49,
+    "descripcion": "MINIFALDA 3 LINEAS / TORMENTA",
+    "id_sku": 314,
+    "sku_label": "MINIFALDA 3 LINEAS / TORMENTA - Celeste - 28",
+    "tonalidad": "Celeste",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 49,
+    "descripcion": "MINIFALDA 3 LINEAS / TORMENTA",
+    "id_sku": 311,
+    "sku_label": "MINIFALDA 3 LINEAS / TORMENTA - Gris Plomo - 26",
+    "tonalidad": "Gris Plomo",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 49,
+    "descripcion": "MINIFALDA 3 LINEAS / TORMENTA",
+    "id_sku": 312,
+    "sku_label": "MINIFALDA 3 LINEAS / TORMENTA - Gris Plomo - 28",
+    "tonalidad": "Gris Plomo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 49,
+    "descripcion": "MINIFALDA 3 LINEAS / TORMENTA",
+    "id_sku": 315,
+    "sku_label": "MINIFALDA 3 LINEAS / TORMENTA - Hielo - 26",
+    "tonalidad": "Hielo",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 49,
+    "descripcion": "MINIFALDA 3 LINEAS / TORMENTA",
+    "id_sku": 316,
+    "sku_label": "MINIFALDA 3 LINEAS / TORMENTA - Hielo - 28",
+    "tonalidad": "Hielo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 61,
+    "descripcion": "MINIFALDA JEANS / TORMENTA",
+    "id_sku": 240,
+    "sku_label": "MINIFALDA JEANS / TORMENTA - Azul Clasico - 28",
+    "tonalidad": "Azul Clasico",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 61,
+    "descripcion": "MINIFALDA JEANS / TORMENTA",
+    "id_sku": 241,
+    "sku_label": "MINIFALDA JEANS / TORMENTA - Azul Clasico - 32",
+    "tonalidad": "Azul Clasico",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 61,
+    "descripcion": "MINIFALDA JEANS / TORMENTA",
+    "id_sku": 242,
+    "sku_label": "MINIFALDA JEANS / TORMENTA - Azul Clasico - 34",
+    "tonalidad": "Azul Clasico",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 61,
+    "descripcion": "MINIFALDA JEANS / TORMENTA",
+    "id_sku": 243,
+    "sku_label": "MINIFALDA JEANS / TORMENTA - Celeste - 28",
+    "tonalidad": "Celeste",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 61,
+    "descripcion": "MINIFALDA JEANS / TORMENTA",
+    "id_sku": 244,
+    "sku_label": "MINIFALDA JEANS / TORMENTA - Celeste - 32",
+    "tonalidad": "Celeste",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 61,
+    "descripcion": "MINIFALDA JEANS / TORMENTA",
+    "id_sku": 245,
+    "sku_label": "MINIFALDA JEANS / TORMENTA - Celeste - 34",
+    "tonalidad": "Celeste",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 61,
+    "descripcion": "MINIFALDA JEANS / TORMENTA",
+    "id_sku": 246,
+    "sku_label": "MINIFALDA JEANS / TORMENTA - Hielo - 28",
+    "tonalidad": "Hielo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 61,
+    "descripcion": "MINIFALDA JEANS / TORMENTA",
+    "id_sku": 247,
+    "sku_label": "MINIFALDA JEANS / TORMENTA - Hielo - 32",
+    "tonalidad": "Hielo",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 61,
+    "descripcion": "MINIFALDA JEANS / TORMENTA",
+    "id_sku": 248,
+    "sku_label": "MINIFALDA JEANS / TORMENTA - Hielo - 34",
+    "tonalidad": "Hielo",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 79,
+    "descripcion": "MODELO MALAGA / TORMENTA",
+    "id_sku": 160,
+    "sku_label": "MODELO MALAGA / TORMENTA - Azul Clasico - 28",
+    "tonalidad": "Azul Clasico",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 79,
+    "descripcion": "MODELO MALAGA / TORMENTA",
+    "id_sku": 161,
+    "sku_label": "MODELO MALAGA / TORMENTA - Azul Clasico - 30",
+    "tonalidad": "Azul Clasico",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 79,
+    "descripcion": "MODELO MALAGA / TORMENTA",
+    "id_sku": 162,
+    "sku_label": "MODELO MALAGA / TORMENTA - Beige - 28",
+    "tonalidad": "Beige",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 79,
+    "descripcion": "MODELO MALAGA / TORMENTA",
+    "id_sku": 163,
+    "sku_label": "MODELO MALAGA / TORMENTA - Beige - 30",
+    "tonalidad": "Beige",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 79,
+    "descripcion": "MODELO MALAGA / TORMENTA",
+    "id_sku": 164,
+    "sku_label": "MODELO MALAGA / TORMENTA - Gris - 28",
+    "tonalidad": "Gris",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 79,
+    "descripcion": "MODELO MALAGA / TORMENTA",
+    "id_sku": 165,
+    "sku_label": "MODELO MALAGA / TORMENTA - Gris - 30",
+    "tonalidad": "Gris",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 90,
+    "descripcion": "MODELO RIZOS / TORMENTA",
+    "id_sku": 63,
+    "sku_label": "MODELO RIZOS / TORMENTA - Azul - 26",
+    "tonalidad": "Azul",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 90,
+    "descripcion": "MODELO RIZOS / TORMENTA",
+    "id_sku": 61,
+    "sku_label": "MODELO RIZOS / TORMENTA - Azul - 28",
+    "tonalidad": "Azul",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 90,
+    "descripcion": "MODELO RIZOS / TORMENTA",
+    "id_sku": 62,
+    "sku_label": "MODELO RIZOS / TORMENTA - Azul - 30",
+    "tonalidad": "Azul",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 90,
+    "descripcion": "MODELO RIZOS / TORMENTA",
+    "id_sku": 60,
+    "sku_label": "MODELO RIZOS / TORMENTA - Azul Noche - 26",
+    "tonalidad": "Azul Noche",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 90,
+    "descripcion": "MODELO RIZOS / TORMENTA",
+    "id_sku": 58,
+    "sku_label": "MODELO RIZOS / TORMENTA - Azul Noche - 28",
+    "tonalidad": "Azul Noche",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 90,
+    "descripcion": "MODELO RIZOS / TORMENTA",
+    "id_sku": 59,
+    "sku_label": "MODELO RIZOS / TORMENTA - Azul Noche - 30",
+    "tonalidad": "Azul Noche",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 90,
+    "descripcion": "MODELO RIZOS / TORMENTA",
+    "id_sku": 66,
+    "sku_label": "MODELO RIZOS / TORMENTA - Gris Plomo - 26",
+    "tonalidad": "Gris Plomo",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 90,
+    "descripcion": "MODELO RIZOS / TORMENTA",
+    "id_sku": 64,
+    "sku_label": "MODELO RIZOS / TORMENTA - Gris Plomo - 28",
+    "tonalidad": "Gris Plomo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 90,
+    "descripcion": "MODELO RIZOS / TORMENTA",
+    "id_sku": 65,
+    "sku_label": "MODELO RIZOS / TORMENTA - Gris Plomo - 30",
+    "tonalidad": "Gris Plomo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 86,
+    "descripcion": "MODELO SARA / TORMENTA",
+    "id_sku": 92,
+    "sku_label": "MODELO SARA / TORMENTA - Azul Clasico - 30",
+    "tonalidad": "Azul Clasico",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 86,
+    "descripcion": "MODELO SARA / TORMENTA",
+    "id_sku": 93,
+    "sku_label": "MODELO SARA / TORMENTA - Azul Clasico - 32",
+    "tonalidad": "Azul Clasico",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 86,
+    "descripcion": "MODELO SARA / TORMENTA",
+    "id_sku": 94,
+    "sku_label": "MODELO SARA / TORMENTA - Azul Clasico - 34",
+    "tonalidad": "Azul Clasico",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 86,
+    "descripcion": "MODELO SARA / TORMENTA",
+    "id_sku": 95,
+    "sku_label": "MODELO SARA / TORMENTA - Azul Noche - 30",
+    "tonalidad": "Azul Noche",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 86,
+    "descripcion": "MODELO SARA / TORMENTA",
+    "id_sku": 96,
+    "sku_label": "MODELO SARA / TORMENTA - Azul Noche - 32",
+    "tonalidad": "Azul Noche",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 86,
+    "descripcion": "MODELO SARA / TORMENTA",
+    "id_sku": 97,
+    "sku_label": "MODELO SARA / TORMENTA - Azul Noche - 34",
+    "tonalidad": "Azul Noche",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 86,
+    "descripcion": "MODELO SARA / TORMENTA",
+    "id_sku": 98,
+    "sku_label": "MODELO SARA / TORMENTA - Gris Plomo - 30",
+    "tonalidad": "Gris Plomo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 86,
+    "descripcion": "MODELO SARA / TORMENTA",
+    "id_sku": 99,
+    "sku_label": "MODELO SARA / TORMENTA - Gris Plomo - 32",
+    "tonalidad": "Gris Plomo",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 86,
+    "descripcion": "MODELO SARA / TORMENTA",
+    "id_sku": 100,
+    "sku_label": "MODELO SARA / TORMENTA - Gris Plomo - 34",
+    "tonalidad": "Gris Plomo",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 86,
+    "descripcion": "MODELO SARA / TORMENTA",
+    "id_sku": 101,
+    "sku_label": "MODELO SARA / TORMENTA - Hielo - 30",
+    "tonalidad": "Hielo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 86,
+    "descripcion": "MODELO SARA / TORMENTA",
+    "id_sku": 102,
+    "sku_label": "MODELO SARA / TORMENTA - Hielo - 32",
+    "tonalidad": "Hielo",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 86,
+    "descripcion": "MODELO SARA / TORMENTA",
+    "id_sku": 103,
+    "sku_label": "MODELO SARA / TORMENTA - Hielo - 34",
+    "tonalidad": "Hielo",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 82,
+    "descripcion": "MOM JEANS STRESH / TORMENTA",
+    "id_sku": 141,
+    "sku_label": "MOM JEANS STRESH / TORMENTA - Azul Clasico - 26",
+    "tonalidad": "Azul Clasico",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 82,
+    "descripcion": "MOM JEANS STRESH / TORMENTA",
+    "id_sku": 140,
+    "sku_label": "MOM JEANS STRESH / TORMENTA - Azul Clasico - 28",
+    "tonalidad": "Azul Clasico",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 82,
+    "descripcion": "MOM JEANS STRESH / TORMENTA",
+    "id_sku": 139,
+    "sku_label": "MOM JEANS STRESH / TORMENTA - Azul Clasico - 30",
+    "tonalidad": "Azul Clasico",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 82,
+    "descripcion": "MOM JEANS STRESH / TORMENTA",
+    "id_sku": 144,
+    "sku_label": "MOM JEANS STRESH / TORMENTA - Azul Noche - 26",
+    "tonalidad": "Azul Noche",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 82,
+    "descripcion": "MOM JEANS STRESH / TORMENTA",
+    "id_sku": 143,
+    "sku_label": "MOM JEANS STRESH / TORMENTA - Azul Noche - 28",
+    "tonalidad": "Azul Noche",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 82,
+    "descripcion": "MOM JEANS STRESH / TORMENTA",
+    "id_sku": 142,
+    "sku_label": "MOM JEANS STRESH / TORMENTA - Azul Noche - 30",
+    "tonalidad": "Azul Noche",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 82,
+    "descripcion": "MOM JEANS STRESH / TORMENTA",
+    "id_sku": 147,
+    "sku_label": "MOM JEANS STRESH / TORMENTA - Azul Pizarra - 26",
+    "tonalidad": "Azul Pizarra",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 82,
+    "descripcion": "MOM JEANS STRESH / TORMENTA",
+    "id_sku": 146,
+    "sku_label": "MOM JEANS STRESH / TORMENTA - Azul Pizarra - 28",
+    "tonalidad": "Azul Pizarra",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 82,
+    "descripcion": "MOM JEANS STRESH / TORMENTA",
+    "id_sku": 145,
+    "sku_label": "MOM JEANS STRESH / TORMENTA - Azul Pizarra - 30",
+    "tonalidad": "Azul Pizarra",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 290,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Azul Clasico - 26",
+    "tonalidad": "Azul Clasico",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 287,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Azul Clasico - 28",
+    "tonalidad": "Azul Clasico",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 288,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Azul Clasico - 30",
+    "tonalidad": "Azul Clasico",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 289,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Azul Clasico - 32",
+    "tonalidad": "Azul Clasico",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 294,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Azul Pizarra - 26",
+    "tonalidad": "Azul Pizarra",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 291,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Azul Pizarra - 28",
+    "tonalidad": "Azul Pizarra",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 292,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Azul Pizarra - 30",
+    "tonalidad": "Azul Pizarra",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 293,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Azul Pizarra - 32",
+    "tonalidad": "Azul Pizarra",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 298,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Celeste - 26",
+    "tonalidad": "Celeste",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 295,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Celeste - 28",
+    "tonalidad": "Celeste",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 296,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Celeste - 30",
+    "tonalidad": "Celeste",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 297,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Celeste - 32",
+    "tonalidad": "Celeste",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 302,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Gris - 26",
+    "tonalidad": "Gris",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 299,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Gris - 28",
+    "tonalidad": "Gris",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 300,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Gris - 30",
+    "tonalidad": "Gris",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 301,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Gris - 32",
+    "tonalidad": "Gris",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 306,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Hielo - 26",
+    "tonalidad": "Hielo",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 303,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Hielo - 28",
+    "tonalidad": "Hielo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 304,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Hielo - 30",
+    "tonalidad": "Hielo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "id_sku": 305,
+    "sku_label": "MOM PINZAS EN LA RODILLA / TORMENTA - Hielo - 32",
+    "tonalidad": "Hielo",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 85,
+    "descripcion": "MULTICARGO COLOR / TORMENTA",
+    "id_sku": 116,
+    "sku_label": "MULTICARGO COLOR / TORMENTA - Melocoton Oscuro - 28",
+    "tonalidad": "Melocoton Oscuro",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 85,
+    "descripcion": "MULTICARGO COLOR / TORMENTA",
+    "id_sku": 117,
+    "sku_label": "MULTICARGO COLOR / TORMENTA - Melocoton Oscuro - 32",
+    "tonalidad": "Melocoton Oscuro",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 85,
+    "descripcion": "MULTICARGO COLOR / TORMENTA",
+    "id_sku": 118,
+    "sku_label": "MULTICARGO COLOR / TORMENTA - Melocoton Oscuro - 34",
+    "tonalidad": "Melocoton Oscuro",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 85,
+    "descripcion": "MULTICARGO COLOR / TORMENTA",
+    "id_sku": 113,
+    "sku_label": "MULTICARGO COLOR / TORMENTA - Rosa Pastel - 28",
+    "tonalidad": "Rosa Pastel",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 85,
+    "descripcion": "MULTICARGO COLOR / TORMENTA",
+    "id_sku": 114,
+    "sku_label": "MULTICARGO COLOR / TORMENTA - Rosa Pastel - 32",
+    "tonalidad": "Rosa Pastel",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 85,
+    "descripcion": "MULTICARGO COLOR / TORMENTA",
+    "id_sku": 115,
+    "sku_label": "MULTICARGO COLOR / TORMENTA - Rosa Pastel - 34",
+    "tonalidad": "Rosa Pastel",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 85,
+    "descripcion": "MULTICARGO COLOR / TORMENTA",
+    "id_sku": 110,
+    "sku_label": "MULTICARGO COLOR / TORMENTA - Terracota - 28",
+    "tonalidad": "Terracota",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 85,
+    "descripcion": "MULTICARGO COLOR / TORMENTA",
+    "id_sku": 111,
+    "sku_label": "MULTICARGO COLOR / TORMENTA - Terracota - 32",
+    "tonalidad": "Terracota",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 85,
+    "descripcion": "MULTICARGO COLOR / TORMENTA",
+    "id_sku": 112,
+    "sku_label": "MULTICARGO COLOR / TORMENTA - Terracota - 34",
+    "tonalidad": "Terracota",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 85,
+    "descripcion": "MULTICARGO COLOR / TORMENTA",
+    "id_sku": 107,
+    "sku_label": "MULTICARGO COLOR / TORMENTA - Verde Olivo - 28",
+    "tonalidad": "Verde Olivo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 85,
+    "descripcion": "MULTICARGO COLOR / TORMENTA",
+    "id_sku": 108,
+    "sku_label": "MULTICARGO COLOR / TORMENTA - Verde Olivo - 32",
+    "tonalidad": "Verde Olivo",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 85,
+    "descripcion": "MULTICARGO COLOR / TORMENTA",
+    "id_sku": 109,
+    "sku_label": "MULTICARGO COLOR / TORMENTA - Verde Olivo - 34",
+    "tonalidad": "Verde Olivo",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 85,
+    "descripcion": "MULTICARGO COLOR / TORMENTA",
+    "id_sku": 104,
+    "sku_label": "MULTICARGO COLOR / TORMENTA - Vino - 28",
+    "tonalidad": "Vino",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 85,
+    "descripcion": "MULTICARGO COLOR / TORMENTA",
+    "id_sku": 105,
+    "sku_label": "MULTICARGO COLOR / TORMENTA - Vino - 32",
+    "tonalidad": "Vino",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 85,
+    "descripcion": "MULTICARGO COLOR / TORMENTA",
+    "id_sku": 106,
+    "sku_label": "MULTICARGO COLOR / TORMENTA - Vino - 34",
+    "tonalidad": "Vino",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 83,
+    "descripcion": "PALAZO CLASICO JEANS / TORMENTA",
+    "id_sku": 137,
+    "sku_label": "PALAZO CLASICO JEANS / TORMENTA - Gris Plomo - 28",
+    "tonalidad": "Gris Plomo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 83,
+    "descripcion": "PALAZO CLASICO JEANS / TORMENTA",
+    "id_sku": 138,
+    "sku_label": "PALAZO CLASICO JEANS / TORMENTA - Gris Plomo - 30",
+    "tonalidad": "Gris Plomo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 83,
+    "descripcion": "PALAZO CLASICO JEANS / TORMENTA",
+    "id_sku": 135,
+    "sku_label": "PALAZO CLASICO JEANS / TORMENTA - Rosa Pastel - 28",
+    "tonalidad": "Rosa Pastel",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 83,
+    "descripcion": "PALAZO CLASICO JEANS / TORMENTA",
+    "id_sku": 136,
+    "sku_label": "PALAZO CLASICO JEANS / TORMENTA - Rosa Pastel - 30",
+    "tonalidad": "Rosa Pastel",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 83,
+    "descripcion": "PALAZO CLASICO JEANS / TORMENTA",
+    "id_sku": 133,
+    "sku_label": "PALAZO CLASICO JEANS / TORMENTA - Terracota - 28",
+    "tonalidad": "Terracota",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 83,
+    "descripcion": "PALAZO CLASICO JEANS / TORMENTA",
+    "id_sku": 134,
+    "sku_label": "PALAZO CLASICO JEANS / TORMENTA - Terracota - 30",
+    "tonalidad": "Terracota",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 83,
+    "descripcion": "PALAZO CLASICO JEANS / TORMENTA",
+    "id_sku": 129,
+    "sku_label": "PALAZO CLASICO JEANS / TORMENTA - Verde Olivo - 28",
+    "tonalidad": "Verde Olivo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 83,
+    "descripcion": "PALAZO CLASICO JEANS / TORMENTA",
+    "id_sku": 130,
+    "sku_label": "PALAZO CLASICO JEANS / TORMENTA - Verde Olivo - 30",
+    "tonalidad": "Verde Olivo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 83,
+    "descripcion": "PALAZO CLASICO JEANS / TORMENTA",
+    "id_sku": 131,
+    "sku_label": "PALAZO CLASICO JEANS / TORMENTA - Vino - 28",
+    "tonalidad": "Vino",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 83,
+    "descripcion": "PALAZO CLASICO JEANS / TORMENTA",
+    "id_sku": 132,
+    "sku_label": "PALAZO CLASICO JEANS / TORMENTA - Vino - 30",
+    "tonalidad": "Vino",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 55,
+    "descripcion": "PALAZO COLOR RIGIDO / TORMENTA",
+    "id_sku": 282,
+    "sku_label": "PALAZO COLOR RIGIDO / TORMENTA - Rosa Pastel - 28",
+    "tonalidad": "Rosa Pastel",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 55,
+    "descripcion": "PALAZO COLOR RIGIDO / TORMENTA",
+    "id_sku": 283,
+    "sku_label": "PALAZO COLOR RIGIDO / TORMENTA - Rosa Pastel - 30",
+    "tonalidad": "Rosa Pastel",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 55,
+    "descripcion": "PALAZO COLOR RIGIDO / TORMENTA",
+    "id_sku": 284,
+    "sku_label": "PALAZO COLOR RIGIDO / TORMENTA - Rosa Pastel - 32",
+    "tonalidad": "Rosa Pastel",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 55,
+    "descripcion": "PALAZO COLOR RIGIDO / TORMENTA",
+    "id_sku": 279,
+    "sku_label": "PALAZO COLOR RIGIDO / TORMENTA - Terracota - 28",
+    "tonalidad": "Terracota",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 55,
+    "descripcion": "PALAZO COLOR RIGIDO / TORMENTA",
+    "id_sku": 280,
+    "sku_label": "PALAZO COLOR RIGIDO / TORMENTA - Terracota - 30",
+    "tonalidad": "Terracota",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 55,
+    "descripcion": "PALAZO COLOR RIGIDO / TORMENTA",
+    "id_sku": 281,
+    "sku_label": "PALAZO COLOR RIGIDO / TORMENTA - Terracota - 32",
+    "tonalidad": "Terracota",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 55,
+    "descripcion": "PALAZO COLOR RIGIDO / TORMENTA",
+    "id_sku": 273,
+    "sku_label": "PALAZO COLOR RIGIDO / TORMENTA - Verde Olivo - 28",
+    "tonalidad": "Verde Olivo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 55,
+    "descripcion": "PALAZO COLOR RIGIDO / TORMENTA",
+    "id_sku": 274,
+    "sku_label": "PALAZO COLOR RIGIDO / TORMENTA - Verde Olivo - 30",
+    "tonalidad": "Verde Olivo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 55,
+    "descripcion": "PALAZO COLOR RIGIDO / TORMENTA",
+    "id_sku": 275,
+    "sku_label": "PALAZO COLOR RIGIDO / TORMENTA - Verde Olivo - 32",
+    "tonalidad": "Verde Olivo",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 55,
+    "descripcion": "PALAZO COLOR RIGIDO / TORMENTA",
+    "id_sku": 276,
+    "sku_label": "PALAZO COLOR RIGIDO / TORMENTA - Vino - 28",
+    "tonalidad": "Vino",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 55,
+    "descripcion": "PALAZO COLOR RIGIDO / TORMENTA",
+    "id_sku": 277,
+    "sku_label": "PALAZO COLOR RIGIDO / TORMENTA - Vino - 30",
+    "tonalidad": "Vino",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 55,
+    "descripcion": "PALAZO COLOR RIGIDO / TORMENTA",
+    "id_sku": 278,
+    "sku_label": "PALAZO COLOR RIGIDO / TORMENTA - Vino - 32",
+    "tonalidad": "Vino",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 84,
+    "descripcion": "PALAZO DE COLOR STRESH / TORMENTA",
+    "id_sku": 127,
+    "sku_label": "PALAZO DE COLOR STRESH / TORMENTA - Blanco Roto - 28",
+    "tonalidad": "Blanco Roto",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 84,
+    "descripcion": "PALAZO DE COLOR STRESH / TORMENTA",
+    "id_sku": 128,
+    "sku_label": "PALAZO DE COLOR STRESH / TORMENTA - Blanco Roto - 32",
+    "tonalidad": "Blanco Roto",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 84,
+    "descripcion": "PALAZO DE COLOR STRESH / TORMENTA",
+    "id_sku": 125,
+    "sku_label": "PALAZO DE COLOR STRESH / TORMENTA - Gris Plomo - 28",
+    "tonalidad": "Gris Plomo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 84,
+    "descripcion": "PALAZO DE COLOR STRESH / TORMENTA",
+    "id_sku": 126,
+    "sku_label": "PALAZO DE COLOR STRESH / TORMENTA - Gris Plomo - 32",
+    "tonalidad": "Gris Plomo",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 84,
+    "descripcion": "PALAZO DE COLOR STRESH / TORMENTA",
+    "id_sku": 123,
+    "sku_label": "PALAZO DE COLOR STRESH / TORMENTA - Marron Chocolate - 28",
+    "tonalidad": "Marron Chocolate",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 84,
+    "descripcion": "PALAZO DE COLOR STRESH / TORMENTA",
+    "id_sku": 124,
+    "sku_label": "PALAZO DE COLOR STRESH / TORMENTA - Marron Chocolate - 32",
+    "tonalidad": "Marron Chocolate",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 84,
+    "descripcion": "PALAZO DE COLOR STRESH / TORMENTA",
+    "id_sku": 119,
+    "sku_label": "PALAZO DE COLOR STRESH / TORMENTA - Rosa Pastel - 28",
+    "tonalidad": "Rosa Pastel",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 84,
+    "descripcion": "PALAZO DE COLOR STRESH / TORMENTA",
+    "id_sku": 120,
+    "sku_label": "PALAZO DE COLOR STRESH / TORMENTA - Rosa Pastel - 32",
+    "tonalidad": "Rosa Pastel",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 84,
+    "descripcion": "PALAZO DE COLOR STRESH / TORMENTA",
+    "id_sku": 121,
+    "sku_label": "PALAZO DE COLOR STRESH / TORMENTA - Terracota - 28",
+    "tonalidad": "Terracota",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 84,
+    "descripcion": "PALAZO DE COLOR STRESH / TORMENTA",
+    "id_sku": 122,
+    "sku_label": "PALAZO DE COLOR STRESH / TORMENTA - Terracota - 32",
+    "tonalidad": "Terracota",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 37,
+    "descripcion": "PALAZO JEANS / WOMAN",
+    "id_sku": 359,
+    "sku_label": "PALAZO JEANS / WOMAN - Azul Clasico - 28",
+    "tonalidad": "Azul Clasico",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 37,
+    "descripcion": "PALAZO JEANS / WOMAN",
+    "id_sku": 360,
+    "sku_label": "PALAZO JEANS / WOMAN - Azul Clasico - 30",
+    "tonalidad": "Azul Clasico",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 37,
+    "descripcion": "PALAZO JEANS / WOMAN",
+    "id_sku": 361,
+    "sku_label": "PALAZO JEANS / WOMAN - Azul Clasico - 32",
+    "tonalidad": "Azul Clasico",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 37,
+    "descripcion": "PALAZO JEANS / WOMAN",
+    "id_sku": 362,
+    "sku_label": "PALAZO JEANS / WOMAN - Azul Noche - 28",
+    "tonalidad": "Azul Noche",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 37,
+    "descripcion": "PALAZO JEANS / WOMAN",
+    "id_sku": 363,
+    "sku_label": "PALAZO JEANS / WOMAN - Azul Noche - 30",
+    "tonalidad": "Azul Noche",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 37,
+    "descripcion": "PALAZO JEANS / WOMAN",
+    "id_sku": 364,
+    "sku_label": "PALAZO JEANS / WOMAN - Azul Noche - 32",
+    "tonalidad": "Azul Noche",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 37,
+    "descripcion": "PALAZO JEANS / WOMAN",
+    "id_sku": 368,
+    "sku_label": "PALAZO JEANS / WOMAN - Celeste - 28",
+    "tonalidad": "Celeste",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 37,
+    "descripcion": "PALAZO JEANS / WOMAN",
+    "id_sku": 369,
+    "sku_label": "PALAZO JEANS / WOMAN - Celeste - 30",
+    "tonalidad": "Celeste",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 37,
+    "descripcion": "PALAZO JEANS / WOMAN",
+    "id_sku": 370,
+    "sku_label": "PALAZO JEANS / WOMAN - Celeste - 32",
+    "tonalidad": "Celeste",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 37,
+    "descripcion": "PALAZO JEANS / WOMAN",
+    "id_sku": 365,
+    "sku_label": "PALAZO JEANS / WOMAN - Gris - 28",
+    "tonalidad": "Gris",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 37,
+    "descripcion": "PALAZO JEANS / WOMAN",
+    "id_sku": 366,
+    "sku_label": "PALAZO JEANS / WOMAN - Gris - 30",
+    "tonalidad": "Gris",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 37,
+    "descripcion": "PALAZO JEANS / WOMAN",
+    "id_sku": 367,
+    "sku_label": "PALAZO JEANS / WOMAN - Gris - 32",
+    "tonalidad": "Gris",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 37,
+    "descripcion": "PALAZO JEANS / WOMAN",
+    "id_sku": 371,
+    "sku_label": "PALAZO JEANS / WOMAN - Hielo - 28",
+    "tonalidad": "Hielo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 37,
+    "descripcion": "PALAZO JEANS / WOMAN",
+    "id_sku": 372,
+    "sku_label": "PALAZO JEANS / WOMAN - Hielo - 30",
+    "tonalidad": "Hielo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 37,
+    "descripcion": "PALAZO JEANS / WOMAN",
+    "id_sku": 373,
+    "sku_label": "PALAZO JEANS / WOMAN - Hielo - 32",
+    "tonalidad": "Hielo",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 69,
+    "descripcion": "PANTALON ALASKA / TORMENTA",
+    "id_sku": 198,
+    "sku_label": "PANTALON ALASKA / TORMENTA - Azul Clasico - 30",
+    "tonalidad": "Azul Clasico",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 69,
+    "descripcion": "PANTALON ALASKA / TORMENTA",
+    "id_sku": 199,
+    "sku_label": "PANTALON ALASKA / TORMENTA - Azul Clasico - 32",
+    "tonalidad": "Azul Clasico",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 69,
+    "descripcion": "PANTALON ALASKA / TORMENTA",
+    "id_sku": 200,
+    "sku_label": "PANTALON ALASKA / TORMENTA - Azul Clasico - 34",
+    "tonalidad": "Azul Clasico",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 69,
+    "descripcion": "PANTALON ALASKA / TORMENTA",
+    "id_sku": 201,
+    "sku_label": "PANTALON ALASKA / TORMENTA - Azul Noche - 30",
+    "tonalidad": "Azul Noche",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 69,
+    "descripcion": "PANTALON ALASKA / TORMENTA",
+    "id_sku": 202,
+    "sku_label": "PANTALON ALASKA / TORMENTA - Azul Noche - 32",
+    "tonalidad": "Azul Noche",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 69,
+    "descripcion": "PANTALON ALASKA / TORMENTA",
+    "id_sku": 203,
+    "sku_label": "PANTALON ALASKA / TORMENTA - Azul Noche - 34",
+    "tonalidad": "Azul Noche",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 69,
+    "descripcion": "PANTALON ALASKA / TORMENTA",
+    "id_sku": 204,
+    "sku_label": "PANTALON ALASKA / TORMENTA - Azul Pizarra - 30",
+    "tonalidad": "Azul Pizarra",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 69,
+    "descripcion": "PANTALON ALASKA / TORMENTA",
+    "id_sku": 205,
+    "sku_label": "PANTALON ALASKA / TORMENTA - Azul Pizarra - 32",
+    "tonalidad": "Azul Pizarra",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 69,
+    "descripcion": "PANTALON ALASKA / TORMENTA",
+    "id_sku": 206,
+    "sku_label": "PANTALON ALASKA / TORMENTA - Azul Pizarra - 34",
+    "tonalidad": "Azul Pizarra",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 69,
+    "descripcion": "PANTALON ALASKA / TORMENTA",
+    "id_sku": 207,
+    "sku_label": "PANTALON ALASKA / TORMENTA - Blanco Roto - 30",
+    "tonalidad": "Blanco Roto",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 69,
+    "descripcion": "PANTALON ALASKA / TORMENTA",
+    "id_sku": 208,
+    "sku_label": "PANTALON ALASKA / TORMENTA - Blanco Roto - 32",
+    "tonalidad": "Blanco Roto",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 69,
+    "descripcion": "PANTALON ALASKA / TORMENTA",
+    "id_sku": 209,
+    "sku_label": "PANTALON ALASKA / TORMENTA - Blanco Roto - 34",
+    "tonalidad": "Blanco Roto",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 87,
+    "descripcion": "POLOS",
+    "id_sku": 87,
+    "sku_label": "POLOS - Azul - UNI",
+    "tonalidad": "Azul",
+    "talla": "UNI",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 87,
+    "descripcion": "POLOS",
+    "id_sku": 89,
+    "sku_label": "POLOS - Blanco Roto - UNI",
+    "tonalidad": "Blanco Roto",
+    "talla": "UNI",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 87,
+    "descripcion": "POLOS",
+    "id_sku": 88,
+    "sku_label": "POLOS - Celeste - UNI",
+    "tonalidad": "Celeste",
+    "talla": "UNI",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 87,
+    "descripcion": "POLOS",
+    "id_sku": 90,
+    "sku_label": "POLOS - Marron Chocolate - UNI",
+    "tonalidad": "Marron Chocolate",
+    "talla": "UNI",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 87,
+    "descripcion": "POLOS",
+    "id_sku": 91,
+    "sku_label": "POLOS - Verde Olivo - UNI",
+    "tonalidad": "Verde Olivo",
+    "talla": "UNI",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 59,
+    "descripcion": "SHORT COLOR RIGIDO / TORMENTA",
+    "id_sku": 251,
+    "sku_label": "SHORT COLOR RIGIDO / TORMENTA - Azul Clasico - 26",
+    "tonalidad": "Azul Clasico",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 59,
+    "descripcion": "SHORT COLOR RIGIDO / TORMENTA",
+    "id_sku": 249,
+    "sku_label": "SHORT COLOR RIGIDO / TORMENTA - Azul Clasico - 28",
+    "tonalidad": "Azul Clasico",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 59,
+    "descripcion": "SHORT COLOR RIGIDO / TORMENTA",
+    "id_sku": 250,
+    "sku_label": "SHORT COLOR RIGIDO / TORMENTA - Azul Clasico - 30",
+    "tonalidad": "Azul Clasico",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 59,
+    "descripcion": "SHORT COLOR RIGIDO / TORMENTA",
+    "id_sku": 254,
+    "sku_label": "SHORT COLOR RIGIDO / TORMENTA - Azul Pizarra - 26",
+    "tonalidad": "Azul Pizarra",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 59,
+    "descripcion": "SHORT COLOR RIGIDO / TORMENTA",
+    "id_sku": 252,
+    "sku_label": "SHORT COLOR RIGIDO / TORMENTA - Azul Pizarra - 28",
+    "tonalidad": "Azul Pizarra",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 59,
+    "descripcion": "SHORT COLOR RIGIDO / TORMENTA",
+    "id_sku": 253,
+    "sku_label": "SHORT COLOR RIGIDO / TORMENTA - Azul Pizarra - 30",
+    "tonalidad": "Azul Pizarra",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 59,
+    "descripcion": "SHORT COLOR RIGIDO / TORMENTA",
+    "id_sku": 257,
+    "sku_label": "SHORT COLOR RIGIDO / TORMENTA - Gris Plomo - 26",
+    "tonalidad": "Gris Plomo",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 59,
+    "descripcion": "SHORT COLOR RIGIDO / TORMENTA",
+    "id_sku": 255,
+    "sku_label": "SHORT COLOR RIGIDO / TORMENTA - Gris Plomo - 28",
+    "tonalidad": "Gris Plomo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 59,
+    "descripcion": "SHORT COLOR RIGIDO / TORMENTA",
+    "id_sku": 256,
+    "sku_label": "SHORT COLOR RIGIDO / TORMENTA - Gris Plomo - 30",
+    "tonalidad": "Gris Plomo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 59,
+    "descripcion": "SHORT COLOR RIGIDO / TORMENTA",
+    "id_sku": 260,
+    "sku_label": "SHORT COLOR RIGIDO / TORMENTA - Hielo - 26",
+    "tonalidad": "Hielo",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 59,
+    "descripcion": "SHORT COLOR RIGIDO / TORMENTA",
+    "id_sku": 258,
+    "sku_label": "SHORT COLOR RIGIDO / TORMENTA - Hielo - 28",
+    "tonalidad": "Hielo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 59,
+    "descripcion": "SHORT COLOR RIGIDO / TORMENTA",
+    "id_sku": 259,
+    "sku_label": "SHORT COLOR RIGIDO / TORMENTA - Hielo - 30",
+    "tonalidad": "Hielo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 109,
+    "descripcion": "SHORT FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 43,
+    "sku_label": "SHORT FRESHTERRY SEFERINA / TORMENTA - Azul Noche - 26",
+    "tonalidad": "Azul Noche",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 109,
+    "descripcion": "SHORT FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 44,
+    "sku_label": "SHORT FRESHTERRY SEFERINA / TORMENTA - Azul Noche - 30",
+    "tonalidad": "Azul Noche",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 109,
+    "descripcion": "SHORT FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 45,
+    "sku_label": "SHORT FRESHTERRY SEFERINA / TORMENTA - Azul Noche - 32",
+    "tonalidad": "Azul Noche",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 109,
+    "descripcion": "SHORT FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 46,
+    "sku_label": "SHORT FRESHTERRY SEFERINA / TORMENTA - Azul Pizarra - 26",
+    "tonalidad": "Azul Pizarra",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 109,
+    "descripcion": "SHORT FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 47,
+    "sku_label": "SHORT FRESHTERRY SEFERINA / TORMENTA - Azul Pizarra - 30",
+    "tonalidad": "Azul Pizarra",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 109,
+    "descripcion": "SHORT FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 48,
+    "sku_label": "SHORT FRESHTERRY SEFERINA / TORMENTA - Azul Pizarra - 32",
+    "tonalidad": "Azul Pizarra",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 109,
+    "descripcion": "SHORT FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 49,
+    "sku_label": "SHORT FRESHTERRY SEFERINA / TORMENTA - Beige - 26",
+    "tonalidad": "Beige",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 109,
+    "descripcion": "SHORT FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 50,
+    "sku_label": "SHORT FRESHTERRY SEFERINA / TORMENTA - Beige - 30",
+    "tonalidad": "Beige",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 109,
+    "descripcion": "SHORT FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 51,
+    "sku_label": "SHORT FRESHTERRY SEFERINA / TORMENTA - Beige - 32",
+    "tonalidad": "Beige",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 113,
+    "descripcion": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA",
+    "id_sku": 22,
+    "sku_label": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA - Azul Clasico - 28",
+    "tonalidad": "Azul Clasico",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 113,
+    "descripcion": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA",
+    "id_sku": 23,
+    "sku_label": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA - Azul Clasico - 30",
+    "tonalidad": "Azul Clasico",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 113,
+    "descripcion": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA",
+    "id_sku": 24,
+    "sku_label": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA - Azul Clasico - 32",
+    "tonalidad": "Azul Clasico",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 113,
+    "descripcion": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA",
+    "id_sku": 31,
+    "sku_label": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA - Celeste - 28",
+    "tonalidad": "Celeste",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 113,
+    "descripcion": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA",
+    "id_sku": 32,
+    "sku_label": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA - Celeste - 30",
+    "tonalidad": "Celeste",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 113,
+    "descripcion": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA",
+    "id_sku": 33,
+    "sku_label": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA - Celeste - 32",
+    "tonalidad": "Celeste",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 113,
+    "descripcion": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA",
+    "id_sku": 28,
+    "sku_label": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA - Gris - 28",
+    "tonalidad": "Gris",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 113,
+    "descripcion": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA",
+    "id_sku": 29,
+    "sku_label": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA - Gris - 30",
+    "tonalidad": "Gris",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 113,
+    "descripcion": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA",
+    "id_sku": 30,
+    "sku_label": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA - Gris - 32",
+    "tonalidad": "Gris",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 113,
+    "descripcion": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA",
+    "id_sku": 25,
+    "sku_label": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA - Hielo - 28",
+    "tonalidad": "Hielo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 113,
+    "descripcion": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA",
+    "id_sku": 26,
+    "sku_label": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA - Hielo - 30",
+    "tonalidad": "Hielo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 113,
+    "descripcion": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA",
+    "id_sku": 27,
+    "sku_label": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA - Hielo - 32",
+    "tonalidad": "Hielo",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 57,
+    "descripcion": "TORERO FRESHTERRY / TORMENTA",
+    "id_sku": 261,
+    "sku_label": "TORERO FRESHTERRY / TORMENTA - Azul Clasico - 28",
+    "tonalidad": "Azul Clasico",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 57,
+    "descripcion": "TORERO FRESHTERRY / TORMENTA",
+    "id_sku": 262,
+    "sku_label": "TORERO FRESHTERRY / TORMENTA - Azul Clasico - 30",
+    "tonalidad": "Azul Clasico",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 57,
+    "descripcion": "TORERO FRESHTERRY / TORMENTA",
+    "id_sku": 263,
+    "sku_label": "TORERO FRESHTERRY / TORMENTA - Azul Clasico - 32",
+    "tonalidad": "Azul Clasico",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 57,
+    "descripcion": "TORERO FRESHTERRY / TORMENTA",
+    "id_sku": 264,
+    "sku_label": "TORERO FRESHTERRY / TORMENTA - Azul Noche - 28",
+    "tonalidad": "Azul Noche",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 57,
+    "descripcion": "TORERO FRESHTERRY / TORMENTA",
+    "id_sku": 265,
+    "sku_label": "TORERO FRESHTERRY / TORMENTA - Azul Noche - 30",
+    "tonalidad": "Azul Noche",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 57,
+    "descripcion": "TORERO FRESHTERRY / TORMENTA",
+    "id_sku": 266,
+    "sku_label": "TORERO FRESHTERRY / TORMENTA - Azul Noche - 32",
+    "tonalidad": "Azul Noche",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 57,
+    "descripcion": "TORERO FRESHTERRY / TORMENTA",
+    "id_sku": 267,
+    "sku_label": "TORERO FRESHTERRY / TORMENTA - Azul Pizarra - 28",
+    "tonalidad": "Azul Pizarra",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 57,
+    "descripcion": "TORERO FRESHTERRY / TORMENTA",
+    "id_sku": 268,
+    "sku_label": "TORERO FRESHTERRY / TORMENTA - Azul Pizarra - 30",
+    "tonalidad": "Azul Pizarra",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 57,
+    "descripcion": "TORERO FRESHTERRY / TORMENTA",
+    "id_sku": 269,
+    "sku_label": "TORERO FRESHTERRY / TORMENTA - Azul Pizarra - 32",
+    "tonalidad": "Azul Pizarra",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 57,
+    "descripcion": "TORERO FRESHTERRY / TORMENTA",
+    "id_sku": 270,
+    "sku_label": "TORERO FRESHTERRY / TORMENTA - Azul Vintage - 28",
+    "tonalidad": "Azul Vintage",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 57,
+    "descripcion": "TORERO FRESHTERRY / TORMENTA",
+    "id_sku": 271,
+    "sku_label": "TORERO FRESHTERRY / TORMENTA - Azul Vintage - 30",
+    "tonalidad": "Azul Vintage",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 57,
+    "descripcion": "TORERO FRESHTERRY / TORMENTA",
+    "id_sku": 272,
+    "sku_label": "TORERO FRESHTERRY / TORMENTA - Azul Vintage - 32",
+    "tonalidad": "Azul Vintage",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 110,
+    "descripcion": "TORERO FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 40,
+    "sku_label": "TORERO FRESHTERRY SEFERINA / TORMENTA - Azul - 28",
+    "tonalidad": "Azul",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 110,
+    "descripcion": "TORERO FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 41,
+    "sku_label": "TORERO FRESHTERRY SEFERINA / TORMENTA - Azul - 32",
+    "tonalidad": "Azul",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 110,
+    "descripcion": "TORERO FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 42,
+    "sku_label": "TORERO FRESHTERRY SEFERINA / TORMENTA - Azul - 34",
+    "tonalidad": "Azul",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 110,
+    "descripcion": "TORERO FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 34,
+    "sku_label": "TORERO FRESHTERRY SEFERINA / TORMENTA - Gris - 28",
+    "tonalidad": "Gris",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 110,
+    "descripcion": "TORERO FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 35,
+    "sku_label": "TORERO FRESHTERRY SEFERINA / TORMENTA - Gris - 32",
+    "tonalidad": "Gris",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 110,
+    "descripcion": "TORERO FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 36,
+    "sku_label": "TORERO FRESHTERRY SEFERINA / TORMENTA - Gris - 34",
+    "tonalidad": "Gris",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 110,
+    "descripcion": "TORERO FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 37,
+    "sku_label": "TORERO FRESHTERRY SEFERINA / TORMENTA - Hielo - 28",
+    "tonalidad": "Hielo",
+    "talla": "28",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 110,
+    "descripcion": "TORERO FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 38,
+    "sku_label": "TORERO FRESHTERRY SEFERINA / TORMENTA - Hielo - 32",
+    "tonalidad": "Hielo",
+    "talla": "32",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 110,
+    "descripcion": "TORERO FRESHTERRY SEFERINA / TORMENTA",
+    "id_sku": 39,
+    "sku_label": "TORERO FRESHTERRY SEFERINA / TORMENTA - Hielo - 34",
+    "tonalidad": "Hielo",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 329,
+    "sku_label": "TORERO JEANS / TORMENTA - Azul Clasico - 26",
+    "tonalidad": "Azul Clasico",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 330,
+    "sku_label": "TORERO JEANS / TORMENTA - Azul Clasico - 30",
+    "tonalidad": "Azul Clasico",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 331,
+    "sku_label": "TORERO JEANS / TORMENTA - Azul Clasico - 34",
+    "tonalidad": "Azul Clasico",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 332,
+    "sku_label": "TORERO JEANS / TORMENTA - Azul Pizarra - 26",
+    "tonalidad": "Azul Pizarra",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 333,
+    "sku_label": "TORERO JEANS / TORMENTA - Azul Pizarra - 30",
+    "tonalidad": "Azul Pizarra",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 334,
+    "sku_label": "TORERO JEANS / TORMENTA - Azul Pizarra - 34",
+    "tonalidad": "Azul Pizarra",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 341,
+    "sku_label": "TORERO JEANS / TORMENTA - Celeste - 26",
+    "tonalidad": "Celeste",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 342,
+    "sku_label": "TORERO JEANS / TORMENTA - Celeste - 30",
+    "tonalidad": "Celeste",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 343,
+    "sku_label": "TORERO JEANS / TORMENTA - Celeste - 34",
+    "tonalidad": "Celeste",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 335,
+    "sku_label": "TORERO JEANS / TORMENTA - Gris - 26",
+    "tonalidad": "Gris",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 336,
+    "sku_label": "TORERO JEANS / TORMENTA - Gris - 30",
+    "tonalidad": "Gris",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 337,
+    "sku_label": "TORERO JEANS / TORMENTA - Gris - 34",
+    "tonalidad": "Gris",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 338,
+    "sku_label": "TORERO JEANS / TORMENTA - Gris Plomo - 26",
+    "tonalidad": "Gris Plomo",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 339,
+    "sku_label": "TORERO JEANS / TORMENTA - Gris Plomo - 30",
+    "tonalidad": "Gris Plomo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 340,
+    "sku_label": "TORERO JEANS / TORMENTA - Gris Plomo - 34",
+    "tonalidad": "Gris Plomo",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 344,
+    "sku_label": "TORERO JEANS / TORMENTA - Hielo - 26",
+    "tonalidad": "Hielo",
+    "talla": "26",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 345,
+    "sku_label": "TORERO JEANS / TORMENTA - Hielo - 30",
+    "tonalidad": "Hielo",
+    "talla": "30",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "id_sku": 346,
+    "sku_label": "TORERO JEANS / TORMENTA - Hielo - 34",
+    "tonalidad": "Hielo",
+    "talla": "34",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 48,
+    "descripcion": "VESTIDO CHALIS",
+    "id_sku": 328,
+    "sku_label": "VESTIDO CHALIS - Azul Vintage - L",
+    "tonalidad": "Azul Vintage",
+    "talla": "L",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 48,
+    "descripcion": "VESTIDO CHALIS",
+    "id_sku": 327,
+    "sku_label": "VESTIDO CHALIS - Azul Vintage - M",
+    "tonalidad": "Azul Vintage",
+    "talla": "M",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 48,
+    "descripcion": "VESTIDO CHALIS",
+    "id_sku": 326,
+    "sku_label": "VESTIDO CHALIS - Azul Vintage - S",
+    "tonalidad": "Azul Vintage",
+    "talla": "S",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 48,
+    "descripcion": "VESTIDO CHALIS",
+    "id_sku": 325,
+    "sku_label": "VESTIDO CHALIS - Rojo - L",
+    "tonalidad": "Rojo",
+    "talla": "L",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 48,
+    "descripcion": "VESTIDO CHALIS",
+    "id_sku": 324,
+    "sku_label": "VESTIDO CHALIS - Rojo - M",
+    "tonalidad": "Rojo",
+    "talla": "M",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 48,
+    "descripcion": "VESTIDO CHALIS",
+    "id_sku": 323,
+    "sku_label": "VESTIDO CHALIS - Rojo - S",
+    "tonalidad": "Rojo",
+    "talla": "S",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 48,
+    "descripcion": "VESTIDO CHALIS",
+    "id_sku": 322,
+    "sku_label": "VESTIDO CHALIS - Rosa Pastel - L",
+    "tonalidad": "Rosa Pastel",
+    "talla": "L",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 48,
+    "descripcion": "VESTIDO CHALIS",
+    "id_sku": 321,
+    "sku_label": "VESTIDO CHALIS - Rosa Pastel - M",
+    "tonalidad": "Rosa Pastel",
+    "talla": "M",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 48,
+    "descripcion": "VESTIDO CHALIS",
+    "id_sku": 320,
+    "sku_label": "VESTIDO CHALIS - Rosa Pastel - S",
+    "tonalidad": "Rosa Pastel",
+    "talla": "S",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 48,
+    "descripcion": "VESTIDO CHALIS",
+    "id_sku": 319,
+    "sku_label": "VESTIDO CHALIS - Vino - L",
+    "tonalidad": "Vino",
+    "talla": "L",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 48,
+    "descripcion": "VESTIDO CHALIS",
+    "id_sku": 318,
+    "sku_label": "VESTIDO CHALIS - Vino - M",
+    "tonalidad": "Vino",
+    "talla": "M",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  },
+  {
+    "id_producto": 48,
+    "descripcion": "VESTIDO CHALIS",
+    "id_sku": 317,
+    "sku_label": "VESTIDO CHALIS - Vino - S",
+    "tonalidad": "Vino",
+    "talla": "S",
+    "stock_total": "0",
+    "stock_por_almacen": "1:ALM CENTRAL ESCALERA=0"
+  }
+]

@@ -1,0 +1,332 @@
+[
+  {
+    "id_producto": 72,
+    "descripcion": "1 BOTON JEANS / TORMENTA",
+    "total_variantes": 8,
+    "total_tonalidades": 4,
+    "total_tallas": 2,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Azul Noche | Blanco Roto | Celeste",
+    "tallas": "30 | 32"
+  },
+  {
+    "id_producto": 71,
+    "descripcion": "1 BOTON NEGRO / TORMENTA",
+    "total_variantes": 2,
+    "total_tonalidades": 1,
+    "total_tallas": 2,
+    "stock_total": "0",
+    "tonalidades": "Negro",
+    "tallas": "30 | 32"
+  },
+  {
+    "id_producto": 73,
+    "descripcion": "1 BOTON PLOMO / TORMENTA",
+    "total_variantes": 4,
+    "total_tonalidades": 2,
+    "total_tallas": 2,
+    "stock_total": "0",
+    "tonalidades": "Gris | Gris Plomo",
+    "tallas": "28 | 30"
+  },
+  {
+    "id_producto": 88,
+    "descripcion": "BLUSA / TORMENTA",
+    "total_variantes": 12,
+    "total_tonalidades": 4,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul | Beige | Blanco | Celeste",
+    "tallas": "L | M | S"
+  },
+  {
+    "id_producto": 78,
+    "descripcion": "CAMISA JEANS MANGA LARGA / TORMENTA",
+    "total_variantes": 9,
+    "total_tonalidades": 3,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Celeste | Hielo",
+    "tallas": "L | M | S"
+  },
+  {
+    "id_producto": 23,
+    "descripcion": "CASACA RIGIDA JEANS / TORMENTA",
+    "total_variantes": 12,
+    "total_tonalidades": 4,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Celeste | Gris | Hielo",
+    "tallas": "L | M | S"
+  },
+  {
+    "id_producto": 77,
+    "descripcion": "CASACA STRESH JEANS / TORMENTA",
+    "total_variantes": 9,
+    "total_tonalidades": 3,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Celeste | Gris",
+    "tallas": "28 | 30 | 32"
+  },
+  {
+    "id_producto": 65,
+    "descripcion": "FALDA SHORT CARGO JEANS / TORMENTA",
+    "total_variantes": 12,
+    "total_tonalidades": 4,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Azul Vintage | Gris Plomo | Hielo",
+    "tallas": "28 | 30 | 32"
+  },
+  {
+    "id_producto": 81,
+    "descripcion": "FALDA SHORT EN PLIEGUES / TORMENTA",
+    "total_variantes": 12,
+    "total_tonalidades": 4,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Celeste | Gris | Gris Plomo",
+    "tallas": "30 | 32 | 34"
+  },
+  {
+    "id_producto": 107,
+    "descripcion": "FRESHTERRY JEAN / WOMAN",
+    "total_variantes": 6,
+    "total_tonalidades": 3,
+    "total_tallas": 2,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Azul Pizarra | Azul Vintage",
+    "tallas": "30 | 34"
+  },
+  {
+    "id_producto": 63,
+    "descripcion": "FRESHTERRY JEANS / TORMENTA",
+    "total_variantes": 18,
+    "total_tonalidades": 6,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Azul Noche | Azul Pizarra | Celeste | Gris | Hielo",
+    "tallas": "26 | 30 | 34"
+  },
+  {
+    "id_producto": 89,
+    "descripcion": "JEANPEAR JEANS / TORMENTA",
+    "total_variantes": 8,
+    "total_tonalidades": 4,
+    "total_tallas": 2,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Azul Noche | Azul Pizarra | Azul Vintage",
+    "tallas": "26 | 28"
+  },
+  {
+    "id_producto": 49,
+    "descripcion": "MINIFALDA 3 LINEAS / TORMENTA",
+    "total_variantes": 10,
+    "total_tonalidades": 5,
+    "total_tallas": 2,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Azul Noche | Celeste | Gris Plomo | Hielo",
+    "tallas": "26 | 28"
+  },
+  {
+    "id_producto": 61,
+    "descripcion": "MINIFALDA JEANS / TORMENTA",
+    "total_variantes": 9,
+    "total_tonalidades": 3,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Celeste | Hielo",
+    "tallas": "28 | 32 | 34"
+  },
+  {
+    "id_producto": 79,
+    "descripcion": "MODELO MALAGA / TORMENTA",
+    "total_variantes": 6,
+    "total_tonalidades": 3,
+    "total_tallas": 2,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Beige | Gris",
+    "tallas": "28 | 30"
+  },
+  {
+    "id_producto": 90,
+    "descripcion": "MODELO RIZOS / TORMENTA",
+    "total_variantes": 9,
+    "total_tonalidades": 3,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul | Azul Noche | Gris Plomo",
+    "tallas": "26 | 28 | 30"
+  },
+  {
+    "id_producto": 86,
+    "descripcion": "MODELO SARA / TORMENTA",
+    "total_variantes": 12,
+    "total_tonalidades": 4,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Azul Noche | Gris Plomo | Hielo",
+    "tallas": "30 | 32 | 34"
+  },
+  {
+    "id_producto": 82,
+    "descripcion": "MOM JEANS STRESH / TORMENTA",
+    "total_variantes": 9,
+    "total_tonalidades": 3,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Azul Noche | Azul Pizarra",
+    "tallas": "26 | 28 | 30"
+  },
+  {
+    "id_producto": 50,
+    "descripcion": "MOM PINZAS EN LA RODILLA / TORMENTA",
+    "total_variantes": 20,
+    "total_tonalidades": 5,
+    "total_tallas": 4,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Azul Pizarra | Celeste | Gris | Hielo",
+    "tallas": "26 | 28 | 30 | 32"
+  },
+  {
+    "id_producto": 85,
+    "descripcion": "MULTICARGO COLOR / TORMENTA",
+    "total_variantes": 15,
+    "total_tonalidades": 5,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Melocoton Oscuro | Rosa Pastel | Terracota | Verde Olivo | Vino",
+    "tallas": "28 | 32 | 34"
+  },
+  {
+    "id_producto": 83,
+    "descripcion": "PALAZO CLASICO JEANS / TORMENTA",
+    "total_variantes": 10,
+    "total_tonalidades": 5,
+    "total_tallas": 2,
+    "stock_total": "0",
+    "tonalidades": "Gris Plomo | Rosa Pastel | Terracota | Verde Olivo | Vino",
+    "tallas": "28 | 30"
+  },
+  {
+    "id_producto": 55,
+    "descripcion": "PALAZO COLOR RIGIDO / TORMENTA",
+    "total_variantes": 12,
+    "total_tonalidades": 4,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Rosa Pastel | Terracota | Verde Olivo | Vino",
+    "tallas": "28 | 30 | 32"
+  },
+  {
+    "id_producto": 84,
+    "descripcion": "PALAZO DE COLOR STRESH / TORMENTA",
+    "total_variantes": 10,
+    "total_tonalidades": 5,
+    "total_tallas": 2,
+    "stock_total": "0",
+    "tonalidades": "Blanco Roto | Gris Plomo | Marron Chocolate | Rosa Pastel | Terracota",
+    "tallas": "28 | 32"
+  },
+  {
+    "id_producto": 37,
+    "descripcion": "PALAZO JEANS / WOMAN",
+    "total_variantes": 15,
+    "total_tonalidades": 5,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Azul Noche | Celeste | Gris | Hielo",
+    "tallas": "28 | 30 | 32"
+  },
+  {
+    "id_producto": 69,
+    "descripcion": "PANTALON ALASKA / TORMENTA",
+    "total_variantes": 12,
+    "total_tonalidades": 4,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Azul Noche | Azul Pizarra | Blanco Roto",
+    "tallas": "30 | 32 | 34"
+  },
+  {
+    "id_producto": 87,
+    "descripcion": "POLOS",
+    "total_variantes": 5,
+    "total_tonalidades": 5,
+    "total_tallas": 1,
+    "stock_total": "0",
+    "tonalidades": "Azul | Blanco Roto | Celeste | Marron Chocolate | Verde Olivo",
+    "tallas": "UNI"
+  },
+  {
+    "id_producto": 59,
+    "descripcion": "SHORT COLOR RIGIDO / TORMENTA",
+    "total_variantes": 12,
+    "total_tonalidades": 4,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Azul Pizarra | Gris Plomo | Hielo",
+    "tallas": "26 | 28 | 30"
+  },
+  {
+    "id_producto": 109,
+    "descripcion": "SHORT FRESHTERRY SEFERINA / TORMENTA",
+    "total_variantes": 9,
+    "total_tonalidades": 3,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul Noche | Azul Pizarra | Beige",
+    "tallas": "26 | 30 | 32"
+  },
+  {
+    "id_producto": 113,
+    "descripcion": "SHORT RIGIDO RASGADO C/S BASTA / TORMENTA",
+    "total_variantes": 12,
+    "total_tonalidades": 4,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Celeste | Gris | Hielo",
+    "tallas": "28 | 30 | 32"
+  },
+  {
+    "id_producto": 57,
+    "descripcion": "TORERO FRESHTERRY / TORMENTA",
+    "total_variantes": 12,
+    "total_tonalidades": 4,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Azul Noche | Azul Pizarra | Azul Vintage",
+    "tallas": "28 | 30 | 32"
+  },
+  {
+    "id_producto": 110,
+    "descripcion": "TORERO FRESHTERRY SEFERINA / TORMENTA",
+    "total_variantes": 9,
+    "total_tonalidades": 3,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul | Gris | Hielo",
+    "tallas": "28 | 32 | 34"
+  },
+  {
+    "id_producto": 47,
+    "descripcion": "TORERO JEANS / TORMENTA",
+    "total_variantes": 18,
+    "total_tonalidades": 6,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul Clasico | Azul Pizarra | Celeste | Gris | Gris Plomo | Hielo",
+    "tallas": "26 | 30 | 34"
+  },
+  {
+    "id_producto": 48,
+    "descripcion": "VESTIDO CHALIS",
+    "total_variantes": 12,
+    "total_tonalidades": 4,
+    "total_tallas": 3,
+    "stock_total": "0",
+    "tonalidades": "Azul Vintage | Rojo | Rosa Pastel | Vino",
+    "tallas": "L | M | S"
+  }
+]

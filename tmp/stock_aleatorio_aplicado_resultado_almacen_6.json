@@ -1,0 +1,79 @@
+[
+  {
+    "lote": 1,
+    "total_lotes": 7,
+    "filas": 50,
+    "num_comprobante": "I400-00000117",
+    "id_nota": 209,
+    "respuesta": {
+      "code": 1,
+      "message": "Nota y detalle insertados correctamente"
+    }
+  },
+  {
+    "lote": 2,
+    "total_lotes": 7,
+    "filas": 50,
+    "num_comprobante": "I400-00000118",
+    "id_nota": 210,
+    "respuesta": {
+      "code": 1,
+      "message": "Nota y detalle insertados correctamente"
+    }
+  },
+  {
+    "lote": 3,
+    "total_lotes": 7,
+    "filas": 50,
+    "num_comprobante": "I400-00000119",
+    "id_nota": 211,
+    "respuesta": {
+      "code": 1,
+      "message": "Nota y detalle insertados correctamente"
+    }
+  },
+  {
+    "lote": 4,
+    "total_lotes": 7,
+    "filas": 50,
+    "num_comprobante": "I400-00000120",
+    "id_nota": 212,
+    "respuesta": {
+      "code": 1,
+      "message": "Nota y detalle insertados correctamente"
+    }
+  },
+  {
+    "lote": 5,
+    "total_lotes": 7,
+    "filas": 50,
+    "num_comprobante": "I400-00000121",
+    "id_nota": 213,
+    "respuesta": {
+      "code": 1,
+      "message": "Nota y detalle insertados correctamente"
+    }
+  },
+  {
+    "lote": 6,
+    "total_lotes": 7,
+    "filas": 50,
+    "num_comprobante": "I400-00000122",
+    "id_nota": 214,
+    "respuesta": {
+      "code": 1,
+      "message": "Nota y detalle insertados correctamente"
+    }
+  },
+  {
+    "lote": 7,
+    "total_lotes": 7,
+    "filas": 50,
+    "num_comprobante": "I400-00000123",
+    "id_nota": 215,
+    "respuesta": {
+      "code": 1,
+      "message": "Nota y detalle insertados correctamente"
+    }
+  }
+]

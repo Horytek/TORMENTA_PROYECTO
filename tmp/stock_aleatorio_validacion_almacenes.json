@@ -1,0 +1,38 @@
+[
+  {
+    "id_almacen": 1,
+    "nom_almacen": "ALM CENTRAL ESCALERA",
+    "variantes_con_stock": 350,
+    "stock_total": "4084"
+  },
+  {
+    "id_almacen": 2,
+    "nom_almacen": "ALMACEN CENTRAL 22",
+    "variantes_con_stock": 350,
+    "stock_total": "4702"
+  },
+  {
+    "id_almacen": 3,
+    "nom_almacen": "ALM CENTRAL 52-53",
+    "variantes_con_stock": 350,
+    "stock_total": "4573"
+  },
+  {
+    "id_almacen": 4,
+    "nom_almacen": "ALM PRODUCCION",
+    "variantes_con_stock": 0,
+    "stock_total": "0"
+  },
+  {
+    "id_almacen": 5,
+    "nom_almacen": "ALM BALTA 7",
+    "variantes_con_stock": 350,
+    "stock_total": "4615"
+  },
+  {
+    "id_almacen": 6,
+    "nom_almacen": "ALM BALTA 8",
+    "variantes_con_stock": 350,
+    "stock_total": "4328"
+  }
+]

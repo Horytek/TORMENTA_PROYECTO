@@ -1,0 +1,34 @@
+id_producto,descripcion,total_variantes,total_tonalidades,total_tallas,stock_total,tonalidades,tallas
+72,1 BOTON JEANS / TORMENTA,8,4,2,0,Azul Clasico | Azul Noche | Blanco Roto | Celeste,30 | 32
+71,1 BOTON NEGRO / TORMENTA,2,1,2,0,Negro,30 | 32
+73,1 BOTON PLOMO / TORMENTA,4,2,2,0,Gris | Gris Plomo,28 | 30
+88,BLUSA / TORMENTA,12,4,3,0,Azul | Beige | Blanco | Celeste,L | M | S
+78,CAMISA JEANS MANGA LARGA / TORMENTA,9,3,3,0,Azul Clasico | Celeste | Hielo,L | M | S
+23,CASACA RIGIDA JEANS / TORMENTA,12,4,3,0,Azul Clasico | Celeste | Gris | Hielo,L | M | S
+77,CASACA STRESH JEANS / TORMENTA,9,3,3,0,Azul Clasico | Celeste | Gris,28 | 30 | 32
+65,FALDA SHORT CARGO JEANS / TORMENTA,12,4,3,0,Azul Clasico | Azul Vintage | Gris Plomo | Hielo,28 | 30 | 32
+81,FALDA SHORT EN PLIEGUES / TORMENTA,12,4,3,0,Azul Clasico | Celeste | Gris | Gris Plomo,30 | 32 | 34
+107,FRESHTERRY JEAN / WOMAN,6,3,2,0,Azul Clasico | Azul Pizarra | Azul Vintage,30 | 34
+63,FRESHTERRY JEANS / TORMENTA,18,6,3,0,Azul Clasico | Azul Noche | Azul Pizarra | Celeste | Gris | Hielo,26 | 30 | 34
+89,JEANPEAR JEANS / TORMENTA,8,4,2,0,Azul Clasico | Azul Noche | Azul Pizarra | Azul Vintage,26 | 28
+49,MINIFALDA 3 LINEAS / TORMENTA,10,5,2,0,Azul Clasico | Azul Noche | Celeste | Gris Plomo | Hielo,26 | 28
+61,MINIFALDA JEANS / TORMENTA,9,3,3,0,Azul Clasico | Celeste | Hielo,28 | 32 | 34
+79,MODELO MALAGA / TORMENTA,6,3,2,0,Azul Clasico | Beige | Gris,28 | 30
+90,MODELO RIZOS / TORMENTA,9,3,3,0,Azul | Azul Noche | Gris Plomo,26 | 28 | 30
+86,MODELO SARA / TORMENTA,12,4,3,0,Azul Clasico | Azul Noche | Gris Plomo | Hielo,30 | 32 | 34
+82,MOM JEANS STRESH / TORMENTA,9,3,3,0,Azul Clasico | Azul Noche | Azul Pizarra,26 | 28 | 30
+50,MOM PINZAS EN LA RODILLA / TORMENTA,20,5,4,0,Azul Clasico | Azul Pizarra | Celeste | Gris | Hielo,26 | 28 | 30 | 32
+85,MULTICARGO COLOR / TORMENTA,15,5,3,0,Melocoton Oscuro | Rosa Pastel | Terracota | Verde Olivo | Vino,28 | 32 | 34
+83,PALAZO CLASICO JEANS / TORMENTA,10,5,2,0,Gris Plomo | Rosa Pastel | Terracota | Verde Olivo | Vino,28 | 30
+55,PALAZO COLOR RIGIDO / TORMENTA,12,4,3,0,Rosa Pastel | Terracota | Verde Olivo | Vino,28 | 30 | 32
+84,PALAZO DE COLOR STRESH / TORMENTA,10,5,2,0,Blanco Roto | Gris Plomo | Marron Chocolate | Rosa Pastel | Terracota,28 | 32
+37,PALAZO JEANS / WOMAN,15,5,3,0,Azul Clasico | Azul Noche | Celeste | Gris | Hielo,28 | 30 | 32
+69,PANTALON ALASKA / TORMENTA,12,4,3,0,Azul Clasico | Azul Noche | Azul Pizarra | Blanco Roto,30 | 32 | 34
+87,POLOS,5,5,1,0,Azul | Blanco Roto | Celeste | Marron Chocolate | Verde Olivo,UNI
+59,SHORT COLOR RIGIDO / TORMENTA,12,4,3,0,Azul Clasico | Azul Pizarra | Gris Plomo | Hielo,26 | 28 | 30
+109,SHORT FRESHTERRY SEFERINA / TORMENTA,9,3,3,0,Azul Noche | Azul Pizarra | Beige,26 | 30 | 32
+113,SHORT RIGIDO RASGADO C/S BASTA / TORMENTA,12,4,3,0,Azul Clasico | Celeste | Gris | Hielo,28 | 30 | 32
+57,TORERO FRESHTERRY / TORMENTA,12,4,3,0,Azul Clasico | Azul Noche | Azul Pizarra | Azul Vintage,28 | 30 | 32
+110,TORERO FRESHTERRY SEFERINA / TORMENTA,9,3,3,0,Azul | Gris | Hielo,28 | 32 | 34
+47,TORERO JEANS / TORMENTA,18,6,3,0,Azul Clasico | Azul Pizarra | Celeste | Gris | Gris Plomo | Hielo,26 | 30 | 34
+48,VESTIDO CHALIS,12,4,3,0,Azul Vintage | Rojo | Rosa Pastel | Vino,L | M | S
