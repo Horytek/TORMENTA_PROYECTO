@@ -13,6 +13,8 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+const NOTA_ALMACEN_FETCH_LIMIT = 500;
+
 const Nota_Almacen = () => {
     const [filtersIngreso, setFiltersIngreso] = useState({});
     const [filtersSalida, setFiltersSalida] = useState({});
@@ -31,13 +33,23 @@ const Nota_Almacen = () => {
 
     // Initial Data Fetch
     const fetchIngresos = async () => {
-        const result = await getNotasIngreso({ ...filtersIngreso, almacen: filtersIngreso.almacen || undefined });
+        const result = await getNotasIngreso({
+            ...filtersIngreso,
+            almacen: filtersIngreso.almacen || undefined,
+            page: 0,
+            limit: NOTA_ALMACEN_FETCH_LIMIT
+        });
         setIngresos(result.data || []);
         setIsInitialLoadingIngresos(false);
     };
 
     const fetchSalidas = async () => {
-        const result = await getNotasSalida(filtersSalida);
+        const result = await getNotasSalida({
+            ...filtersSalida,
+            almacen: filtersSalida.almacen || undefined,
+            page: 0,
+            limit: NOTA_ALMACEN_FETCH_LIMIT
+        });
         setSalidas(result.data || []);
         setIsInitialLoadingSalidas(false);
     };
@@ -67,22 +79,42 @@ const Nota_Almacen = () => {
             const nf = { ...newFilters, almacen: newFilters.almacen || '%' };
             if (JSON.stringify(filtersIngreso) !== JSON.stringify(nf)) {
                 setFiltersIngreso(nf);
-                getNotasIngreso({ ...nf, almacen: nf.almacen || undefined }).then(res => setIngresos(res.data || []));
+                getNotasIngreso({
+                    ...nf,
+                    almacen: nf.almacen || undefined,
+                    page: 0,
+                    limit: NOTA_ALMACEN_FETCH_LIMIT
+                }).then(res => setIngresos(res.data || []));
             }
         } else if (tipo === "salida") {
             const nf = { ...newFilters, almacen: newFilters.almacen || '%' };
             if (JSON.stringify(filtersSalida) !== JSON.stringify(nf)) {
                 setFiltersSalida(nf);
-                getNotasSalida({ ...nf, almacen: nf.almacen || undefined }).then(res => setSalidas(res.data || []));
+                getNotasSalida({
+                    ...nf,
+                    almacen: nf.almacen || undefined,
+                    page: 0,
+                    limit: NOTA_ALMACEN_FETCH_LIMIT
+                }).then(res => setSalidas(res.data || []));
             }
         }
     };
 
     const handleRefresh = () => {
         if (tabActiva === "ingreso") {
-            getNotasIngreso({ ...filtersIngreso, almacen: filtersIngreso.almacen || undefined }).then(res => setIngresos(res.data || []));
+            getNotasIngreso({
+                ...filtersIngreso,
+                almacen: filtersIngreso.almacen || undefined,
+                page: 0,
+                limit: NOTA_ALMACEN_FETCH_LIMIT
+            }).then(res => setIngresos(res.data || []));
         } else {
-            getNotasSalida(filtersSalida).then(res => setSalidas(res.data || []));
+            getNotasSalida({
+                ...filtersSalida,
+                almacen: filtersSalida.almacen || undefined,
+                page: 0,
+                limit: NOTA_ALMACEN_FETCH_LIMIT
+            }).then(res => setSalidas(res.data || []));
         }
     };
 
