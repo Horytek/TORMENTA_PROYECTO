@@ -23,3 +23,6 @@ tmp/sunat-tests/
 
 # Mobile Project
 mobile_flutter/
+
+# Claude Code — se comparte CLAUDE.md y .claude/settings.json; las overrides personales no
+.claude/settings.local.json
