@@ -4,9 +4,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/react-router";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useUserStore } from "@/store/useUserStore";
-import { verifyTokenRequest, resetVerifyTokenCache } from "@/api/auth";
+import { verifyTokenRequest } from "@/api/auth";
 import { setAuthReady } from "@/api/axios";
-import { removeToken } from "@/utils/authStorage";
+import { getToken } from "@/utils/authStorage";
 
 // Layouts and Pages
 import LoginPage from "@/features/auth/pages/LoginPage";
@@ -56,6 +56,13 @@ export default function App() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // Skip request if no token stored — unauthed state is expected, not an error
+        const token = await getToken();
+        if (!token) {
+          clearUser();
+          return;
+        }
+
         const response = await verifyTokenRequest();
         const resData = response.data;
         if (resData && resData.success) {
@@ -68,7 +75,7 @@ export default function App() {
           clearUser();
         }
       } catch (error) {
-        console.error("Error de verificación de sesión:", error);
+        // 401 means no valid session — expected, no need to surface as error
         clearUser();
       } finally {
         setLoading(false);
@@ -81,7 +88,7 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <Router>
         <NuqsAdapter>
           <TooltipProvider>
             <Routes>

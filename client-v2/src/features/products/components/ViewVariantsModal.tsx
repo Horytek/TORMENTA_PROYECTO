@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { getProductAttributes } from "../api/products";
 import { Loader2, Palette, Ruler, Boxes, Info } from "lucide-react";
 

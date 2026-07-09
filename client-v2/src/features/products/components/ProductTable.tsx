@@ -1,7 +1,7 @@
-import React, { useRef, useMemo } from "react";
+import { useRef, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { Product } from "../types";
-import { Edit, Trash2, Eye, Download, Info } from "lucide-react";
+import { Edit, Trash2, Eye, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Barcode from "@/components/ui/Barcode";
@@ -179,7 +179,6 @@ export default function ProductTable({
                         title="Click para descargar código de barras"
                       >
                         <Barcode
-                          id={`barcode-${product.id_producto}`}
                           value={product.cod_barras}
                           className="bg-transparent"
                           options={{

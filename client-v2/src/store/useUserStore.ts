@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { getModulosConSubmodulos } from "../api/rutas";
+import { getModulosConSubmodulos, type RouteModule } from "../api/rutas";
 import { getPermisosByRolRequest } from "../api/permisos";
 
 export interface User {
@@ -51,7 +51,7 @@ interface UserState {
   plan_pago: string;
   permissions: Permission[];
   capabilities: Set<string>;
-  globalModuleConfigs: ModuleConfig[];
+  globalModuleConfigs: RouteModule[];
   
   // Normalized User object
   user: User | null;
