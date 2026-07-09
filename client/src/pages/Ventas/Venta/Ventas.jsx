@@ -261,6 +261,7 @@ const Ventas = () => {
               </div>
             </div>
           </Tab>
+{/*
           <Tab key="online" title={
             <div className="flex items-center gap-2">
               <FaGlobe className="text-emerald-500" />
@@ -268,7 +269,6 @@ const Ventas = () => {
             </div>
           }>
             <div className="space-y-6 mt-4">
-              {/* KPIs Online */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <KpiCard
                   title="Total Ventas Online"
@@ -290,7 +290,6 @@ const Ventas = () => {
                 />
               </div>
 
-              {/* Tabla de ventas online */}
               <VentasOnlineTable
                 ventas={ventasOnline || []}
                 loading={loadingOnline}
@@ -302,6 +301,7 @@ const Ventas = () => {
               />
             </div>
           </Tab>
+*/}
           <Tab key="inventario" title={
             <div className="flex items-center gap-2">
               <FaCalendarAlt className="text-purple-500" />
