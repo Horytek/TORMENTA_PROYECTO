@@ -126,17 +126,17 @@ export default function ProductsPage() {
       <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val)} className="w-full space-y-6">
         
         {/* Main Header that adapts to active tab */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-100 dark:border-zinc-900 pb-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-border pb-4">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-800 dark:text-white">
-              Gestor del Catálogo
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              Gestor del catálogo
             </h1>
-            <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
-              Administra productos, marcas, categorías y variantes en tu base de datos centralizada
+            <p className="text-sm text-muted-foreground mt-1">
+              Administra productos, marcas, categorías y variantes
             </p>
           </div>
 
-          <TabsList className="bg-slate-100 dark:bg-zinc-900 p-1 rounded-xl h-11 w-full md:w-auto grid grid-cols-4 gap-1">
+          <TabsList className="bg-muted p-1 rounded-lg h-11 w-full md:w-auto grid grid-cols-4 gap-1">
             <TabsTrigger value="productos" className="rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold">
               <Package className="h-3.5 w-3.5" />
               <span>Productos</span>
@@ -161,31 +161,28 @@ export default function ProductsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             {/* Search input */}
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar productos por descripción, ID o código..."
+                placeholder="Buscar por descripción, ID o código…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full bg-white dark:bg-zinc-950 border-slate-200/60 dark:border-zinc-800/80 rounded-xl focus-visible:ring-purple-500"
+                className="pl-10 w-full"
               />
             </div>
 
             <div className="flex items-center gap-2 self-end sm:self-auto">
-              <Button 
+              <Button
                 onClick={exportToCSV}
-                variant="outline" 
-                className="flex items-center gap-2 border-slate-200 dark:border-zinc-800 rounded-xl hover:bg-slate-100 dark:hover:bg-zinc-900"
+                variant="outline"
+                className="gap-2"
               >
-                <Download className="h-4 w-4 text-slate-500" />
+                <Download className="h-4 w-4" />
                 <span className="hidden md:inline">Exportar CSV</span>
               </Button>
 
-              <Button 
-                onClick={handleCreateOpen}
-                className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl shadow-lg shadow-purple-500/20"
-              >
+              <Button onClick={handleCreateOpen} className="gap-2">
                 <Plus className="h-4 w-4" />
-                <span>Nuevo Producto</span>
+                <span>Nuevo producto</span>
               </Button>
             </div>
           </div>
@@ -242,15 +239,15 @@ export default function ProductsPage() {
 
       {/* Dialog: Confirm Delete Product */}
       <Dialog open={isDeleteOpen} onOpenChange={(open) => !open && setIsDeleteOpen(false)}>
-        <DialogContent className="max-w-md border-slate-200/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-950 rounded-2xl shadow-xl">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-destructive">
+            <DialogTitle className="text-lg font-semibold flex items-center gap-2 text-destructive">
               <ShieldAlert className="h-5 w-5 text-destructive/80" />
               ¿Confirmar eliminación?
             </DialogTitle>
-            <DialogDescription className="text-slate-500 dark:text-slate-400 text-sm mt-2">
+            <DialogDescription className="text-sm mt-2">
               ¿Estás seguro de que deseas eliminar permanentemente el producto{" "}
-              <strong className="text-slate-800 dark:text-slate-200">
+              <strong className="text-foreground">
                 "{deletingProduct?.descripcion}"
               </strong>
               ? Esta acción no se puede deshacer y podría afectar el stock relacionado.

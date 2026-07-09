@@ -22,11 +22,10 @@ import {
   Settings,
   Terminal,
   LogOut,
-  ChevronRight,
   ShieldAlert,
   Building,
   User,
-  Users
+  Users,
 } from "lucide-react";
 import { removeToken } from "@/utils/authStorage";
 import { resetVerifyTokenCache } from "@/api/auth";
@@ -56,14 +55,7 @@ export default function AppSidebar() {
     clearUser();
   };
 
-  // Helper to check module access
   const hasAccess = (item: SidebarItem) => {
-    console.log("AppSidebar Access check:", {
-      title: item.title,
-      capability: item.capability,
-      userRole: user?.roleId,
-      capabilitiesLoaded: Array.from(capabilities)
-    });
     if (user?.roleId === 10) return true; // Developer always has access
     if (!item.capability) return true; // Public item
     return capabilities.has(`${item.capability}.view`) || capabilities.has("*");
@@ -110,7 +102,6 @@ export default function AppSidebar() {
     },
   ];
 
-  // Developer module (role ID 10)
   if (user?.roleId === 10) {
     navigation.push({
       label: "Developer Only",
@@ -122,33 +113,31 @@ export default function AppSidebar() {
   }
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-slate-200/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-950">
-      <SidebarHeader className="h-16 flex items-center justify-between px-6 border-b border-slate-200/50 dark:border-zinc-800/50">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
-            <Warehouse className="h-5 w-5" />
-          </div>
-          <span className="font-bold text-md tracking-tight group-data-[collapsible=icon]:hidden">
-            Horytek ERP
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
+      <SidebarHeader className="flex h-16 items-center justify-between border-b border-sidebar-border px-6">
+        <Link to="/dashboard" className="flex items-center gap-2">
+          <span className="font-display text-lg font-extrabold tracking-tight text-sidebar-foreground group-data-[collapsible=icon]:hidden">
+            Horytek
           </span>
-        </div>
+          <span className="h-2 w-2 rounded-full bg-brand" />
+        </Link>
       </SidebarHeader>
 
       <SidebarContent className="py-4">
         {navigation.map((group) => {
-          // Filter out items that the user doesn't have access to
           const allowedItems = group.items.filter(hasAccess);
           if (allowedItems.length === 0) return null;
 
           return (
-            <SidebarGroup key={group.label} className="px-3 mb-4">
-              <SidebarGroupLabel className="px-3 text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider group-data-[collapsible=icon]:hidden">
+            <SidebarGroup key={group.label} className="mb-3 px-3">
+              <SidebarGroupLabel className="num px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground group-data-[collapsible=icon]:hidden">
                 {group.label}
               </SidebarGroupLabel>
               <SidebarGroupContent className="mt-1">
                 <SidebarMenu>
                   {allowedItems.map((item) => {
-                    const isActive = location.pathname === item.url || location.pathname.startsWith(`${item.url}/`);
+                    const isActive =
+                      location.pathname === item.url || location.pathname.startsWith(`${item.url}/`);
                     return (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton
@@ -156,15 +145,20 @@ export default function AppSidebar() {
                           isActive={isActive}
                           tooltip={item.title}
                           className={cn(
-                            "w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 text-sm font-medium hover:bg-slate-100 dark:hover:bg-zinc-900",
-                            isActive 
-                              ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 dark:bg-purple-500/20" 
-                              : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                            "relative w-full gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                            isActive
+                              ? "bg-sidebar-accent text-sidebar-accent-foreground before:absolute before:left-0 before:top-1/2 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-r-full before:bg-brand"
+                              : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
                           )}
                         >
                           <Link to={item.url}>
-                            <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-purple-600 dark:text-purple-400" : "text-slate-400 dark:text-slate-500")} />
-                            <span className="group-data-[collapsible=icon]:hidden truncate">{item.title}</span>
+                            <item.icon
+                              className={cn(
+                                "h-4 w-4 shrink-0",
+                                isActive ? "text-brand" : "text-muted-foreground"
+                              )}
+                            />
+                            <span className="truncate group-data-[collapsible=icon]:hidden">{item.title}</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -177,30 +171,29 @@ export default function AppSidebar() {
         })}
       </SidebarContent>
 
-      <SidebarFooter className="p-3 border-t border-slate-200/50 dark:border-zinc-800/50">
+      <SidebarFooter className="border-t border-sidebar-border p-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            {/* User profile card in sidebar footer */}
-            <div className="flex items-center gap-3 p-2 rounded-xl group-data-[collapsible=icon]:hidden">
-              <div className="h-9 w-9 rounded-full bg-purple-500/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold">
+            <div className="flex items-center gap-3 rounded-md p-2 group-data-[collapsible=icon]:hidden">
+              <div className="num flex h-9 w-9 items-center justify-center rounded-md bg-brand/10 font-bold text-brand ring-1 ring-brand/25">
                 {user?.username?.substring(0, 2).toUpperCase()}
               </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-xs font-semibold text-sidebar-foreground">
                   {user?.username}
                 </span>
-                <span className="text-[10px] text-slate-400 truncate">
+                <span className="num truncate text-[10px] text-muted-foreground">
                   {user?.sucursal || "Sucursal Central"}
                 </span>
               </div>
             </div>
           </SidebarMenuItem>
-          
+
           <SidebarMenuItem className="mt-1">
             <SidebarMenuButton
               onClick={handleLogout}
               tooltip="Cerrar Sesión"
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20 font-medium text-sm transition-all duration-200"
+              className="w-full gap-3 rounded-md px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
             >
               <LogOut className="h-4 w-4 shrink-0 text-destructive/70" />
               <span className="group-data-[collapsible=icon]:hidden">Cerrar Sesión</span>

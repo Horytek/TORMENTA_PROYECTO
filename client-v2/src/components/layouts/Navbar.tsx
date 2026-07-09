@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useUserStore } from "@/store/useUserStore";
 import { Sun, Moon, Bell, Search, Store } from "lucide-react";
@@ -8,7 +8,6 @@ export default function Navbar() {
   const user = useUserStore((state) => state.user);
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
-  // Sync theme with HTML class list
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
     if (savedTheme) {
@@ -28,36 +27,34 @@ export default function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between px-6 border-b border-slate-200/50 dark:border-zinc-800/50 bg-white/70 dark:bg-zinc-950/70 backdrop-blur-md">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur-md">
       <div className="flex items-center gap-4">
-        {/* Toggle button to collapse/expand sidebar */}
-        <SidebarTrigger className="h-9 w-9 text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-900 rounded-xl" />
-        
-        {/* Branch / Store Indicator */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 font-medium text-xs">
-          <Store className="h-3.5 w-3.5" />
-          <span>Sucursal: {user?.sucursal || "Matriz Central"}</span>
+        <SidebarTrigger className="h-9 w-9 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground" />
+
+        {/* Indicador de sucursal — chip tipo etiqueta, código en mono */}
+        <div className="hidden items-center gap-2 rounded-md border border-border bg-secondary/60 px-3 py-1.5 text-xs font-medium text-secondary-foreground sm:flex">
+          <Store className="h-3.5 w-3.5 text-brand" />
+          <span className="text-muted-foreground">Sucursal</span>
+          <span className="num font-semibold">{user?.sucursal || "Matriz Central"}</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        {/* Quick Search Trigger (Mocked) */}
-        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-900">
+      <div className="flex items-center gap-1">
+        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground">
           <Search className="h-4 w-4" />
         </Button>
 
-        {/* Notifications (Mocked) */}
-        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-900 relative">
+        <Button variant="ghost" size="icon" className="relative h-9 w-9 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground">
           <Bell className="h-4 w-4" />
-          <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-purple-600 animate-pulse" />
+          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-brand ring-2 ring-background" />
         </Button>
 
-        {/* Theme Toggler (Light/Dark Mode) */}
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={toggleTheme}
-          className="h-9 w-9 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-900"
+          aria-label="Cambiar tema"
+          className="h-9 w-9 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
         >
           {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
         </Button>
