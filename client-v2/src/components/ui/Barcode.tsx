@@ -14,12 +14,11 @@ export default function Barcode({ value, options, className, onClick, title }: B
   const barcodeRef = useBarcode(value, options);
 
   return (
-    <svg 
-      ref={barcodeRef} 
-      className={className} 
-      onClick={onClick} 
-      title={title}
-      style={{ cursor: onClick ? "pointer" : "default" }}
+    <svg
+    ref={barcodeRef}
+    className={className}
+    onClick={onClick}
+    style={{ cursor: onClick ? "pointer" : "default" }}
     />
   );
 }

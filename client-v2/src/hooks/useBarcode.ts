@@ -1,4 +1,4 @@
-import { useEffect, useRef, RefObject } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 import JsBarcode from 'jsbarcode';
 
 export default function useBarcode(value: string, options: JsBarcode.Options = {}): RefObject<SVGSVGElement | null> {

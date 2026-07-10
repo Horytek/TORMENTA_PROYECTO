@@ -181,7 +181,6 @@ export default function ProductTable({
                         title="Click para descargar código de barras"
                       >
                         <Barcode
-                          id={`barcode-${product.id_producto}`}
                           value={product.cod_barras}
                           className="bg-transparent"
                           options={{ width: 0.9, height: 24, fontSize: 8, displayValue: true }}
