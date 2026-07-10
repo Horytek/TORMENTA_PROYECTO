@@ -109,14 +109,16 @@ const normalizeUser = (raw: any): User | null => {
 };
 
 const getActiveActions = (globalConfigs: any[], idModulo: number, idSubmodulo: number | null) => {
+  // `null` = sin restricción → se permiten las acciones que el permiso del rol concede.
+  // Un array (aunque vacío) sí restringe a esa lista exacta.
   if (!globalConfigs.length) return null;
   const moduleConfig = globalConfigs.find(m => String(m.id) === String(idModulo));
-  if (!moduleConfig) return [];
+  if (!moduleConfig) return null;
   if (idSubmodulo && idSubmodulo !== 0) {
     const subConfig = moduleConfig.submodulos?.find((s: any) => String(s.id_submodulo) === String(idSubmodulo));
-    return subConfig?.active_actions || [];
+    return subConfig?.active_actions ?? null;
   }
-  return moduleConfig.active_actions || [];
+  return moduleConfig.active_actions ?? null;
 };
 
 const parseActions = (actions: any) => {

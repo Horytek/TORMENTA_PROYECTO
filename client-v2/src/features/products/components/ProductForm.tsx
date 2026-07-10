@@ -295,14 +295,14 @@ export default function ProductForm({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto border-slate-200/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-950 rounded-2xl shadow-xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-400 dark:to-indigo-400">
+          <DialogTitle className="text-xl font-bold text-foreground">
             {initialData ? "Editar Producto" : "Registrar Nuevo Producto"}
           </DialogTitle>
         </DialogHeader>
 
         {loadingMetadata ? (
           <div className="flex items-center justify-center p-12">
-            <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-brand" />
           </div>
         ) : (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -318,7 +318,7 @@ export default function ProductForm({
                       {...field}
                       id="descripcion"
                       placeholder="Ej: Camiseta Algodón Premium"
-                      className="bg-slate-50/50 dark:bg-zinc-900/50 focus-visible:ring-purple-500"
+                      className=""
                     />
                   )}
                 />
@@ -337,7 +337,7 @@ export default function ProductForm({
                     <select
                       {...field}
                       id="id_marca"
-                      className="w-full flex h-10 w-full rounded-md border border-input bg-slate-50/50 dark:bg-zinc-900/50 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:ring-purple-500"
+                      className="w-full flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 "
                     >
                       <option value="">Selecciona una marca</option>
                       {brands.map((b) => (
@@ -363,7 +363,7 @@ export default function ProductForm({
                     <select
                       {...field}
                       id="undm"
-                      className="w-full flex h-10 w-full rounded-md border border-input bg-slate-50/50 dark:bg-zinc-900/50 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:ring-purple-500"
+                      className="w-full flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 "
                     >
                       <option value="">Selecciona Unidad</option>
                       {units.map((u) => (
@@ -390,7 +390,7 @@ export default function ProductForm({
                     <select
                       {...field}
                       id="id_categoria"
-                      className="w-full flex h-10 w-full rounded-md border border-input bg-slate-50/50 dark:bg-zinc-900/50 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:ring-purple-500"
+                      className="w-full flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 "
                     >
                       <option value="">Selecciona Categoría</option>
                       {categories.map((c) => (
@@ -417,7 +417,7 @@ export default function ProductForm({
                       {...field}
                       id="id_subcategoria"
                       disabled={!watchIdCategoria}
-                      className="w-full flex h-10 w-full rounded-md border border-input bg-slate-50/50 dark:bg-zinc-900/50 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:ring-purple-500"
+                      className="w-full flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 "
                     >
                       <option value="">Selecciona Subcategoría</option>
                       {filteredSubcategories.map((s) => (
@@ -445,7 +445,7 @@ export default function ProductForm({
                       id="precio"
                       type="text"
                       placeholder="0.00"
-                      className="bg-slate-50/50 dark:bg-zinc-900/50 focus-visible:ring-purple-500"
+                      className=""
                     />
                   )}
                 />
@@ -465,7 +465,7 @@ export default function ProductForm({
                       {...field}
                       id="cod_barras"
                       placeholder="Generado automáticamente"
-                      className="bg-slate-50/50 dark:bg-zinc-900/50 focus-visible:ring-purple-500"
+                      className=""
                     />
                   )}
                 />
@@ -481,7 +481,7 @@ export default function ProductForm({
                     <select
                       {...field}
                       id="estado_producto"
-                      className="w-full flex h-10 w-full rounded-md border border-input bg-slate-50/50 dark:bg-zinc-900/50 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:ring-purple-500"
+                      className="w-full flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 "
                     >
                       <option value="1">Activo</option>
                       <option value="0">Inactivo</option>
@@ -495,13 +495,13 @@ export default function ProductForm({
             {watchIdCategoria && (
               <div className="border-t border-slate-100 dark:border-zinc-900 pt-4">
                 <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-1.5">
-                  <Plus className="h-4 w-4 text-purple-600" />
+                  <Plus className="h-4 w-4 text-brand" />
                   Atributos y Variantes del Producto
                 </h4>
                 
                 {loadingAttrs ? (
                   <div className="flex items-center gap-2 text-xs text-slate-400 py-4">
-                    <Loader2 className="h-4 w-4 animate-spin text-purple-500" />
+                    <Loader2 className="h-4 w-4 animate-spin text-brand" />
                     Cargando atributos del producto...
                   </div>
                 ) : categoryAttrs.length === 0 ? (
@@ -544,7 +544,7 @@ export default function ProductForm({
               <Button type="button" variant="ghost" onClick={onClose} disabled={loading} className="rounded-xl">
                 Cancelar
               </Button>
-              <Button type="submit" disabled={loading} className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl shadow-md">
+              <Button type="submit" disabled={loading} className="">
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {initialData ? "Actualizar Producto" : "Guardar Producto"}
               </Button>

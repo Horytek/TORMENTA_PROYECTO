@@ -1,10 +1,11 @@
-import React, { useRef, useMemo } from "react";
+import { useRef, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { Product } from "../types";
-import { Edit, Trash2, Eye, Download, Info } from "lucide-react";
+import { Edit, Trash2, Eye, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Barcode from "@/components/ui/Barcode";
+import { cn } from "@/lib/utils";
 
 import { useUserStore } from "@/store/useUserStore";
 
@@ -26,8 +27,7 @@ export default function ProductTable({
   searchTerm,
 }: ProductTableProps) {
   const parentRef = useRef<HTMLDivElement>(null);
-  
-  // Filter products based on search term in local memory
+
   const filteredProducts = useMemo(() => {
     if (!searchTerm) return products;
     const term = searchTerm.toLowerCase().trim();
@@ -39,22 +39,21 @@ export default function ProductTable({
     );
   }, [products, searchTerm]);
 
-  // Virtualizer setup for rows
   const rowVirtualizer = useVirtualizer({
     count: filteredProducts.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 64, // estimated height of each row in px
+    estimateSize: () => 64,
     overscan: 10,
   });
 
   const downloadBarcode = (product: Product) => {
     const svg = document.querySelector(`#barcode-${product.id_producto}`);
     if (!svg) return;
-    
+
     const serializer = new XMLSerializer();
     const source = serializer.serializeToString(svg);
     const dataUri = "data:image/svg+xml;base64," + btoa(source);
-    
+
     const a = document.createElement("a");
     a.href = dataUri;
     a.download = `${product.descripcion}-barcode.svg`;
@@ -71,9 +70,9 @@ export default function ProductTable({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-4 w-full">
+      <div className="flex w-full flex-col gap-3">
         {[...Array(6)].map((_, i) => (
-          <div key={i} className="h-16 w-full rounded-2xl bg-slate-100 dark:bg-zinc-900 animate-pulse" />
+          <div key={i} className="h-16 w-full animate-pulse rounded-lg bg-muted" />
         ))}
       </div>
     );
@@ -81,12 +80,12 @@ export default function ProductTable({
 
   if (filteredProducts.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 border border-dashed border-slate-200 dark:border-zinc-800 rounded-3xl bg-white dark:bg-zinc-950 text-center">
-        <Info className="h-12 w-12 text-slate-400 mb-4" />
-        <h3 className="text-lg font-bold text-slate-700 dark:text-slate-300">No se encontraron productos</h3>
-        <p className="text-sm text-slate-400 dark:text-slate-500 mt-1 max-w-sm">
-          {searchTerm 
-            ? "Ningún producto coincide con el término de búsqueda ingresado." 
+      <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border bg-card p-12 text-center">
+        <Info className="mb-4 h-10 w-10 text-muted-foreground" />
+        <h3 className="text-base font-semibold text-foreground">No se encontraron productos</h3>
+        <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+          {searchTerm
+            ? "Ningún producto coincide con el término de búsqueda ingresado."
             : "No hay productos registrados en el inventario actual."}
         </p>
       </div>
@@ -97,38 +96,38 @@ export default function ProductTable({
   const totalSize = rowVirtualizer.getTotalSize();
 
   return (
-    <div 
-      ref={parentRef} 
-      className="relative overflow-y-auto max-h-[65vh] border border-slate-200/50 dark:border-zinc-800/50 rounded-2xl bg-white dark:bg-zinc-950 shadow-sm"
+    <div
+      ref={parentRef}
+      className="relative max-h-[65vh] overflow-y-auto rounded-lg border border-border bg-card"
     >
-      <div className="min-w-full inline-block align-middle">
-        <table className="min-w-full divide-y divide-slate-100 dark:divide-zinc-900 table-fixed">
-          <thead className="sticky top-0 z-10 bg-slate-50/90 dark:bg-zinc-900/90 backdrop-blur-md">
-            <tr>
-              <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[35%]">
+      <div className="inline-block min-w-full align-middle">
+        <table className="min-w-full table-fixed">
+          <thead className="sticky top-0 z-10 bg-muted/90 backdrop-blur-md">
+            <tr className="border-b border-border">
+              <th scope="col" className="w-[35%] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Descripción
               </th>
-              <th scope="col" className="px-4 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[15%]">
+              <th scope="col" className="w-[15%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Marca / Sub-Línea
               </th>
-              <th scope="col" className="px-4 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[10%]">
-                UND. Med.
+              <th scope="col" className="w-[10%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Und. Med.
               </th>
-              <th scope="col" className="px-4 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[12%]">
+              <th scope="col" className="w-[12%] px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Precio
               </th>
-              <th scope="col" className="px-4 py-4 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[15%]">
+              <th scope="col" className="w-[15%] px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Cód. Barras
               </th>
-              <th scope="col" className="px-4 py-4 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[10%]">
+              <th scope="col" className="w-[10%] px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Estado
               </th>
-              <th scope="col" className="px-6 py-4 text-center text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-[13%]">
+              <th scope="col" className="w-[13%] px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Acciones
               </th>
             </tr>
           </thead>
-          
+
           <tbody className="relative" style={{ height: `${totalSize}px` }}>
             {virtualItems.map((virtualRow) => {
               const product = filteredProducts[virtualRow.index];
@@ -137,44 +136,47 @@ export default function ProductTable({
               return (
                 <tr
                   key={product.id_producto}
-                  className="absolute left-0 w-full hover:bg-slate-50/50 dark:hover:bg-zinc-900/50 transition-colors flex items-center border-b border-slate-100 dark:border-zinc-900"
+                  className={cn(
+                    "absolute left-0 flex w-full items-center border-b border-border transition-colors hover:bg-muted/50",
+                    isInactive && "opacity-60"
+                  )}
                   style={{
                     height: `${virtualRow.size}px`,
                     transform: `translateY(${virtualRow.start}px)`,
                   }}
                 >
-                  <td className="px-6 py-2 whitespace-nowrap text-sm font-semibold text-slate-800 dark:text-slate-200 truncate w-[35%]">
+                  <td className="w-[35%] truncate px-6 py-2 text-sm font-medium text-foreground">
                     <div className="flex flex-col truncate">
                       <span className="truncate">{product.descripcion}</span>
-                      <span className="text-[10px] text-slate-400 font-mono mt-0.5">ID: {product.id_producto}</span>
+                      <span className="num mt-0.5 text-[10px] text-muted-foreground">ID: {product.id_producto}</span>
                     </div>
                   </td>
-                  
-                  <td className="px-4 py-2 whitespace-nowrap text-xs w-[15%]">
+
+                  <td className="w-[15%] px-4 py-2 text-xs">
                     <div className="flex flex-col gap-1">
-                      <Badge variant="secondary" className="w-fit bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 hover:bg-purple-500/10">
+                      <Badge variant="secondary" className="w-fit font-medium">
                         {product.nom_marca || "Genérico"}
                       </Badge>
-                      <span className="text-[10px] text-slate-400 truncate">
+                      <span className="truncate text-[10px] text-muted-foreground">
                         {product.nom_subcat || "-"}
                       </span>
                     </div>
                   </td>
-                  
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-slate-600 dark:text-slate-400 w-[10%]">
+
+                  <td className="w-[10%] px-4 py-2 text-sm text-muted-foreground">
                     {product.undm || "NIU"}
                   </td>
-                  
-                  <td className="px-4 py-2 whitespace-nowrap text-sm font-bold text-slate-700 dark:text-slate-300 w-[12%]">
-                    S/. {Number(product.precio || 0).toFixed(2)}
+
+                  <td className="num w-[12%] px-4 py-2 text-sm font-semibold text-foreground">
+                    S/ {Number(product.precio || 0).toFixed(2)}
                   </td>
-                  
-                  <td className="px-4 py-2 whitespace-nowrap text-center text-xs w-[15%]">
+
+                  <td className="w-[15%] px-4 py-2 text-center text-xs">
                     {!product.cod_barras || product.cod_barras === "-" ? (
-                      <span className="text-slate-300 dark:text-slate-600 font-mono">-</span>
+                      <span className="num text-muted-foreground">-</span>
                     ) : (
-                      <div 
-                        className="flex justify-center hover:opacity-75 transition-opacity"
+                      <div
+                        className="flex cursor-pointer justify-center transition-opacity hover:opacity-70"
                         onClick={() => downloadBarcode(product)}
                         title="Click para descargar código de barras"
                       >
@@ -182,56 +184,48 @@ export default function ProductTable({
                           id={`barcode-${product.id_producto}`}
                           value={product.cod_barras}
                           className="bg-transparent"
-                          options={{
-                            width: 0.9,
-                            height: 24,
-                            fontSize: 8,
-                            displayValue: true,
-                          }}
+                          options={{ width: 0.9, height: 24, fontSize: 8, displayValue: true }}
                         />
                       </div>
                     )}
                   </td>
-                  
-                  <td className="px-4 py-2 whitespace-nowrap text-center w-[10%]">
+
+                  <td className="w-[10%] px-4 py-2 text-center">
                     <Badge variant={isInactive ? "destructive" : "success"}>
                       {isInactive ? "Inactivo" : "Activo"}
                     </Badge>
                   </td>
-                  
-                  <td className="px-6 py-2 whitespace-nowrap text-center text-sm font-medium w-[13%]">
+
+                  <td className="w-[13%] px-6 py-2 text-center">
                     <div className="flex items-center justify-center gap-1">
-                      {/* View Variants Button */}
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => onViewVariants(product)}
-                        className="h-8 w-8 text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 rounded-lg hover:bg-purple-500/10"
-                        title="Ver Variantes"
+                        className="h-8 w-8 text-muted-foreground hover:bg-accent hover:text-brand"
+                        title="Ver variantes"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
 
-                      {/* Edit Button */}
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => onEdit(product)}
                         disabled={!hasEditPermission}
-                        className="h-8 w-8 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-blue-500/10 disabled:opacity-30"
-                        title="Editar Producto"
+                        className="h-8 w-8 text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-30"
+                        title="Editar producto"
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
 
-                      {/* Delete Button */}
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => onDelete(product)}
                         disabled={!hasDeletePermission}
-                        className="h-8 w-8 text-slate-400 hover:text-destructive dark:hover:text-red-400 rounded-lg hover:bg-destructive/10 disabled:opacity-30"
-                        title="Eliminar Producto"
+                        className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-30"
+                        title="Eliminar producto"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

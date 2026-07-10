@@ -66,7 +66,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen w-full bg-background lg:grid lg:grid-cols-[1.05fr_1fr]">
       {/* ── Panel de marca con carácter de taller ─────────────── */}
-      <aside className="relative hidden overflow-hidden bg-[#243645] text-slate-100 lg:flex lg:flex-col lg:justify-between lg:p-12">
+      <aside className="relative hidden overflow-hidden bg-[#243645] text-slate-100 lg:flex lg:min-h-screen lg:flex-col lg:justify-between lg:p-12">
         {/* costura tenue */}
         <div
           aria-hidden
@@ -142,7 +142,7 @@ export default function LoginPage() {
       </aside>
 
       {/* ── Panel formulario ───────────────────────────────── */}
-      <main className="flex min-h-screen items-center justify-center px-6 py-12 lg:min-h-0">
+      <main className="flex min-h-screen items-center justify-center px-6 py-12">
         <div className="w-full max-w-sm">
           {/* Marca compacta (móvil) */}
           <div className="mb-10 flex items-center gap-3 lg:hidden">

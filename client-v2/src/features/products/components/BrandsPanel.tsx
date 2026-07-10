@@ -121,14 +121,14 @@ export default function BrandsPanel() {
             placeholder="Buscar marcas..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-white dark:bg-zinc-950 border-slate-200/60 dark:border-zinc-800/80 rounded-xl focus-visible:ring-purple-500"
+            className="pl-10"
           />
         </div>
 
         <Button 
           onClick={handleOpenCreate}
           disabled={!hasCreatePermission}
-          className="flex items-center gap-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded-xl px-4 py-2 border-0 shadow-none font-semibold transition-colors disabled:opacity-30"
+          className="flex items-center gap-2 disabled:opacity-40"
         >
           <Plus className="h-4 w-4" />
           <span>Agregar Marca</span>
@@ -138,7 +138,7 @@ export default function BrandsPanel() {
       {/* Brands Table list */}
       {isLoading ? (
         <div className="flex justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-brand" />
         </div>
       ) : filteredBrands.length === 0 ? (
         <div className="text-center p-8 border border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl bg-white dark:bg-zinc-950 text-slate-400">
@@ -203,7 +203,7 @@ export default function BrandsPanel() {
       <Dialog open={isOpen} onOpenChange={(open) => !open && setIsOpen(false)}>
         <DialogContent className="max-w-md border-slate-200/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-950 rounded-2xl shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600 dark:from-purple-400 dark:to-indigo-400">
+            <DialogTitle className="text-lg font-bold text-foreground">
               {editingBrand ? "Editar Marca" : "Registrar Marca"}
             </DialogTitle>
           </DialogHeader>
@@ -217,7 +217,7 @@ export default function BrandsPanel() {
                 value={brandName}
                 onChange={(e) => setBrandName(e.target.value)}
                 disabled={actionLoading}
-                className="bg-slate-50/50 dark:bg-zinc-900/50 focus-visible:ring-purple-500"
+                className=""
                 required
               />
             </div>
@@ -226,7 +226,7 @@ export default function BrandsPanel() {
               <Button type="button" variant="ghost" onClick={() => setIsOpen(false)} disabled={actionLoading} className="rounded-xl">
                 Cancelar
               </Button>
-              <Button type="submit" disabled={actionLoading} className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white rounded-xl">
+              <Button type="submit" disabled={actionLoading} className="">
                 {actionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Guardar
               </Button>
