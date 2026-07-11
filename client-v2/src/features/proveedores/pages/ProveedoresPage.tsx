@@ -3,17 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryState, parseAsString } from "nuqs";
 import { Plus, Search, Pencil, Trash2, Truck, Phone, Mail } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
+import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection";
+import type { FieldDef, RecordAction } from "@/components/shared/AdaptiveCollection";
 import { useUserStore } from "@/store/useUserStore";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +45,84 @@ export default function ProveedoresPage() {
     );
   }, [proveedores, searchTerm]);
 
+  const fields: FieldDef<Proveedor>[] = [
+    {
+      key: "nombres",
+      priority: "primary",
+      semantic: "title",
+      label: "Proveedor",
+      render: (_, p) => proveedorNombre(p),
+    },
+    {
+      key: "direccion",
+      priority: "secondary",
+      semantic: "subtitle",
+      label: "Ubicación",
+      format: (v) => (v as string) || "—",
+    },
+    {
+      key: "estado",
+      priority: "secondary",
+      semantic: "badge",
+      label: "Estado",
+      format: (v) => Number(v) === 1 ? "Activo" : "Inactivo",
+    },
+    {
+      key: "ruc",
+      priority: "meta",
+      semantic: "code",
+      label: "Documento",
+      render: (_, p) => `${proveedorTipo(p) === "juridico" ? "RUC" : "DNI"}: ${proveedorDocumento(p)}`,
+    },
+    {
+      key: "telefono",
+      priority: "secondary",
+      semantic: "icon-text",
+      label: "Teléfono",
+      render: (v) => v ? (
+        <span className="flex items-center gap-1.5 text-foreground">
+          <Phone className="h-3 w-3 text-muted-foreground" />
+          {String(v)}
+        </span>
+      ) : null,
+    },
+    {
+      key: "email",
+      priority: "secondary",
+      semantic: "icon-text",
+      label: "Email",
+      render: (v) => v ? (
+        <span className="flex items-center gap-1.5 text-muted-foreground">
+          <Mail className="h-3 w-3 text-muted-foreground" />
+          {String(v)}
+        </span>
+      ) : null,
+    },
+  ];
+
+  const getRhythm = (p: Proveedor) => ({
+    type: "dot" as const,
+    color: Number(p.estado) === 1 ? "emerald" as const : "rose" as const,
+  });
+
+  const actions: RecordAction[] = [
+    {
+      id: "edit",
+      label: "Editar",
+      icon: <Pencil className="h-4 w-4" />,
+      onClick: (item) => openEdit(item as Proveedor),
+      disabled: !canEdit,
+    },
+    {
+      id: "delete",
+      label: "Eliminar",
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: (item) => setDeleting(item as Proveedor),
+      variant: "destructive",
+      disabled: !canDelete,
+    },
+  ];
+
   const deleteMutation = useMutation({
     mutationFn: (p: Proveedor) => deleteProveedor(p.id),
     onSuccess: () => {
@@ -73,120 +142,31 @@ export default function ProveedoresPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 animate-fade-in">
-      {/* Encabezado */}
-      <div className="flex flex-col gap-4 border-b border-border pb-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Proveedores</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            <span className="num font-medium text-foreground">{proveedores.length}</span> proveedores registrados
-          </p>
-        </div>
-        <Button onClick={openCreate} disabled={!canEdit} className="gap-2 self-start md:self-auto">
-          <Plus className="h-4 w-4" />
-          Nuevo proveedor
-        </Button>
-      </div>
-
-      {/* Búsqueda */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por nombre o documento…"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
-      </div>
-
-      {/* Tabla */}
-      <div className="rounded-lg border border-border bg-card">
-        {isLoading ? (
-          <div className="space-y-2 p-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-12 w-full animate-pulse rounded-md bg-muted" />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 p-12 text-center">
-            <Truck className="h-10 w-10 text-muted-foreground/40" />
-            <h3 className="text-base font-semibold text-foreground">No se encontraron proveedores</h3>
-            <p className="text-sm text-muted-foreground">
-              {searchTerm ? "Ajusta el término de búsqueda." : "Registra tu primer proveedor."}
-            </p>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="pl-4">Proveedor</TableHead>
-                <TableHead>Contacto</TableHead>
-                <TableHead>Ubicación</TableHead>
-                <TableHead className="text-center">Estado</TableHead>
-                <TableHead className="pr-4 text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((p) => {
-                const isActive = Number(p.estado) === 1;
-                const nombre = proveedorNombre(p);
-                return (
-                  <TableRow key={p.id}>
-                    <TableCell className="pl-4">
-                      <div className="flex items-center gap-3">
-                        <span className="num flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-brand/10 text-xs font-bold uppercase text-brand ring-1 ring-brand/20">
-                          {nombre.slice(0, 2)}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-foreground">{nombre}</p>
-                          <p className="num text-xs text-muted-foreground">
-                            {proveedorTipo(p) === "juridico" ? "RUC" : "DNI"} · {proveedorDocumento(p)}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-0.5 text-xs">
-                        {p.telefono ? (
-                          <span className="num flex items-center gap-1.5 text-foreground">
-                            <Phone className="h-3 w-3 text-muted-foreground" />
-                            {p.telefono}
-                          </span>
-                        ) : null}
-                        {p.email ? (
-                          <span className="flex items-center gap-1.5 text-muted-foreground">
-                            <Mail className="h-3 w-3" />
-                            <span className="truncate">{p.email}</span>
-                          </span>
-                        ) : null}
-                        {!p.telefono && !p.email && <span className="text-muted-foreground">—</span>}
-                      </div>
-                    </TableCell>
-                    <TableCell className="max-w-[14rem] truncate text-sm text-muted-foreground">
-                      {p.direccion || "—"}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant={isActive ? "success" : "destructive"} className="gap-1.5">
-                        <span className={cn("h-1.5 w-1.5 rounded-full", isActive ? "bg-emerald-600" : "bg-red-600")} />
-                        {isActive ? "Activo" : "Inactivo"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="pr-4">
-                      <div className="flex items-center justify-end gap-1">
-                        <IconAction label="Editar" onClick={() => openEdit(p)} disabled={!canEdit}>
-                          <Pencil className="h-4 w-4" />
-                        </IconAction>
-                        <IconAction label="Eliminar" danger onClick={() => setDeleting(p)} disabled={!canDelete}>
-                          <Trash2 className="h-4 w-4" />
-                        </IconAction>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+      <AdaptiveCollection<Proveedor>
+        title="Proveedores"
+        items={proveedores}
+        fields={fields}
+        actions={actions}
+        layout="card"
+        isLoading={isLoading}
+        search={searchTerm}
+        searchPlaceholder="Buscar por nombre o documento…"
+        onSearch={setSearchTerm}
+        empty={{
+          title: "No se encontraron proveedores",
+          description: searchTerm
+            ? `Ningún proveedor coincide con "${searchTerm}"`
+            : "Registra tu primer proveedor.",
+          action: canEdit ? { label: "Nuevo proveedor", onClick: openCreate } : undefined,
+        }}
+        getItemId={(p: Proveedor) => p.id}
+        getRhythm={getRhythm}
+        globalActions={
+          canEdit
+            ? [{ id: "create", label: "Nuevo proveedor", icon: <Plus className="h-4 w-4" />, onClick: () => openCreate() }]
+            : []
+        }
+      />
 
       {/* Alta / edición */}
       {isFormOpen && (

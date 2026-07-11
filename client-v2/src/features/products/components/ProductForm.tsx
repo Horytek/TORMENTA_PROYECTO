@@ -25,6 +25,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Zod Validation Schema
 const productSchema = z.object({
@@ -334,18 +341,18 @@ export default function ProductForm({
                   name="id_marca"
                   control={control}
                   render={({ field }) => (
-                    <select
-                      {...field}
-                      id="id_marca"
-                      className="w-full flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 "
-                    >
-                      <option value="">Selecciona una marca</option>
-                      {brands.map((b) => (
-                        <option key={b.id_marca} value={b.id_marca}>
-                          {b.nombre}
-                        </option>
-                      ))}
-                    </select>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger id="id_marca" className="w-full">
+                        <SelectValue placeholder="Selecciona una marca" />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        {brands.map((b) => (
+                          <SelectItem key={b.id_marca} value={String(b.id_marca)}>
+                            {b.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                 />
                 {errors.id_marca && (
@@ -360,19 +367,19 @@ export default function ProductForm({
                   name="undm"
                   control={control}
                   render={({ field }) => (
-                    <select
-                      {...field}
-                      id="undm"
-                      className="w-full flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 "
-                    >
-                      <option value="">Selecciona Unidad</option>
-                      {units.map((u) => (
-                        <option key={u.id_unidad} value={u.simbolo}>
-                          {u.nombre} ({u.simbolo})
-                        </option>
-                      ))}
-                      <option value="NIU">Unidad (NIU)</option>
-                    </select>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger id="undm" className="w-full">
+                        <SelectValue placeholder="Selecciona Unidad" />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        {units.map((u) => (
+                          <SelectItem key={u.id_unidad} value={u.simbolo}>
+                            {u.nombre} ({u.simbolo})
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="NIU">Unidad (NIU)</SelectItem>
+                      </SelectContent>
+                    </Select>
                   )}
                 />
                 {errors.undm && (
@@ -387,18 +394,18 @@ export default function ProductForm({
                   name="id_categoria"
                   control={control}
                   render={({ field }) => (
-                    <select
-                      {...field}
-                      id="id_categoria"
-                      className="w-full flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 "
-                    >
-                      <option value="">Selecciona Categoría</option>
-                      {categories.map((c) => (
-                        <option key={c.id_categoria} value={c.id_categoria}>
-                          {c.nombre}
-                        </option>
-                      ))}
-                    </select>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger id="id_categoria" className="w-full">
+                        <SelectValue placeholder="Selecciona Categoría" />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        {categories.map((c) => (
+                          <SelectItem key={c.id_categoria} value={String(c.id_categoria)}>
+                            {c.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                 />
                 {errors.id_categoria && (
@@ -413,19 +420,22 @@ export default function ProductForm({
                   name="id_subcategoria"
                   control={control}
                   render={({ field }) => (
-                    <select
-                      {...field}
-                      id="id_subcategoria"
+                    <Select 
+                      onValueChange={field.onChange} 
+                      value={field.value}
                       disabled={!watchIdCategoria}
-                      className="w-full flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 "
                     >
-                      <option value="">Selecciona Subcategoría</option>
-                      {filteredSubcategories.map((s) => (
-                        <option key={s.id_subcategoria} value={s.id_subcategoria}>
-                          {s.nombre_sub}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger id="id_subcategoria" className="w-full">
+                        <SelectValue placeholder="Selecciona Subcategoría" />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        {filteredSubcategories.map((s) => (
+                          <SelectItem key={s.id_subcategoria} value={String(s.id_subcategoria)}>
+                            {s.nombre_sub}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                 />
                 {errors.id_subcategoria && (
@@ -478,14 +488,15 @@ export default function ProductForm({
                   name="estado_producto"
                   control={control}
                   render={({ field }) => (
-                    <select
-                      {...field}
-                      id="estado_producto"
-                      className="w-full flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 "
-                    >
-                      <option value="1">Activo</option>
-                      <option value="0">Inactivo</option>
-                    </select>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger id="estado_producto" className="w-full">
+                        <SelectValue placeholder="Activo" />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        <SelectItem value="1">Activo</SelectItem>
+                        <SelectItem value="0">Inactivo</SelectItem>
+                      </SelectContent>
+                    </Select>
                   )}
                 />
               </div>

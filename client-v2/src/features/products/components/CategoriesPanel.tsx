@@ -1,17 +1,27 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Category } from "../types";
-import { 
-  getCategories, createCategory, updateCategory, deleteCategory 
+import {
+  getCategories, createCategory, updateCategory, deleteCategory,
+  checkCategoryUsage,
 } from "../api/products";
 import { useUserStore } from "@/store/useUserStore";
 
 // UI Components
 import { Button } from "@/components/ui/button";
+import EntityCardsGrid from "@/components/shared/EntityCardsGrid";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { 
-  Plus, Search, Edit, Trash2, Loader2, Info, ShieldAlert
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Plus, Search, Edit, Trash2, Loader2, ShieldAlert,
+  AlertTriangle, CheckCircle2,
 } from "lucide-react";
 import {
   Dialog,
@@ -25,15 +35,18 @@ import {
 export default function CategoriesPanel() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // Modals state
   const [isOpen, setIsOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [categoryName, setCategoryName] = useState("");
-  
+  const [categoryEstado, setCategoryEstado] = useState("1");
+
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deletingCategory, setDeletingCategory] = useState<Category | null>(null);
-  
+  const [deleteMode, setDeleteMode] = useState<"confirm" | "deactivated" | "deleted">("confirm");
+  const [deleteUsageInfo, setDeleteUsageInfo] = useState<{ used: boolean; subcategoryCount: number } | null>(null);
+
   const [actionLoading, setActionLoading] = useState(false);
 
   // Fetch Categories
@@ -44,7 +57,7 @@ export default function CategoriesPanel() {
 
   const capabilities = useUserStore((state) => state.capabilities);
   const user = useUserStore((state) => state.user);
-  
+
   const hasCreatePermission = user?.roleId === 10 || capabilities.has("productos.create") || capabilities.has("*");
   const hasEditPermission = user?.roleId === 10 || capabilities.has("productos.edit") || capabilities.has("*");
   const hasDeletePermission = user?.roleId === 10 || capabilities.has("productos.delete") || capabilities.has("*");
@@ -56,12 +69,14 @@ export default function CategoriesPanel() {
   const handleOpenCreate = () => {
     setEditingCategory(null);
     setCategoryName("");
+    setCategoryEstado("1");
     setIsOpen(true);
   };
 
   const handleOpenEdit = (category: Category) => {
     setEditingCategory(category);
     setCategoryName(category.nombre);
+    setCategoryEstado(String(category.estado ?? "1"));
     setIsOpen(true);
   };
 
@@ -72,10 +87,15 @@ export default function CategoriesPanel() {
     setActionLoading(true);
     try {
       let success = false;
+      const payload = {
+        nombre: categoryName,
+        estado: Number(categoryEstado)
+      };
+
       if (editingCategory) {
-        success = await updateCategory(editingCategory.id_categoria, { nombre: categoryName });
+        success = await updateCategory(editingCategory.id_categoria, payload);
       } else {
-        success = await createCategory({ nombre: categoryName });
+        success = await createCategory(payload);
       }
 
       if (success) {
@@ -89,19 +109,33 @@ export default function CategoriesPanel() {
     }
   };
 
-  const handleOpenDelete = (category: Category) => {
+  const handleOpenDelete = async (category: Category) => {
     setDeletingCategory(category);
+    setDeleteMode("confirm");
+    setDeleteUsageInfo(null);
     setIsDeleteOpen(true);
+
+    try {
+      const info = await checkCategoryUsage(category.id_categoria);
+      setDeleteUsageInfo(info);
+    } catch {
+      setDeleteUsageInfo(null);
+    }
   };
 
   const handleConfirmDelete = async () => {
     if (!deletingCategory) return;
     setActionLoading(true);
     try {
-      const success = await deleteCategory(deletingCategory.id_categoria);
-      if (success) {
-        queryClient.invalidateQueries({ queryKey: ["categories"] });
-        setIsDeleteOpen(false);
+      const result = await deleteCategory(deletingCategory.id_categoria);
+      if (result.success) {
+        if (result.mode === "deactivated") {
+          setDeleteMode("deactivated");
+        } else {
+          setDeleteMode("deleted");
+          queryClient.invalidateQueries({ queryKey: ["categories"] });
+          setIsDeleteOpen(false);
+        }
       }
     } catch (err) {
       console.error("Error deleting category:", err);
@@ -110,12 +144,21 @@ export default function CategoriesPanel() {
     }
   };
 
+  const handleCloseDeleteDialog = () => {
+    setIsDeleteOpen(false);
+    if (deleteMode !== "confirm") {
+      queryClient.invalidateQueries({ queryKey: ["categories"] });
+    }
+    setDeleteMode("confirm");
+    setDeleteUsageInfo(null);
+  };
+
   return (
     <div className="space-y-4">
       {/* Search & Actions Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full max-w-xs">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar categorías..."
             value={searchTerm}
@@ -124,83 +167,50 @@ export default function CategoriesPanel() {
           />
         </div>
 
-        <Button 
+        <Button
           onClick={handleOpenCreate}
           disabled={!hasCreatePermission}
-          className="flex items-center gap-2 disabled:opacity-40"
+          className="gap-2 self-start sm:self-auto"
         >
           <Plus className="h-4 w-4" />
           <span>Agregar Categoría</span>
         </Button>
       </div>
 
-      {/* Categories Table list */}
-      {isLoading ? (
-        <div className="flex justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin text-brand" />
-        </div>
-      ) : filteredCategories.length === 0 ? (
-        <div className="text-center p-8 border border-dashed border-slate-200 dark:border-zinc-800 rounded-2xl bg-white dark:bg-zinc-950 text-slate-400">
-          <Info className="h-8 w-8 mx-auto mb-2 text-slate-300 dark:text-slate-700" />
-          <p className="text-sm">No se encontraron categorías registradas.</p>
-        </div>
-      ) : (
-        <div className="border border-slate-200/50 dark:border-zinc-800/50 rounded-2xl bg-white dark:bg-zinc-950 shadow-sm overflow-hidden">
-          <table className="min-w-full divide-y divide-slate-100 dark:divide-zinc-900">
-            <thead className="bg-slate-50 dark:bg-zinc-900/40">
-              <tr>
-                <th scope="col" className="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  ID
-                </th>
-                <th scope="col" className="px-6 py-3.5 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  Nombre
-                </th>
-                <th scope="col" className="px-6 py-3.5 text-center text-xs font-bold text-slate-500 uppercase tracking-wider w-24">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-zinc-900">
-              {filteredCategories.map((c) => (
-                <tr key={c.id_categoria} className="hover:bg-slate-50/50 dark:hover:bg-zinc-900/30 transition-colors">
-                  <td className="px-6 py-3 whitespace-nowrap text-sm font-mono text-slate-400">
-                    #{c.id_categoria}
-                  </td>
-                  <td className="px-6 py-3 whitespace-nowrap text-sm font-semibold text-slate-700 dark:text-slate-300">
-                    {c.nombre}
-                  </td>
-                  <td className="px-6 py-3 whitespace-nowrap text-center text-sm font-medium">
-                    <div className="flex justify-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={!hasEditPermission}
-                        onClick={() => handleOpenEdit(c)}
-                        className="h-8 w-8 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg hover:bg-blue-500/10 disabled:opacity-30"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={!hasDeletePermission}
-                        onClick={() => handleOpenDelete(c)}
-                        className="h-8 w-8 text-slate-400 hover:text-destructive dark:hover:text-red-400 rounded-lg hover:bg-destructive/10 disabled:opacity-30"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      {/* Categories Cards Grid */}
+      <EntityCardsGrid
+        items={filteredCategories}
+        getItemId={(c) => c.id_categoria}
+        columns={[{ labelKey: "nombre" }]}
+        nodeTint={(c) => (c.estado === 0 ? "rose" : undefined)}
+        isLoading={isLoading}
+        searchTerm={searchTerm}
+        emptyMessage={{
+          title: "No se encontraron categorías",
+          description: searchTerm
+            ? `Ninguna categoría coincide con "${searchTerm}"`
+            : "Registra tu primera categoría.",
+        }}
+        getActions={(c) => [
+          {
+            label: "Editar",
+            icon: <Edit className="h-4 w-4" />,
+            onClick: () => handleOpenEdit(c),
+            disabled: !hasEditPermission,
+          },
+          {
+            label: "Eliminar",
+            icon: <Trash2 className="h-4 w-4" />,
+            onClick: () => handleOpenDelete(c),
+            variant: "destructive",
+            disabled: !hasDeletePermission,
+          },
+        ]}
+      />
 
       {/* Dialog Create/Edit Category */}
       <Dialog open={isOpen} onOpenChange={(open) => !open && setIsOpen(false)}>
-        <DialogContent className="max-w-md border-slate-200/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-950 rounded-2xl shadow-xl">
+        <DialogContent className="max-w-md border-border bg-card">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-foreground">
               {editingCategory ? "Editar Categoría" : "Registrar Categoría"}
@@ -216,16 +226,28 @@ export default function CategoriesPanel() {
                 value={categoryName}
                 onChange={(e) => setCategoryName(e.target.value)}
                 disabled={actionLoading}
-                className=""
                 required
               />
             </div>
 
-            <DialogFooter className="border-t border-slate-100 dark:border-zinc-900 pt-4 flex gap-2 justify-end">
-              <Button type="button" variant="ghost" onClick={() => setIsOpen(false)} disabled={actionLoading} className="rounded-xl">
+            <div className="space-y-2">
+              <Label htmlFor="category-status">Estado</Label>
+              <Select value={categoryEstado} onValueChange={setCategoryEstado} disabled={actionLoading}>
+                <SelectTrigger id="category-status" className="w-full">
+                  <SelectValue placeholder="Activo" />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  <SelectItem value="1">Activo</SelectItem>
+                  <SelectItem value="0">Inactivo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <DialogFooter className="border-t border-border pt-4 flex gap-2 justify-end">
+              <Button type="button" variant="ghost" onClick={() => setIsOpen(false)} disabled={actionLoading}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={actionLoading} className="">
+              <Button type="submit" disabled={actionLoading}>
                 {actionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Guardar
               </Button>
@@ -234,29 +256,96 @@ export default function CategoriesPanel() {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog Delete Confirm */}
-      <Dialog open={isDeleteOpen} onOpenChange={(open) => !open && setIsDeleteOpen(false)}>
-        <DialogContent className="max-w-sm border-slate-200/50 dark:border-zinc-800/50 bg-white dark:bg-zinc-950 rounded-2xl shadow-xl">
-          <DialogHeader>
-            <DialogTitle className="text-md font-bold flex items-center gap-2 text-destructive">
-              <ShieldAlert className="h-5 w-5 text-destructive/80" />
-              ¿Eliminar categoría?
-            </DialogTitle>
-            <DialogDescription className="text-slate-500 dark:text-slate-400 text-xs mt-2">
-              ¿Estás seguro de que deseas eliminar la categoría <strong>"{deletingCategory?.nombre}"</strong>?
-              Esta acción no se puede deshacer.
-            </DialogDescription>
-          </DialogHeader>
+      {/* Dialog Delete — 3 estados */}
+      <Dialog open={isDeleteOpen} onOpenChange={(open) => !open && handleCloseDeleteDialog()}>
+        <DialogContent className="max-w-sm border-border bg-card">
 
-          <DialogFooter className="mt-4 flex gap-2 justify-end">
-            <Button variant="ghost" onClick={() => setIsDeleteOpen(false)} disabled={actionLoading} className="rounded-xl">
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmDelete} disabled={actionLoading} className="rounded-xl">
-              {actionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Eliminar
-            </Button>
-          </DialogFooter>
+          {deleteMode === "confirm" && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2 text-md font-bold">
+                  <ShieldAlert className="h-5 w-5 text-destructive/80" />
+                  ¿Eliminar categoría?
+                </DialogTitle>
+                <DialogDescription className="text-muted-foreground mt-2 space-y-2">
+                  <p>
+                    ¿Estás seguro de que deseas eliminar la categoría{" "}
+                    <strong>"{deletingCategory?.nombre}"</strong>?
+                  </p>
+                  {deleteUsageInfo && deleteUsageInfo.used && (
+                    <div className="flex items-start gap-2 rounded-lg border border-amber-200/50 bg-amber-50/30 p-3 text-xs text-amber-700 dark:text-amber-400">
+                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      <span>
+                        Esta categoría tiene{" "}
+                        <strong>{deleteUsageInfo.subcategoryCount} subcategoría(s)</strong> asociadas.
+                        Al eliminarla se <strong>desactivará</strong> en lugar de borrarse.
+                      </span>
+                    </div>
+                  )}
+                  {!deleteUsageInfo && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      Verificando uso...
+                    </div>
+                  )}
+                </DialogDescription>
+              </DialogHeader>
+
+              <DialogFooter className="mt-4 flex gap-2">
+                <Button variant="ghost" onClick={handleCloseDeleteDialog} disabled={actionLoading}>
+                  Cancelar
+                </Button>
+                <Button
+                  variant={deleteUsageInfo?.used ? "default" : "destructive"}
+                  onClick={handleConfirmDelete}
+                  disabled={actionLoading}
+                >
+                  {actionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {deleteUsageInfo?.used ? "Desactivar" : "Eliminar"}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {deleteMode === "deactivated" && (
+            <>
+              <DialogHeader className="text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-50 ring-1 ring-amber-200">
+                  <AlertTriangle className="h-6 w-6 text-amber-500" />
+                </div>
+                <DialogTitle className="text-md font-bold">Categoría desactivada</DialogTitle>
+                <DialogDescription className="text-muted-foreground">
+                  La categoría <strong>"{deletingCategory?.nombre}"</strong> tenía subcategorías
+                  asociadas, por lo que se <strong>desactivó</strong> en lugar de eliminarse.
+                  Ya no aparecerá en el sistema, pero sus datos históricos se mantienen.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="mt-4">
+                <Button onClick={handleCloseDeleteDialog} className="w-full">
+                  Entendido
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {deleteMode === "deleted" && (
+            <>
+              <DialogHeader className="text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 ring-1 ring-emerald-200">
+                  <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+                </div>
+                <DialogTitle className="text-md font-bold">Categoría eliminada</DialogTitle>
+                <DialogDescription className="text-muted-foreground">
+                  La categoría <strong>"{deletingCategory?.nombre}"</strong> fue eliminada permanentemente.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="mt-4">
+                <Button onClick={handleCloseDeleteDialog} className="w-full">
+                  Entendido
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>

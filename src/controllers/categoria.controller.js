@@ -140,34 +140,73 @@ const deactivateCategoria = async (req, res) => {
 };
 
 const deleteCategoria = async (req, res) => {
-  let connection;
-  try {
-    const { id } = req.params;
-    connection = await getConnection();
+    let connection;
+    try {
+        const { id } = req.params;
+        connection = await getConnection();
 
-    // Check for dependencies in 'sub_categoria'
-    const [subcats] = await connection.query("SELECT 1 FROM sub_categoria WHERE id_categoria = ? AND id_tenant = ? LIMIT 1", [id, req.id_tenant]);
+        // Verificar subcategorías asociadas
+        const [[subcatCount]] = await connection.query(
+            "SELECT COUNT(*) as cnt FROM sub_categoria WHERE id_categoria = ? AND id_tenant = ?",
+            [id, req.id_tenant]
+        );
 
-    if (subcats.length > 0) {
-      return res.status(409).json({ code: 0, message: "No se puede eliminar la categoría porque tiene subcategorías asociadas." });
+        if (subcatCount.cnt > 0) {
+            // Soft delete: desactivar
+            await connection.query(
+                "UPDATE categoria SET estado_categoria = 0 WHERE id_categoria = ? AND id_tenant = ?",
+                [id, req.id_tenant]
+            );
+            queryCache.clear();
+            return res.json({
+                code: 1,
+                mode: "deactivated",
+                message: "La categoría tiene subcategorías asociadas. Se desactivó en lugar de eliminar."
+            });
+        }
+
+        // Sin dependencias → hard delete
+        const [result] = await connection.query(
+            "DELETE FROM categoria WHERE id_categoria = ? AND id_tenant = ?",
+            [id, req.id_tenant]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ code: 0, message: "Recurso no disponible" });
+        }
+
+        queryCache.clear();
+        res.json({ code: 1, mode: "deleted", message: "Categoría eliminada permanentemente." });
+    } catch (error) {
+        console.error('Error en deleteCategoria:', error);
+        if (!res.headersSent) res.status(500).json({ code: 0, message: "Ocurrió un error inesperado" });
+    } finally {
+        if (connection) connection.release();
     }
+};
 
-    const [result] = await connection.query("DELETE FROM categoria WHERE id_categoria = ? AND id_tenant = ?", [id, req.id_tenant]);
+const checkUsageCategoria = async (req, res) => {
+    let connection;
+    try {
+        const { id } = req.params;
+        connection = await getConnection();
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ code: 0, message: "Recurso no disponible" });
+        const [[subcatCount]] = await connection.query(
+            "SELECT COUNT(*) as cnt FROM sub_categoria WHERE id_categoria = ? AND id_tenant = ?",
+            [id, req.id_tenant]
+        );
+
+        res.json({
+            code: 1,
+            used: subcatCount.cnt > 0,
+            subcategoryCount: subcatCount.cnt
+        });
+    } catch (error) {
+        console.error('Error en checkUsageCategoria:', error);
+        if (!res.headersSent) res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    } finally {
+        if (connection) connection.release();
     }
-
-    // Limpiar caché
-    queryCache.clear();
-
-    res.json({ code: 1, message: "Categoría eliminada" });
-  } catch (error) {
-    console.error('Error en deleteCategoria:', error);
-    if (!res.headersSent) res.status(500).json({ code: 0, message: "Ocurrió un error inesperado" });
-  } finally {
-    if (connection) connection.release();
-  }
 };
 
 const importExcel = async (req, res) => {
@@ -237,5 +276,6 @@ export const methods = {
   updateCategoria,
   deactivateCategoria,
   deleteCategoria,
+  checkUsageCategoria,
   importExcel
 };

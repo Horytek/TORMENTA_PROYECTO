@@ -1,7 +1,10 @@
 import api from "@/api/axios";
 import type { Proveedor, ProveedorInput } from "../types";
 
-const ok = (res: { data: any }): boolean => res.data?.success ?? res.data === true;
+const ok = (res: { data: any }): boolean => {
+  const data = res.data;
+  return data?.code === 1 || data?.code === 2 || data?.success === true || data === true;
+};
 
 // El backend arma cuerpos distintos para persona natural y jurídica.
 const buildBody = (input: ProveedorInput) => {
@@ -18,7 +21,8 @@ const buildBody = (input: ProveedorInput) => {
 
 export const getProveedores = async (): Promise<Proveedor[]> => {
   const res = await api.get("/destinatario");
-  const list = res.data?.success ? res.data.data : (res.data ?? []);
+  const data = res.data;
+  const list = data?.data || (data?.success ? data.data : (data ?? []));
   return (Array.isArray(list) ? list : []).map((d: any) => ({
     ...d,
     id: d.id ?? d.id_destinatario,

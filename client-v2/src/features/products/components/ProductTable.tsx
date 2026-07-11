@@ -29,9 +29,10 @@ export default function ProductTable({
   const parentRef = useRef<HTMLDivElement>(null);
 
   const filteredProducts = useMemo(() => {
-    if (!searchTerm) return products;
+    const list = products ?? [];
+    if (!searchTerm) return list;
     const term = searchTerm.toLowerCase().trim();
-    return products.filter(
+    return list.filter(
       (p) =>
         (p.descripcion || "").toLowerCase().includes(term) ||
         (p.cod_barras || "").toLowerCase().includes(term) ||

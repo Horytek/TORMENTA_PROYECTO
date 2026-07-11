@@ -211,14 +211,26 @@ const deleteSubCategoria = async (req, res) => {
     try {
         connection = await getConnection();
 
-        // Check for dependencies in 'producto'
-        const [products] = await connection.query("SELECT 1 FROM producto WHERE id_subcategoria = ? AND id_tenant = ? LIMIT 1", [id, req.id_tenant]);
+        const [[productCount]] = await connection.query(
+            "SELECT COUNT(*) as cnt FROM producto WHERE id_subcategoria = ? AND id_tenant = ?",
+            [id, req.id_tenant]
+        );
 
-        if (products.length > 0) {
-            return res.status(409).json({ code: 0, message: "No se puede eliminar la subcategoría porque está asociada a productos." });
+        if (productCount.cnt > 0) {
+            // Soft delete
+            await connection.query(
+                "UPDATE sub_categoria SET estado_subcat = 0 WHERE id_subcategoria = ? AND id_tenant = ?",
+                [id, req.id_tenant]
+            );
+            queryCache.clear();
+            return res.json({
+                code: 1,
+                mode: "deactivated",
+                message: "La subcategoría está asociada a productos. Se desactivó en lugar de eliminar."
+            });
         }
 
-        const [result] = await connection.query(
+        const [[result]] = await connection.query(
             "DELETE FROM sub_categoria WHERE id_subcategoria = ? AND id_tenant = ?",
             [id, req.id_tenant]
         );
@@ -227,12 +239,38 @@ const deleteSubCategoria = async (req, res) => {
             return res.status(404).json({ code: 0, message: "Subcategoría no encontrada" });
         }
 
-        // Limpiar caché
         queryCache.clear();
-
-        res.json({ code: 1, message: "Subcategoría eliminada con éxito" });
+        res.json({ code: 1, mode: "deleted", message: "Subcategoría eliminada permanentemente." });
     } catch (error) {
         console.error('Error en deleteSubCategoria:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
+        }
+    } finally {
+        if (connection) {
+            connection.release();
+        }
+    }
+};
+
+const checkUsageSubcategoria = async (req, res) => {
+    let connection;
+    try {
+        const { id } = req.params;
+        connection = await getConnection();
+
+        const [[productCount]] = await connection.query(
+            "SELECT COUNT(*) as cnt FROM producto WHERE id_subcategoria = ? AND id_tenant = ?",
+            [id, req.id_tenant]
+        );
+
+        res.json({
+            code: 1,
+            used: productCount.cnt > 0,
+            productCount: productCount.cnt
+        });
+    } catch (error) {
+        console.error('Error en checkUsageSubcategoria:', error);
         if (!res.headersSent) {
             res.status(500).json({ code: 0, message: "Error interno del servidor" });
         }
@@ -346,5 +384,6 @@ export const methods = {
     updateSubCategoria,
     deactivateSubCategoria,
     deleteSubCategoria,
+    checkUsageSubcategoria,
     importExcel
 };

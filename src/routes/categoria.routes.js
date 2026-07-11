@@ -9,6 +9,7 @@ router.use(auth);
 
 
 router.get("/", categoriaController.getCategorias);
+router.get("/check-usage/:id", categoriaController.checkUsageCategoria);
 router.get("/:id", categoriaController.getCategoria);
 router.post("/", categoriaController.addCategoria);
 router.put("/update/:id", categoriaController.updateCategoria);

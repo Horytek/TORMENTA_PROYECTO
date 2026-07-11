@@ -9,6 +9,7 @@ router.use(auth);
 
 
 router.get("/", marcasController.getMarcas);
+router.get("/check-usage/:id", marcasController.checkUsageMarca);
 router.get("/:id", marcasController.getMarca);
 router.post("/", marcasController.addMarca);
 router.put("/update/:id", marcasController.updateMarca);

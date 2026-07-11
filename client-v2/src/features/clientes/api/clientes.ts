@@ -1,11 +1,17 @@
 import api from "@/api/axios";
 import type { Cliente, ClienteInput } from "../types";
 
-// El backend responde con { success, data } o directamente el recurso.
-const unwrap = <T>(res: { data: any }, fallback: T): T =>
-  res.data?.success ? res.data.data : (res.data ?? fallback);
+// El backend responde con { code, data } o directamente el recurso.
+const unwrap = <T>(res: { data: any }, fallback: T): T => {
+  const data = res.data;
+  if (data?.data) return data.data;
+  return data?.success ? data.data : (data ?? fallback);
+};
 
-const ok = (res: { data: any }): boolean => res.data?.success ?? res.data === true;
+const ok = (res: { data: any }): boolean => {
+  const data = res.data;
+  return data?.code === 1 || data?.code === 2 || data?.success === true || data === true;
+};
 
 export const getClientes = async (): Promise<Cliente[]> => {
   const res = await api.get("/clientes");

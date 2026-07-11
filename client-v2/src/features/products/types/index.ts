@@ -36,6 +36,7 @@ export interface Product {
   cod_barras: string;
   undm: string;
   estado_producto: number;
+  estado?: number;
   id_categoria?: number;
 }
 
