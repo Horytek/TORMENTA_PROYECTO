@@ -18,6 +18,7 @@ import SuppliersPage from "@/features/suppliers/pages/SuppliersPage";
 import BranchesPage from "@/features/branches/pages/BranchesPage";
 import WarehousesPage from "@/features/warehouses/pages/WarehousesPage";
 import KardexPage from "@/features/kardex/pages/KardexPage";
+import UsersPage from "@/features/users/pages/UsersPage";
 import SalesPage from "@/features/sales/pages/SalesPage";
 import InventoryPage from "@/features/inventory/pages/InventoryPage";
 import EmployeesPage from "@/features/employees/pages/EmployeesPage";
@@ -118,6 +119,7 @@ export default function App() {
                   <Route path="/logistics/branches" element={<BranchesPage />} />
                   <Route path="/logistics/warehouses" element={<WarehousesPage />} />
                   <Route path="/logistics/kardex" element={<KardexPage />} />
+                  <Route path="/settings/users" element={<UsersPage />} />
                   {/* Other routes can be registered here as features are developed from scratch */}
                 </Route>
                 
