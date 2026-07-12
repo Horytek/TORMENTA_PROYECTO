@@ -14,8 +14,9 @@ import DashboardLayout from "@/components/layouts/DashboardLayout";
 import ProductsPage from "@/features/products/pages/ProductsPage";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 import ClientesPage from "@/features/clientes/pages/ClientesPage";
-import ProveedoresPage from "@/features/proveedores/pages/ProveedoresPage";
 import SuppliersPage from "@/features/suppliers/pages/SuppliersPage";
+import BranchesPage from "@/features/branches/pages/BranchesPage";
+import WarehousesPage from "@/features/warehouses/pages/WarehousesPage";
 import SalesPage from "@/features/sales/pages/SalesPage";
 import InventoryPage from "@/features/inventory/pages/InventoryPage";
 import EmployeesPage from "@/features/employees/pages/EmployeesPage";
@@ -109,10 +110,12 @@ export default function App() {
                   <Route path="/products" element={<ProductsPage />} />
                   <Route path="/sales" element={<SalesPage />} />
                   <Route path="/people/clients" element={<ClientesPage />} />
-                  <Route path="/people/providers" element={<ProveedoresPage />} />
+                  <Route path="/people/providers" element={<SuppliersPage />} />
                   <Route path="/suppliers" element={<SuppliersPage />} />
                   <Route path="/inventory" element={<InventoryPage />} />
                   <Route path="/people/employees" element={<EmployeesPage />} />
+                  <Route path="/logistics/branches" element={<BranchesPage />} />
+                  <Route path="/logistics/warehouses" element={<WarehousesPage />} />
                   {/* Other routes can be registered here as features are developed from scratch */}
                 </Route>
                 
