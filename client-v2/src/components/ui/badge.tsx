@@ -20,6 +20,8 @@ const badgeVariants = cva(
         link: "text-primary underline-offset-4 [a&]:hover:underline",
         success:
           "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 [a&]:hover:bg-emerald-100/80",
+        warning:
+          "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 [a&]:hover:bg-amber-100/80",
       },
     },
     defaultVariants: {
