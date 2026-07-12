@@ -158,7 +158,7 @@ export const useUserStore = create<UserState>((set) => ({
   setCapabilities: (capabilities) => set({ 
     capabilities: capabilities instanceof Set ? capabilities : new Set(capabilities) 
   }),
-  setGlobalModuleConfigs: (configs) => set({ globalModuleConfigs: configs }),
+  setGlobalModuleConfigs: (configs) => set({ globalModuleConfigs: configs as unknown as RouteModule[] }),
   setLoading: (loading) => set({ loading }),
   setIsAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
 

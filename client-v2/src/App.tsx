@@ -15,6 +15,10 @@ import ProductsPage from "@/features/products/pages/ProductsPage";
 import DashboardPage from "@/features/dashboard/pages/DashboardPage";
 import ClientesPage from "@/features/clientes/pages/ClientesPage";
 import ProveedoresPage from "@/features/proveedores/pages/ProveedoresPage";
+import SuppliersPage from "@/features/suppliers/pages/SuppliersPage";
+import SalesPage from "@/features/sales/pages/SalesPage";
+import InventoryPage from "@/features/inventory/pages/InventoryPage";
+import EmployeesPage from "@/features/employees/pages/EmployeesPage";
 import { Loader2 } from "lucide-react";
 
 // Initialize Query Client for TanStack Query
@@ -103,8 +107,12 @@ export default function App() {
                 <Route element={<DashboardLayout />}>
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/products" element={<ProductsPage />} />
+                  <Route path="/sales" element={<SalesPage />} />
                   <Route path="/people/clients" element={<ClientesPage />} />
                   <Route path="/people/providers" element={<ProveedoresPage />} />
+                  <Route path="/suppliers" element={<SuppliersPage />} />
+                  <Route path="/inventory" element={<InventoryPage />} />
+                  <Route path="/people/employees" element={<EmployeesPage />} />
                   {/* Other routes can be registered here as features are developed from scratch */}
                 </Route>
                 

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import type { FieldDef, SortConfig, ViewMode } from "./types";
 import { AdaptiveRecord, RecordSkeleton } from "./AdaptiveRecord";
@@ -21,14 +21,8 @@ import {
 } from "@/components/ui/select";
 import {
   Search,
-  ArrowUpDown,
-  LayoutGrid,
-  LayoutList,
-  AlignJustify,
   SlidersHorizontal,
   Plus,
-  ChevronUp,
-  ChevronDown,
   Info,
 } from "lucide-react";
 
@@ -71,21 +65,6 @@ interface CollectionProps<T extends AnyRecord> {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Iconos de vista
-// ─────────────────────────────────────────────────────────────────
-const VIEW_ICONS: Record<ViewMode, React.ReactNode> = {
-  compact:     <LayoutGrid className="h-3.5 w-3.5" />,
-  comfortable: <LayoutList className="h-3.5 w-3.5" />,
-  expanded:    <AlignJustify className="h-3.5 w-3.5" />,
-};
-
-const VIEW_LABELS: Record<ViewMode, string> = {
-  compact:    "Compacta",
-  comfortable:"Cómoda",
-  expanded:   "Expandida",
-};
-
-// ─────────────────────────────────────────────────────────────────
 // Header de la colección
 // ─────────────────────────────────────────────────────────────────
 function CollectionHeader({
@@ -94,10 +73,10 @@ function CollectionHeader({
   search,
   searchPlaceholder,
   onSearch,
-  viewMode,
-  onViewModeChange,
-  sort,
-  onSort,
+  viewMode: _viewMode,
+  onViewModeChange: _onViewModeChange,
+  sort: _sort,
+  onSort: _onSort,
   filters,
   globalActions,
   selectedIds,
@@ -296,6 +275,12 @@ export function AdaptiveCollection<T extends AnyRecord>({
   const viewMode = controlledViewMode ?? internalViewMode;
   const setViewMode = onViewModeChange ?? setInternalViewMode;
 
+  const [internalPage, setInternalPage] = useState(1);
+
+  useEffect(() => {
+    setInternalPage(1);
+  }, [search, filters]);
+
   const getId = useCallback((item: T) => {
     if (getItemId) return getItemId(item);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -346,6 +331,18 @@ export function AdaptiveCollection<T extends AnyRecord>({
     else onRecordClick?.(item);
   }, [expandedId, renderExpanded, onRecordClick]);
 
+  const itemsPerPage = 12;
+  const isClientSidePaging = !serverSide && page === undefined;
+  const currentPage = isClientSidePaging ? internalPage : (page ?? 1);
+  const displayTotalPages = isClientSidePaging ? Math.ceil(sorted.length / itemsPerPage) : (totalPages ?? 1);
+  const displayPageChange = isClientSidePaging ? (p: number) => setInternalPage(p) : onPageChange;
+
+  const paginatedItems = useMemo(() => {
+    if (!isClientSidePaging) return sorted;
+    const start = (currentPage - 1) * itemsPerPage;
+    return sorted.slice(start, start + itemsPerPage);
+  }, [sorted, isClientSidePaging, currentPage]);
+
   const hasContent = !isLoading && sorted.length > 0;
 
   return (
@@ -394,7 +391,7 @@ export function AdaptiveCollection<T extends AnyRecord>({
       {/* ── LAYOUT: CARD GRID ── */}
       {hasContent && layout === "card" && (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {sorted.map((item, index) => (
+          {paginatedItems.map((item, index) => (
             <AdaptiveCard<any>
               key={String(getId(item))}
               item={item}
@@ -422,7 +419,7 @@ export function AdaptiveCollection<T extends AnyRecord>({
             </div>
           )}
           <div className="divide-y divide-border/40">
-            {sorted.map((item, index) => {
+            {paginatedItems.map((item, index) => {
               const id = getId(item);
               const rhythm = getRhythm ? getRhythm(item, index) : undefined;
               const isSelected = selectedIds?.includes(id) ?? false;
@@ -453,18 +450,18 @@ export function AdaptiveCollection<T extends AnyRecord>({
       )}
 
       {/* ── PAGINATION CONTROLLER ── */}
-      {totalPages !== undefined && totalPages > 1 && onPageChange && (
+      {displayTotalPages > 1 && displayPageChange && (
         <div className="flex items-center justify-between pt-4 mt-4 border-t border-border/40 select-none">
           <div className="text-xs text-muted-foreground">
-            {page !== undefined && <span>Página {page} de {totalPages}</span>}
+            <span>Página {currentPage} de {displayTotalPages}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <Button
               variant="outline"
               size="sm"
               className="h-8 px-3 text-xs gap-1 rounded-xl cursor-pointer"
-              onClick={() => onPageChange(Math.max((page ?? 1) - 1, 1))}
-              disabled={page === 1}
+              onClick={() => displayPageChange(Math.max(currentPage - 1, 1))}
+              disabled={currentPage === 1}
             >
               Anterior
             </Button>
@@ -472,8 +469,8 @@ export function AdaptiveCollection<T extends AnyRecord>({
               variant="outline"
               size="sm"
               className="h-8 px-3 text-xs gap-1 rounded-xl cursor-pointer"
-              onClick={() => onPageChange(Math.min((page ?? 1) + 1, totalPages))}
-              disabled={page === totalPages}
+              onClick={() => displayPageChange(Math.min(currentPage + 1, displayTotalPages))}
+              disabled={currentPage === displayTotalPages}
             >
               Siguiente
             </Button>

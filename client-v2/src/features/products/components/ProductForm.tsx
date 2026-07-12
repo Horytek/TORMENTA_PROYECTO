@@ -45,7 +45,7 @@ const productSchema = z.object({
   id_marca: z.string().min(1, "Debe seleccionar una marca"),
   id_categoria: z.string().min(1, "Debe seleccionar una categoría"),
   id_subcategoria: z.string().min(1, "Debe seleccionar una subcategoría"),
-  estado_producto: z.string().default("1"),
+  estado_producto: z.string(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;

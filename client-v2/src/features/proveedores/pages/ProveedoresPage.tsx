@@ -1,15 +1,12 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryState, parseAsString } from "nuqs";
-import { Plus, Search, Pencil, Trash2, Truck, Phone, Mail } from "lucide-react";
+import { Plus, Pencil, Trash2, Phone, Mail } from "lucide-react";
 
 import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection";
 import type { FieldDef, RecordAction } from "@/components/shared/AdaptiveCollection";
 import { useUserStore } from "@/store/useUserStore";
-import { cn } from "@/lib/utils";
-
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { IconAction } from "@/components/shared/IconAction";
 import ProveedorForm from "../components/ProveedorForm";
 import { getProveedores, deleteProveedor } from "../api/proveedores";
 import type { Proveedor } from "../types";
@@ -34,16 +31,6 @@ export default function ProveedoresPage() {
     queryKey: ["proveedores"],
     queryFn: getProveedores,
   });
-
-  const filtered = useMemo(() => {
-    const term = searchTerm.toLowerCase().trim();
-    if (!term) return proveedores;
-    return proveedores.filter(
-      (p) =>
-        proveedorNombre(p).toLowerCase().includes(term) ||
-        proveedorDocumento(p).toLowerCase().includes(term)
-    );
-  }, [proveedores, searchTerm]);
 
   const fields: FieldDef<Proveedor>[] = [
     {

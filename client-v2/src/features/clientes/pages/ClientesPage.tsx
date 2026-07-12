@@ -1,15 +1,13 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryState, parseAsString } from "nuqs";
-import { Plus, Search, Pencil, Trash2, Ban, RotateCcw, Users } from "lucide-react";
+import { Plus, Pencil, Trash2, Ban, RotateCcw } from "lucide-react";
 
 import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection";
 import type { FieldDef, RecordAction } from "@/components/shared/AdaptiveCollection";
 import { useUserStore } from "@/store/useUserStore";
-import { cn } from "@/lib/utils";
 
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { IconAction } from "@/components/shared/IconAction";
 import ClientForm from "../components/ClientForm";
 import { getClientes, deleteCliente, deactivateCliente, updateCliente } from "../api/clientes";
 import type { Cliente } from "../types";

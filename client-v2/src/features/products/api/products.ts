@@ -91,7 +91,14 @@ export const getUnits = async (): Promise<UnitOfMeasure[]> => {
   const response = await api.get("/unidades");
   const data = response.data;
   const list = data?.data || (Array.isArray(data) ? data : []);
-  return list.filter((u: any) => u.estado === 1 || u.estado === '1');
+  return list
+    .filter((u: any) => u.estado === 1 || u.estado === '1')
+    .map((u: any) => ({
+      id_unidad: u.id_unidad,
+      nombre: u.descripcion || "",
+      simbolo: u.codigo_sunat || "",
+      estado: Number(u.estado),
+    }));
 };
 
 // 4. Atributos dinámicos y variantes

@@ -10,7 +10,7 @@ interface BarcodeProps {
   title?: string;
 }
 
-export default function Barcode({ value, options, className, onClick, title }: BarcodeProps) {
+export default function Barcode({ value, options, className, onClick }: BarcodeProps) {
   const barcodeRef = useBarcode(value, options);
 
   return (

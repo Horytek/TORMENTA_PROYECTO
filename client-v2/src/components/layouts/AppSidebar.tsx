@@ -16,8 +16,8 @@ import {
 import {
   Home,
   Tags,
-  LineChart,
   Warehouse,
+  Package,
   FileSpreadsheet,
   Settings,
   Terminal,
@@ -26,6 +26,7 @@ import {
   Building,
   User,
   Users,
+  ShoppingCart,
 } from "lucide-react";
 import { removeToken } from "@/utils/authStorage";
 import { resetVerifyTokenCache } from "@/api/auth";
@@ -67,13 +68,13 @@ export default function AppSidebar() {
       items: [
         { title: "Inicio", url: "/dashboard", icon: Home },
         { title: "Productos", url: "/products", icon: Tags, capability: "productos" },
-        { title: "Punto de Venta (POS)", url: "/sales/pos", icon: LineChart, capability: "ventas" },
+        { title: "Punto de Venta (POS)", url: "/sales", icon: ShoppingCart, capability: "ventas" },
       ],
     },
     {
       label: "Logística",
       items: [
-        { title: "Movimientos Kárdex", url: "/logistics/kardex", icon: Warehouse, capability: "almacen" },
+        { title: "Inventario / Kárdex", url: "/inventory", icon: Package, capability: "almacen" },
         { title: "Almacenes", url: "/logistics/warehouses", icon: Warehouse, capability: "almaceng" },
         { title: "Sucursales", url: "/logistics/branches", icon: Building, capability: "sucursal" },
       ],
