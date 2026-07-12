@@ -114,6 +114,7 @@ export default function App() {
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/products" element={<ProductsPage />} />
                   <Route path="/sales" element={<SalesPage />} />
+                  <Route path="/sales/pos" element={<SalesPage />} />
                   <Route path="/people/clients" element={<ClientesPage />} />
                   <Route path="/people/providers" element={<SuppliersPage />} />
                   <Route path="/suppliers" element={<SuppliersPage />} />

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryState, parseAsString } from "nuqs";
-import { Plus, Search, Pencil, Trash2, ShieldCheck, Lock } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, ShieldCheck, Lock, SlidersHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { IconAction } from "@/components/shared/IconAction";
 import RoleForm from "../components/RoleForm";
+import RolePermissionsDialog from "../components/RolePermissionsDialog";
 import { getRoles, deleteRol } from "../api/roles";
 import type { Rol } from "../types";
 import { RESERVED_ROLES } from "../types";
@@ -31,6 +32,7 @@ export default function RolesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Rol | null>(null);
   const [deleting, setDeleting] = useState<Rol | null>(null);
+  const [permsRole, setPermsRole] = useState<Rol | null>(null);
 
   const capabilities = useUserStore((s) => s.capabilities);
   const user = useUserStore((s) => s.user);
@@ -150,6 +152,13 @@ export default function RolesPage() {
                     <TableCell className="pr-4">
                       <div className="flex items-center justify-end gap-1">
                         <IconAction
+                          label={reserved ? "Rol del sistema" : "Permisos"}
+                          onClick={() => setPermsRole(r)}
+                          disabled={!canEdit || reserved}
+                        >
+                          <SlidersHorizontal className="h-4 w-4" />
+                        </IconAction>
+                        <IconAction
                           label={reserved ? "Rol del sistema" : "Editar"}
                           onClick={() => openEdit(r)}
                           disabled={!canEdit || reserved}
@@ -176,6 +185,10 @@ export default function RolesPage() {
 
       {isFormOpen && (
         <RoleForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} initialData={editing} />
+      )}
+
+      {permsRole && (
+        <RolePermissionsDialog role={permsRole} open onClose={() => setPermsRole(null)} />
       )}
 
       <ConfirmDialog
