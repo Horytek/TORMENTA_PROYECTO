@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/react-router";
@@ -7,25 +7,27 @@ import { useUserStore } from "@/store/useUserStore";
 import { verifyTokenRequest } from "@/api/auth";
 import { setAuthReady } from "@/api/axios";
 import { getToken } from "@/utils/authStorage";
+import { Loader2 } from "lucide-react";
 
-// Layouts and Pages
+// Layout + login cargan de inmediato; las páginas van diferidas (code-split por ruta).
 import LoginPage from "@/features/auth/pages/LoginPage";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
-import ProductsPage from "@/features/products/pages/ProductsPage";
-import DashboardPage from "@/features/dashboard/pages/DashboardPage";
-import ClientesPage from "@/features/clientes/pages/ClientesPage";
-import SuppliersPage from "@/features/suppliers/pages/SuppliersPage";
-import BranchesPage from "@/features/branches/pages/BranchesPage";
-import WarehousesPage from "@/features/warehouses/pages/WarehousesPage";
-import KardexPage from "@/features/kardex/pages/KardexPage";
-import UsersPage from "@/features/users/pages/UsersPage";
-import RolesPage from "@/features/roles/pages/RolesPage";
-import SettingsPage from "@/features/settings/pages/SettingsPage";
-import ReportsPage from "@/features/reports/pages/ReportsPage";
-import SalesPage from "@/features/sales/pages/SalesPage";
-import InventoryPage from "@/features/inventory/pages/InventoryPage";
-import EmployeesPage from "@/features/employees/pages/EmployeesPage";
-import { Loader2 } from "lucide-react";
+import { PageLoader } from "@/components/shared/PageLoader";
+
+const ProductsPage = lazy(() => import("@/features/products/pages/ProductsPage"));
+const DashboardPage = lazy(() => import("@/features/dashboard/pages/DashboardPage"));
+const ClientesPage = lazy(() => import("@/features/clientes/pages/ClientesPage"));
+const SuppliersPage = lazy(() => import("@/features/suppliers/pages/SuppliersPage"));
+const BranchesPage = lazy(() => import("@/features/branches/pages/BranchesPage"));
+const WarehousesPage = lazy(() => import("@/features/warehouses/pages/WarehousesPage"));
+const KardexPage = lazy(() => import("@/features/kardex/pages/KardexPage"));
+const UsersPage = lazy(() => import("@/features/users/pages/UsersPage"));
+const RolesPage = lazy(() => import("@/features/roles/pages/RolesPage"));
+const SettingsPage = lazy(() => import("@/features/settings/pages/SettingsPage"));
+const ReportsPage = lazy(() => import("@/features/reports/pages/ReportsPage"));
+const SalesPage = lazy(() => import("@/features/sales/pages/SalesPage"));
+const InventoryPage = lazy(() => import("@/features/inventory/pages/InventoryPage"));
+const EmployeesPage = lazy(() => import("@/features/employees/pages/EmployeesPage"));
 
 // Initialize Query Client for TanStack Query
 const queryClient = new QueryClient({
@@ -103,6 +105,7 @@ export default function App() {
       <Router>
         <NuqsAdapter>
           <TooltipProvider>
+            <Suspense fallback={<PageLoader />}>
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<LoginPage />} />
@@ -137,6 +140,7 @@ export default function App() {
                 <Route path="/*" element={<Navigate to="/dashboard" replace />} />
               </Route>
             </Routes>
+            </Suspense>
           </TooltipProvider>
         </NuqsAdapter>
       </Router>
