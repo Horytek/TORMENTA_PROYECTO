@@ -1,29 +1,49 @@
 import api from "@/api/axios";
 import { isOk, unwrapList } from "@/api/http";
-import type { Talla, Tonalidad } from "../types";
+import type { Attribute, AttributeInput, AttributeValue, ValueMetadata } from "../types";
 
-// Tallas
-export const getTallas = async (): Promise<Talla[]> =>
-  unwrapList<Talla>(await api.get("/talla"));
+const parseMeta = (m: unknown): ValueMetadata | null => {
+  if (!m) return null;
+  if (typeof m === "object") return m as ValueMetadata;
+  if (typeof m === "string") {
+    try {
+      return JSON.parse(m) as ValueMetadata;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+};
 
-export const createTalla = async (nombre: string): Promise<boolean> =>
-  isOk(await api.post("/talla", { nombre: nombre.trim() }));
+// ── Atributos ────────────────────────────────────────────────
+export const getAttributes = async (): Promise<Attribute[]> =>
+  unwrapList<Attribute>(await api.get("/attributes"));
 
-export const updateTalla = async (id: number, nombre: string): Promise<boolean> =>
-  isOk(await api.put(`/talla/${id}`, { nombre: nombre.trim() }));
+export const createAttribute = async (input: AttributeInput): Promise<boolean> =>
+  isOk(await api.post("/attributes", input));
 
-export const deleteTalla = async (id: number): Promise<boolean> =>
-  isOk(await api.delete(`/talla/${id}`));
+export const updateAttribute = async (id: number, input: AttributeInput): Promise<boolean> =>
+  isOk(await api.put(`/attributes/${id}`, input));
 
-// Tonalidades
-export const getTonalidades = async (): Promise<Tonalidad[]> =>
-  unwrapList<Tonalidad>(await api.get("/tonalidad"));
+// ── Valores ──────────────────────────────────────────────────
+export const getAttributeValues = async (idAtributo: number): Promise<AttributeValue[]> =>
+  unwrapList<Record<string, unknown>>(await api.get(`/attributes/${idAtributo}/values`)).map((v) => ({
+    id_valor: v.id_valor as number,
+    valor: v.valor as string,
+    metadata: parseMeta(v.metadata),
+  }));
 
-export const createTonalidad = async (t: { nombre: string; hex?: string }): Promise<boolean> =>
-  isOk(await api.post("/tonalidad", { nombre: t.nombre.trim(), hex: t.hex || null }));
+export const createAttributeValue = async (
+  idAtributo: number,
+  valor: string,
+  metadata?: ValueMetadata | null
+): Promise<boolean> => isOk(await api.post(`/attributes/${idAtributo}/values`, { valor: valor.trim(), metadata: metadata ?? null }));
 
-export const updateTonalidad = async (id: number, t: { nombre: string; hex?: string }): Promise<boolean> =>
-  isOk(await api.put(`/tonalidad/${id}`, { nombre: t.nombre.trim(), hex: t.hex || null }));
+export const updateAttributeValue = async (
+  idValor: number,
+  valor: string,
+  metadata?: ValueMetadata | null
+): Promise<boolean> => isOk(await api.put(`/attributes/values/${idValor}`, { valor: valor.trim(), metadata: metadata ?? null }));
 
-export const deleteTonalidad = async (id: number): Promise<boolean> =>
-  isOk(await api.delete(`/tonalidad/${id}`));
+export const deleteAttributeValue = async (idValor: number): Promise<boolean> =>
+  isOk(await api.delete(`/attributes/values/${idValor}`));

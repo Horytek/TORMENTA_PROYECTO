@@ -17,7 +17,8 @@ export type FieldSemantic =
 // Definición de un campo
 // ─────────────────────────────────────────────────────────────────
 export interface FieldDef<T> {
-  key: keyof T & string;
+  /** Clave real del item, o un identificador arbitrario para columnas computadas (con `render`). */
+  key: (keyof T & string) | (string & {});
   label?: string;
   priority?: FieldPriority;
   semantic?: FieldSemantic;

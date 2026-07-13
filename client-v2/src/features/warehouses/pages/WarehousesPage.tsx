@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryState, parseAsString } from "nuqs";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { useUserStore } from "@/store/useUserStore";
 
 import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection/AdaptiveCollection";

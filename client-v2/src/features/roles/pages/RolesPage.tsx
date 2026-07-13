@@ -150,14 +150,17 @@ export default function RolesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="pr-4">
-                      <div className="flex items-center justify-end gap-1">
-                        <IconAction
-                          label={reserved ? "Rol del sistema" : "Permisos"}
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 gap-1.5"
                           onClick={() => setPermsRole(r)}
                           disabled={!canEdit || reserved}
                         >
-                          <SlidersHorizontal className="h-4 w-4" />
-                        </IconAction>
+                          <SlidersHorizontal className="h-3.5 w-3.5" />
+                          Permisos
+                        </Button>
                         <IconAction
                           label={reserved ? "Rol del sistema" : "Editar"}
                           onClick={() => openEdit(r)}
