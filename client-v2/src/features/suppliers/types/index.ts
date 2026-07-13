@@ -1,0 +1,53 @@
+export type TipoProveedor = "natural" | "juridico";
+
+/** Proveedor tal como lo devuelve el backend vía /destinatario. */
+export interface Proveedor {
+  id: number;
+  /** Alias compuesto que viene del backend: "nombres apellidos" o "razon_social" */
+  destinatario?: string;
+  /** Documento: dni o ruc según tipo */
+  documento?: string;
+  nombres?: string;
+  apellidos?: string;
+  razon_social?: string;
+  dni?: string;
+  ruc?: string;
+  ubicacion?: string;
+  direccion?: string;
+  telefono?: string;
+  email?: string;
+  estado: number; // 1 = activo, 0 = inactivo
+  /** Cantidad de productos asociados — viene del join con productos */
+  productos_count?: number;
+}
+
+/** Payload para crear/actualizar (POST /destinatario/natural | /destinatario/juridico). */
+export interface ProveedorInput {
+  tipo: TipoProveedor;
+  dni?: string;
+  ruc?: string;
+  nombres?: string;
+  apellidos?: string;
+  razon_social?: string;
+  /** El backend requiere ubicacion — se setea implícitamente a "proveedor" */
+  ubicacion?: string;
+  direccion?: string;
+  telefono?: string;
+  email?: string;
+  estado?: number;
+}
+
+export const proveedorTipo = (p: Proveedor): TipoProveedor =>
+  p.ruc || p.razon_social ? "juridico" : "natural";
+
+export const proveedorNombre = (p: Proveedor): string =>
+  p.razon_social?.trim() ||
+  `${p.nombres ?? ""} ${p.apellidos ?? ""}`.trim() ||
+  p.destinatario?.trim() ||
+  "Sin nombre";
+
+export const proveedorDocumento = (p: Proveedor): string =>
+  p.ruc || p.dni || p.documento || "Sin documento";
+
+export const proveedorLabel = (p: Proveedor): string =>
+  `${proveedorNombre(p)} — ${proveedorDocumento(p)}`;

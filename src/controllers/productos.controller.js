@@ -57,6 +57,19 @@ const getProductos = async (req, res) => {
 
         const whereSQL = `WHERE ${whereClauses.join(' AND ')}`;
 
+        const [countResult] = await connection.query(
+            `
+            SELECT COUNT(DISTINCT PR.id_producto) AS total
+            FROM producto PR
+            INNER JOIN marca MA ON MA.id_marca = PR.id_marca
+            INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
+            INNER JOIN categoria cat ON cat.id_categoria = CA.id_categoria
+            ${whereSQL}
+            `,
+            params
+        );
+        const total = countResult[0]?.total || 0;
+
         const [result] = await connection.query(
             `
             SELECT PR.id_producto, PR.descripcion,
@@ -79,7 +92,17 @@ const getProductos = async (req, res) => {
             [...params, limit, offset]
         );
 
-        res.json({ code: 1, data: result, message: "Productos listados" });
+        res.json({
+            code: 1,
+            data: result,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            },
+            message: "Productos listados"
+        });
     } catch (error) {
         console.error('Error en getProductos:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });

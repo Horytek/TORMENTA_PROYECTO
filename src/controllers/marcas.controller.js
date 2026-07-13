@@ -182,10 +182,17 @@ const deleteMarca = async (req, res) => {
         connection = await getConnection();
 
         // Check for dependencies in 'producto'
-        const [products] = await connection.query("SELECT 1 FROM producto WHERE id_marca = ? AND id_tenant = ? LIMIT 1", [id, req.id_tenant]);
+        const [products] = await connection.query("SELECT COUNT(*) as cnt FROM producto WHERE id_marca = ? AND id_tenant = ?", [id, req.id_tenant]);
 
-        if (products.length > 0) {
-            return res.status(409).json({ code: 0, message: "No se puede eliminar la marca porque está asociada a productos." });
+        if (products[0].cnt > 0) {
+            // Soft delete: desactivar en lugar de eliminar
+            await connection.query("UPDATE marca SET estado_marca = 0 WHERE id_marca = ? AND id_tenant = ?", [id, req.id_tenant]);
+            queryCache.clear();
+            return res.json({
+                code: 1,
+                mode: "deactivated",
+                message: "La marca estaba asociada a productos. Se desactivó en lugar de eliminar."
+            });
         }
 
         const [result] = await connection.query("DELETE FROM marca WHERE id_marca = ? AND id_tenant = ?", [id, req.id_tenant]);
@@ -194,10 +201,8 @@ const deleteMarca = async (req, res) => {
             return res.status(404).json({ code: 0, message: "Marca no encontrada" });
         }
 
-        // Limpiar caché
         queryCache.clear();
-
-        res.json({ code: 1, message: "Marca eliminada" });
+        res.json({ code: 1, mode: "deleted", message: "Marca eliminada permanentemente." });
     } catch (error) {
         console.error('Error en deleteMarca:', error);
         if (!res.headersSent) {
@@ -270,6 +275,34 @@ const importExcel = async (req, res) => {
     }
 };
 
+const checkUsageMarca = async (req, res) => {
+    let connection;
+    try {
+        const { id } = req.params;
+        connection = await getConnection();
+
+        const [[productCount]] = await connection.query(
+            "SELECT COUNT(*) as cnt FROM producto WHERE id_marca = ? AND id_tenant = ?",
+            [id, req.id_tenant]
+        );
+
+        res.json({
+            code: 1,
+            used: productCount.cnt > 0,
+            productCount: productCount.cnt
+        });
+    } catch (error) {
+        console.error('Error en checkUsageMarca:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ code: 0, message: "Error interno del servidor" });
+        }
+    } finally {
+        if (connection) {
+            connection.release();
+        }
+    }
+};
+
 export const methods = {
     getMarcas,
     getMarca,
@@ -277,5 +310,6 @@ export const methods = {
     updateMarca,
     deactivateMarca,
     deleteMarca,
+    checkUsageMarca,
     importExcel
 };
