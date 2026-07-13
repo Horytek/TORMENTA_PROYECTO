@@ -45,11 +45,67 @@ export function SalesReportPanel() {
     queryFn: () => getVentas(filters),
   });
 
+function parseMetodoPago(metodoPago?: string, totalVenta: number = 0) {
+  if (!metodoPago) return { efectivo: 0, digital: 0 };
+  const upper = metodoPago.toUpperCase();
+  if (upper === "EFECTIVO") {
+    return { efectivo: totalVenta, digital: 0 };
+  }
+  if (["TARJETA", "TRANSFERENCIA", "YAPE", "PLIN"].includes(upper)) {
+    return { efectivo: 0, digital: totalVenta };
+  }
+  if (metodoPago.includes(":")) {
+    const parts = metodoPago.split(",").map(p => p.trim());
+    let efectivo = 0;
+    let digital = 0;
+    for (const part of parts) {
+      const idx = part.indexOf(":");
+      if (idx !== -1) {
+        const tipo = part.slice(0, idx).trim().toUpperCase();
+        const monto = parseFloat(part.slice(idx + 1).trim()) || 0;
+        if (tipo === "EFECTIVO") {
+          efectivo += monto;
+        } else if (["PLIN", "YAPE", "TARJETA", "TRANSFERENCIA", "VISA", "MASTERCARD"].includes(tipo)) {
+          digital += monto;
+        }
+      }
+    }
+    return { efectivo, digital };
+  }
+  if (upper === "MIXTO") {
+    return { efectivo: totalVenta / 2, digital: totalVenta / 2 };
+  }
+  return { efectivo: 0, digital: totalVenta };
+}
+
   const stats = useMemo(() => {
-    const total = ventas.reduce((sum, v) => sum + Number(v.total_t ?? 0), 0);
+    let total = 0;
     const count = ventas.length;
-    const igv = ventas.reduce((sum, v) => sum + Number(v.igv ?? 0), 0);
-    return { total, count, igv, promedio: count > 0 ? total / count : 0 };
+    let igv = 0;
+    let efectivo = 0;
+    let digital = 0;
+
+    ventas.forEach((v) => {
+      const isCompletada = v.estado_venta === 1 || v.estado === 1;
+      if (isCompletada) {
+        const saleTotal = Number(v.total_t ?? v.total ?? 0);
+        total += saleTotal;
+        igv += Number(v.igv ?? 0);
+        
+        const split = parseMetodoPago(v.metodo_pago, saleTotal);
+        efectivo += split.efectivo;
+        digital += split.digital;
+      }
+    });
+
+    return {
+      total,
+      count,
+      igv,
+      promedio: count > 0 ? total / count : 0,
+      efectivo,
+      digital
+    };
   }, [ventas]);
 
   const handleExportCSV = () => {
@@ -154,9 +210,11 @@ export function SalesReportPanel() {
       </Card>
 
       {/* ── Stats ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <StatCard label="Ventas" value={stats.count.toLocaleString()} />
         <StatCard label="Total" value={`S/ ${stats.total.toFixed(2)}`} accent />
+        <StatCard label="Dinero Físico" value={`S/ ${stats.efectivo.toFixed(2)}`} />
+        <StatCard label="Dinero Digital" value={`S/ ${stats.digital.toFixed(2)}`} />
         <StatCard label="IGV Total" value={`S/ ${stats.igv.toFixed(2)}`} />
         <StatCard label="Promedio" value={`S/ ${stats.promedio.toFixed(2)}`} />
       </div>
@@ -245,7 +303,7 @@ export function SalesReportPanel() {
                             title="Anular venta"
                             onClick={() => {
                               if (confirm(`¿Anular venta ${venta.num_comprobante}?`)) {
-                                annulVenta(venta.id_venta).then(() => refetch());
+                                if (venta.id_venta) annulVenta(venta.id_venta).then(() => refetch());
                               }
                             }}
                           >

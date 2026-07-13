@@ -158,6 +158,9 @@ export function AdaptiveCard<T extends Record<string, unknown>>({
   const primaryField = primary[0] || sorted[0];
   const subtitleField = secondary.find(f => f.semantic === "subtitle" || String(f.key).includes("nom_subcat") || String(f.key).includes("categoria"));
   const chipFields = secondary.filter(f => f.semantic === "chip" || f.semantic === "badge");
+  const statusField = secondary.find(f => f.semantic === "status-dot");
+  const iconTextFields = secondary.filter(f => f.semantic === "icon-text");
+  const textFields = secondary.filter(f => f.semantic === "text");
   const numberField = secondary.find(f => f.semantic === "number");
   const codeFields = meta.filter(f => f.semantic === "code");
   const barcodeField = meta.find(f => f.semantic === "barcode" || f.key === "cod_barras");
@@ -230,51 +233,122 @@ export function AdaptiveCard<T extends Record<string, unknown>>({
         )}
 
         {/* ── Contenido principal ── */}
-        <div className={cn("min-w-0 flex-1 px-4 py-3.5", useAccentTop && "pt-3 pb-4 flex flex-col justify-between")}>
+        <div className={cn("min-w-0 flex-1 px-4 py-3.5 space-y-1.5", useAccentTop && "pt-3 pb-4 flex flex-col justify-between")}>
 
-          {/* Título — protagonista */}
-          <p className="truncate text-sm font-medium tracking-tight text-foreground/90">
-            {primaryField ? renderField(primaryField, item[primaryField.key as keyof T], item, index) : (
-              <span className="text-muted-foreground/40 italic">Sin nombre</span>
-            )}
-          </p>
-
-          {/* Subtítulo */}
-          {subtitleField && (
-            <p className={cn("mt-0.5 truncate text-xs font-medium", tint ? tint.text : "golden-node-text")}>
-              {renderField(subtitleField, item[subtitleField.key as keyof T], item, index)}
+          {/* Bloque: título + subtítulo */}
+          <div className="space-y-0.5">
+            <p className="truncate text-sm font-medium tracking-tight text-foreground/90">
+              {primaryField ? renderField(primaryField, item[primaryField.key as keyof T], item, index) : (
+                <span className="text-muted-foreground/40 italic">Sin nombre</span>
+              )}
             </p>
-          )}
 
-          {/* Chips — marca, categoría, estado */}
+            {(() => {
+              if (!subtitleField) return null;
+              const raw = item[subtitleField.key as keyof T];
+              if (raw == null || raw === '' || String(raw).trim() === '—') return null;
+              return (
+                <p className={cn("truncate text-xs font-medium", tint ? tint.text : "golden-node-text")}>
+                  {renderField(subtitleField, raw, item, index)}
+                </p>
+              );
+            })()}
+          </div>
+
+          {/* Chips — marca, categoría */}
           {chipFields.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {chipFields.slice(0, 3).map(f => (
-                <div key={f.key}>
-                  {renderField(f, item[f.key as keyof T], item, index)}
-                </div>
-              ))}
+            <div className="flex flex-wrap gap-1.5">
+              {chipFields.slice(0, 3).map(f => {
+                const v = item[f.key as keyof T];
+                if (v == null || v === '' || String(v).trim() === '—') return null;
+                return <div key={f.key}>{renderField(f, v, item, index)}</div>;
+              }).filter(Boolean)}
+              {/* placeholder para no dejar gap si todos están vacíos pero el array no */}
             </div>
           )}
 
-          {/* Número destacado */}
-          {numberField && (
-            <div className={cn("mt-2 text-base font-bold tabular-nums", tint ? tint.text : "text-foreground")}>
-              {renderField(numberField, item[numberField.key as keyof T], item, index)}
+          {/* Número discreto — oculto si es 0/null */}
+          {(() => {
+            if (!numberField) return null;
+            const raw = item[numberField.key as keyof T];
+            const num = Number(raw);
+            const isZero = !isNaN(num) && num === 0;
+            const isEmpty = raw == null || raw === '' || isZero;
+            if (isEmpty) return null;
+            return (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground tabular-nums">
+                {numberField.label && <span className="text-muted-foreground/60">{numberField.label}:</span>}
+                <span className="font-medium text-foreground/80">
+                  {renderField(numberField, raw, item, index)}
+                </span>
+              </div>
+            );
+          })()}
+
+          {/* Status dot — estado activo/inactivo */}
+          {statusField && (
+            <div>
+              {renderField(statusField, item[statusField.key as keyof T], item, index)}
             </div>
           )}
+
+          {/* Campos con icono (teléfono, email, vendedor) — render gestiona vacío */}
+          {(() => {
+            const visible = iconTextFields.filter(f => {
+              if (f.render) return true;
+              const v = item[f.key as keyof T];
+              return v != null && v !== '' && String(v).trim() !== '' && String(v).trim() !== '—';
+            });
+            if (visible.length === 0) return null;
+            return (
+              <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+                {visible.slice(0, 3).map(f => (
+                  <div key={f.key} className="min-w-0 truncate">
+                    {renderField(f, item[f.key as keyof T], item, index)}
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+
+          {/* Campos de texto genéricos (dirección, etc.) — solo no vacíos */}
+          {(() => {
+            const visible = textFields.filter(f => {
+              if (f.render) return true;
+              const v = item[f.key as keyof T];
+              return v != null && v !== '' && String(v).trim() !== '' && String(v).trim() !== '—';
+            });
+            if (visible.length === 0) return null;
+            return (
+              <div className="flex flex-col gap-0.5 pt-1 border-t border-border/30">
+                {visible.slice(0, 2).map(f => (
+                  <p key={f.key} className="truncate text-xs text-muted-foreground">
+                    {renderField(f, item[f.key as keyof T], item, index)}
+                  </p>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* Metadatos en línea */}
-          {codeFields.length > 0 && (
-            <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5">
-              {codeFields.slice(0, 3).map(f => (
-                <span key={f.key} className="flex items-center gap-1">
-                  {f.label && <span className="text-[10px] text-muted-foreground/40">{f.label}</span>}
-                  <span className="text-[10px] font-medium text-muted-foreground/60">{renderField(f, item[f.key as keyof T], item, index)}</span>
-                </span>
-              ))}
-            </div>
-          )}
+          {(() => {
+            const visible = codeFields.filter(f => {
+              if (f.render) return true;
+              const v = item[f.key as keyof T];
+              return v != null && v !== '' && String(v).trim() !== '' && String(v).trim() !== '—';
+            });
+            if (visible.length === 0) return null;
+            return (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
+                {visible.slice(0, 3).map(f => (
+                  <span key={f.key} className="flex items-center gap-1">
+                    {f.label && <span className="text-[10px] uppercase tracking-wider text-muted-foreground/50">{f.label}</span>}
+                    <span className="text-[10px] font-mono font-medium text-muted-foreground/70">{renderField(f, item[f.key as keyof T], item, index)}</span>
+                  </span>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* Código de barras dedicado */}
           {barcodeField && (

@@ -8,6 +8,7 @@ export interface Sucursal {
   /** Nombre del vendedor asignado (viene por join). */
   nombre_completo?: string;
   nombres?: string;
+  nombre_vendedor?: string;
 }
 
 /** Vendedor activo (GET /sucursales/vendedores) para asignar a la sucursal. */
@@ -25,5 +26,12 @@ export interface SucursalInput {
   estado_sucursal?: number;
 }
 
-export const sucursalVendedor = (s: Sucursal): string =>
-  s.nombre_completo?.trim() || s.nombres?.trim() || (s.dni ? `DNI ${s.dni}` : "Sin asignar");
+export const sucursalVendedor = (s: Sucursal): string => {
+  const name = (s.nombre_vendedor && s.nombre_vendedor !== "Sin vendedor")
+    ? s.nombre_vendedor.trim()
+    : (s.nombre_completo?.trim() || s.nombres?.trim());
+  if (name && s.dni) {
+    return `${name} · ${s.dni}`;
+  }
+  return name || (s.dni ? `DNI ${s.dni}` : "Sin asignar");
+};

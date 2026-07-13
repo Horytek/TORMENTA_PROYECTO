@@ -268,7 +268,28 @@ const getVentas = async (req, res) => {
       params.push(id_tenant);
     }
 
-    // Solo ventas activas (trae todas, los filtros se aplican en frontend)
+    if (req.query.fecha_inicio) {
+      where.push("v.f_venta >= ?");
+      params.push(req.query.fecha_inicio);
+    }
+    if (req.query.fecha_fin) {
+      where.push("v.f_venta <= ?");
+      params.push(req.query.fecha_fin);
+    }
+    if (req.query.id_comprobante) {
+      if (req.query.id_comprobante === "Nota") {
+        where.push("tp.nom_tipocomp = 'Nota de venta'");
+      } else {
+        where.push("tp.nom_tipocomp = ?");
+        params.push(req.query.id_comprobante);
+      }
+    }
+    if (req.query.estado !== undefined && req.query.estado !== '') {
+      where.push("v.estado_venta = ?");
+      params.push(parseInt(req.query.estado, 10));
+    }
+
+    // Armar cláusula WHERE
     let whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
     // Consulta principal con detalles agregados

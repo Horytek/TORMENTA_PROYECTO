@@ -74,7 +74,7 @@ export function PaymentModal({ open, onClose, onSaleComplete }: PaymentModalProp
   const mutation = useMutation({
     mutationFn: async () => {
       const payload: VentaPayload = {
-        id_sucursal: user?.id ?? 1,
+        id_sucursal: user?.id_sucursal ?? user?.id ?? 1,
         id_almacen: 1,
         id_cliente: cart.cliente?.id_cliente,
         nombre_cliente: cart.cliente

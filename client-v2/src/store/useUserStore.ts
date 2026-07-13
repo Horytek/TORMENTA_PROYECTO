@@ -7,6 +7,7 @@ export interface User {
   username: string;
   roleId: number | null;
   sucursal: string;
+  id_sucursal?: number | null;
   id_tenant: number | null;
   id_empresa: number | null;
   plan_pago: string;
@@ -101,6 +102,7 @@ const normalizeUser = (raw: any): User | null => {
     username,
     roleId,
     sucursal: raw.sucursal || raw.nombre_sucursal || raw.sur || "",
+    id_sucursal: raw.id_sucursal || raw.idSucursal || null,
     id_tenant: raw.id_tenant || raw.idTenant || null,
     id_empresa: raw.id_empresa || raw.idEmpresa || null,
     plan_pago: raw.plan_pago || raw.planPago || null,

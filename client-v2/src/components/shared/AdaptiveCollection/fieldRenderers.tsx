@@ -19,8 +19,8 @@ const SEMANTIC_COLORS: Record<string, { bg: string; text: string; dot?: string }
 
 function getStatusColor(value: unknown): { bg: string; text: string; dot?: string } {
   const str = String(value ?? "").toLowerCase();
-  if (str === "1" || str === "active" || str === "activo" || str === "enabled" || str === "aprobado" || str === "completado" || str === "completed") return SEMANTIC_COLORS.active;
-  if (str === "0" || str === "inactive" || str === "inactivo" || str === "disabled" || str === "desactivado" || str === "deleted" || str === "eliminado") return SEMANTIC_COLORS.inactivo;
+  if (str === "1" || str === "active" || str === "activo" || str === "activa" || str === "enabled" || str === "aprobado" || str === "completado" || str === "completed") return SEMANTIC_COLORS.active;
+  if (str === "0" || str === "inactive" || str === "inactivo" || str === "inactiva" || str === "disabled" || str === "desactivado" || str === "deleted" || str === "eliminado") return SEMANTIC_COLORS.inactivo;
   if (str === "warning" || str === "pendiente" || str === "pending" || str === "en proceso") return SEMANTIC_COLORS.warning;
   if (str === "error" || str === "fallido" || str === "failed" || str === "rechazado") return SEMANTIC_COLORS.error;
   return SEMANTIC_COLORS.default;

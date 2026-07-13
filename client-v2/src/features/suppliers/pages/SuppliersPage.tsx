@@ -1,40 +1,20 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Package, Phone, Mail, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Phone, Mail } from "lucide-react";
 import { useUserStore } from "@/store/useUserStore";
-import { cn } from "@/lib/utils";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection/AdaptiveCollection";
+import type { FieldDef, RecordAction } from "@/components/shared/AdaptiveCollection/types";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import SupplierForm from "../components/SupplierForm";
 import { getProveedores, deleteProveedor } from "../api/suppliers";
 import type { Proveedor } from "../types";
 import { proveedorNombre, proveedorDocumento, proveedorTipo } from "../types";
 
-type FilterEstado = "todos" | "activo" | "inactivo";
-
 export default function SuppliersPage() {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState("");
-  const [filterEstado, setFilterEstado] = useState<FilterEstado>("todos");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Proveedor | null>(null);
   const [deleting, setDeleting] = useState<Proveedor | null>(null);
@@ -51,19 +31,6 @@ export default function SuppliersPage() {
     queryFn: getProveedores,
   });
 
-  const filtered = proveedores.filter((p) => {
-    const term = search.toLowerCase().trim();
-    const matchTerm =
-      !term ||
-      proveedorNombre(p).toLowerCase().includes(term) ||
-      proveedorDocumento(p).toLowerCase().includes(term);
-    const matchEstado =
-      filterEstado === "todos" ||
-      (filterEstado === "activo" && p.estado === 1) ||
-      (filterEstado === "inactivo" && p.estado === 0);
-    return matchTerm && matchEstado;
-  });
-
   const deleteMutation = useMutation({
     mutationFn: (p: Proveedor) => deleteProveedor(p.id),
     onSuccess: () => {
@@ -75,171 +42,139 @@ export default function SuppliersPage() {
   const openCreate = () => { setEditing(null); setIsFormOpen(true); };
   const openEdit = (p: Proveedor) => { setEditing(p); setIsFormOpen(true); };
 
+  // ── Fields para AdaptiveCard ──────────────────────────────
+  const fields: FieldDef<Proveedor>[] = [
+    {
+      key: "nombre",
+      label: "Nombre",
+      priority: "primary",
+      semantic: "title",
+      render: (_v, item) => proveedorNombre(item),
+    },
+    {
+      key: "documento",
+      label: "Documento",
+      priority: "secondary",
+      semantic: "subtitle",
+      render: (_v, item) => {
+        const tipo = proveedorTipo(item) === "juridico" ? "RUC" : "DNI";
+        const num = proveedorDocumento(item);
+        return num ? `${tipo}: ${num}` : null;
+      },
+    },
+    {
+      key: "telefono",
+      label: "Teléfono",
+      priority: "secondary",
+      semantic: "icon-text",
+      render: (v) => {
+        if (!v) return null;
+        return (
+          <span className="flex items-center gap-1.5 min-w-0">
+            <Phone className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+            <span className="truncate">{String(v)}</span>
+          </span>
+        );
+      },
+    },
+    {
+      key: "email",
+      label: "Email",
+      priority: "secondary",
+      semantic: "icon-text",
+      render: (v) => {
+        if (!v) return null;
+        return (
+          <span className="flex items-center gap-1.5 min-w-0">
+            <Mail className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+            <span className="truncate">{String(v)}</span>
+          </span>
+        );
+      },
+    },
+    {
+      key: "productos_count",
+      label: "Productos",
+      priority: "secondary",
+      semantic: "number",
+      render: (v) => (v != null ? String(v) : "0"),
+    },
+    {
+      key: "estado",
+      label: "Estado",
+      priority: "secondary",
+      semantic: "status-dot",
+      format: (v) => (Number(v) === 1 ? "Activo" : "Inactivo"),
+    },
+    {
+      key: "direccion",
+      label: "Dirección",
+      priority: "secondary",
+      semantic: "text",
+    },
+    {
+      key: "id",
+      label: "ID",
+      priority: "meta",
+      semantic: "code",
+    },
+  ];
+
+  // ── Acciones de registro ─────────────────────────────────
+  const actions: RecordAction[] = [
+    {
+      id: "edit",
+      label: "Editar",
+      icon: <Pencil className="h-3.5 w-3.5" />,
+      onClick: (item) => openEdit(item as Proveedor),
+      disabled: !canEdit,
+    },
+    {
+      id: "delete",
+      label: "Eliminar",
+      icon: <Trash2 className="h-3.5 w-3.5" />,
+      onClick: (item) => setDeleting(item as Proveedor),
+      variant: "destructive",
+      disabled: !canDelete,
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Proveedores</h1>
-          <p className="text-sm text-muted-foreground">
-            {filtered.length} de {proveedores.length} proveedores
-          </p>
-        </div>
-        {canEdit && (
-          <Button onClick={openCreate} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Nuevo proveedor
-          </Button>
-        )}
-      </div>
+    <>
+      <AdaptiveCollection<Proveedor>
+        title="Proveedores"
+        items={proveedores}
+        fields={fields}
+        actions={actions}
+        isLoading={isLoading}
+        search={search}
+        searchPlaceholder="Buscar por nombre o documento…"
+        onSearch={setSearch}
+        layout="card"
+        getItemId={(p) => p.id}
+        empty={{
+          title: "No se encontraron proveedores",
+          description: search ? "Ajusta el término de búsqueda." : "Registra tu primer proveedor.",
+          action: !search && canEdit ? { label: "Nuevo proveedor", onClick: openCreate } : undefined,
+        }}
+        globalActions={
+          canEdit
+            ? [
+                {
+                  id: "create",
+                  label: "Nuevo proveedor",
+                  icon: <Plus className="h-4 w-4" />,
+                  onClick: () => openCreate(),
+                },
+              ]
+            : []
+        }
+      />
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[240px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por nombre o documento…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Select
-          value={filterEstado}
-          onValueChange={(v) => setFilterEstado(v as FilterEstado)}
-        >
-          <SelectTrigger className="w-[160px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos</SelectItem>
-            <SelectItem value="activo">Activos</SelectItem>
-            <SelectItem value="inactivo">Inactivos</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Table */}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Documento</TableHead>
-              <TableHead>Teléfono</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead className="text-center">Productos</TableHead>
-              <TableHead className="text-center">Estado</TableHead>
-              {(canEdit || canDelete) && <TableHead className="text-right">Acciones</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                  Cargando proveedores…
-                </TableCell>
-              </TableRow>
-            ) : filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                  {search || filterEstado !== "todos"
-                    ? "Ningún proveedor coincide con los filtros."
-                    : "No hay proveedores registrados."}
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtered.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell>
-                    <div className="font-medium">{proveedorNombre(p)}</div>
-                    {p.direccion && (
-                      <div className="text-xs text-muted-foreground">{p.direccion}</div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-mono text-sm">
-                      {proveedorTipo(p) === "juridico" ? "RUC" : "DNI"}: {proveedorDocumento(p)}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {p.telefono ? (
-                      <span className="flex items-center gap-1.5 text-sm">
-                        <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                        {p.telefono}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {p.email ? (
-                      <span className="flex items-center gap-1.5 text-sm">
-                        <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                        {p.email}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <span className="flex items-center justify-center gap-1 text-sm">
-                      <Package className="h-3.5 w-3.5 text-muted-foreground" />
-                      {p.productos_count ?? 0}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge
-                      variant={p.estado === 1 ? "default" : "secondary"}
-                      className={cn(
-                        p.estado === 1
-                          ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100"
-                          : "bg-rose-100 text-rose-700 hover:bg-rose-100"
-                      )}
-                    >
-                      {p.estado === 1 ? "Activo" : "Inactivo"}
-                    </Badge>
-                  </TableCell>
-                  {(canEdit || canDelete) && (
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {canEdit && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openEdit(p)}
-                            title="Editar"
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {canDelete && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setDeleting(p)}
-                            title="Eliminar"
-                            className="text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* CRUD Modal */}
       {isFormOpen && (
         <SupplierForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} initialData={editing} />
       )}
 
-      {/* Confirm delete */}
       <ConfirmDialog
         open={!!deleting}
         onClose={() => setDeleting(null)}
@@ -258,6 +193,6 @@ export default function SuppliersPage() {
         variant="danger"
         isPending={deleteMutation.isPending}
       />
-    </div>
+    </>
   );
 }

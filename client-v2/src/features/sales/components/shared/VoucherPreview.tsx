@@ -49,10 +49,11 @@ export function VoucherPreview({ open, venta, onClose }: VoucherPreviewProps) {
 // VoucherContent — Componente imprimible (sin Dialog)
 // ─────────────────────────────────────────────────────────────────
 function VoucherContent({ venta }: { venta: Venta }) {
-  const fecha = new Date(venta.f_venta).toLocaleDateString("es-PE", {
+  const fVenta = venta.f_venta ?? venta.fecha_iso ?? new Date().toISOString();
+  const fecha = new Date(fVenta).toLocaleDateString("es-PE", {
     year: "numeric", month: "long", day: "numeric",
   });
-  const hora = new Date(venta.f_venta).toLocaleTimeString("es-PE", {
+  const hora = new Date(fVenta).toLocaleTimeString("es-PE", {
     hour: "2-digit", minute: "2-digit",
   });
 
@@ -70,7 +71,7 @@ function VoucherContent({ venta }: { venta: Venta }) {
 
       {/* Tipo + número */}
       <div className="text-center my-2">
-        <p className="font-bold text-sm">{venta.id_comprobante.toUpperCase()}</p>
+        <p className="font-bold text-sm">{(venta.id_comprobante ?? "COMPROBANTE").toUpperCase()}</p>
         <p className="text-[10px]">{venta.num_comprobante}</p>
       </div>
 
@@ -126,16 +127,16 @@ function VoucherContent({ venta }: { venta: Venta }) {
       <div className="space-y-1">
         <div className="flex justify-between text-[10px]">
           <span>Subtotal</span>
-          <span className="tabular-nums">S/ {Number(venta.total_t - venta.igv).toFixed(2)}</span>
+          <span className="tabular-nums">S/ {(Number(venta.total_t ?? 0) - Number(venta.igv ?? 0)).toFixed(2)}</span>
         </div>
         <div className="flex justify-between text-[10px]">
           <span>IGV (18%)</span>
-          <span className="tabular-nums">S/ {Number(venta.igv).toFixed(2)}</span>
+          <span className="tabular-nums">S/ {Number(venta.igv ?? 0).toFixed(2)}</span>
         </div>
         <Separator className="border-zinc-400" />
         <div className="flex justify-between font-bold text-sm">
           <span>TOTAL</span>
-          <span className="tabular-nums">S/ {Number(venta.total_t).toFixed(2)}</span>
+          <span className="tabular-nums">S/ {Number(venta.total_t ?? 0).toFixed(2)}</span>
         </div>
       </div>
 
