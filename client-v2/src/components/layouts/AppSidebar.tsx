@@ -27,6 +27,7 @@ import {
   User,
   Users,
   ShoppingCart,
+  Palette,
 } from "lucide-react";
 import { removeToken } from "@/utils/authStorage";
 import { resetVerifyTokenCache } from "@/api/auth";
@@ -68,6 +69,7 @@ export default function AppSidebar() {
       items: [
         { title: "Inicio", url: "/dashboard", icon: Home },
         { title: "Productos", url: "/products", icon: Tags, capability: "productos" },
+        { title: "Contenidos", url: "/content", icon: Palette, capability: "gestor-contenidos" },
         { title: "Punto de Venta (POS)", url: "/sales", icon: ShoppingCart, capability: "ventas" },
       ],
     },

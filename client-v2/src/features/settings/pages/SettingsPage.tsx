@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Check, Building2, MapPin, Phone } from "lucide-react";
+import { Loader2, Check, Building2, MapPin, Phone, ImageIcon, Upload, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,17 +56,36 @@ export default function SettingsPage() {
     formState: { errors, isDirty },
   } = useForm<FormValues>({ defaultValues: empty });
 
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (negocio !== undefined) reset(toForm(negocio ?? null));
   }, [negocio, reset]);
 
+  const onPickLogo = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setLogoFile(file);
+    setLogoPreview(file ? URL.createObjectURL(file) : null);
+  };
+
+  const clearLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
   const mutation = useMutation({
-    mutationFn: (values: FormValues) => updateNegocio(values),
+    mutationFn: (values: FormValues) => updateNegocio(values, logoFile),
     onSuccess: (_ok, values) => {
       queryClient.invalidateQueries({ queryKey: ["negocio"] });
       reset(values); // limpia isDirty tras guardar
+      clearLogo();
     },
   });
+
+  const canSave = (isDirty || !!logoFile) && !mutation.isPending;
 
   if (isLoading) {
     return (
@@ -88,7 +107,7 @@ export default function SettingsPage() {
             Estos datos aparecen en tus comprobantes y reportes.
           </p>
         </div>
-        <Button type="submit" disabled={mutation.isPending || !isDirty} className="gap-2 self-start sm:self-auto">
+        <Button type="submit" disabled={!canSave} className="gap-2 self-start sm:self-auto">
           {mutation.isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : mutation.isSuccess && !isDirty ? (
@@ -103,6 +122,39 @@ export default function SettingsPage() {
           No se pudieron guardar los cambios. Intenta de nuevo.
         </p>
       )}
+
+      {/* Logo */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ImageIcon className="h-4 w-4 text-brand" />
+            Logotipo
+          </CardTitle>
+          <CardDescription>Se muestra en tus comprobantes. PNG o JPG.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex items-center gap-4">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
+            {logoPreview || negocio?.logotipo ? (
+              <img src={logoPreview ?? negocio?.logotipo} alt="Logotipo" className="h-full w-full object-contain" />
+            ) : (
+              <ImageIcon className="h-7 w-7 text-muted-foreground/40" />
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={onPickLogo} className="hidden" />
+            <Button type="button" variant="outline" size="sm" className="gap-2" onClick={() => fileRef.current?.click()}>
+              <Upload className="h-3.5 w-3.5" />
+              {logoFile ? "Cambiar imagen" : "Subir logotipo"}
+            </Button>
+            {logoFile && (
+              <button type="button" onClick={clearLogo} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-destructive">
+                <X className="h-3 w-3" />
+                Quitar selección ({logoFile.name})
+              </button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Datos del negocio */}
       <Card>

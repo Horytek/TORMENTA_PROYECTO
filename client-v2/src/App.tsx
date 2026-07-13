@@ -28,6 +28,7 @@ const ReportsPage = lazy(() => import("@/features/reports/pages/ReportsPage"));
 const SalesPage = lazy(() => import("@/features/sales/pages/SalesPage"));
 const InventoryPage = lazy(() => import("@/features/inventory/pages/InventoryPage"));
 const EmployeesPage = lazy(() => import("@/features/employees/pages/EmployeesPage"));
+const ContentPage = lazy(() => import("@/features/content/pages/ContentPage"));
 
 // Initialize Query Client for TanStack Query
 const queryClient = new QueryClient({
@@ -116,6 +117,7 @@ export default function App() {
                 <Route element={<DashboardLayout />}>
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route path="/products" element={<ProductsPage />} />
+                  <Route path="/content" element={<ContentPage />} />
                   <Route path="/sales" element={<SalesPage />} />
                   <Route path="/sales/pos" element={<SalesPage />} />
                   <Route path="/people/clients" element={<ClientesPage />} />
