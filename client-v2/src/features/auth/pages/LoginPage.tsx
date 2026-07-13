@@ -10,7 +10,7 @@ import { Eye, EyeOff, Loader2, Check } from "lucide-react";
 import { SwatchStrip } from "@/components/brand/Swatch";
 import { SizeCurve } from "@/components/brand/SizeCurve";
 
-// Tonalidades de muestra (colores reales de prenda) — en clave Prime, sobrias.
+// Tonalidades de muestra (colores reales de prenda), sobrias.
 const TAG_COLORS = ["#243645", "#3E6B89", "#0E7C7B", "#C9A227", "#B23A48", "#D6D3CD"];
 
 export default function LoginPage() {
@@ -85,7 +85,7 @@ export default function LoginPage() {
           </div>
           <div className="leading-tight">
             <p className="text-lg font-semibold tracking-tight">Horytek ERP</p>
-            <p className="text-xs text-slate-400">por Prime Institute</p>
+            <p className="text-xs text-slate-400">Sistema de gestión</p>
           </div>
         </div>
 
@@ -136,7 +136,7 @@ export default function LoginPage() {
             Inventario, ventas y facturación — cada prenda bajo control.
           </p>
           <p className="num mt-3 text-[11px] uppercase tracking-[0.16em] text-slate-400">
-            © {new Date().getFullYear()} Prime Institute
+            © {new Date().getFullYear()} Horytek ERP
           </p>
         </div>
       </aside>
@@ -151,7 +151,7 @@ export default function LoginPage() {
             </div>
             <div className="leading-tight">
               <p className="text-base font-semibold text-foreground">Horytek ERP</p>
-              <p className="text-[11px] text-muted-foreground">por Prime Institute</p>
+              <p className="text-[11px] text-muted-foreground">Sistema de gestión</p>
             </div>
           </div>
 

@@ -3,7 +3,7 @@
 @plugin "tailwindcss-animate";
 
 /* ============================================================
-   HORYTEK ERP · Prime Institute
+   HORYTEK ERP
    Identidad corporativa: slate navy de marca, neutros fríos,
    acento azul acero sobrio. Tipografía Inter (profesional, densa en datos).
    ============================================================ */
@@ -36,7 +36,7 @@
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
 
-  /* Acento de marca (azul acero Prime) + semánticos */
+  /* Acento de marca (azul acero) + semánticos */
   --color-brand: hsl(var(--brand));
   --color-brand-foreground: hsl(var(--brand-foreground));
   --color-success: hsl(var(--success));
@@ -90,7 +90,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 212 30% 16%;
 
-    --primary: 212 33% 24%;         /* marca Prime (slate navy) */
+    --primary: 212 33% 24%;         /* marca (slate navy) */
     --primary-foreground: 210 20% 98%;
 
     --secondary: 210 17% 93%;
@@ -196,7 +196,7 @@
   }
 }
 
-/* Sidebar (recoloreado a la identidad Prime) */
+/* Sidebar (recoloreado a la identidad de marca) */
 :root {
   --sidebar: hsl(210 22% 97%);
   --sidebar-foreground: hsl(212 24% 28%);
