@@ -47,3 +47,12 @@ export const updateAttributeValue = async (
 
 export const deleteAttributeValue = async (idValor: number): Promise<boolean> =>
   isOk(await api.delete(`/attributes/values/${idValor}`));
+
+// ── Plantillas por categoría (qué atributos aplican a cada categoría) ──
+export const getCategoryAttributeIds = async (idCategoria: number): Promise<number[]> => {
+  const list = unwrapList<{ id_atributo: number }>(await api.get(`/attributes/category/${idCategoria}`));
+  return list.map((a) => a.id_atributo);
+};
+
+export const linkCategoryAttributes = async (idCategoria: number, attributeIds: number[]): Promise<boolean> =>
+  isOk(await api.post("/attributes/link-category", { id_categoria: idCategoria, attribute_ids: attributeIds }));

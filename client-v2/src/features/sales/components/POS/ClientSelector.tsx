@@ -1,12 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { User, Search, X, Check } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 
-import { useUserStore } from "@/store/useUserStore";
 import type { ClienteForSale } from "@/features/sales/types";
 import { clienteNombre, clienteDocumento } from "@/features/sales/types";
 import api from "@/api/axios";

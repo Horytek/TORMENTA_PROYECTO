@@ -9,7 +9,6 @@ import { useCartStore } from "@/store/useCartStore";
 import { useConfigStore } from "@/store/useConfigStore";
 import { useUserStore } from "@/store/useUserStore";
 import { getNegocio } from "@/features/settings/api/settings";
-import { clienteNombre } from "@/features/sales/types";
 
 // ─────────────────────────────────────────────────────────────────
 // POSScreen — Pantalla principal del Punto de Venta

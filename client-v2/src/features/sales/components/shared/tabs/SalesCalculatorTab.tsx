@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Calculator, Download, TrendingUp, Package, Percent, CreditCard, Banknote } from "lucide-react";
+import { Calculator, TrendingUp, Package, CreditCard, Banknote } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -238,7 +238,7 @@ export function SalesCalculatorTab() {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="fecha" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 10 }} tickFormatter={(v) => `S/${v}`} />
-                  <Tooltip formatter={(v: number) => [`S/ ${v.toFixed(2)}`, "Total"]} contentStyle={{ fontSize: 12 }} />
+                  <Tooltip formatter={(v: any) => [`S/ ${v.toFixed(2)}`, "Total"]} contentStyle={{ fontSize: 12 }} />
                   <Bar dataKey="total" fill="#3b82f6" radius={[3, 3, 0, 0]} name="Ventas" />
                 </BarChart>
               </ResponsiveContainer>
@@ -254,14 +254,14 @@ export function SalesCalculatorTab() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie data={chartPorMetodo} cx="50%" cy="50%" outerRadius={70}
-                    dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                     labelLine={false} fontSize={10}>
                     {chartPorMetodo.map((_, i) => (
                       <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                     ))}
                   </Pie>
                   <Legend wrapperStyle={{ fontSize: 10 }} />
-                  <Tooltip formatter={(v: number) => [`S/ ${v.toFixed(2)}`, "Monto"]} contentStyle={{ fontSize: 12 }} />
+                  <Tooltip formatter={(v: any) => [`S/ ${v.toFixed(2)}`, "Monto"]} contentStyle={{ fontSize: 12 }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
@@ -278,7 +278,7 @@ export function SalesCalculatorTab() {
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis type="number" tick={{ fontSize: 10 }} tickFormatter={(v) => `S/${v}`} />
                   <YAxis type="category" dataKey="name" tick={{ fontSize: 10 }} width={60} />
-                  <Tooltip formatter={(v: number) => [`S/ ${v.toFixed(2)}`, "Total"]} contentStyle={{ fontSize: 12 }} />
+                  <Tooltip formatter={(v: any) => [`S/ ${v.toFixed(2)}`, "Total"]} contentStyle={{ fontSize: 12 }} />
                   <Bar dataKey="value" name="Total" radius={[0, 3, 3, 0]}>
                     {chartPorComprobante.map((_, i) => (
                       <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />

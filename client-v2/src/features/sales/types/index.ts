@@ -38,6 +38,8 @@ export interface VentaDetalle {
   id_talla?: number;
   nom_tonalidad?: string;
   nom_talla?: string;
+  nombre_producto?: string;
+  nombre?: string;
 }
 
 // ── Venta (respuesta GET /api/ventas — nombres reales del backend) ───────────
@@ -103,7 +105,7 @@ export interface Venta {
 export interface VentaPayload {
   id_sucursal: number;
   id_almacen?: number;
-  id_cliente?: number;
+  id_cliente?: number | null;
   nombre_cliente?: string;
   documento_cliente?: string;
   direccion_cliente?: string;
