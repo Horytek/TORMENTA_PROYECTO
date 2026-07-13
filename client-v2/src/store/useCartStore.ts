@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { CartItem, ClienteForSale, ComprobanteTipo, MetodoPago } from "@/features/sales/types";
+import { useConfigStore } from "./useConfigStore";
 
 // ─────────────────────────────────────────────────────────────────
 // useCartStore — Estado global del carrito de compras (POS)
@@ -89,11 +90,13 @@ export const useCartStore = create<CartStore>((set, get) => ({
     }));
   },
 
-  // ── Clear ────────────────────────────────────────────────────
+  // ── Clear — reinicia TODO para una nueva venta ─────────────────
   clearCart: () =>
     set({
       items: [],
       cliente: null,
+      comprobanteTipo: "Boleta",
+      metodoPago: "EFECTIVO",
       montoRecibido: 0,
       observaciones: "",
       isProcessing: false,
@@ -115,11 +118,24 @@ export const useCartStore = create<CartStore>((set, get) => ({
 
   getIgv: () => {
     const subtotal = get().getSubtotal();
+    const igv_incluido = useConfigStore.getState().igv_incluido;
+    if (igv_incluido) {
+      // El precio YA incluye IGV → extraer: base = total / 1.18, igv = total - base
+      const base = subtotal / (1 + IGV_RATE);
+      return Math.round((subtotal - base) * 100) / 100;
+    }
+    // El precio es base imponible → IGV se calcula encima
     return Math.round(subtotal * IGV_RATE * 100) / 100;
   },
 
   getTotal: () => {
     const subtotal = get().getSubtotal();
+    const igv_incluido = useConfigStore.getState().igv_incluido;
+    if (igv_incluido) {
+      // El precio ya incluye IGV → el total es la suma de los precio_total tal cual
+      return Math.round(subtotal * 100) / 100;
+    }
+    // El precio es base imponible → se agrega IGV encima
     const igv = Math.round(subtotal * IGV_RATE * 100) / 100;
     return Math.round((subtotal + igv) * 100) / 100;
   },

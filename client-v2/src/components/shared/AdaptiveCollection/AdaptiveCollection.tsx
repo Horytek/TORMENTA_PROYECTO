@@ -282,9 +282,12 @@ export function AdaptiveCollection<T extends AnyRecord>({
   }, [search, filters]);
 
   const getId = useCallback((item: T) => {
-    if (getItemId) return getItemId(item);
+    if (getItemId) {
+      const val = getItemId(item);
+      if (val !== undefined && val !== null && String(val) !== "NaN") return String(val);
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fallback = (item as any).id ?? Math.random();
+    const fallback = (item as any).id_sucursal ?? (item as any).id ?? (item as any).id_usuario ?? (item as any).dni ?? Math.random();
     return String(fallback);
   }, [getItemId]);
 

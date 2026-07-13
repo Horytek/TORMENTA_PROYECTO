@@ -1,11 +1,14 @@
-import { useState, useCallback } from "react";
-import { User } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ProductCatalog } from "./ProductCatalog";
 import { CartPanel } from "./CartPanel";
 import { PaymentModal } from "./PaymentModal";
+import { ClientSelector, CLIENTE_VARIOS } from "./ClientSelector";
 import { Badge } from "@/components/ui/badge";
 import { useCartStore } from "@/store/useCartStore";
+import { useConfigStore } from "@/store/useConfigStore";
 import { useUserStore } from "@/store/useUserStore";
+import { getNegocio } from "@/features/settings/api/settings";
 import { clienteNombre } from "@/features/sales/types";
 
 // ─────────────────────────────────────────────────────────────────
@@ -20,12 +23,31 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
   const user = useUserStore((s) => s.user);
   const cliente = useCartStore((s) => s.cliente);
   const setCliente = useCartStore((s) => s.setCliente);
+  const setIgvIncluido = useConfigStore((s) => s.setIgvIncluido);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [lastSaleId, setLastSaleId] = useState<number | null>(null);
 
+  // Cargar configuración global de IGV al montar
+  const { data: negocio } = useQuery({
+    queryKey: ["negocio"],
+    queryFn: getNegocio,
+    staleTime: Infinity, // la config de empresa cambia poco; no refetch en background
+  });
+
+  // Sincronizar igv_incluido al store de config global
+  useEffect(() => {
+    if (negocio?.igv_incluido !== undefined) {
+      setIgvIncluido(negocio.igv_incluido);
+    }
+  }, [negocio, setIgvIncluido]);
+
+  // Asegurar que siempre hay cliente (default "Varios") antes de cobrar
   const handleCheckout = useCallback(() => {
+    if (!cliente) {
+      setCliente(CLIENTE_VARIOS);
+    }
     setIsPaymentOpen(true);
-  }, []);
+  }, [cliente, setCliente]);
 
   const handleSaleComplete = useCallback((saleId: number, numComprobante: string) => {
     setLastSaleId(saleId);
@@ -33,34 +55,19 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
   }, [onSaleComplete]);
 
   const handleClosePayment = useCallback(() => {
+    setLastSaleId(null);
     setIsPaymentOpen(false);
   }, []);
 
   return (
     <div className="flex flex-col h-full">
       {/* ── Header bar ─────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-card/80 backdrop-blur-sm shrink-0">
+      <div className="relative z-30 flex items-center justify-between px-4 py-2 border-b border-border bg-card/80 backdrop-blur-sm shrink-0">
         <div className="flex items-center gap-3">
-          {cliente ? (
-            <button
-              onClick={() => setCliente(null)}
-              className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
-            >
-              <User className="h-3 w-3 text-muted-foreground" />
-              <span className="font-medium">{clienteNombre(cliente)}</span>
-              <Badge variant="secondary" className="h-4 px-1 text-[9px]">
-                {cliente.ruc ? "RUC" : "DNI"} {cliente.ruc || cliente.dni || "—"}
-              </Badge>
-            </button>
-          ) : (
-            <button
-              onClick={() => { /* TODO: selector de cliente */ }}
-              className="flex items-center gap-1.5 rounded-lg border border-dashed border-border px-2.5 py-1 text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground transition-colors cursor-pointer"
-            >
-              <User className="h-3 w-3" />
-              Sin cliente
-            </button>
-          )}
+          <ClientSelector
+            value={cliente}
+            onChange={(c) => setCliente(c ?? CLIENTE_VARIOS)}
+          />
         </div>
 
         <div className="flex items-center gap-3">

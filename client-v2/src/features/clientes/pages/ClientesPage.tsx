@@ -157,7 +157,7 @@ export default function ClientesPage() {
   const copy = confirm ? CONFIRM_COPY[confirm.action] : null;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 animate-fade-in">
+    <div className="w-full space-y-6 animate-fade-in">
       <AdaptiveCollection<Cliente>
         title="Clientes"
         items={clientes}

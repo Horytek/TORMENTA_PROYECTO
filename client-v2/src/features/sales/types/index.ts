@@ -111,7 +111,8 @@ export interface VentaPayload {
   estado_venta?: 1;
   f_venta: string;
   fecha_iso?: string;
-  metodo_pago: MetodoPago;
+  // string codificado: "EFECTIVO:50,YAPE:30" o "EFECTIVO" para notas
+  metodo_pago: string;
   formadepago?: string;
   igv: number;
   igv_b?: number;

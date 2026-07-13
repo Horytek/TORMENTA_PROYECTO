@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Check, Building2, MapPin, Phone, ImageIcon, Upload, X } from "lucide-react";
+import { Loader2, Check, Building2, MapPin, Phone, ImageIcon, Upload, X, Percent } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { FormField } from "@/components/shared/FormField";
 
@@ -20,6 +21,9 @@ interface FormValues {
   departamento: string;
   telefono: string;
   email: string;
+  igv_incluido: boolean;
+  moneda: string;
+  pais: string;
 }
 
 const empty: FormValues = {
@@ -31,6 +35,9 @@ const empty: FormValues = {
   departamento: "",
   telefono: "",
   email: "",
+  igv_incluido: true,
+  moneda: "",
+  pais: "",
 };
 
 const toForm = (n: Negocio | null): FormValues => ({
@@ -42,6 +49,9 @@ const toForm = (n: Negocio | null): FormValues => ({
   departamento: n?.departamento ?? "",
   telefono: n?.telefono ?? "",
   email: n?.email ?? "",
+  igv_incluido: n?.igv_incluido ?? true,
+  moneda: n?.moneda ?? "",
+  pais: n?.pais ?? "",
 });
 
 export default function SettingsPage() {
@@ -53,8 +63,10 @@ export default function SettingsPage() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isDirty },
-  } = useForm<FormValues>({ defaultValues: empty });
+  } = useForm<FormValues>({ defaultValues: empty, values: toForm(negocio ?? null) });
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -134,8 +146,8 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="flex items-center gap-4">
           <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
-            {logoPreview || negocio?.logotipo ? (
-              <img src={logoPreview ?? negocio?.logotipo} alt="Logotipo" className="h-full w-full object-contain" />
+            {logoPreview || negocio?.logotipo_url ? (
+              <img src={logoPreview ?? negocio?.logotipo_url} alt="Logotipo" className="h-full w-full object-contain" />
             ) : (
               <ImageIcon className="h-7 w-7 text-muted-foreground/40" />
             )}
@@ -178,6 +190,35 @@ export default function SettingsPage() {
               className="num"
               {...register("ruc", { pattern: { value: /^\d{11}$/, message: "El RUC debe tener 11 dígitos" } })}
             />
+          </FormField>
+
+          {/* Toggle IGV incluido — spanned 2 cols */}
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-border/60 bg-zinc-50 px-4 py-3 dark:bg-zinc-900/50 sm:col-span-2">
+            <div className="flex items-center gap-2.5">
+              <Percent className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <p className="text-sm font-medium">Precio incluye IGV (18%)</p>
+                <p className="text-xs text-muted-foreground">
+                  {watch("igv_incluido")
+                    ? "El precio del producto ya contiene el IGV — se calculará la base imponible"
+                    : "El precio es base imponible — el IGV se agregará encima del precio"}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={watch("igv_incluido")}
+              onCheckedChange={(v) => setValue("igv_incluido", v, { shouldDirty: true })}
+            />
+          </div>
+
+          {/* Moneda */}
+          <FormField label="Moneda" htmlFor="moneda">
+            <Input id="moneda" placeholder="PEN" maxLength={10} {...register("moneda")} />
+          </FormField>
+
+          {/* País */}
+          <FormField label="País" htmlFor="pais">
+            <Input id="pais" placeholder="Perú" {...register("pais")} />
           </FormField>
         </CardContent>
       </Card>

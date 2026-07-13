@@ -9,6 +9,7 @@ export interface Sucursal {
   nombre_completo?: string;
   nombres?: string;
   nombre_vendedor?: string;
+  vendedor?: string;
 }
 
 /** Vendedor activo (GET /sucursales/vendedores) para asignar a la sucursal. */
