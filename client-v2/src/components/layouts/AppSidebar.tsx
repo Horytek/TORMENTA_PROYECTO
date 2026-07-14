@@ -28,6 +28,7 @@ import {
   Users,
   ShoppingCart,
   Palette,
+  ClipboardList,
 } from "lucide-react";
 import { removeToken } from "@/utils/authStorage";
 import { resetVerifyTokenCache } from "@/api/auth";
@@ -78,6 +79,7 @@ export default function AppSidebar() {
       items: [
         { title: "Inventario / Kárdex", url: "/inventory", icon: Package, capability: "almacen" },
         { title: "Almacenes", url: "/logistics/warehouses", icon: Warehouse, capability: "almaceng" },
+        { title: "Notas de Almacén", url: "/logistics/warehouse-notes", icon: ClipboardList, capability: "nota_almacen" },
         { title: "Sucursales", url: "/logistics/branches", icon: Building, capability: "sucursal" },
       ],
     },

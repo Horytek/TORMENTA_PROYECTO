@@ -134,9 +134,14 @@ function CollectionHeader({
             <div className="flex items-center gap-2 mr-2">
               <span className="text-xs text-muted-foreground">{selectedIds.length} sel.</span>
               <Button variant="ghost" size="sm" className="h-8 px-2.5 text-xs rounded-xl" onClick={() => onSelectionChange([])}>Limpiar</Button>
-              {globalActions?.map(action => (
+            </div>
+          )}
+
+          {globalActions && globalActions.length > 0 && (
+            <div className="flex items-center gap-2">
+              {globalActions.map(action => (
                 <Button key={action.id} variant="default" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-xl"
-                  onClick={() => action.onClick(selectedIds)} disabled={action.disabled}>
+                  onClick={() => action.onClick(selectedIds ?? [])} disabled={action.disabled}>
                   {action.icon}{action.label}
                 </Button>
               ))}
