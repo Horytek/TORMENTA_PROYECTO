@@ -10,25 +10,58 @@ export interface InventarioProducto {
   estado: number;
 }
 
-// ─── Movimiento de kardex ──────────────────────────────────────────
-export interface KardexMovimiento {
-  id_kardex: number;
-  tipo_movimiento: string;       // "INGRESO" | "SALIDA" | "AJUSTE"
-  tipo_doc: string;              // "BOLETA" | "FACTURA" | "NOTA DE SALIDA" | "NOTA DE INGRESO" | "GUÍA" | "OTRO"
-  num_serie: string | null;
-  num_doc: string | null;
-  fecha_mov: string;
+// ─── Histórico de kardex (movimientos por producto + rango fechas) ──
+/** Sub-item de una transacción agrupada (una nota/venta puede incluir varios productos). */
+export interface KardexTransaccionProducto {
+  codigo: number;
+  descripcion: string;
+  marca: string;
   cantidad: number;
-  stock_anterior: number;
-  stock_actual: number;
-  id_almacen: number | null;
-  nom_almacen: string | null;
-  precio_unitario: number;
-  total: number;
-  nom_usuario: string;
 }
 
-// ─── Detalle kardex (movimientos por producto + rango fechas) ─────
+/**
+ * Transacción de kardex — GET /kardex/detalleK. El backend agrupa todos los movimientos
+ * de una misma nota/venta en una sola fila (`productos` trae el detalle por producto).
+ *
+ * NOTA: este módulo opera contra las tablas "normales" (`producto`, `marca`, `almacen`).
+ * Por eso NO se exponen aquí los campos relacionados con variantes
+ * (`tonalidad`, `talla`, `sku_label`, `sku_attrs`, `id_sku`, etc.) — la BD aún los tiene
+ * en `producto_sku`/`tonalidad`/`talla`, pero el cliente los ignora para mantener la
+ * capa de presentación simple y enfocada en el kardex por producto.
+ */
+export interface KardexTransaccion {
+  id: number;
+  fecha: string;               // ya formateada dd/mm/yyyy
+  documento: string;
+  nombre: string;               // tipo de operación (nombre de la nota, "Venta", etc.)
+  entra: number;
+  sale: number;
+  stock: number;                // stock acumulado tras la transacción (según backend)
+  precio: number | null;
+  glosa: string;
+  hora_creacion: string | null;
+  usuario: string;
+  almacen_origen: string;
+  almacen_destino: string;
+  estado_doc: number | string;  // 1/"REGISTRADO"/"APROBADO" = activo, 0/"ANULADO" = anulado
+  productos: KardexTransaccionProducto[];
+}
+
+/** GET /kardex/detalleKA — acumulado de movimientos previos al rango filtrado. */
+export interface KardexPrevio {
+  numero: number;
+  entra: number;
+  sale: number;
+}
+
+/** GET /kardex/producto — info puntual del producto (stock actual real). */
+export interface KardexProductoInfo {
+  codigo: number;
+  descripcion: string;
+  marca: string;
+  stock: number;
+}
+
 export interface KardexDetalleParams {
   fechaInicio: string;   // YYYY-MM-DD
   fechaFin: string;       // YYYY-MM-DD
@@ -77,4 +110,52 @@ export interface ProductoStockMinimo {
   descripcion: string;
   marca: string;
   stock: number;
+}
+
+// ─── Lote de inventario (solicitud → verificación → aprobación) ────
+/** `estado`: 0 = pendiente de verificar, 1 = verificado (pendiente aprobar), 2 = aprobado. */
+export interface Lote {
+  id_lote: number;
+  descripcion: string;
+  estado: 0 | 1 | 2;
+  id_usuario_crea: number;
+  creador?: string;
+  id_usuario_verifica?: number | null;
+  verificador?: string | null;
+  fecha_verificacion?: string | null;
+  id_usuario_aprueba?: number | null;
+  aprobador?: string | null;
+  fecha_aprobacion?: string | null;
+  fecha_creacion: string;
+  id_tenant?: number;
+}
+
+/**
+ * Detalle de un lote: una línea por producto (sin variantes).
+ * El backend puede seguir exponiendo campos de SKU para diagnóstico; el cliente los
+ * ignora para mantener la UI enfocada en producto + cantidad.
+ */
+export interface LoteDetalle {
+  id_producto: number;
+  cantidad: number;
+  producto: string;
+  marca: string;
+}
+
+/** Item enviado al crear un lote — solo producto y cantidad (sin variantes). */
+export interface LoteItemInput {
+  id_producto: number;
+  cantidad: number;
+}
+
+export interface LoteCreatePayload {
+  descripcion: string;
+  id_usuario: number;
+  productos: LoteItemInput[];
+}
+
+/** Roles habilitados por etapa — GET/POST /config-verification. */
+export interface VerificationConfig {
+  verify: number[];
+  approve: number[];
 }

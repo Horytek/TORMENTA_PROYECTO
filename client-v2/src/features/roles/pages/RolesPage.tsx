@@ -14,7 +14,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { useUserStore } from "@/store/useUserStore";
+import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
 
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -34,10 +34,7 @@ export default function RolesPage() {
   const [deleting, setDeleting] = useState<Rol | null>(null);
   const [permsRole, setPermsRole] = useState<Rol | null>(null);
 
-  const capabilities = useUserStore((s) => s.capabilities);
-  const user = useUserStore((s) => s.user);
-  const can = (perm: string) =>
-    user?.roleId === 10 || capabilities.has(perm) || capabilities.has("*");
+  const { can } = usePermissions();
   const canEdit = can("configuracion/roles.edit");
   const canDelete = can("configuracion/roles.delete");
 

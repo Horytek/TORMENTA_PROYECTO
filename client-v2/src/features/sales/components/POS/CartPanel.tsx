@@ -85,10 +85,10 @@ export function CartPanel({ onCheckout, disabled }: CartPanelProps) {
             <div className="p-2 space-y-1.5">
               {items.map((item) => (
                 <CartItemRow
-                  key={item.id_variante}
+                  key={item.id_producto}
                   item={item}
-                  onQuantityChange={(qty) => updateQuantity(item.id_variante, qty)}
-                  onRemove={() => removeItem(item.id_variante)}
+                  onQuantityChange={(qty) => updateQuantity(item.id_producto, qty)}
+                  onRemove={() => removeItem(item.id_producto)}
                 />
               ))}
             </div>
@@ -133,7 +133,7 @@ export function CartPanel({ onCheckout, disabled }: CartPanelProps) {
 // ─────────────────────────────────────────────────────────────────
 interface CartItemRowProps {
   item: {
-    id_variante: number;
+    id_producto: number;
     descripcion: string;
     nom_marca?: string;
     cantidad: number;

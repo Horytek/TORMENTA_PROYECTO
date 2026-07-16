@@ -41,7 +41,8 @@ const getProductos = async (req, res) => {
             estado,
             descripcion,
             id_producto,
-            cod_barras
+            cod_barras,
+            q
         } = req.query;
 
         const whereClauses = ['PR.id_tenant = ?'];
@@ -54,6 +55,18 @@ const getProductos = async (req, res) => {
         if (descripcion) { whereClauses.push('PR.descripcion = ?'); params.push(descripcion); }
         if (id_producto) { whereClauses.push('PR.id_producto = ?'); params.push(id_producto); }
         if (cod_barras) { whereClauses.push('PR.cod_barras = ?'); params.push(cod_barras); }
+
+        if (q && q.trim() !== '') {
+            const searchVal = `%${q.trim()}%`;
+            const qNum = parseInt(q, 10);
+            if (!isNaN(qNum)) {
+                whereClauses.push('(PR.descripcion LIKE ? OR PR.cod_barras LIKE ? OR PR.id_producto = ?)');
+                params.push(searchVal, searchVal, qNum);
+            } else {
+                whereClauses.push('(PR.descripcion LIKE ? OR PR.cod_barras LIKE ?)');
+                params.push(searchVal, searchVal);
+            }
+        }
 
         const whereSQL = `WHERE ${whereClauses.join(' AND ')}`;
 
@@ -82,8 +95,7 @@ const getProductos = async (req, res) => {
             INNER JOIN marca MA ON MA.id_marca = PR.id_marca
             INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
             INNER JOIN categoria cat ON cat.id_categoria = CA.id_categoria
-            LEFT JOIN producto_sku SKU ON SKU.id_producto = PR.id_producto
-            LEFT JOIN inventario_stock INV ON INV.id_sku = SKU.id_sku
+            LEFT JOIN inventario INV ON INV.id_producto = PR.id_producto AND INV.id_tenant = PR.id_tenant
             ${whereSQL}
             GROUP BY PR.id_producto, PR.descripcion, CA.nom_subcat, MA.nom_marca, PR.undm, PR.precio, PR.cod_barras, PR.estado_producto, PR.id_marca, PR.id_subcategoria, cat.id_categoria
             ORDER BY ${sortBy} ${sortDir}
@@ -318,30 +330,37 @@ const getProductVariants = async (req, res) => {
         if (id_sucursal) {
             joinClause = `
                 LEFT JOIN sucursal_almacen sa ON sa.id_sucursal = ?
-                LEFT JOIN inventario_stock s ON s.id_sku = sku.id_sku AND s.id_almacen = sa.id_almacen
             `;
             joinParams = [id_sucursal];
-        } else {
-            joinClause = `
-                LEFT JOIN inventario_stock s ON s.id_sku = sku.id_sku AND s.id_almacen = ?
-            `;
-            joinParams = [almacenId];
         }
 
-        // Updated for SPU/SKU: fetch from producto_sku
+        // Stock por (id_producto, id_tonalidad, id_talla, id_almacen).
+        // Ya no se desglosa por SKU — usamos directamente `inventario`.
+        const stockWhere = id_sucursal
+            ? `(s.id_almacen = sa.id_almacen OR s.id_almacen IS NULL)`
+            : `(s.id_almacen = ? OR s.id_almacen IS NULL)`;
+
         const [result] = await connection.query(`
-            SELECT 
-                sku.id_sku,
-                sku.attributes_json,
-                sku.precio,
-                sku.cod_barras,
-                sku.sku as nombre_sku,
-                COALESCE(s.stock, 0) as stock
-            FROM producto_sku sku
+            SELECT
+                s.id_tonalidad,
+                s.id_talla,
+                t.nombre  AS nom_tonalidad,
+                ta.nombre AS nom_talla,
+                s.precio,
+                s.stock,
+                s.id_almacen,
+                a.nom_almacen
+            FROM inventario s
             ${joinClause}
-            WHERE sku.id_producto = ? AND ${stockCondition}
-            ORDER BY sku.id_sku
-        `, [...joinParams, id]);
+            LEFT JOIN almacen    a  ON s.id_almacen    = a.id_almacen
+            LEFT JOIN tonalidad  t  ON s.id_tonalidad  = t.id_tonalidad
+            LEFT JOIN talla      ta ON s.id_talla      = ta.id_talla
+            WHERE s.id_producto = ?
+              AND s.id_tenant   = ?
+              AND ${stockCondition.replace('s.stock', 's.stock')}
+              AND ${stockWhere}
+            ORDER BY a.nom_almacen, t.nombre, ta.nombre
+        `, [...joinParams, id, req.id_tenant, ...(!id_sucursal ? [almacenId] : [])]);
 
         res.json({ code: 1, data: result });
     } catch (error) {
@@ -505,12 +524,15 @@ const registerVariants = async (req, res) => {
                     }
                 }
 
-                // Initialize Stock
+// Initialize Stock en `inventario` (sin variantes).
+                // Para simplificar y no requerir mapeo color→tonalidad/talla,
+                // dejamos id_tonalidad e id_talla NULL (representa "producto
+                // sin variante" en este modelo simplificado).
                 await connection.query(`
-                    INSERT INTO inventario_stock (id_sku, id_almacen, stock, id_tenant) 
-                    VALUES (?, ?, 0, ?) 
+                    INSERT INTO inventario (id_producto, id_almacen, id_tonalidad, id_talla, stock, id_tenant)
+                    VALUES (?, ?, NULL, NULL, 0, ?)
                     ON DUPLICATE KEY UPDATE stock = stock
-                `, [id_sku, id_almacen, req.id_tenant]);
+                `, [id_producto, id_almacen, req.id_tenant]);
             }
         }
 
@@ -625,12 +647,12 @@ const generateSKUs = async (req, res) => {
                 }
             }
 
-            // Init Stock
+// Init Stock en `inventario` (sin variantes).
             await connection.query(`
-                INSERT INTO inventario_stock (id_sku, id_almacen, stock, id_tenant) 
-                VALUES (?, ?, 0, ?) 
+                INSERT INTO inventario (id_producto, id_almacen, id_tonalidad, id_talla, stock, id_tenant)
+                VALUES (?, 1, NULL, NULL, 0, ?)
                 ON DUPLICATE KEY UPDATE stock = stock
-            `, [id_sku, 1, req.id_tenant]); // Default Almacen 1
+            `, [id_producto, req.id_tenant]); // Default Almacen 1
         }
 
         await connection.commit();

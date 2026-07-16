@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { FormField } from "@/components/shared/FormField";
 import { useUserStore } from "@/store/useUserStore";
+import { usePermissions } from "@/hooks/usePermissions";
 
 import { ProductPickerPanel } from "./ProductPickerPanel";
 import {
@@ -37,16 +38,25 @@ import {
 } from "../api/warehouseNotes";
 import type { NoteKind, NoteFormItem, NotaInsertPayload } from "../types";
 
-const GLOSAS: Record<NoteKind, string[]> = {
-  ingreso: [
-    "COMPRA EN EL PAIS", "COMPRA EN EL EXTERIOR", "TRANSFERENCIA ENTRE ALMACENES",
-    "DEVOLUCION", "AJUSTE INVENTARIO", "OTROS INGRESOS",
-  ],
-  salida: [
-    "VENTA DE PRODUCTOS", "CONSIGNACION CLIENTE", "TRASLADO ENTRE ALMACENES",
-    "MATERIA PRIMA PRODUCCION", "DEVOLUCION PROVEEDOR", "AJUSTE INVENTARIO", "OTRAS SALIDAS",
-  ],
+/** "conjunto" = registra una salida y un ingreso a la vez (traslado entre almacenes). */
+type Mode = NoteKind | "conjunto";
+
+const GLOSAS_INGRESO = [
+  "COMPRA EN EL PAIS", "COMPRA EN EL EXTERIOR", "TRANSFERENCIA ENTRE ALMACENES",
+  "DEVOLUCION", "AJUSTE INVENTARIO", "OTROS INGRESOS",
+];
+const GLOSAS_SALIDA = [
+  "VENTA DE PRODUCTOS", "CONSIGNACION CLIENTE", "TRASLADO ENTRE ALMACENES",
+  "MATERIA PRIMA PRODUCCION", "DEVOLUCION PROVEEDOR", "AJUSTE INVENTARIO", "OTRAS SALIDAS",
+];
+const GLOSAS: Record<Mode, string[]> = {
+  ingreso: GLOSAS_INGRESO,
+  salida: GLOSAS_SALIDA,
+  conjunto: Array.from(new Set([...GLOSAS_INGRESO, ...GLOSAS_SALIDA])),
 };
+
+/** Sentinel para "sin selección" — Radix Select no permite value="". */
+const NONE = "__none__";
 
 interface HeaderValues {
   almacenOrigen: string;
@@ -87,9 +97,10 @@ interface NoteFormDialogProps {
 export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso" }: NoteFormDialogProps) {
   const queryClient = useQueryClient();
   const user = useUserStore((s) => s.user);
-  const isAdmin = user?.roleId === 10;
+  const { isDeveloper, roleId } = usePermissions();
+  const isAdmin = isDeveloper || roleId === 1;
 
-  const [tipoNota, setTipoNota] = useState<NoteKind>(defaultTipo);
+  const [tipoNota, setTipoNota] = useState<Mode>(defaultTipo);
   const [items, setItems] = useState<NoteFormItem[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -126,13 +137,22 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
     enabled: isOpen,
   });
 
-  const { data: documentos = [] } = useQuery({
-    queryKey: ["nota-almacen-documentos", tipoNota],
-    queryFn: () => (tipoNota === "salida" ? getDocumentosSalida() : getDocumentosIngreso()),
+  // Los correlativos de ingreso y salida son secuencias distintas; en modo "conjunto" se
+  // necesitan ambos a la vez, así que se piden siempre en vez de condicionar por tipoNota.
+  const { data: documentosIngreso = [] } = useQuery({
+    queryKey: ["nota-almacen-documentos", "ingreso"],
+    queryFn: getDocumentosIngreso,
+    enabled: isOpen,
+  });
+  const { data: documentosSalida = [] } = useQuery({
+    queryKey: ["nota-almacen-documentos", "salida"],
+    queryFn: getDocumentosSalida,
     enabled: isOpen,
   });
 
-  const numeroDocumento = documentos[0]?.nuevo_numero_de_nota ?? "";
+  const numeroDocumentoIngreso = documentosIngreso[0]?.nuevo_numero_de_nota ?? "";
+  const numeroDocumentoSalida = documentosSalida[0]?.nuevo_numero_de_nota ?? "";
+  const numeroDocumento = tipoNota === "salida" ? numeroDocumentoSalida : numeroDocumentoIngreso;
 
   const almacenesFiltrados = useMemo(() => {
     if (isAdmin || !user?.sucursal) return almacenes;
@@ -152,20 +172,50 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
   const removeItem = (uniqueKey: string) => setItems((prev) => prev.filter((p) => p.uniqueKey !== uniqueKey));
 
   const mutation = useMutation({
-    mutationFn: (values: HeaderValues) => {
-      const payload: NotaInsertPayload = {
-        almacenO: tipoNota === "salida" ? values.almacenOrigen : values.almacenOrigen || null,
-        almacenD: tipoNota === "ingreso" ? values.almacenDestino : values.almacenDestino || null,
-        destinatario: values.destinatario,
-        glosa: values.glosa,
-        nota: values.nota,
-        fecha: buildFechaCompleta(values.fecha),
-        observacion: values.observacion,
+    mutationFn: async (values: HeaderValues) => {
+      const itemFields = {
         producto: items.map((i) => i.codigo),
         cantidad: items.map((i) => i.cantidad),
         tonalidad: items.map((i) => i.id_tonalidad),
         talla: items.map((i) => i.id_talla),
         sku: items.map((i) => i.id_sku),
+      };
+      const common = {
+        destinatario: values.destinatario,
+        glosa: values.glosa,
+        nota: values.nota,
+        fecha: buildFechaCompleta(values.fecha),
+        observacion: values.observacion,
+        ...itemFields,
+      };
+
+      if (tipoNota === "conjunto") {
+        const salidaResult = await insertNotaSalida({
+          ...common,
+          almacenO: values.almacenOrigen,
+          numComprobante: numeroDocumentoSalida,
+          nom_usuario: user?.username,
+        });
+        if (!salidaResult.success) return salidaResult;
+
+        const ingresoResult = await insertNotaIngreso({
+          ...common,
+          almacenD: values.almacenDestino,
+          numComprobante: numeroDocumentoIngreso,
+          usuario: user?.username,
+        });
+        // ponytail: sin transacción entre los dos endpoints legacy; si el ingreso falla acá,
+        // la salida ya quedó registrada. Aceptable (no es ruta de facturación/pagos); se avisa.
+        if (!ingresoResult.success) {
+          return { success: false, message: `Salida registrada, pero el ingreso falló: ${ingresoResult.message || "error desconocido"}` };
+        }
+        return ingresoResult;
+      }
+
+      const payload: NotaInsertPayload = {
+        ...common,
+        almacenO: tipoNota === "salida" ? values.almacenOrigen : values.almacenOrigen || null,
+        almacenD: tipoNota === "ingreso" ? values.almacenDestino : values.almacenDestino || null,
         numComprobante: numeroDocumento,
         ...(tipoNota === "salida" ? { nom_usuario: user?.username } : { usuario: user?.username }),
       };
@@ -183,10 +233,16 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
     onError: () => setError("No se pudo registrar la nota. Intenta de nuevo."),
   });
 
+  const documentosListos =
+    tipoNota === "conjunto" ? !!numeroDocumentoIngreso && !!numeroDocumentoSalida : !!numeroDocumento;
+  const origenOk = tipoNota === "ingreso" || !!watch("almacenOrigen");
+  const destinoOk = tipoNota === "salida" || !!watch("almacenDestino");
+
   const isValid =
     !!user?.username &&
-    !!numeroDocumento &&
-    (tipoNota === "ingreso" ? !!watch("almacenDestino") : !!watch("almacenOrigen")) &&
+    documentosListos &&
+    origenOk &&
+    destinoOk &&
     !!watch("destinatario") &&
     !!watch("glosa") &&
     !!watch("nota") &&
@@ -199,14 +255,14 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Nueva nota de almacén</DialogTitle>
           <DialogDescription>Registra un movimiento de ingreso o salida de inventario.</DialogDescription>
         </DialogHeader>
 
         <div className="flex gap-1.5 rounded-lg bg-muted p-1">
-          {(["ingreso", "salida"] as NoteKind[]).map((k) => (
+          {(["ingreso", "salida", "conjunto"] as Mode[]).map((k) => (
             <button
               key={k}
               type="button"
@@ -215,16 +271,27 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
                 tipoNota === k ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"
               }`}
             >
-              {k === "ingreso" ? "Ingreso" : "Salida"}
+              {k === "ingreso" ? "Ingreso" : k === "salida" ? "Salida" : "Conjunto"}
             </button>
           ))}
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField label="N° de documento">
-              <Input value={numeroDocumento} disabled placeholder="Cargando…" />
-            </FormField>
+            {tipoNota === "conjunto" ? (
+              <>
+                <FormField label="N° de salida">
+                  <Input value={numeroDocumentoSalida} disabled placeholder="Cargando…" />
+                </FormField>
+                <FormField label="N° de ingreso">
+                  <Input value={numeroDocumentoIngreso} disabled placeholder="Cargando…" />
+                </FormField>
+              </>
+            ) : (
+              <FormField label="N° de documento">
+                <Input value={numeroDocumento} disabled placeholder="Cargando…" />
+              </FormField>
+            )}
 
             <FormField label="Fecha" htmlFor="fecha">
               <Input id="fecha" type="date" {...register("fecha", { required: true })} />
@@ -234,11 +301,12 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
               <Controller
                 control={control}
                 name="almacenOrigen"
-                rules={{ required: tipoNota === "salida" }}
+                rules={{ required: tipoNota !== "ingreso" }}
                 render={({ field }) => (
-                  <Select value={field.value || undefined} onValueChange={field.onChange}>
+                  <Select value={field.value || undefined} onValueChange={(v) => field.onChange(v === NONE ? "" : v)}>
                     <SelectTrigger><SelectValue placeholder="Selecciona almacén de origen" /></SelectTrigger>
                     <SelectContent>
+                      {tipoNota === "ingreso" && <SelectItem value={NONE} className="text-muted-foreground">— Ninguno —</SelectItem>}
                       {almacenesFiltrados.map((a) => (
                         <SelectItem key={a.id} value={String(a.id)}>{a.almacen}</SelectItem>
                       ))}
@@ -252,11 +320,12 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
               <Controller
                 control={control}
                 name="almacenDestino"
-                rules={{ required: tipoNota === "ingreso" }}
+                rules={{ required: tipoNota !== "salida" }}
                 render={({ field }) => (
-                  <Select value={field.value || undefined} onValueChange={field.onChange}>
+                  <Select value={field.value || undefined} onValueChange={(v) => field.onChange(v === NONE ? "" : v)}>
                     <SelectTrigger><SelectValue placeholder="Selecciona almacén de destino" /></SelectTrigger>
                     <SelectContent>
+                      {tipoNota === "salida" && <SelectItem value={NONE} className="text-muted-foreground">— Ninguno —</SelectItem>}
                       {almacenesFiltrados.map((a) => (
                         <SelectItem key={a.id} value={String(a.id)}>{a.almacen}</SelectItem>
                       ))}
@@ -266,7 +335,7 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
               />
             </FormField>
 
-            <FormField label={tipoNota === "ingreso" ? "Proveedor" : "Destinatario"}>
+            <FormField label={tipoNota === "ingreso" ? "Proveedor" : tipoNota === "conjunto" ? "Destinatario / Proveedor" : "Destinatario"}>
               <Controller
                 control={control}
                 name="destinatario"
@@ -316,11 +385,11 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
               <PackageSearch className="h-4 w-4" /> Productos
             </div>
             <ProductPickerPanel
-              tipo={tipoNota}
+              tipo={tipoNota === "ingreso" ? "ingreso" : "salida"}
               almacen={almacenOrigen}
               items={items}
               onAdd={addItem}
-              disabled={tipoNota === "salida" && !almacenOrigen}
+              disabled={tipoNota !== "ingreso" && !almacenOrigen}
             />
 
             {items.length > 0 && (
@@ -333,8 +402,7 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-foreground">{item.descripcion}</p>
                       <p className="truncate text-xs text-muted-foreground">
-                        {item.marca}
-                        {item.sku_label ? ` · ${item.sku_label}` : ""} · Cant: {item.cantidad}
+                        {item.marca} · Cant: {item.cantidad}
                       </p>
                     </div>
                     <Button

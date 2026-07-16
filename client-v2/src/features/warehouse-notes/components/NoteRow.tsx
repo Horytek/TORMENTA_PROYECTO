@@ -10,16 +10,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { NoteDetailPanel } from "./NoteDetailPanel";
 import type { WarehouseNote, NoteKind } from "../types";
 
 interface NoteRowProps {
   note: WarehouseNote;
   tipo: NoteKind;
-  isExpanded: boolean;
-  onToggle: () => void;
+  isSelected: boolean;
+  onSelect: () => void;
   canDeactivate: boolean;
-  canGeneratePdf: boolean;
   onAnular: () => void;
 }
 
@@ -31,16 +29,16 @@ function formatFecha(fecha: string) {
   }
 }
 
-export function NoteRow({ note, tipo, isExpanded, onToggle, canDeactivate, canGeneratePdf, onAnular }: NoteRowProps) {
+export function NoteRow({ note, tipo, isSelected, onSelect, canDeactivate, onAnular }: NoteRowProps) {
   const isAnulado = Number(note.estado) === 1;
   const isIngreso = tipo === "ingreso";
   const itemCount = note.detalles?.length ?? 0;
 
   return (
-    <div className={cn("border-b border-border/40 last:border-0", isExpanded && "bg-muted/20")}>
+    <div className={cn("border-b border-border/40 last:border-0", isSelected && "bg-muted/20")}>
       <button
         type="button"
-        onClick={onToggle}
+        onClick={onSelect}
         className="grid w-full grid-cols-2 items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/30 cursor-pointer md:grid-cols-12"
       >
         {/* Tipo + documento + fecha */}
@@ -99,15 +97,10 @@ export function NoteRow({ note, tipo, isExpanded, onToggle, canDeactivate, canGe
               <Ban className="h-3.5 w-3.5" />
             </Button>
           )}
-          <ChevronRight className={cn("h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform", isExpanded && "rotate-90")} />
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" />
         </div>
       </button>
-
-      {isExpanded && (
-        <div className="border-t border-border/40 px-4 pb-4">
-          <NoteDetailPanel note={note} tipo={tipo} canGeneratePdf={canGeneratePdf} />
-        </div>
-      )}
     </div>
   );
 }
+

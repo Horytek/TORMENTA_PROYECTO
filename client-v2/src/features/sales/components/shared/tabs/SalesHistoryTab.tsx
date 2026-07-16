@@ -1,23 +1,21 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { FileSpreadsheet, Download, Eye, RotateCcw } from "lucide-react";
+import { Download, Eye, RotateCcw } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Spinner } from "@/components/ui/spinner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "lucide-react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
 import { useUserStore } from "@/store/useUserStore";
+import { usePermissions } from "@/hooks/usePermissions";
 import { getVentas, annulVenta } from "@/features/sales/api/ventas";
 import type { Venta, VentasFilters } from "@/features/sales/types";
 import { VoucherPreview } from "../VoucherPreview";
+import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection";
+import type { FieldDef, RecordAction } from "@/components/shared/AdaptiveCollection";
 
 // ─────────────────────────────────────────────────────────────────
 // SalesHistoryTab — Lista de ventas con filtros y acciones
@@ -58,7 +56,8 @@ function parseMetodoPago(metodoPago?: string, totalVenta: number = 0) {
 
 export function SalesHistoryTab() {
   const user = useUserStore((s) => s.user);
-  const canDelete = user?.roleId === 10 || user?.roleId === 3;
+  const { isDeveloper } = usePermissions();
+  const canDelete = isDeveloper || user?.roleId === 3;
 
   const [filters, setFilters] = useState<VentasFilters>({
     fecha_inicio: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split("T")[0],
@@ -100,6 +99,44 @@ export function SalesHistoryTab() {
       digital
     };
   }, [ventas]);
+
+  const fields: FieldDef<Venta>[] = [
+    { key: "num_comprobante", priority: "primary", semantic: "title", label: "Comprobante" },
+    { key: "id_comprobante", priority: "secondary", semantic: "chip", label: "Tipo" },
+    {
+      key: "nom_cliente", priority: "secondary", semantic: "subtitle", label: "Cliente",
+      format: (v) => (v as string) || "Venta rápida",
+    },
+    { key: "f_venta", priority: "meta", semantic: "date", label: "Fecha" },
+    { key: "igv", priority: "meta", semantic: "number", label: "IGV", format: (v) => `S/ ${Number(v ?? 0).toFixed(2)}` },
+    { key: "total_t", priority: "secondary", semantic: "number", label: "Total", format: (v) => `S/ ${Number(v ?? 0).toFixed(2)}` },
+    { key: "metodo_pago", priority: "secondary", semantic: "chip", label: "Método" },
+    {
+      key: "estado_venta", priority: "secondary", semantic: "badge", label: "Estado",
+      format: (v) => (Number(v) === 1 ? "Completada" : "Anulada"),
+    },
+  ];
+
+  const actions: RecordAction[] = [
+    {
+      id: "view", label: "Ver comprobante",
+      icon: <Eye className="h-3.5 w-3.5" />,
+      onClick: (item) => setPreviewVenta(item as Venta),
+    },
+    {
+      id: "annul", label: "Anular venta",
+      icon: <RotateCcw className="h-3.5 w-3.5" />,
+      variant: "destructive",
+      hidden: (item) => !canDelete || (item as Venta).estado_venta !== 1,
+      onClick: (item) => {
+        const venta = item as Venta;
+        if (!venta.id_venta) return;
+        if (confirm(`¿Anular venta ${venta.num_comprobante}?`)) {
+          annulVenta(venta.id_venta).then(() => refetch());
+        }
+      },
+    },
+  ];
 
   const handleExportCSV = () => {
     if (ventas.length === 0) return;
@@ -192,79 +229,18 @@ export function SalesHistoryTab() {
         <StatCard label="Promedio" value={`S/ ${stats.promedio.toFixed(2)}`} />
       </div>
 
-      {/* Tabla */}
-      <Card className="flex-1 rounded-xl border border-border bg-card overflow-hidden">
-        <div className="overflow-auto h-full">
-          <Table>
-            <TableHeader>
-              <TableRow className="text-[10px] uppercase text-muted-foreground/70">
-                <TableHead>Fecha</TableHead>
-                <TableHead>Comprobante</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead className="text-right">IGV</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead>Método</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow><TableCell colSpan={8} className="text-center py-12"><Spinner size="md" /></TableCell></TableRow>
-              ) : ventas.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12">
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <FileSpreadsheet className="h-8 w-8 text-muted-foreground/30" strokeWidth={1.5} />
-                      <p className="text-sm">No hay ventas en este período</p>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                ventas.map((venta) => (
-                  <TableRow key={venta.id_venta} className="group">
-                    <TableCell className="text-xs whitespace-nowrap">{venta.f_venta}</TableCell>
-                    <TableCell>
-                      <span className="font-mono text-xs font-medium">{venta.num_comprobante}</span>
-                      <span className="ml-1 text-[10px] text-muted-foreground">{venta.id_comprobante}</span>
-                    </TableCell>
-                    <TableCell className="text-xs max-w-[180px] truncate">
-                      {venta.nom_cliente ?? <span className="text-muted-foreground italic">Venta rápida</span>}
-                      {venta.documento_cliente && <span className="ml-1 text-[10px] text-muted-foreground">{venta.documento_cliente}</span>}
-                    </TableCell>
-                    <TableCell className="text-xs text-right tabular-nums">S/ {Number(venta.igv ?? 0).toFixed(2)}</TableCell>
-                    <TableCell className="text-xs text-right font-semibold tabular-nums text-primary">S/ {Number(venta.total_t ?? 0).toFixed(2)}</TableCell>
-                    <TableCell><Badge variant="secondary" className="text-[10px]">{venta.metodo_pago ?? "—"}</Badge></TableCell>
-                    <TableCell>
-                      <Badge variant={venta.estado_venta === 1 ? "default" : "destructive"} className="text-[10px]">
-                        {venta.estado_venta === 1 ? "Completada" : "Anulada"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Ver comprobante"
-                          onClick={() => setPreviewVenta(venta)}>
-                          <Eye className="h-3 w-3" />
-                        </Button>
-                        {canDelete && venta.estado_venta === 1 && (
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive" title="Anular venta"
-                            onClick={() => {
-                              if (confirm(`¿Anular venta ${venta.num_comprobante}?`)) {
-                                if (venta.id_venta) annulVenta(venta.id_venta).then(() => refetch());
-                              }
-                            }}>
-                            <RotateCcw className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </Card>
+      {/* Tabla adaptativa */}
+      <div className="flex-1 overflow-auto">
+        <AdaptiveCollection<Venta>
+          items={ventas}
+          fields={fields}
+          actions={actions}
+          layout="list"
+          isLoading={isLoading}
+          getItemId={(v) => v.id_venta ?? Math.random()}
+          empty={{ title: "No hay ventas en este período" }}
+        />
+      </div>
 
       {previewVenta && (
         <VoucherPreview open={!!previewVenta} venta={previewVenta} onClose={() => setPreviewVenta(null)} />

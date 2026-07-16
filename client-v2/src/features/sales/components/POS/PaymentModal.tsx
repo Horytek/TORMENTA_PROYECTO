@@ -236,15 +236,13 @@ export function PaymentModal({ open, onClose, onSaleComplete }: PaymentModalProp
         igv,
         total_t: total,
         totalImporte_venta: total,
-        descuento_venta: 0,
+        descuento_venta: cart.descuento,
         vuelto: Math.max(0, totalPagado - total),
         recibido: montoRecibidoBackend,
         observacion: observaciones || undefined,
         comprobante_pago: metodoPagoBackend,
         detalles: cart.items.map((item) => ({
           id_producto: item.id_producto,
-          id_variante: item.id_variante,
-          sku: item.sku,
           cantidad: item.cantidad,
           precio_unitario: item.precio_unitario,
           precio_total: item.precio_total,
@@ -313,6 +311,22 @@ export function PaymentModal({ open, onClose, onSaleComplete }: PaymentModalProp
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">IGV (18%)</span>
                 <span className="font-medium">S/ {igv.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <Label htmlFor="pos-descuento" className="text-muted-foreground font-normal">Descuento</Label>
+                <div className="relative w-28">
+                  <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">S/</span>
+                  <Input
+                    id="pos-descuento"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={cart.descuento || ""}
+                    onChange={(e) => cart.setDescuento(Number(e.target.value) || 0)}
+                    placeholder="0.00"
+                    className="h-7 pl-7 text-right text-sm"
+                  />
+                </div>
               </div>
               <Separator />
               <div className="flex justify-between text-lg font-bold">

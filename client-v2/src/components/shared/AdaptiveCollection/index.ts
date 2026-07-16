@@ -5,7 +5,7 @@ export {
   AdaptiveCard,
   CardSkeleton,
 } from "./AdaptiveCollection";
-export { renderField, SEMANTIC_COLOR_MAP } from "./fieldRenderers";
+export { renderField, SEMANTIC_COLOR_MAP, inferState } from "./fieldRenderers";
 export type {
   FieldDef,
   FieldPriority,
@@ -18,5 +18,41 @@ export type {
   SortConfig,
   RhythmConfig,
   AdaptiveCollectionProps,
+  // Nuevos (Phase 2)
+  CardVariant,
+  CardSlots,
+  MediaSpec,
+  ItemState,
+  AdaptiveCardProps,
 } from "./types";
-export { inferSemantic, sortFieldsByPriority, splitCollapsible } from "./types";
+export { inferSemantic, sortFieldsByPriority, splitCollapsible, getInitials } from "./types";
+
+// Sub-componentes presentacionales (Phase 2)
+export {
+  CardRail,
+  CardMedia,
+  CardHeader,
+  CardBody,
+  CardFooter,
+  CardAside,
+} from "./CardSlots";
+
+// Sistema de acento (Phase 2)
+export { Accent, type AccentKind, type AccentProps } from "./Accent";
+
+// Auto-mapper (Phase 2)
+export { mapFieldsToSlots, deriveItemState } from "./FieldAutoMap.tsx";
+
+// Variants (Phase 2)
+export {
+  cardRootVariants,
+  accentVariants,
+  kpiVariants,
+  STATE_TINT,
+  NODE_TINTS,
+  getTintById,
+  type CardRootVariantProps,
+  type AccentVariantProps,
+  type KpiVariantProps,
+  type NodeTintId,
+} from "./variants";

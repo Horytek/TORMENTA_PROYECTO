@@ -5,7 +5,7 @@ import {
   getSubcategories, getCategories, createSubcategory, updateSubcategory,
   deleteSubcategory, checkSubcategoryUsage,
 } from "../api/products";
-import { useUserStore } from "@/store/useUserStore";
+import { usePermissions } from "@/hooks/usePermissions";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -62,12 +62,11 @@ export default function SubcategoriesPanel() {
     queryFn: getCategories,
   });
 
-  const capabilities = useUserStore((state) => state.capabilities);
-  const user = useUserStore((state) => state.user);
+  const { can } = usePermissions();
 
-  const hasCreatePermission = user?.roleId === 10 || capabilities.has("productos.create") || capabilities.has("*");
-  const hasEditPermission = user?.roleId === 10 || capabilities.has("productos.edit") || capabilities.has("*");
-  const hasDeletePermission = user?.roleId === 10 || capabilities.has("productos.delete") || capabilities.has("*");
+  const hasCreatePermission = can("productos.create");
+  const hasEditPermission = can("productos.edit");
+  const hasDeletePermission = can("productos.delete");
 
   const filteredSubs = subcategories.filter((s) =>
     (s.nombre_sub || "").toLowerCase().includes(searchTerm.toLowerCase().trim()) ||

@@ -8,10 +8,11 @@ export type MetodoPago = "EFECTIVO" | "TARJETA" | "TRANSFERENCIA" | "YAPE" | "PL
 export type VentaEstado = 1 | 0;
 
 // ── Item en carrito ─────────────────────────────────────────────
+// Clave única del item: `id_producto`. Sin variantes ni SKU.
+// Si en el futuro se vuelven a manejar tallas/colores, la clave pasará
+// a ser (id_producto, id_tonalidad?, id_talla?).
 export interface CartItem {
-  id_variante: number;
   id_producto: number;
-  sku: string;
   codigo_barra?: string;
   descripcion: string;
   nom_marca?: string;
@@ -20,7 +21,8 @@ export interface CartItem {
   precio_unitario: number;
   precio_total: number;
   stock?: number;
-  attributes_json?: string;
+  id_tonalidad?: number;
+  id_talla?: number;
 }
 
 // ── Detalle de venta (respuesta API / backend) ─────────────────
@@ -130,8 +132,6 @@ export interface VentaPayload {
 
 export interface VentaDetallePayload {
   id_producto: number;
-  id_variante?: number;
-  sku?: string;
   cantidad: number;
   precio_unitario: number;
   precio_total: number;

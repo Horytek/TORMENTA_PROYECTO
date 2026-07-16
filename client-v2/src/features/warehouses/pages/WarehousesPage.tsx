@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryState, parseAsString } from "nuqs";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 
-import { useUserStore } from "@/store/useUserStore";
+import { usePermissions } from "@/hooks/usePermissions";
 
 import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection/AdaptiveCollection";
 import type { FieldDef, RecordAction } from "@/components/shared/AdaptiveCollection/types";
@@ -20,10 +20,7 @@ export default function WarehousesPage() {
   const [editing, setEditing] = useState<Almacen | null>(null);
   const [deleting, setDeleting] = useState<Almacen | null>(null);
 
-  const capabilities = useUserStore((s) => s.capabilities);
-  const user = useUserStore((s) => s.user);
-  const can = (perm: string) =>
-    user?.roleId === 10 || capabilities.has(perm) || capabilities.has("*");
+  const { can } = usePermissions();
   const canEdit = can("almaceng.edit");
   const canDelete = can("almaceng.delete");
 

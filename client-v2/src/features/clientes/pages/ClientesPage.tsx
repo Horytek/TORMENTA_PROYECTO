@@ -5,7 +5,7 @@ import { Plus, Pencil, Trash2, Ban, RotateCcw } from "lucide-react";
 
 import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection";
 import type { FieldDef, RecordAction } from "@/components/shared/AdaptiveCollection";
-import { useUserStore } from "@/store/useUserStore";
+import { usePermissions } from "@/hooks/usePermissions";
 
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import ClientForm from "../components/ClientForm";
@@ -42,10 +42,7 @@ export default function ClientesPage() {
   const [editing, setEditing] = useState<Cliente | null>(null);
   const [confirm, setConfirm] = useState<{ action: ConfirmAction; cliente: Cliente } | null>(null);
 
-  const capabilities = useUserStore((s) => s.capabilities);
-  const user = useUserStore((s) => s.user);
-  const can = (perm: string) =>
-    user?.roleId === 10 || capabilities.has(perm) || capabilities.has("*");
+  const { can } = usePermissions();
   const canEdit = can("clientes.edit");
   const canDelete = can("clientes.delete");
 

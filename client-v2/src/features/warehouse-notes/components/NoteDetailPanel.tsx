@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { FileDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { getNegocio } from "@/features/settings/api/settings";
 import type { WarehouseNote, NoteKind } from "../types";
 
@@ -9,14 +8,6 @@ interface NoteDetailPanelProps {
   note: WarehouseNote;
   tipo: NoteKind;
   canGeneratePdf: boolean;
-}
-
-function variantBadges(detalle: WarehouseNote["detalles"] extends (infer D)[] | undefined ? D : never) {
-  const labels: string[] = [];
-  if (detalle.sku_label) labels.push(detalle.sku_label);
-  if (detalle.nombre_talla && detalle.nombre_talla !== "-") labels.push(`Talla: ${detalle.nombre_talla}`);
-  if (detalle.nombre_tonalidad && detalle.nombre_tonalidad !== "-") labels.push(`Color: ${detalle.nombre_tonalidad}`);
-  return labels;
 }
 
 export function NoteDetailPanel({ note, tipo, canGeneratePdf }: NoteDetailPanelProps) {
@@ -71,11 +62,7 @@ export function NoteDetailPanel({ note, tipo, canGeneratePdf }: NoteDetailPanelP
       doc.text(note.usuario || "-", 55, y);
       y += 8;
 
-      const rows = detalles.map((d) => {
-        const extras = variantBadges(d).join(", ");
-        const desc = extras ? `${d.descripcion} [${extras}]` : d.descripcion;
-        return [String(d.codigo), d.marca, desc, String(d.cantidad), d.unidad];
-      });
+      const rows = detalles.map((d) => [String(d.codigo), d.marca, d.descripcion, String(d.cantidad), d.unidad]);
 
       autoTable(doc, {
         head: [["Código", "Marca", "Descripción", "Cant.", "Und."]],
@@ -124,12 +111,7 @@ export function NoteDetailPanel({ note, tipo, canGeneratePdf }: NoteDetailPanelP
           <div key={`${d.codigo}-${i}`} className="flex items-center justify-between gap-3 px-3 py-2">
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-foreground">{d.descripcion}</p>
-              <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                <span className="text-xs text-muted-foreground">{d.marca}</span>
-                {variantBadges(d).map((label) => (
-                  <Badge key={label} variant="secondary" className="max-w-[200px] truncate text-[10px] font-normal" title={label}>{label}</Badge>
-                ))}
-              </div>
+              <span className="text-xs text-muted-foreground">{d.marca}</span>
             </div>
             <div className="shrink-0 text-right text-sm">
               <span className="font-semibold text-foreground">{d.cantidad}</span>

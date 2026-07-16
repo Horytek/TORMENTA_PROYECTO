@@ -2,7 +2,6 @@ import { getConnection } from "./../database/database.js";
 import { getTesisConnection } from "./../database/database_tesis.js";
 import { DATABASE } from "../config.js";
 import { logVentas } from "../utils/logActions.js";
-import { resolveSku } from "../utils/skuHelper.js";
 
 // Cache para datos que no cambian frecuentemente
 const queryCache = new Map();
@@ -11,10 +10,10 @@ const CACHE_TTL = 60000; // 1 minuto
 // --- INTERNAL HELPER FUNCTIONS ---
 
 const annulVentaInternal = async (connection, id_venta, id_usuario, id_tenant, ip, comprobante, estadoSunat) => {
-  // 1) Obtener detalles - ADD id_sku
+  // 1) Obtener detalles del detalle_venta (sin id_sku: ya no usamos SKU en el POS)
   const [detallesResult] = await connection.query(
     `
-    SELECT dv.id_producto, dv.cantidad, dv.id_tonalidad, dv.id_talla, dv.id_sku
+    SELECT dv.id_producto, dv.cantidad, dv.id_tonalidad, dv.id_talla
     FROM detalle_venta dv
     INNER JOIN venta v ON v.id_venta = dv.id_venta
     WHERE dv.id_venta = ? AND v.id_tenant = ?
@@ -51,46 +50,42 @@ const annulVentaInternal = async (connection, id_venta, id_usuario, id_tenant, i
   }
   const id_almacen = almacenResult[0].id_almacen;
 
-  // 4) Restaurar stock para cada detalle
+  // 4) Restaurar stock en `inventario` para cada detalle.
+  //    La clave única de stock ahora es (id_producto, id_almacen, id_tenant).
+  //    id_tonalidad / id_talla se conservan para la bitácora y se usan
+  //    para identificar la fila correcta de inventario si el producto
+  //    tiene variantes físicas (PK incluye las columnas nulables).
   for (const detalle of detallesResult) {
-    const { id_producto, cantidad, id_tonalidad, id_talla } = detalle; // id_sku is also here
+    const { id_producto, cantidad, id_tonalidad, id_talla } = detalle;
+    const id_ton = id_tonalidad || null;
+    const id_tal = id_talla || null;
 
-    // Resolve SKU - Prioritize existing id_sku
-    let id_sku = detalle.id_sku;
-    if (!id_sku) {
-      id_sku = await resolveSku(connection, id_producto, id_tonalidad, id_talla, id_tenant);
-    }
+    // Construir WHERE dinámico: incluir id_tonalidad / id_talla solo si vienen definidos,
+    // para alinear con la fila exacta del inventario.
+    let where = `id_producto = ? AND id_almacen = ? AND id_tenant = ?`;
+    const whereParams = [id_producto, id_almacen, id_tenant];
+    if (id_ton !== null) { where += ` AND (id_tonalidad <=> ?)`; whereParams.push(id_ton); }
+    if (id_tal !== null) { where += ` AND (id_talla <=> ?)`;     whereParams.push(id_tal); }
 
-    // Stock actual del inventario del producto en el almacén de la venta
+    // Stock actual del inventario
     const [[stockRow]] = await connection.query(
-      `
-      SELECT I.stock AS stockActual
-      FROM inventario_stock I
-      WHERE I.id_sku = ? 
-        AND I.id_almacen = ?
-      `,
-      [id_sku, id_almacen]
+      `SELECT stock AS stockActual FROM inventario WHERE ${where} LIMIT 1`,
+      whereParams
     );
-
     const stockActual = Number(stockRow?.stockActual ?? 0);
 
     await connection.query(
-      `
-      UPDATE inventario_stock
-      SET stock = ?
-      WHERE id_sku = ?
-        AND id_almacen = ?
-      `,
-      [stockActual + cantidad, id_sku, id_almacen]
+      `UPDATE inventario SET stock = ? WHERE ${where}`,
+      [stockActual + cantidad, ...whereParams]
     );
 
-    // Bitácora de entrada (Legacy columns for T/T)
+    // Bitácora de entrada (compatible con kardex)
     await connection.query(
       `
       INSERT INTO bitacora_nota (id_producto, id_almacen, entra, stock_anterior, stock_actual, fecha, id_venta, id_tenant, id_tonalidad, id_talla)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
-      [id_producto, id_almacen, cantidad, stockActual, stockActual + cantidad, f_venta, id_venta, id_tenant, id_tonalidad, id_talla]
+      [id_producto, id_almacen, cantidad, stockActual, stockActual + cantidad, f_venta, id_venta, id_tenant, id_ton, id_tal]
     );
   }
 
@@ -185,39 +180,38 @@ const createVentaInternal = async (connection, saleData, id_tenant, ip) => {
     const id_ton = id_tonalidad || null;
     const id_tal = id_talla || null;
 
-    // Resolve SKU - Prioritize passed id_sku
-    let id_sku = detalle.id_sku;
-    if (!id_sku) {
-      id_sku = await resolveSku(connection, id_producto, id_ton, id_tal, id_tenant);
-    }
+    // Construir WHERE dinámico para localizar la fila exacta de inventario.
+    // La clave es (id_producto, id_almacen, id_tenant) y se estrecha con
+    // id_tonalidad / id_talla si vienen definidos.
+    let where = `id_producto = ? AND id_almacen = ? AND id_tenant = ?`;
+    const whereParams = [id_producto, id_almacen, id_tenant];
+    if (id_ton !== null) { where += ` AND (id_tonalidad <=> ?)`; whereParams.push(id_ton); }
+    if (id_tal !== null) { where += ` AND (id_talla <=> ?)`;     whereParams.push(id_tal); }
 
-    // Verificar Stock
+    // Verificar stock en `inventario`
     const [inventarioResult] = await connection.query(
-      `SELECT stock FROM inventario_stock 
-       WHERE id_sku = ? 
-       AND id_almacen = ?
-       LIMIT 1`,
-      [id_sku, id_almacen]
+      `SELECT stock FROM inventario WHERE ${where} LIMIT 1`,
+      whereParams
     );
 
     const stockActual = inventarioResult.length > 0 ? Number(inventarioResult[0].stock) : 0;
 
     if (stockActual < cantidad) {
-      throw new Error(`Not enough stock for product ID ${id_producto}. Available: ${stockActual}, Requested: ${cantidad}`);
+      throw new Error(`Stock insuficiente para producto ID ${id_producto}. Disponible: ${stockActual}, Solicitado: ${cantidad}`);
     }
 
     const stockNuevo = stockActual - cantidad;
 
-    // Update Stock
+    // Actualizar stock en `inventario`
     await connection.query(
-      `UPDATE inventario_stock SET stock = ? 
-       WHERE id_sku = ? 
-       AND id_almacen = ?`,
-      [stockNuevo, id_sku, id_almacen]
+      `UPDATE inventario SET stock = ? WHERE ${where}`,
+      [stockNuevo, ...whereParams]
     );
 
+    // detalle_venta: insertar sin id_sku (la columna sigue existiendo pero queda NULL).
+    // 9 placeholders: id_producto, id_venta, cantidad, precio, descuento, total, id_tonalidad, id_talla, id_sku
     detalleVentaValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    detalleVentaParams.push(id_producto, id_venta, cantidad, precio, descuento, total, id_ton, id_tal, id_sku);
+    detalleVentaParams.push(id_producto, id_venta, cantidad, precio, descuento, total, id_ton, id_tal, null);
 
     bitacoraValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     bitacoraParams.push(id_producto, id_almacen, cantidad, stockActual, stockNuevo, fecha, id_venta, id_tenant, id_ton, id_tal);
@@ -501,96 +495,69 @@ const getProductosVentas = async (req, res) => {
     const id_tenant = req.id_tenant;
     connection = await getConnection();
 
-    // Determine the almacen filter based on sucursal
-    let almacenFilter = '';
-    let queryParams = [id_tenant];
+    // Catálogo POS: usa solo la tabla `inventario` como fuente de stock.
+    // Se mantiene el filtro por sucursal para que cada cajero vea stock
+    // del almacén que le corresponde.
+    let almacenCondition = '';
+    const queryParams = [];
 
     if (id_sucursal && !isNaN(id_sucursal)) {
-      // If we have a numeric sucursal ID, find the associated almacen
-      almacenFilter = `
-        AND al.id_almacen IN (
-          SELECT sa.id_almacen 
-          FROM sucursal_almacen sa 
+      // id_sucursal numérico: filtrar por almacenes ligados a esa sucursal.
+      almacenCondition = `
+        AND i.id_almacen IN (
+          SELECT sa.id_almacen
+          FROM sucursal_almacen sa
           WHERE sa.id_sucursal = ?
         )
       `;
       queryParams.push(id_sucursal);
     } else if (id_sucursal) {
-      // If we have a sucursal name (legacy), find via usuario
-      almacenFilter = `
-        AND al.id_almacen IN (
-          SELECT sa.id_almacen 
-          FROM sucursal_almacen sa 
-          INNER JOIN sucursal su ON su.id_sucursal = sa.id_sucursal
-          INNER JOIN vendedor ven ON ven.dni = su.dni
-          INNER JOIN usuario us ON us.id_usuario = ven.id_usuario
+      // id_sucursal como string (legacy): buscar por usuario → vendedor → sucursal → almacén.
+      almacenCondition = `
+        AND i.id_almacen IN (
+          SELECT sa.id_almacen
+          FROM sucursal_almacen sa
+            INNER JOIN sucursal su   ON su.id_sucursal = sa.id_sucursal
+            INNER JOIN vendedor ven ON ven.dni        = su.dni
+            INNER JOIN usuario us   ON us.id_usuario  = ven.id_usuario
           WHERE us.usua = ?
         )
       `;
       queryParams.push(id_sucursal);
     }
 
-    // Modern query that checks BOTH inventario_stock (for SKU-based products)
-    // AND legacy inventario table (for simple products without SKUs)
-    // We use UNION to combine both sources
+    // id_tenant siempre se añade al final para mantener consistencia
+    // con el orden de los placeholders en el SQL.
+    queryParams.push(id_tenant);
+
     const [result] = await connection.query(
       `
-      SELECT 
-        codigo, nombre, precio, SUM(stock) as stock, undm, nom_marca, categoria_p, codigo_barras
-      FROM (
-        -- Modern SKU-based inventory from inventario_stock
-        SELECT 
-          PR.id_producto AS codigo, 
-          PR.descripcion AS nombre,
-          CAST(PR.precio AS DECIMAL(10, 2)) AS precio, 
-          COALESCE(ist.stock, 0) as stock, 
-          PR.undm, 
-          MA.nom_marca, 
-          CA.nom_subcat AS categoria_p, 
-          PR.cod_barras as codigo_barras
-        FROM producto PR
-          INNER JOIN marca MA ON MA.id_marca = PR.id_marca
-          INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
-          LEFT JOIN producto_sku sku ON sku.id_producto = PR.id_producto
-          LEFT JOIN inventario_stock ist ON ist.id_sku = sku.id_sku
-          LEFT JOIN almacen al ON al.id_almacen = ist.id_almacen
-        WHERE PR.estado_producto = 1 
-          AND PR.id_tenant = ?
-          AND sku.id_sku IS NOT NULL
-          AND sku.attributes_json IS NOT NULL 
-          AND LENGTH(sku.attributes_json) > 2
-          AND sku.attributes_json != '{}'
-          AND sku.attributes_json != '[]'
-          ${almacenFilter}
-        
-        UNION ALL
-        
-        -- Legacy inventory for products without SKUs
-        SELECT 
-          PR.id_producto AS codigo, 
-          PR.descripcion AS nombre,
-          CAST(PR.precio AS DECIMAL(10, 2)) AS precio, 
-          COALESCE(inv.stock, 0) as stock, 
-          PR.undm, 
-          MA.nom_marca, 
-          CA.nom_subcat AS categoria_p, 
-          PR.cod_barras as codigo_barras
-        FROM producto PR
-          INNER JOIN marca MA ON MA.id_marca = PR.id_marca
-          INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
-          LEFT JOIN inventario inv ON inv.id_producto = PR.id_producto
-          LEFT JOIN almacen al ON al.id_almacen = inv.id_almacen
-          LEFT JOIN producto_sku sku ON sku.id_producto = PR.id_producto
-        WHERE PR.estado_producto = 1 
-          AND PR.id_tenant = ?
-          AND sku.id_sku IS NULL  -- Only products WITHOUT SKUs
-          ${almacenFilter ? almacenFilter.replace('?', (queryParams.length > 1 ? '?' : '')) : ''}
-      ) combined
-      GROUP BY codigo, nombre, precio, undm, nom_marca, categoria_p, codigo_barras
+      SELECT
+        PR.id_producto        AS codigo,
+        PR.descripcion        AS nombre,
+        CAST(PR.precio AS DECIMAL(10, 2)) AS precio,
+        COALESCE(SUM(i.stock), 0)         AS stock,
+        PR.undm,
+        MA.nom_marca,
+        CA.nom_subcat         AS categoria_p,
+        PR.cod_barras         AS codigo_barras
+      FROM producto PR
+        INNER JOIN marca MA         ON MA.id_marca         = PR.id_marca
+        INNER JOIN sub_categoria CA ON CA.id_subcategoria  = PR.id_subcategoria
+        LEFT  JOIN inventario i     ON i.id_producto       = PR.id_producto
+                                    AND i.id_tenant        = ?
+                                    ${almacenCondition}
+      WHERE PR.estado_producto = 1
+        AND PR.id_tenant       = ?
+      GROUP BY PR.id_producto, PR.descripcion, PR.precio, PR.undm,
+               MA.nom_marca, CA.nom_subcat, PR.cod_barras
       HAVING stock > 0
       ORDER BY nombre
       `,
-      almacenFilter ? [...queryParams, id_tenant, queryParams[1]] : [...queryParams, id_tenant]
+      // Orden: el primer ? es i.id_tenant = ? (dentro del LEFT JOIN);
+      // luego vienen los placeholders de almacenCondition (si hay);
+      // finalmente PR.id_tenant = ?.
+      [id_tenant, ...queryParams]
     );
 
     res.json({ code: 1, data: result, message: "Productos listados" });

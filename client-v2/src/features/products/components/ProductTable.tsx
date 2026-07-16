@@ -1,19 +1,18 @@
 import { useRef, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import type { Product } from "../types";
-import { Edit, Trash2, Eye, Info } from "lucide-react";
+import { Edit, Trash2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Barcode from "@/components/ui/Barcode";
 import { cn } from "@/lib/utils";
 
-import { useUserStore } from "@/store/useUserStore";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface ProductTableProps {
   products: Product[];
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
-  onViewVariants: (product: Product) => void;
   isLoading: boolean;
   searchTerm: string;
 }
@@ -22,7 +21,6 @@ export default function ProductTable({
   products,
   onEdit,
   onDelete,
-  onViewVariants,
   isLoading,
   searchTerm,
 }: ProductTableProps) {
@@ -63,11 +61,10 @@ export default function ProductTable({
     document.body.removeChild(a);
   };
 
-  const capabilities = useUserStore((state) => state.capabilities);
-  const user = useUserStore((state) => state.user);
+  const { can } = usePermissions();
 
-  const hasEditPermission = user?.roleId === 10 || capabilities.has("productos.edit") || capabilities.has("*");
-  const hasDeletePermission = user?.roleId === 10 || capabilities.has("productos.delete") || capabilities.has("*");
+  const hasEditPermission = can("productos.edit");
+  const hasDeletePermission = can("productos.delete");
 
   if (isLoading) {
     return (
@@ -198,16 +195,6 @@ export default function ProductTable({
 
                   <td className="w-[13%] px-6 py-2 text-center">
                     <div className="flex items-center justify-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onViewVariants(product)}
-                        className="h-8 w-8 text-muted-foreground hover:bg-accent hover:text-brand"
-                        title="Ver variantes"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-
                       <Button
                         variant="ghost"
                         size="icon"

@@ -4,6 +4,7 @@ import { ProductCatalog } from "./ProductCatalog";
 import { CartPanel } from "./CartPanel";
 import { PaymentModal } from "./PaymentModal";
 import { ClientSelector, CLIENTE_VARIOS } from "./ClientSelector";
+import { HeldTicketsPanel } from "./HeldTicketsPanel";
 import { Badge } from "@/components/ui/badge";
 import { useCartStore } from "@/store/useCartStore";
 import { useConfigStore } from "@/store/useConfigStore";
@@ -67,6 +68,7 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
             value={cliente}
             onChange={(c) => setCliente(c ?? CLIENTE_VARIOS)}
           />
+          <HeldTicketsPanel />
         </div>
 
         <div className="flex items-center gap-3">

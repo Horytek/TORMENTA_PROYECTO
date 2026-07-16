@@ -18,6 +18,7 @@ import marcasRoutes from "./routes/marcas.routes.js";
 import ingresosRoutes from "./routes/notaingreso.routes.js";
 import salidaRoutes from "./routes/notasalida.routes.js";
 import kardexRoutes from "./routes/kardex.routes.js";
+import kardexInventarioRoutes from "./routes/kardexInventario.routes.js";
 import guiasRoutes from "./routes/guiaremision.routes.js";
 import categoriaRoutes from "./routes/categoria.routes.js";
 import subcategoriaRoutes from "./routes/subcategoria.routes.js";
@@ -68,6 +69,7 @@ import tallaRoutes from "./routes/talla.routes.js";
 import tonalidadRoutes from "./routes/tonalidad.routes.js";
 import loteRoutes from "./routes/lote.routes.js";
 import unidadesRoutes from "./routes/unidades.routes.js";
+import gastosRoutes from "./routes/gastos.routes.js";
 
 // Settings
 const port = process.env.PORT || 4000;
@@ -194,6 +196,7 @@ app.use("/api/nota_ingreso", ingresosRoutes);
 app.use("/api/nota_salida", salidaRoutes);
 app.use("/api/destinatario", destinatarioRoutes);
 app.use("/api/kardex", kardexRoutes);
+app.use("/api/kardex-inventario", kardexInventarioRoutes);
 app.use("/api/guia_remision", guiasRoutes);
 app.use("/api/categorias", categoriaRoutes);
 app.use("/api/subcategorias", subcategoriaRoutes);
@@ -233,6 +236,7 @@ app.use("/api/landing", landingRoutes);
 app.use("/api/unidades", unidadesRoutes);
 app.use("/api/health", healthRoutes);
 app.use("/api/express", expressRoutes);
+app.use("/api/gastos", gastosRoutes);
 
 
 // Servir archivos estáticos (uploads)

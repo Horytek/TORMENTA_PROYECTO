@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
-import type { Venta } from "@/features/sales/types";
+import type { Venta, VentaDetalle } from "@/features/sales/types";
 import { getNegocio } from "@/features/settings/api/settings";
 import { useConfigStore } from "@/store/useConfigStore";
 
@@ -48,8 +48,9 @@ export function VoucherPreview({ open, venta, onClose }: VoucherPreviewProps) {
           </div>
         </DialogHeader>
 
-        {/* Papel del comprobante */}
-        <div className="flex-1 overflow-y-auto bg-white dark:bg-zinc-950 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-4 print:border-none print:rounded-none print:p-0">
+        {/* Papel del comprobante — recibe la clase `voucher-paper` que el
+            bloque <style> de VoucherContent estiliza para impresión. */}
+        <div className="voucher-paper flex-1 overflow-y-auto bg-white dark:bg-zinc-950 rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-4">
           {negocio ? (
             <VoucherContent venta={venta} negocio={negocio} igv_incluido={igv_incluido} />
           ) : (
@@ -64,7 +65,58 @@ export function VoucherPreview({ open, venta, onClose }: VoucherPreviewProps) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// VoucherContent — Componente imprimible (sin Dialog)
+// Shape normalizado de un detalle. Esto evita que el JSX tenga que
+// conocer todos los aliases que el backend puede usar.
+// ─────────────────────────────────────────────────────────────────
+interface NormalizedDetalle {
+  descripcion: string;
+  marca?: string;
+  undm?: string;
+  sku?: string;
+  cantidad: number;
+  precioUnit: number;
+  precioTotal: number;
+}
+
+/**
+ * Normaliza un `VentaDetalle` (o la forma cruda que devuelve
+ * `GET /api/ventas` con `JSON_ARRAYAGG`) a una estructura única.
+ *
+ * Esto desacopla el render del contrato HTTP: si mañana el backend
+ * cambia `nombre` por `descripcion` o mueve las variantes a otro
+ * campo, sólo hay que tocar este mapper.
+ */
+function normalizeDetalle(raw: VentaDetalle | Record<string, unknown>): NormalizedDetalle {
+  const r = raw as Record<string, unknown>;
+
+  // ── Campos simples con fallbacks ──────────────────────────────
+  const descripcion =
+    strOr(r.nombre) ??
+    strOr(r.descripcion) ??
+    strOr(r.nombre_producto) ??
+    "—";
+
+  const marca = strOr(r.marca) ?? strOr((r as { nom_marca?: unknown }).nom_marca);
+  const undm = strOr(r.undm);
+  const sku = strOr(r.sku_label) ?? strOr(r.sku);
+
+  const cantidad = numOr(r.cantidad);
+  const precioUnit = numOr(r.precio) ?? numOr(r.precio_unitario);
+  const precioTotal = numOr(r.subtotal) ?? numOr(r.precio_total) ?? numOr(r.total);
+
+  return {
+    descripcion,
+    marca,
+    undm,
+    sku,
+    cantidad,
+    precioUnit,
+    precioTotal,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────
+// VoucherContent — Componente imprimible
 // ─────────────────────────────────────────────────────────────────
 function VoucherContent({
   venta,
@@ -113,6 +165,10 @@ function VoucherContent({
   const telefono = negocio?.telefono ?? "";
   const distrito = negocio?.distrito ?? "";
   const provincia = negocio?.provincia ?? "";
+
+  // Normalizar detalles (la iteración se hace una sola vez aquí; el sub-
+  // componente recibe datos ya normalizados).
+  const detalles: NormalizedDetalle[] = (venta.detalles ?? []).map(normalizeDetalle);
 
   return (
     <div
@@ -180,48 +236,18 @@ function VoucherContent({
       <Separator className="my-1 border-zinc-400" />
 
       {/* ── Encabezados columna ── */}
-      <div className="flex text-[8px] text-zinc-500 uppercase mb-0.5">
-        <span className="flex-1">Descripción</span>
-        <span className="w-8 text-right">Cant.</span>
-        <span className="w-10 text-right">P.Unit</span>
-        <span className="w-12 text-right">Total</span>
+      <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 text-[8px] text-zinc-500 uppercase">
+        <span>Descripción</span>
+        <span className="text-right w-8">Cant.</span>
+        <span className="text-right w-12">P.Unit</span>
+        <span className="text-right w-14">Total</span>
       </div>
       <Separator className="my-0.5 border-zinc-300" />
 
       {/* ── Detalles ── */}
-      {/* Backend retorna: nombre, precio, subtotal, nombre_talla, nombre_tonalidad */}
-      {venta.detalles?.map((det: any, i: number) => {
-        const nombre = (det.nombre as string) ?? (det.descripcion as string) ?? "—";
-        const cantidad = Number(det.cantidad ?? 0);
-        const precioUnit = Number(det.precio ?? det.precio_unitario ?? 0);
-        const precioTotal = Number(det.subtotal ?? det.precio_total ?? 0);
-        const nombreTalla = det.nombre_talla as string | undefined;
-        const nombreTonalidad = det.nombre_tonalidad as string | undefined;
-
-        const attrs: string[] = [];
-        if (nombreTalla && nombreTalla !== "U") attrs.push(`T:${nombreTalla}`);
-        if (nombreTonalidad && nombreTonalidad !== "Sin Tonalidad")
-          attrs.push(`C:${nombreTonalidad}`);
-        const attrSuffix = attrs.length > 0 ? ` [${attrs.join(" ")}]` : "";
-
-        return (
-          <div key={i} className="text-[9px]">
-            <div className="flex">
-              <span className="flex-1 truncate">
-                {nombre}
-                {attrSuffix}
-              </span>
-              <span className="w-8 text-right">{cantidad}</span>
-              <span className="w-10 text-right tabular-nums">
-                {precioUnit.toFixed(2)}
-              </span>
-              <span className="w-12 text-right tabular-nums">
-                {precioTotal.toFixed(2)}
-              </span>
-            </div>
-          </div>
-        );
-      })}
+      {detalles.map((det, i) => (
+        <VoucherDetalleLine key={i} det={det} />
+      ))}
 
       <Separator className="my-1 border-zinc-400" />
 
@@ -229,30 +255,30 @@ function VoucherContent({
       <div className="space-y-0.5">
         <div className="flex justify-between text-[9px]">
           <span>Op. Gravada S/</span>
-          <span className="tabular-nums">{base.toFixed(2)}</span>
+          <span className="num tabular-nums">{base.toFixed(2)}</span>
         </div>
         <div className="flex justify-between text-[9px]">
           <span>Exonerado S/</span>
-          <span className="tabular-nums">0.00</span>
+          <span className="num tabular-nums">0.00</span>
         </div>
         <div className="flex justify-between text-[9px]">
           <span>IGV 18% S/</span>
-          <span className="tabular-nums">{igv.toFixed(2)}</span>
+          <span className="num tabular-nums">{igv.toFixed(2)}</span>
         </div>
         <div className="flex justify-between text-[9px]">
           <span>ICBPER S/</span>
-          <span className="tabular-nums">0.00</span>
+          <span className="num tabular-nums">0.00</span>
         </div>
         {descuento > 0 && (
           <div className="flex justify-between text-[9px]">
             <span>Descuento S/</span>
-            <span className="tabular-nums">{descuento.toFixed(2)}</span>
+            <span className="num tabular-nums">{descuento.toFixed(2)}</span>
           </div>
         )}
         <Separator className="border-zinc-400" />
         <div className="flex justify-between font-bold text-sm">
           <span>Importe Total S/</span>
-          <span className="tabular-nums">{total.toFixed(2)}</span>
+          <span className="num tabular-nums">{total.toFixed(2)}</span>
         </div>
       </div>
 
@@ -306,13 +332,16 @@ function VoucherContent({
         <p className="text-[7px] text-zinc-400">No se aceptan devoluciones</p>
       </div>
 
-      {/* ── Print styles ── */}
+      {/* Print styles — aplicadas a `.voucher-paper` (el contenedor padre). */}
       <style>{`
         @media print {
           .voucher-paper {
             padding: 0 !important;
             margin: 0 !important;
             background: white !important;
+            border: none !important;
+            border-radius: 0 !important;
+            overflow: visible !important;
           }
         }
       `}</style>
@@ -321,13 +350,59 @@ function VoucherContent({
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Helpers
+// VoucherDetalleLine — Línea de detalle del comprobante.
+//
+// Layout robusto:
+//   - Cabecera con descripcion + atributos en líneas separadas (sin truncate)
+//   - Bloque inferior con cantidad / precio unit / total alineados a la derecha
+//   - SKU discreto al pie para impresoras térmicas estrechas
 // ─────────────────────────────────────────────────────────────────
+function VoucherDetalleLine({ det }: { det: NormalizedDetalle }) {
+  return (
+    <div className="text-[9px] py-0.5">
+      {/* Línea de descripción: permite wrap si el nombre es largo. */}
+      <p className="break-words">{det.descripcion}</p>
+
+      {/* Marca + SKU (si existen) en una sola línea. */}
+      {(det.marca || det.sku) && (
+        <p className="text-[8px] text-zinc-500 break-words">
+          {det.marca && <span>{det.marca}</span>}
+          {det.marca && det.sku && <span> · </span>}
+          {det.sku && <span className="font-mono">SKU {det.sku}</span>}
+        </p>
+      )}
+
+      {/* Cantidad / P.Unit / Total — grid robusto que no depende de w- fijo. */}
+      <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 mt-0.5">
+        <span />
+        <span className="w-8 text-right num tabular-nums">{det.cantidad}</span>
+        <span className="w-12 text-right num tabular-nums">{det.precioUnit.toFixed(2)}</span>
+        <span className="w-14 text-right num tabular-nums font-semibold">{det.precioTotal.toFixed(2)}</span>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Helpers de string / número / capitalización
+// ─────────────────────────────────────────────────────────────────
+
+function strOr(v: unknown): string | undefined {
+  if (v === null || v === undefined) return undefined;
+  const s = String(v).trim();
+  return s === "" ? undefined : s;
+}
+
+function numOr(v: unknown): number {
+  if (v === null || v === undefined || v === "") return 0;
+  const n = Number(v);
+  return isNaN(n) ? 0 : n;
+}
 
 function parseMetodoPago(metodoPago?: string): { tipo: string; monto: number }[] {
   if (!metodoPago) return [{ tipo: "EFECTIVO", monto: 0 }];
   const upper = metodoPago.toUpperCase();
-  if (upper === "EFECTIVO" || upper === "TARJETA" || upper === "YAPE" || upper === "PLIN" || upper === "TRANSFERENCIA") {
+  if (["EFECTIVO", "TARJETA", "YAPE", "PLIN", "TRANSFERENCIA"].includes(upper)) {
     return [{ tipo: upper, monto: 0 }];
   }
   if (metodoPago.includes(":")) {
@@ -373,7 +448,6 @@ function numeroALetras(numero: number): string {
   }
 
   if (decena === 1) {
-    // 10–19
     const especiales = [
       "DIEZ", "ONCE", "DOCE", "TRECE", "CATORCE", "QUINCE",
       "DIECISÉIS", "DIECISIETE", "DIECIOCHO", "DIECINUEVE",

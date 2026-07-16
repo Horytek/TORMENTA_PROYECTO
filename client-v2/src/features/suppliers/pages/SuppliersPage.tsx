@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Phone, Mail } from "lucide-react";
-import { useUserStore } from "@/store/useUserStore";
+import { usePermissions } from "@/hooks/usePermissions";
 
 import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection/AdaptiveCollection";
 import type { FieldDef, RecordAction } from "@/components/shared/AdaptiveCollection/types";
@@ -19,10 +19,7 @@ export default function SuppliersPage() {
   const [editing, setEditing] = useState<Proveedor | null>(null);
   const [deleting, setDeleting] = useState<Proveedor | null>(null);
 
-  const capabilities = useUserStore((s) => s.capabilities);
-  const user = useUserStore((s) => s.user);
-  const can = (perm: string) =>
-    user?.roleId === 10 || capabilities.has(perm) || capabilities.has("*");
+  const { can } = usePermissions();
   const canEdit = can("proveedores.edit");
   const canDelete = can("proveedores.delete");
 
@@ -52,15 +49,11 @@ export default function SuppliersPage() {
       render: (_v, item) => proveedorNombre(item),
     },
     {
-      key: "documento",
-      label: "Documento",
+      key: "direccion",
+      label: "Dirección",
       priority: "secondary",
       semantic: "subtitle",
-      render: (_v, item) => {
-        const tipo = proveedorTipo(item) === "juridico" ? "RUC" : "DNI";
-        const num = proveedorDocumento(item);
-        return num ? `${tipo}: ${num}` : null;
-      },
+      format: (v) => (v as string) || "—",
     },
     {
       key: "telefono",
@@ -103,20 +96,23 @@ export default function SuppliersPage() {
       key: "estado",
       label: "Estado",
       priority: "secondary",
-      semantic: "status-dot",
+      semantic: "badge",
       format: (v) => (Number(v) === 1 ? "Activo" : "Inactivo"),
     },
     {
-      key: "direccion",
-      label: "Dirección",
-      priority: "secondary",
-      semantic: "text",
+      key: "documento",
+      label: "Documento",
+      priority: "meta",
+      semantic: "code",
+      render: (_v, item) => {
+        const tipo = proveedorTipo(item) === "juridico" ? "RUC" : "DNI";
+        const num = proveedorDocumento(item);
+        return num ? `${tipo}: ${num}` : null;
+      },
     },
     {
       key: "id",
-      label: "ID",
-      priority: "meta",
-      semantic: "code",
+      priority: "hidden",
     },
   ];
 

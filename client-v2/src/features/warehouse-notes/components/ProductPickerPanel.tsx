@@ -1,23 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Package, Plus, ChevronDown } from "lucide-react";
+import { Search, Package, Plus } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
-import { cn } from "@/lib/utils";
-import api from "@/api/axios";
 
 import { getProductosIngreso, getProductosSalida } from "../api/warehouseNotes";
 import type { NoteKind, NoteFormItem, NotaProducto } from "../types";
-
-interface VariantOption {
-  id_sku: number;
-  nombre_sku: string;
-  attributes_json: string | null;
-  stock: number;
-}
 
 interface ProductPickerPanelProps {
   tipo: NoteKind;
@@ -37,22 +27,10 @@ function useDebouncedValue<T>(value: T, delay = 350): T {
   return debounced;
 }
 
-function formatAttributes(json: string | null): string {
-  if (!json) return "";
-  try {
-    const parsed = JSON.parse(json) as Record<string, string>;
-    return Object.values(parsed).join(" / ");
-  } catch {
-    return "";
-  }
-}
-
 export function ProductPickerPanel({ tipo, almacen, items, onAdd, disabled }: ProductPickerPanelProps) {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
-  const [expandedCodigo, setExpandedCodigo] = useState<number | null>(null);
-  const [selectedVariant, setSelectedVariant] = useState<VariantOption | null>(null);
-  const [qty, setQty] = useState("1");
+  const [qtyByProduct, setQtyByProduct] = useState<Record<number, string>>({});
 
   const { data: productos = [], isFetching } = useQuery<NotaProducto[]>({
     queryKey: ["nota-almacen-productos", tipo, almacen, debouncedSearch],
@@ -65,71 +43,37 @@ export function ProductPickerPanel({ tipo, almacen, items, onAdd, disabled }: Pr
     enabled: !disabled,
   });
 
-  const { data: variants = [], isFetching: loadingVariants } = useQuery<VariantOption[]>({
-    queryKey: ["nota-almacen-variantes", expandedCodigo, almacen],
-    queryFn: async () => {
-      const res = await api.get(`/productos/${expandedCodigo}/variants`, {
-        params: almacen ? { almacen, includeZero: tipo === "ingreso" ? "true" : "false" } : { includeZero: "true" },
-      });
-      const data = res.data;
-      return data?.data ?? (Array.isArray(data) ? data : []);
-    },
-    enabled: expandedCodigo !== null,
-  });
-
-  const toggleExpanded = (codigo: number) => {
-    setExpandedCodigo((prev) => (prev === codigo ? null : codigo));
-    setSelectedVariant(null);
-    setQty("1");
-  };
-
   const qtyAlreadyInCart = (uniqueKey: string) =>
     items.filter((i) => i.uniqueKey === uniqueKey).reduce((sum, i) => sum + i.cantidad, 0);
 
+  const isOverStock = (producto: NotaProducto, cantidad: number) => {
+    if (tipo !== "salida") return false;
+    const stockDisponible = producto.stock ?? 0;
+    const yaEnCarrito = qtyAlreadyInCart(`PROD-${producto.codigo}`);
+    return yaEnCarrito + cantidad > stockDisponible;
+  };
+
   const handleAdd = (producto: NotaProducto) => {
-    const cantidad = Number(qty);
+    const cantidad = Number(qtyByProduct[producto.codigo] ?? "1");
     if (!cantidad || cantidad <= 0) return;
-
-    const variant = selectedVariant;
-    const uniqueKey = variant ? `SKU-${variant.id_sku}` : `PROD-${producto.codigo}`;
-    const stockDisponible = variant ? variant.stock : producto.stock ?? 0;
-
-    if (tipo === "salida") {
-      const yaEnCarrito = qtyAlreadyInCart(uniqueKey);
-      if (yaEnCarrito + cantidad > stockDisponible) {
-        return; // el botón queda deshabilitado en este caso, ver isOverStock
-      }
-    }
+    if (isOverStock(producto, cantidad)) return;
 
     onAdd({
-      uniqueKey,
+      uniqueKey: `PROD-${producto.codigo}`,
       codigo: producto.codigo,
       descripcion: producto.descripcion,
       marca: producto.marca,
-      stock: stockDisponible,
+      stock: producto.stock ?? 0,
       cantidad,
       id_tonalidad: null,
       id_talla: null,
-      id_sku: variant?.id_sku ?? null,
+      id_sku: null,
       nombre_tonalidad: null,
       nombre_talla: null,
-      sku_label: variant?.nombre_sku ?? formatAttributes(variant?.attributes_json ?? null) ?? null,
+      sku_label: null,
     });
 
-    setExpandedCodigo(null);
-    setQty("1");
-    setSelectedVariant(null);
-  };
-
-  const currentUniqueKey = (producto: NotaProducto) =>
-    selectedVariant ? `SKU-${selectedVariant.id_sku}` : `PROD-${producto.codigo}`;
-
-  const isOverStock = (producto: NotaProducto) => {
-    if (tipo !== "salida") return false;
-    const cantidad = Number(qty) || 0;
-    const stockDisponible = selectedVariant ? selectedVariant.stock : producto.stock ?? 0;
-    const yaEnCarrito = qtyAlreadyInCart(currentUniqueKey(producto));
-    return yaEnCarrito + cantidad > stockDisponible;
+    setQtyByProduct((prev) => ({ ...prev, [producto.codigo]: "1" }));
   };
 
   const emptyMessage = useMemo(() => {
@@ -161,85 +105,39 @@ export function ProductPickerPanel({ tipo, almacen, items, onAdd, disabled }: Pr
         ) : (
           <div className="flex flex-col divide-y divide-border/60">
             {productos.map((producto) => {
-              const isExpanded = expandedCodigo === producto.codigo;
+              const cantidad = Number(qtyByProduct[producto.codigo] ?? "1") || 0;
+              const overStock = isOverStock(producto, cantidad);
               return (
-                <div key={producto.codigo} className="py-2">
-                  <button
-                    type="button"
-                    onClick={() => toggleExpanded(producto.codigo)}
-                    className="flex w-full items-center justify-between gap-2 text-left cursor-pointer"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-foreground">{producto.descripcion}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {producto.marca}
-                        {producto.stock !== undefined && ` · Stock: ${producto.stock}`}
-                      </p>
+                <div key={producto.codigo} className="flex items-center justify-between gap-2 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">{producto.descripcion}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {producto.marca}
+                      {producto.stock !== undefined && ` · Stock: ${producto.stock}`}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={tipo === "salida" ? producto.stock : undefined}
+                        value={qtyByProduct[producto.codigo] ?? "1"}
+                        onChange={(e) => setQtyByProduct((prev) => ({ ...prev, [producto.codigo]: e.target.value }))}
+                        className="h-8 w-16 text-sm"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="h-8 gap-1"
+                        disabled={!cantidad || overStock}
+                        onClick={() => handleAdd(producto)}
+                      >
+                        <Plus className="h-3.5 w-3.5" /> Agregar
+                      </Button>
                     </div>
-                    <ChevronDown
-                      className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", isExpanded && "rotate-180")}
-                    />
-                  </button>
-
-                  {isExpanded && (
-                    <div className="mt-2 flex flex-col gap-2 rounded-lg bg-muted/30 p-2.5">
-                      {loadingVariants ? (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Spinner size="xs" /> Cargando variantes…
-                        </div>
-                      ) : variants.length > 0 ? (
-                        <div className="flex flex-wrap gap-1.5">
-                          {variants.map((v) => {
-                            const label = formatAttributes(v.attributes_json) || v.nombre_sku;
-                            const selected = selectedVariant?.id_sku === v.id_sku;
-                            const sinStock = tipo === "salida" && v.stock <= 0;
-                            return (
-                              <button
-                                key={v.id_sku}
-                                type="button"
-                                disabled={sinStock}
-                                onClick={() => setSelectedVariant(v)}
-                                className={cn(
-                                  "cursor-pointer",
-                                  sinStock && "cursor-not-allowed opacity-40"
-                                )}
-                              >
-                                <Badge variant={selected ? "default" : "secondary"} className="gap-1 font-normal">
-                                  {label} · {v.stock}
-                                </Badge>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">Producto sin variantes registradas.</p>
-                      )}
-
-                      <div className="flex items-center gap-2 pt-1">
-                        <Input
-                          type="number"
-                          min={1}
-                          value={qty}
-                          onChange={(e) => setQty(e.target.value)}
-                          className="h-8 w-20 text-sm"
-                        />
-                        <Button
-                          type="button"
-                          size="sm"
-                          className="h-8 gap-1"
-                          disabled={
-                            (variants.length > 0 && !selectedVariant) || !Number(qty) || isOverStock(producto)
-                          }
-                          onClick={() => handleAdd(producto)}
-                        >
-                          <Plus className="h-3.5 w-3.5" /> Agregar
-                        </Button>
-                        {isOverStock(producto) && (
-                          <span className="text-xs text-destructive">Stock insuficiente</span>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                    {overStock && <span className="text-xs text-destructive">Stock insuficiente</span>}
+                  </div>
                 </div>
               );
             })}
