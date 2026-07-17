@@ -53,7 +53,7 @@ type KardexTab = "catalogo" | "stock-minimo" | "detalle" | "solicitudes";
 type StockFilter = "" | "todos" | "con_stock" | "sin_stock";
 
 export default function KardexPage() {
-  const [tab, setTab] = useQueryState<KardexTab>("tab", parseAsString.withDefault("catalogo"));
+  const [tab, setTab] = useQueryState("tab", parseAsString.withDefault("catalogo" as KardexTab));
   const [search, setSearch] = useQueryState("q", parseAsString.withDefault(""));
   const [almacen, setAlmacen] = useQueryState("alm", parseAsString.withDefault(""));
   const [stock, setStock] = useQueryState("stock", parseAsString.withDefault("con_stock"));

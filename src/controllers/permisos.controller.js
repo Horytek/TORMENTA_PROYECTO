@@ -1,5 +1,6 @@
 import { getConnection } from "./../database/database.js";
 import { logAudit } from "../utils/auditLogger.js";
+import { isDeveloperReq, DEVELOPER_ROLE_ID } from "../middlewares/authorize.middleware.js";
 
 // Cache para consultas frecuentes
 const queryCache = new Map();
@@ -17,8 +18,7 @@ setInterval(() => {
 
 // OBTENER MÓDULOS CON SUBMÓDULOS - OPTIMIZADO
 const getModulosConSubmodulos = async (req, res) => {
-    const nameUser = req.user.nameUser;
-    const isDeveloper = nameUser === 'desarrollador';
+    const isDeveloper = isDeveloperReq(req);
     const id_tenant = req.id_tenant;
 
     const cacheKey = `modulos_submodulos_${isDeveloper ? 'dev' : id_tenant}`;
@@ -133,8 +133,7 @@ const getModulosConSubmodulos = async (req, res) => {
 // OBTENER PERMISOS DE MÓDULO - OPTIMIZADO
 const getPermisosModulo = async (req, res) => {
     const { id_rol } = req.params;
-    const nameUser = req.user.nameUser;
-    const isDeveloper = nameUser === 'desarrollador';
+    const isDeveloper = isDeveloperReq(req);
     const id_tenant = req.id_tenant;
 
     if (!id_rol) {
@@ -152,8 +151,8 @@ const getPermisosModulo = async (req, res) => {
 
         if (isDeveloper) {
             permisosQuery = `
-                SELECT 
-                    m.nombre_modulo, 
+                SELECT
+                    m.nombre_modulo,
                     s.nombre_sub as nombre_submodulo, 
                     p.ver, 
                     p.crear, 
@@ -211,8 +210,7 @@ const getPermisosModulo = async (req, res) => {
 
 // OBTENER ROLES - OPTIMIZADO CON CACHÉ
 const getRoles = async (req, res) => {
-    const nameUser = req.user.nameUser;
-    const isDeveloper = nameUser === 'desarrollador';
+    const isDeveloper = isDeveloperReq(req);
     const id_tenant = req.id_tenant;
 
     const cacheKey = `roles_permisos_${isDeveloper ? 'dev' : id_tenant}`;
@@ -282,7 +280,7 @@ const getRoles = async (req, res) => {
 const getPermisosByRol = async (req, res) => {
     const { id_rol } = req.params;
     const nameUser = req.user.nameUser;
-    const isDeveloper = nameUser === 'desarrollador';
+    const isDeveloper = isDeveloperReq(req);
     const id_tenant = req.id_tenant;
 
     if (!id_rol) {
@@ -300,7 +298,7 @@ const getPermisosByRol = async (req, res) => {
 
         if (isDeveloper) {
             permisosQuery = `
-                SELECT 
+                SELECT
                     p.id_permiso,
                     p.id_rol,
                     p.id_modulo,
@@ -397,8 +395,7 @@ const getPermisosByRol = async (req, res) => {
 // GUARDAR PERMISOS - OPTIMIZADO CON BATCH INSERT
 const savePermisos = async (req, res) => {
     const { id_rol, permisos } = req.body;
-    const nameUser = req.user.nameUser;
-    const isDeveloper = nameUser === 'desarrollador';
+    const isDeveloper = isDeveloperReq(req);
     const id_tenant = req.id_tenant;
     const id_usuario_actor = req.user.id_usuario; // del JWT
 
@@ -438,13 +435,15 @@ const savePermisos = async (req, res) => {
         // Insertar nuevos permisos
         if (permisos.length > 0) {
             if (isDeveloper) {
-                // Desarrollador: obtener todos los tenants y preparar batch insert
+                // Desarrollador: borrar/insertar deja la tabla vacía antes del
+                // INSERT (DELETE WHERE id_rol = ? sin filtro de plan), así que
+                // id_plan cae al DEFAULT 1 sin chocar con nada. No tocamos esa
+                // rama para no cambiar el comportamiento del developer.
                 const [tenants] = await connection.query(
                     'SELECT DISTINCT id_tenant FROM usuario WHERE id_tenant IS NOT NULL'
                 );
 
                 if (tenants.length > 0) {
-                    // Preparar valores para batch insert
                     const values = [];
                     const params = [];
 
@@ -467,7 +466,6 @@ const savePermisos = async (req, res) => {
                         }
                     }
 
-                    // Batch insert - mucho más eficiente
                     const batchQuery = `
                         INSERT INTO permisos
                         (id_rol, id_modulo, id_submodulo, crear, ver, editar, eliminar, desactivar, generar, actions_json, id_tenant)
@@ -477,12 +475,19 @@ const savePermisos = async (req, res) => {
                     await connection.query(batchQuery, params);
                 }
             } else {
-                // Administrador de empresa: batch insert para su tenant
+                // Administrador de empresa: el DELETE de arriba solo borra filas
+                // con id_plan IS NULL (overrides del tenant), pero la columna
+                // `permisos.id_plan` tiene DEFAULT 1. Si no fijamos id_plan = NULL
+                // en el INSERT, MySQL aplica el DEFAULT 1 y choca con la fila
+                // plantilla (`uk_permiso_completo` incluye id_plan) →
+                // ER_DUP_ENTRY → rollback → el usuario ve "no se pudieron
+                // guardar". Forzamos id_plan = NULL para que el INSERT sea
+                // consistente con el DELETE y represente un override del tenant.
                 const values = [];
                 const params = [];
 
                 for (const p of permisos) {
-                    values.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+                    values.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)');
                     params.push(
                         id_rol,
                         p.id_modulo,
@@ -491,22 +496,31 @@ const savePermisos = async (req, res) => {
                         p.ver !== undefined ? p.ver : 0,
                         p.editar !== undefined ? p.editar : 0,
                         p.eliminar !== undefined ? p.eliminar : 0,
-                        p.desactivar !== undefined ? p.desactivar : 0,
                         p.generar !== undefined ? p.generar : 0,
                         JSON.stringify(p.actions_json || {}),
                         id_tenant
                     );
                 }
 
-                // Batch insert
                 const batchQuery = `
                     INSERT INTO permisos
-                    (id_rol, id_modulo, id_submodulo, crear, ver, editar, eliminar, desactivar, generar, actions_json, id_tenant)
+                    (id_rol, id_modulo, id_submodulo, crear, ver, editar, eliminar, desactivar, generar, actions_json, id_tenant, id_plan)
                     VALUES ${values.join(', ')}
                 `;
 
                 await connection.query(batchQuery, params);
             }
+        }
+
+        // ---------------------------------------------------------
+        // NUEVA ARQUITECTURA: Versionado
+        // ---------------------------------------------------------
+        if (!isDeveloper && id_tenant) {
+            // Incrementar perm_version del tenant antes de confirmar la transacción
+            await connection.query(
+                "UPDATE empresa SET perm_version = perm_version + 1 WHERE id_empresa = ?",
+                [id_tenant]
+            );
         }
 
         await connection.commit();
@@ -515,33 +529,21 @@ const savePermisos = async (req, res) => {
         queryCache.clear();
 
         // ---------------------------------------------------------
-        // NUEVA ARQUITECTURA: Versionado + Auditoría
+        // NUEVA ARQUITECTURA: Auditoría (Async)
         // ---------------------------------------------------------
-        if (!isDeveloper && id_tenant) {
-            // 1. Incrementar perm_version del tenant
-            connection.query(
-                "UPDATE empresa SET perm_version = perm_version + 1 WHERE id_empresa = ?",
-                [id_tenant]
-            ).catch(e => console.error("Error updating perm_version:", e));
-
-            // 2. Audit Log (Async)
-            if (permisos.length > 0) {
-                // Import dinámico para evitar error circular si fuera el caso, aunque aquí está ok
-                // import { logAudit } from "../utils/auditLogger.js"; 
-                // Asumimos que lo importamos arriba
-                logAudit(req, {
-                    actor_user_id: id_usuario_actor,
-                    actor_role: req.user.rol,
-                    id_tenant_target: id_tenant,
-                    entity_type: 'PERMISOS',
-                    entity_id: String(id_rol),
-                    action: 'UPDATE',
-                    details: {
-                        permisos_count: permisos.length,
-                        permisos_ids: permisos.map(p => p.id_modulo) // ejemplo
-                    }
-                });
-            }
+        if (!isDeveloper && id_tenant && permisos.length > 0) {
+            logAudit(req, {
+                actor_user_id: id_usuario_actor,
+                actor_role: req.user.rol,
+                id_tenant_target: id_tenant,
+                entity_type: 'PERMISOS',
+                entity_id: String(id_rol),
+                action: 'UPDATE',
+                details: {
+                    permisos_count: permisos.length,
+                    permisos_ids: permisos.map(p => p.id_modulo) // ejemplo
+                }
+            });
         }
         // ---------------------------------------------------------
 
@@ -598,7 +600,7 @@ const checkPermiso = async (req, res) => {
     }
 
     // Si es desarrollador, tiene todos los permisos
-    if (nameUser === 'desarrollador') {
+    if (isDeveloperReq(req) || nameUser === 'desarrollador') {
         return res.json({
             hasPermission: true,
             hasCreatePermission: true,
@@ -661,7 +663,7 @@ const checkPermiso = async (req, res) => {
         const usuario = resultado[0];
 
         // Si es rol 10 (superadmin), tiene todos los permisos
-        if (usuario.id_rol === 10) {
+        if (usuario.id_rol === DEVELOPER_ROLE_ID) {
             const allPermissions = {
                 hasPermission: true,
                 hasCreatePermission: true,

@@ -42,7 +42,7 @@ export default function AppSidebar() {
   const user = useUserStore((state) => state.user);
   const globalModuleConfigs = useUserStore((state) => state.globalModuleConfigs);
   const clearUser = useUserStore((state) => state.clearUser);
-  const { can, isDeveloper } = usePermissions();
+  const { can, isDeveloper, isAdmin } = usePermissions();
   const [showAccount, setShowAccount] = React.useState(false);
   const [showBilling, setShowBilling] = React.useState(false);
 
@@ -52,7 +52,7 @@ export default function AppSidebar() {
     clearUser();
   };
 
-  const canManageAccount = user?.roleId === 1 || isDeveloper;
+  const canManageAccount = isAdmin;
 
   const hasAccess = (item: NavItem) => {
     if (isDeveloper) return true;

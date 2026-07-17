@@ -17,7 +17,9 @@
     "build:client": "npm --prefix ./client ci && npm --prefix ./client run build",
     "start": "node index.js",
     "migrate:passwords": "node migrate-passwords.js",
-    "security:install": "npm install bcryptjs"
+    "security:install": "npm install bcryptjs",
+    "validate:authz": "node scripts/validate-authz.js",
+    "validate:registry-sync": "node scripts/validate-registry-sync.js"
   },
   "engines": {
     "node": ">=20"

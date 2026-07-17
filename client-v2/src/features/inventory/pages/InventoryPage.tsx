@@ -27,14 +27,13 @@ import { verifyLote, approveLote } from "../api/lotes";
 import type { InventarioFiltros, Lote } from "../types";
 
 export default function InventoryPage() {
-  const [filtros, setFiltros] = useState<InventarioFiltros>({ stock: "" });
+  const [filtros, setFiltros] = useState<InventarioFiltros>({ stock: "con_stock" });
   const [activeTab, setActiveTab] = useState("catalogo");
 
   // Solicitudes de inventario (lotes)
   const queryClient = useQueryClient();
   const user = useUserStore((s) => s.user);
-  const { can, isDeveloper } = usePermissions();
-  const isAdmin = isDeveloper || user?.roleId === 1;
+  const { can, isAdmin } = usePermissions();
   const [loteStage, setLoteStage] = useState<"verificar" | "aprobar">("verificar");
   const [isRequestOpen, setIsRequestOpen] = useState(false);
   const [isConfigOpen, setIsConfigOpen] = useState(false);

@@ -1,5 +1,6 @@
 import { getConnection } from "./../database/database.js";
 import { logAudit } from "../utils/auditLogger.js";
+import { isDeveloperReq, DEVELOPER_ROLE_ID } from "../middlewares/authorize.middleware.js";
 
 // Helper para obtener el nombre de usuario de forma flexible
 function getUserName(req) {
@@ -15,16 +16,16 @@ function getUserRol(userRow) {
   return userRow?.id_rol || userRow?.rol || userRow?.idRol;
 }
 
-// Helper para verificar si es desarrollador
+// Helper para verificar si es desarrollador (fast path por JWT + fallback con rol fresco de BD)
 async function isDeveloperUser(req, connection) {
+  if (isDeveloperReq(req)) return true;
   const nameUser = getUserName(req);
   const id_tenant = req.id_tenant;
-  if (nameUser === "desarrollador") return true;
   const [developerCheck] = await connection.query(
     `SELECT id_rol FROM usuario WHERE usua = ? AND id_tenant = ?`,
     [nameUser, id_tenant]
   );
-  return developerCheck.length > 0 && getUserRol(developerCheck[0]) == 10;
+  return developerCheck.length > 0 && getUserRol(developerCheck[0]) == DEVELOPER_ROLE_ID;
 }
 
 const getModulosConSubmodulosPorPlan = async (req, res) => {

@@ -168,7 +168,7 @@ export const methods = {
       let cdrXmlFileName = null;
       let cdrSummary = null;
 
-      if (cdrZipBase66) {
+      if (cdrZipBase64) {
         const { fileName: f, content } = await unzipSingleFile({
           zipBuffer: Buffer.from(cdrZipBase64, 'base64'),
         });

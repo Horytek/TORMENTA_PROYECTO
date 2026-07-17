@@ -3,9 +3,11 @@ import { getConnection } from "../database/database.js";
 // Centraliza el check de "usuario Developer/SuperAdmin" que hoy está
 // reimplementado con variaciones en permisos.controller.js, permisosGlobales.controller.js
 // y rutas.controller.js (algunos miran solo id_rol, otros solo el username, ninguno los dos igual).
+export const DEVELOPER_ROLE_ID = 10;
+
 export const isDeveloperReq = (req) => {
     const idRol = Number(req.user?.rol);
-    return idRol === 10 || req.user?.nameUser === "desarrollador";
+    return idRol === DEVELOPER_ROLE_ID || req.user?.nameUser === "desarrollador";
 };
 
 // Bloquea rutas reservadas a Developer (config global de módulos, sync entre tenants,

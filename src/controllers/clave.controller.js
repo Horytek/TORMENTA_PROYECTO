@@ -1,11 +1,6 @@
 import { getConnection } from "./../database/database.js";
 import { encrypt, decrypt } from "./../utils/cryptoUtil.js";
-
-// Utilidad para saber si el usuario es desarrollador
-function isDeveloperUser(req) {
-  const user = req.user || {};
-  return user.rol === 10 || user.nameUser === 'desarrollador';
-}
+import { isDeveloperReq as isDeveloperUser } from "../middlewares/authorize.middleware.js";
 
 const getClaves = async (req, res) => {
   let connection;

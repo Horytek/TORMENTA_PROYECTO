@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { isActiveInClientV2 } from "@/lib/navigationCatalog";
 
 import { ModuloFormDialog } from "./ModuloFormDialog";
 import { SubmoduloFormDialog } from "./SubmoduloFormDialog";
@@ -35,13 +36,17 @@ export function ModulosTab() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["developer-modulos"] }); setDeleteSubTarget(null); },
   });
 
+  // Solo módulos con pantalla real en client-v2 (o que tengan al menos un
+  // submódulo con pantalla) — el resto es legacy del frontend anterior, que ya
+  // no se piensa usar, así que no tiene sentido seguir gestionándolo acá.
   const filteredModulos = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return modulos;
-    return modulos.filter((m) => m.nombre_modulo.toLowerCase().includes(q) || m.ruta.toLowerCase().includes(q));
-  }, [modulos, search]);
+    return modulos
+      .filter((m) => isActiveInClientV2(m.ruta) || submodulos.some((s) => s.id_modulo === m.id_modulo && isActiveInClientV2(s.ruta_submodulo)))
+      .filter((m) => !q || m.nombre_modulo.toLowerCase().includes(q) || m.ruta.toLowerCase().includes(q));
+  }, [modulos, submodulos, search]);
 
-  const getSubsFor = (idModulo: number) => submodulos.filter((s) => s.id_modulo === idModulo);
+  const getSubsFor = (idModulo: number) => submodulos.filter((s) => s.id_modulo === idModulo && isActiveInClientV2(s.ruta_submodulo));
 
   if (isLoading) return <div className="flex justify-center py-12"><Spinner /></div>;
 

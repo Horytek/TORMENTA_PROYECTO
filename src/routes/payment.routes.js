@@ -26,6 +26,6 @@ router.post("/preapproval", auth, createPreapproval);
 // Solicitud de cambio de plan (requiere autenticación)
 router.post("/plan-change", auth, requestPlanChange);
 
-router.get("/payment-receipt/:id", downloadPaymentReceipt);
+router.get("/payment-receipt/:id", auth, downloadPaymentReceipt);
 
 export default router;

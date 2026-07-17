@@ -49,7 +49,7 @@ export interface NavSection {
   items: NavItem[];
 }
 
-interface ModuleMeta {
+export interface ModuleMeta {
   url: string;
   icon: NavIcon;
   group: string;
@@ -83,11 +83,21 @@ const MODULE_META: Record<string, ModuleMeta> = {
   "configuracion/negocio": { url: "/settings/system", icon: Settings, group: "Ajustes", title: "Configuración" },
 };
 
-const SECTION_ORDER = ["General", "Logística", "Personas", "Reportes", "Ajustes"];
+export const SECTION_ORDER = ["General", "Logística", "Personas", "Reportes", "Ajustes"];
 
 export function normalizeSlug(ruta?: string | null): string {
   if (!ruta) return "";
   return ruta.toString().toLowerCase().replace(/^\/+/, "");
+}
+
+/** true si ese módulo/submódulo (por su `ruta` en BD) tiene una pantalla real hoy en client-v2. */
+export function isActiveInClientV2(ruta?: string | null): boolean {
+  return normalizeSlug(ruta) in MODULE_META;
+}
+
+/** Metadata del sidebar (grupo, título, ícono) para ese módulo/submódulo, si tiene pantalla en client-v2. */
+export function getModuleMeta(ruta?: string | null): ModuleMeta | undefined {
+  return MODULE_META[normalizeSlug(ruta)];
 }
 
 /** Recorre módulos + submódulos del catálogo buscando metadata mapeada. */

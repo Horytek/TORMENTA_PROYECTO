@@ -1,5 +1,6 @@
 import { getConnection } from "../database/database.js";
 import { AuthZService } from "../services/authz.service.js";
+import { isDeveloperReq } from "../middlewares/authorize.middleware.js";
 
 // Cache para consultas frecuentes
 const queryCache = new Map();
@@ -100,8 +101,7 @@ const getSubmodulos = async (req, res) => {
 // OBTENER MÓDULOS CON SUBMÓDULOS - VIA AUTHZ SERVICE
 const getModulosConSubmodulos = async (req, res) => {
     try {
-        const nameUser = req.user?.nameUser || req.user?.username || 'desconocido';
-        const isDeveloper = nameUser === 'desarrollador' || (req.user?.rol === 10);
+        const isDeveloper = isDeveloperReq(req);
         const id_tenant = req.id_tenant;
 
         // Delegate to AuthZ Service

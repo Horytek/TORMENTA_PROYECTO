@@ -6,19 +6,48 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export const sendCredencialesEmail = async (req, res) => {
   let connection;
   try {
-    const { to, usuario, contrasena } = req.body;
-    if (!to || !usuario || !contrasena) {
+    const { usuario, contrasena } = req.body;
+    if (!usuario || !contrasena) {
       return res.status(400).json({ ok: false, message: 'Faltan campos requeridos' });
     }
+
+    connection = await getConnection();
+
+    // El destino del correo y el estado de la cuenta se derivan del servidor, nunca del
+    // request: antes este endpoint aceptaba `to` del body y regeneraba clave_acceso para
+    // cualquier `usuario` sin validar nada, lo que permitía interceptar el código de
+    // activación de una cuenta ajena. Solo se permite (re)enviar el código de activación
+    // a cuentas todavía no activadas, y siempre al correo real de la empresa registrada.
+    const [userRows] = await connection.query(
+      "SELECT id_usuario, id_empresa, estado_usuario FROM usuario WHERE usua = ? LIMIT 1",
+      [usuario]
+    );
+    if (userRows.length === 0) {
+      return res.status(404).json({ ok: false, message: 'Usuario no encontrado' });
+    }
+    const user = userRows[0];
+    if (user.estado_usuario === 1 || user.estado_usuario === "1") {
+      return res.status(400).json({ ok: false, message: 'La cuenta ya está activada' });
+    }
+    if (!user.id_empresa) {
+      return res.status(400).json({ ok: false, message: 'El usuario no tiene empresa asociada' });
+    }
+    const [empresaRows] = await connection.query(
+      "SELECT email FROM empresa WHERE id_empresa = ? LIMIT 1",
+      [user.id_empresa]
+    );
+    if (empresaRows.length === 0 || !empresaRows[0].email) {
+      return res.status(404).json({ ok: false, message: 'No se encontró el email de la empresa' });
+    }
+    const to = empresaRows[0].email;
 
     // Generar clave de 4 dígitos
     const claveAcceso = Math.floor(1000 + Math.random() * 9000).toString();
 
     // Guardar la clave en el usuario (campo clave_acceso)
-    connection = await getConnection();
     await connection.query(
-      "UPDATE usuario SET clave_acceso = ? WHERE usua = ? LIMIT 1",
-      [claveAcceso, usuario]
+      "UPDATE usuario SET clave_acceso = ? WHERE id_usuario = ?",
+      [claveAcceso, user.id_usuario]
     );
 
     const currentYear = new Date().getFullYear();

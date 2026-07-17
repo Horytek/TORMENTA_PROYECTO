@@ -97,8 +97,7 @@ interface NoteFormDialogProps {
 export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso" }: NoteFormDialogProps) {
   const queryClient = useQueryClient();
   const user = useUserStore((s) => s.user);
-  const { isDeveloper, roleId } = usePermissions();
-  const isAdmin = isDeveloper || roleId === 1;
+  const { isAdmin } = usePermissions();
 
   const [tipoNota, setTipoNota] = useState<Mode>(defaultTipo);
   const [items, setItems] = useState<NoteFormItem[]>([]);

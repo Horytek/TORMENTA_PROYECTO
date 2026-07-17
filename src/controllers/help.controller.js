@@ -1,5 +1,6 @@
 import { getConnection } from "../database/database.js";
 import formsSchema from "../config/forms.schema.js";
+import { isDeveloperReq, DEVELOPER_ROLE_ID } from "../middlewares/authorize.middleware.js";
 
 // Buscar módulos/submódulos por texto (RAG ligero)
 export const helpSearch = async (req, res) => {
@@ -214,7 +215,7 @@ export const helpForms = async (req, res) => {
         "SELECT id_rol FROM usuario WHERE usua = ? AND id_tenant = ? LIMIT 1",
         [nameUser, id_tenant]
       );
-      isDev = nameUser === "desarrollador" || rows?.[0]?.id_rol == 10;
+      isDev = isDeveloperReq(req) || rows?.[0]?.id_rol == DEVELOPER_ROLE_ID;
     }
 
     return res.json({

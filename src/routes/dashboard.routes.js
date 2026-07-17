@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { methods as dashboardController } from "./../controllers/dashboard.controller.js";
 import { auth } from "../middlewares/auth.middleware.js";
+import { requireCapability } from "../middlewares/authorize.middleware.js";
 
 const router = Router();
 
@@ -15,7 +16,7 @@ router.get("/comparacion_ventas", dashboardController.getComparacionVentasPorRan
 router.get("/usuarioRol", dashboardController.getUserRolController);
 router.get("/ventas_por_sucursal", dashboardController.getVentasPorSucursalPeriodo);
 router.get("/notas_pendientes", dashboardController.getNotasPendientes);
-router.post("/actualizar_espera", dashboardController.actualizarEstadoEspera);
+router.post("/actualizar_espera", requireCapability("reportes", "editar"), dashboardController.actualizarEstadoEspera);
 router.get("/notificaciones", dashboardController.getNotificaciones);
 router.get("/nuevos_clientes", dashboardController.getNuevosClientes);
 export default router;

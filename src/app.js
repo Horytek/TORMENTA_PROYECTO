@@ -38,7 +38,6 @@ import rutasRoutes from "./routes/rutas.routes.js";
 import empresaRoutes from "./routes/empresa.routes.js";
 import claveRoutes from './routes/clave.routes.js';
 import logotipoRoutes from "./routes/logotipo.routes.js";
-import valorRoutes from "./routes/valor.routes.js";
 import logsRoutes from "./routes/logs.routes.js";
 import chatRoutes from "./routes/chat.routes.js";
 import helpRoutes from "./routes/help.routes.js";
@@ -70,6 +69,16 @@ import tonalidadRoutes from "./routes/tonalidad.routes.js";
 import loteRoutes from "./routes/lote.routes.js";
 import unidadesRoutes from "./routes/unidades.routes.js";
 import gastosRoutes from "./routes/gastos.routes.js";
+import cuentaContableRoutes from "./routes/cuentaContable.routes.js";
+import centroCostoRoutes from "./routes/centroCosto.routes.js";
+import periodoContableRoutes from "./routes/periodoContable.routes.js";
+import asientoContableRoutes from "./routes/asientoContable.routes.js";
+import contabilidadConfigRoutes from "./routes/contabilidadConfig.routes.js";
+import tesoreriaRoutes from "./routes/tesoreria.routes.js";
+import presupuestoRoutes from "./routes/presupuesto.routes.js";
+import estadosFinancierosRoutes from "./routes/estadosFinancieros.routes.js";
+import auditoriaContableRoutes from "./routes/auditoriaContable.routes.js";
+import resumenContableRoutes from "./routes/resumenContable.routes.js";
 
 // Settings
 const port = process.env.PORT || 4000;
@@ -215,7 +224,6 @@ app.use("/api/rutas", rutasRoutes);
 app.use("/api/empresa", empresaRoutes);
 app.use("/api/clave", claveRoutes);
 app.use("/api/logotipo", logotipoRoutes);
-app.use("/api/valor", valorRoutes);
 app.use("/api/logs", logsRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/help", helpRoutes);
@@ -237,6 +245,16 @@ app.use("/api/unidades", unidadesRoutes);
 app.use("/api/health", healthRoutes);
 app.use("/api/express", expressRoutes);
 app.use("/api/gastos", gastosRoutes);
+app.use("/api/contabilidad/cuentas", cuentaContableRoutes);
+app.use("/api/contabilidad/centros-costo", centroCostoRoutes);
+app.use("/api/contabilidad/periodos", periodoContableRoutes);
+app.use("/api/contabilidad/asientos", asientoContableRoutes);
+app.use("/api/contabilidad/configuracion", contabilidadConfigRoutes);
+app.use("/api/contabilidad/tesoreria", tesoreriaRoutes);
+app.use("/api/contabilidad/presupuestos", presupuestoRoutes);
+app.use("/api/contabilidad/estados-financieros", estadosFinancierosRoutes);
+app.use("/api/contabilidad/auditoria", auditoriaContableRoutes);
+app.use("/api/contabilidad/resumen", resumenContableRoutes);
 
 
 // Servir archivos estáticos (uploads)

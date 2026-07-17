@@ -195,10 +195,11 @@ export const updatePago = async (req, res) => {
 
 export const deletePago = async (req, res) => {
     const { id } = req.params;
+    const id_tenant = req.id_tenant;
     let connection;
     try {
         connection = await getConnection();
-        await connection.query("DELETE FROM pago_vendedor WHERE id_pago = ?", [id]);
+        await connection.query("DELETE FROM pago_vendedor WHERE id_pago = ? AND id_tenant = ?", [id, id_tenant]);
         res.json({ code: 1, message: "Pago eliminado" });
     } catch (error) {
         res.status(500).json({ code: 0, message: "Error al eliminar" });
