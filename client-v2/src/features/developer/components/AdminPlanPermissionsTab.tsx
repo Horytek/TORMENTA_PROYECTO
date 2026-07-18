@@ -5,8 +5,6 @@ import { Loader2, ShieldCheck } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
-import { getIcon } from "@/lib/iconRegistry";
 import { SECTION_ORDER, getModuleMeta, type ModuleMeta } from "@/lib/navigationCatalog";
 
 import { getPlanesDisponibles } from "../api/permissionsAudit";

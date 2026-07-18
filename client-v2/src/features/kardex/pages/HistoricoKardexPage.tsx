@@ -3,7 +3,6 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
-  FileDown,
   Printer,
   Calendar,
   Package,
@@ -26,7 +25,6 @@ import { cn } from "@/lib/utils";
 import {
   getKardexInventarioAlmacenes as getKardexAlmacenes,
   getKardexInventarioDetalleCompleto as getKardexDetalleCompleto,
-  type KardexInventarioDetalleMovimiento as KardexDetalleMovimiento,
   type KardexInventarioStockAnterior as KardexStockAnterior,
 } from "@/features/kardex-inventario/api/kardexInventario";
 
@@ -201,7 +199,7 @@ export default function HistoricoKardexPage() {
         : ventasReales[0]
           ? Number(ventasReales[0].precio)
           : 0;
-    const precioUnitPrev = Number(prev.precio) || precioUnitActual;
+    const precioUnitPrev = Number((prev as any).precio) || precioUnitActual;
 
     const rotacion = entradasActual > 0 ? (salidasActual / entradasActual) * 100 : 0;
     const velocidadVenta =
@@ -255,9 +253,8 @@ export default function HistoricoKardexPage() {
     try {
       const jspdfModule = await import("jspdf");
       const autoTableModule = await import("jspdf-autotable");
-      const jsPDF = jspdfModule.jsPDF ?? jspdfModule.default ?? jspdfModule;
-      const autoTable =
-        (autoTableModule as { default?: typeof autoTableModule }).default ?? autoTableModule;
+      const jsPDF = (jspdfModule as any).jsPDF ?? (jspdfModule as any).default ?? jspdfModule;
+      const autoTable = (autoTableModule as any).default ?? autoTableModule;
 
       const doc = new jsPDF({ orientation: "p", unit: "mm", format: "a4" });
       const pageWidth = doc.internal.pageSize.getWidth();
@@ -354,7 +351,7 @@ export default function HistoricoKardexPage() {
         ];
       });
 
-      autoTable(doc, {
+      (autoTable as any)(doc, {
         head: [["Fecha", "Documento", "Nombre", "Entra", "Sale", "Stock", "Precio", "Glosa"]],
         body: rows,
         startY: cursorY,
@@ -497,7 +494,7 @@ export default function HistoricoKardexPage() {
                 <span className="font-medium">{productoData?.marca ?? "—"}</span>
               </span>
               {previousTransactions[0] && (
-                <Badge variant="muted" className="text-[10px]">
+                <Badge variant="secondary" className="text-[10px]">
                   {previousTransactions[0].numero} movs. previos
                 </Badge>
               )}
@@ -544,7 +541,7 @@ export default function HistoricoKardexPage() {
           No se pudo cargar el histórico. Verifica el id del producto y el rango de fechas.
         </div>
       ) : (
-        <HistoricoTable transactions={transactions as KardexDetalleMovimiento[]} />
+        <HistoricoTable transactions={transactions as any[]} />
       )}
     </div>
   );

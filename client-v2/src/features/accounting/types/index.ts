@@ -174,6 +174,7 @@ export interface LibroMayorMovimiento {
 export interface LibroMayorResponse {
   cuenta: { codigo: string; nombre: string; naturaleza: NaturalezaCuenta };
   movimientos: LibroMayorMovimiento[];
+  saldoInicial?: number;
   saldoFinal: number;
 }
 

@@ -32,7 +32,7 @@ export function LedgerBookPanel() {
     if (!libro) return;
 
     // Rows to export
-    const rows = [
+    const rows: Record<string, string | number>[] = [
       // Row for Saldo Inicial
       {
         Fecha: "",
@@ -40,7 +40,7 @@ export function LedgerBookPanel() {
         Descripción: "SALDO INICIAL",
         "Debe (S/)": "",
         "Haber (S/)": "",
-        "Saldo (S/)": libro.saldoInicial,
+        "Saldo (S/)": libro.saldoInicial ?? 0,
       }
     ];
 

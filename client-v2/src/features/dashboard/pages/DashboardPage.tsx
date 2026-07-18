@@ -81,7 +81,6 @@ const TAB_PERIODS = [
 ];
 
 export default function DashboardPage() {
-  const user = useUserStore((s) => s.user);
   const username = useUserStore((s) => s.nombre || s.usuario || "tormenta");
 
   const [selectedTab, setSelectedTab] = useState("24h");
