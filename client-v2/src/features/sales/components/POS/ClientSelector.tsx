@@ -125,7 +125,7 @@ export function ClientSelector({ value, onChange }: ClientSelectorProps) {
       <button
         onClick={() => setOpen((v) => !v)}
         className={cn(
-          "flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition-all cursor-pointer",
+          "flex items-center gap-1.5 rounded-lg border px-2.5 h-8 text-xs transition-all cursor-pointer shrink-0",
           value
             ? "border-border bg-zinc-50 dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800"
             : "border-dashed border-muted-foreground/40 hover:border-primary/40 hover:text-foreground text-muted-foreground"
