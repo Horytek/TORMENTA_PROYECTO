@@ -1,24 +1,13 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryState, parseAsString } from "nuqs";
-import { Plus, Search, Pencil, Trash2, Users as UsersIcon, ShieldCheck } from "lucide-react";
-
+import { ShieldAlert, Loader2, Edit, Trash2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
-import { useUserStore } from "@/store/useUserStore";
-import { cn } from "@/lib/utils";
-
-import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { IconAction } from "@/components/shared/IconAction";
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from "@/components/ui/dialog";
+import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection";
+import type { FieldDef, RecordAction, RhythmConfig } from "@/components/shared/AdaptiveCollection";
 import UserForm from "../components/UserForm";
 import { getUsuarios, deleteUsuario } from "../api/users";
 import type { Usuario } from "../types";
@@ -27,181 +16,179 @@ export default function UsersPage() {
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useQueryState("q", parseAsString.withDefault(""));
+  const [page, setPage] = useState(1);
+  const LIMIT = 12;
+
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editing, setEditing] = useState<Usuario | null>(null);
-  const [deleting, setDeleting] = useState<Usuario | null>(null);
+  const [editingUser, setEditingUser] = useState<Usuario | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deletingUser, setDeletingUser] = useState<Usuario | null>(null);
 
-  const capabilities = useUserStore((s) => s.capabilities);
-  const currentUser = useUserStore((s) => s.user);
-  const can = (perm: string) =>
-    currentUser?.roleId === 10 || capabilities.has(perm) || capabilities.has("*");
-  const canEdit = can("configuracion/usuarios.edit");
-  const canDelete = can("configuracion/usuarios.delete");
-
-  const { data: usuarios = [], isLoading } = useQuery<Usuario[]>({
-    queryKey: ["usuarios"],
-    queryFn: getUsuarios,
+  const { data = [], isLoading } = useQuery<Usuario[]>({
+    queryKey: ["usuarios", page, searchTerm],
+    queryFn: () => getUsuarios(),
   });
 
-  const filtered = useMemo(() => {
-    const term = searchTerm.toLowerCase().trim();
-    if (!term) return usuarios;
-    return usuarios.filter(
-      (u) =>
-        u.usua.toLowerCase().includes(term) ||
-        (u.nom_rol ?? "").toLowerCase().includes(term)
-    );
-  }, [usuarios, searchTerm]);
+  const filtered = searchTerm.trim()
+    ? data.filter(u =>
+        u.usua.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (u.nom_rol ?? "").toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : data;
 
   const deleteMutation = useMutation({
-    mutationFn: (u: Usuario) => deleteUsuario(u.id_usuario),
+    mutationFn: (id: number) => deleteUsuario(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["usuarios"] });
-      setDeleting(null);
+      setIsDeleteOpen(false);
+      setDeletingUser(null);
     },
   });
 
-  const openCreate = () => {
-    setEditing(null);
-    setIsFormOpen(true);
-  };
-  const openEdit = (u: Usuario) => {
-    setEditing(u);
-    setIsFormOpen(true);
+  // ── Fields ─────────────────────────────────────────────────────
+  const fields: FieldDef<Usuario>[] = [
+    {
+      key: "usua", priority: "primary", semantic: "title",
+      label: "Usuario",
+      className: "font-medium",
+    },
+    {
+      key: "nom_rol", priority: "secondary", semantic: "chip",
+      label: "Rol",
+      format: (v) => (v as string) || "Sin rol",
+      className: "text-xs",
+    },
+    {
+      key: "estado_usuario", priority: "secondary", semantic: "badge",
+      label: "Estado",
+      format: (v) => Number(v) === 1 ? "Activo" : "Inactivo",
+    },
+    {
+      key: "plan_pago_1", priority: "meta", semantic: "subtitle",
+      label: "Plan",
+      format: (v) => (v as string) || "—",
+    },
+    {
+      key: "id_usuario", priority: "hidden",
+    },
+    {
+      key: "id_rol", priority: "hidden",
+    },
+    {
+      key: "id_empresa", priority: "hidden",
+    },
+  ];
+
+  // ── Rhythm ────────────────────────────────────────────────────
+  const getRhythm = (u: Usuario): RhythmConfig => ({
+    type: "dot",
+    color: Number(u.estado_usuario) === 0 ? "rose" : "emerald",
+  });
+
+  // ── Actions ────────────────────────────────────────────────────
+  const actions: RecordAction[] = [
+    {
+      id: "edit", label: "Editar",
+      icon: <Edit className="h-3.5 w-3.5" />,
+      onClick: (item) => { setEditingUser(item as Usuario); setIsFormOpen(true); },
+      variant: "secondary",
+    },
+    {
+      id: "delete", label: "Eliminar",
+      icon: <Trash2 className="h-3.5 w-3.5" />,
+      onClick: (item) => { setDeletingUser(item as Usuario); setIsDeleteOpen(true); },
+      variant: "destructive",
+    },
+  ];
+
+  // ── CSV Export ────────────────────────────────────────────────
+  const exportToCSV = () => {
+    if (filtered.length === 0) return;
+    const headers = ["ID", "Usuario", "Rol", "Estado", "Plan"];
+    const rows = filtered.map((u) => [
+      u.id_usuario,
+      `"${(u.usua || "").replace(/"/g, '""')}"`,
+      u.nom_rol || "",
+      Number(u.estado_usuario) === 1 ? "Activo" : "Inactivo",
+      u.plan_pago_1 || "",
+    ]);
+    const csv = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const link = document.createElement("a");
+    link.href = encodeURI(csv);
+    link.download = `usuarios_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 animate-fade-in">
-      {/* Encabezado */}
-      <div className="flex flex-col gap-4 border-b border-border pb-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Usuarios</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            <span className="num font-medium text-foreground">{usuarios.length}</span> cuentas de acceso
-          </p>
-        </div>
-        <Button onClick={openCreate} disabled={!canEdit} className="gap-2 self-start md:self-auto">
-          <Plus className="h-4 w-4" />
-          Nuevo usuario
-        </Button>
-      </div>
+    <>
+      <AdaptiveCollection<Usuario>
+        title="Usuarios"
+        items={filtered}
+        fields={fields}
+        actions={actions}
+        layout="card"
+        isLoading={isLoading}
+        search={searchTerm}
+        searchPlaceholder="Buscar por usuario o rol…"
+        onSearch={(val) => { setSearchTerm(val); setPage(1); }}
+        empty={{
+          title: "No se encontraron usuarios",
+          description: searchTerm
+            ? `Ningún usuario coincide con "${searchTerm}"`
+            : "No hay cuentas de acceso registradas.",
+        }}
+        getItemId={(u) => u.id_usuario}
+        getRhythm={getRhythm}
+        page={page}
+        totalPages={Math.max(Math.ceil(filtered.length / LIMIT), 1)}
+        onPageChange={setPage}
+        serverSide={false}
+        totalCount={filtered.length}
+        globalActions={[{
+          id: "export", label: "Exportar CSV",
+          icon: <Download className="h-4 w-4" />,
+          onClick: () => exportToCSV(),
+        }]}
+      />
 
-      {/* Búsqueda */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por usuario o rol…"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
-      </div>
-
-      {/* Tabla */}
-      <div className="rounded-lg border border-border bg-card">
-        {isLoading ? (
-          <div className="space-y-2 p-4">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-12 w-full animate-pulse rounded-md bg-muted" />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 p-12 text-center">
-            <UsersIcon className="h-10 w-10 text-muted-foreground/40" />
-            <h3 className="text-base font-semibold text-foreground">No se encontraron usuarios</h3>
-            <p className="text-sm text-muted-foreground">
-              {searchTerm ? "Ajusta el término de búsqueda." : "Crea la primera cuenta de acceso."}
-            </p>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="pl-4">Usuario</TableHead>
-                <TableHead>Rol</TableHead>
-                <TableHead className="text-center">Estado</TableHead>
-                <TableHead className="pr-4 text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((u) => {
-                const isActive = Number(u.estado_usuario) === 1;
-                const isSelf = currentUser?.username === u.usua;
-                return (
-                  <TableRow key={u.id_usuario}>
-                    <TableCell className="pl-4">
-                      <div className="flex items-center gap-3">
-                        <span className="num flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-brand/10 text-xs font-bold uppercase text-brand ring-1 ring-brand/20">
-                          {u.usua.slice(0, 2)}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-foreground">
-                            {u.usua}
-                            {isSelf && <span className="ml-2 text-[10px] font-normal text-muted-foreground">(tú)</span>}
-                          </p>
-                          {u.plan_pago_1 && (
-                            <p className="num text-xs text-muted-foreground">{u.plan_pago_1}</p>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="gap-1 font-medium">
-                        <ShieldCheck className="h-3 w-3" />
-                        {u.nom_rol || `Rol ${u.id_rol}`}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant={isActive ? "success" : "destructive"} className="gap-1.5">
-                        <span className={cn("h-1.5 w-1.5 rounded-full", isActive ? "bg-emerald-600" : "bg-red-600")} />
-                        {isActive ? "Activo" : "Inactivo"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="pr-4">
-                      <div className="flex items-center justify-end gap-1">
-                        <IconAction label="Editar" onClick={() => openEdit(u)} disabled={!canEdit}>
-                          <Pencil className="h-4 w-4" />
-                        </IconAction>
-                        <IconAction
-                          label={isSelf ? "No puedes eliminarte" : "Eliminar"}
-                          danger
-                          onClick={() => setDeleting(u)}
-                          disabled={!canDelete || isSelf}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </IconAction>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </div>
-
+      {/* Create / Edit form */}
       {isFormOpen && (
-        <UserForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} initialData={editing} />
+        <UserForm
+          isOpen={isFormOpen}
+          onClose={() => { setIsFormOpen(false); setEditingUser(null); }}
+          initialData={editingUser}
+        />
       )}
 
-      <ConfirmDialog
-        open={!!deleting}
-        onClose={() => setDeleting(null)}
-        onConfirm={() => deleting && deleteMutation.mutate(deleting)}
-        title="¿Eliminar usuario?"
-        description={
-          <>
-            Se eliminará la cuenta de acceso de forma permanente.
-            <br />
-            <span className="num mt-1 inline-block font-medium text-foreground">
-              {deleting?.usua ?? ""}
-            </span>
-          </>
-        }
-        confirmLabel="Eliminar"
-        variant="danger"
-        isPending={deleteMutation.isPending}
-      />
-    </div>
+      {/* Delete confirmation */}
+      <Dialog open={isDeleteOpen} onOpenChange={(o) => !o && setIsDeleteOpen(false)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold flex items-center gap-2 text-destructive">
+              <ShieldAlert className="h-5 w-5 text-destructive/80" />
+              ¿Confirmar eliminación?
+            </DialogTitle>
+            <DialogDescription className="text-sm mt-2">
+              ¿Eliminar permanentemente la cuenta de <strong>"{deletingUser?.usua}"</strong>? No se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex gap-2 justify-end">
+            <Button variant="ghost" onClick={() => setIsDeleteOpen(false)} disabled={deleteMutation.isPending}>
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deletingUser && deleteMutation.mutate(deletingUser.id_usuario)}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Eliminar usuario
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

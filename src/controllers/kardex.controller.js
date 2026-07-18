@@ -28,15 +28,14 @@ const getProductos = async (req, res) => {
         const whereClauses = ['p.id_tenant = ?'];
         const params = [id_tenant];
 
-        // SPU/SKU Logic: We need to aggregate stock from inventario_stock
-        let invJoin = `LEFT JOIN producto_sku sku ON p.id_producto = sku.id_producto
-                       LEFT JOIN inventario_stock i ON sku.id_sku = i.id_sku`;
+        // Stock viene de la tabla `inventario`, agregada por id_producto
+        // (sin variantes/SKU).
+        let invJoin = `LEFT JOIN inventario i ON p.id_producto = i.id_producto AND i.id_tenant = p.id_tenant`;
 
         if (almacen) {
-            // Need to filter by warehouse in the ON clause for the join, otherwise we get cross product pre-filter
-            // Update join logic to filter by warehouse
-            invJoin = `LEFT JOIN producto_sku sku ON p.id_producto = sku.id_producto
-                       LEFT JOIN inventario_stock i ON sku.id_sku = i.id_sku AND i.id_almacen = ?`;
+            // Filtrar por almacén directamente en el ON del JOIN para no
+            // inflar el resultado con filas de otros almacenes.
+            invJoin = `LEFT JOIN inventario i ON p.id_producto = i.id_producto AND i.id_almacen = ? AND i.id_tenant = p.id_tenant`;
             params.unshift(almacen);
         }
 
@@ -121,8 +120,7 @@ const getProductosMenorStock = async (req, res) => {
         const whereClauses = ['p.id_tenant = ?'];
         const params = [id_tenant];
 
-        let invJoin = `LEFT JOIN producto_sku sku ON p.id_producto = sku.id_producto
-                       LEFT JOIN inventario_stock i ON sku.id_sku = i.id_sku`;
+        let invJoin = `LEFT JOIN inventario i ON p.id_producto = i.id_producto AND i.id_tenant = p.id_tenant`;
 
         if (sucursal) {
             // Need to join through warehouse-branch map
@@ -655,15 +653,15 @@ const getInfProducto = async (req, res) => {
         connection = await getConnection();
 
         const [infProductoResult] = await connection.query(
-            `SELECT 
-                p.id_producto AS codigo, 
-                p.descripcion AS descripcion, 
-                m.nom_marca AS marca, 
+            `SELECT
+                p.id_producto AS codigo,
+                p.descripcion AS descripcion,
+                m.nom_marca AS marca,
                 COALESCE(SUM(i.stock), 0) AS stock
-            FROM producto p 
+            FROM producto p
             INNER JOIN marca m ON p.id_marca = m.id_marca
-            LEFT JOIN producto_sku sku ON p.id_producto = sku.id_producto
-            LEFT JOIN inventario_stock i ON sku.id_sku = i.id_sku ${idAlmacen && idAlmacen !== '%' ? 'AND i.id_almacen = ?' : ''}
+            LEFT JOIN inventario i ON p.id_producto = i.id_producto AND i.id_tenant = p.id_tenant
+                ${idAlmacen && idAlmacen !== '%' ? 'AND i.id_almacen = ?' : ''}
             WHERE p.id_producto = ?
                 AND p.id_tenant = ?
             GROUP BY p.id_producto`,
@@ -715,20 +713,27 @@ const getProductoStockDetails = async (req, res) => {
 
         params.push(idProducto, id_tenant);
 
+        // Stock desglosado por (id_producto, id_tonalidad, id_talla, id_almacen).
+        // Ya no hay SKUs: las "variantes" se identifican por (id_tonalidad, id_talla).
         const [result] = await connection.query(
-            `SELECT 
-                sku.id_sku,
-                sku.sku AS sku_label,
-                sku.attributes_json AS attributes,
+            `SELECT
+                i.id_tonalidad,
+                i.id_talla,
+                t.nombre  AS nom_tonalidad,
+                ta.nombre AS nom_talla,
                 COALESCE(SUM(i.stock), 0) AS stock,
-                a.nom_almacen
-            FROM producto_sku sku
-            LEFT JOIN inventario_stock i ON sku.id_sku = i.id_sku ${almacenCondition}
-            LEFT JOIN almacen a ON i.id_almacen = a.id_almacen
-                        WHERE sku.id_producto = ?
-                            AND (sku.id_tenant = ? OR sku.id_tenant IS NULL)
-            GROUP BY sku.id_sku, sku.sku, sku.attributes_json ${idAlmacen && idAlmacen !== '%' ? '' : ', a.id_almacen'}
-            ORDER BY sku.sku`,
+                a.nom_almacen,
+                a.id_almacen
+            FROM inventario i
+            LEFT JOIN almacen    a  ON i.id_almacen    = a.id_almacen
+            LEFT JOIN tonalidad  t  ON i.id_tonalidad  = t.id_tonalidad
+            LEFT JOIN talla      ta ON i.id_talla      = ta.id_talla
+            WHERE i.id_producto = ?
+              AND i.id_tenant   = ?
+              ${almacenCondition.replace(/i\./g, 'i.')}
+            GROUP BY i.id_tonalidad, i.id_talla, t.nombre, ta.nombre,
+                     a.nom_almacen, a.id_almacen
+            ORDER BY a.nom_almacen, t.nombre, ta.nombre`,
             params
         );
 

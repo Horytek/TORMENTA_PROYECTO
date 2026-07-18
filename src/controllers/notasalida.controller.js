@@ -1,6 +1,5 @@
 import { getConnection } from "../database/database.js";
 import { logInventario } from "../utils/logActions.js";
-import { resolveSku } from "../utils/skuHelper.js";
 
 // Cache para queries repetitivas
 const queryCache = new Map();
@@ -234,20 +233,19 @@ const getProductos = async (req, res) => {
     connection = await getConnection();
 
     let query = `
-      SELECT 
-        p.id_producto AS codigo, 
-        p.descripcion AS descripcion, 
-        m.nom_marca AS marca, 
+      SELECT
+        p.id_producto AS codigo,
+        p.descripcion AS descripcion,
+        m.nom_marca AS marca,
         SUM(COALESCE(i.stock, 0)) AS stock,
-        p.cod_barras as cod_barras 
-      FROM producto p 
-      INNER JOIN marca m ON p.id_marca = m.id_marca 
-      LEFT JOIN producto_sku sku ON p.id_producto = sku.id_producto
-      LEFT JOIN inventario_stock i ON sku.id_sku = i.id_sku AND i.id_almacen = ?
+        p.cod_barras as cod_barras
+      FROM producto p
+      INNER JOIN marca m ON p.id_marca = m.id_marca
+      LEFT JOIN inventario i ON p.id_producto = i.id_producto AND i.id_almacen = ? AND i.id_tenant = ?
       WHERE p.id_tenant = ?
     `;
 
-    const queryParams = [almacen, id_tenant];
+    const queryParams = [almacen, id_tenant, id_tenant];
 
     if (descripcion) {
       query += ' AND p.descripcion LIKE ?';
@@ -467,22 +465,16 @@ const insertNotaAndDetalle = async (req, res) => {
       const id_detalle = firstDetalleId + i;
       const id_ton = tonalidades[i] || null;
       const id_tal = tallas[i] || null;
-      const passed_sku = skus[i] || null;
 
-      // Consultar stock específico
-      let id_sku;
-      if (passed_sku) {
-        id_sku = passed_sku;
-      } else {
-        id_sku = await resolveSku(connection, id_producto, id_ton, id_tal, id_tenant);
-      }
+      // Construir WHERE dinámico para localizar la fila exacta de inventario.
+      let invWhere = `id_producto = ? AND id_almacen = ? AND id_tenant = ?`;
+      const invParams = [id_producto, almacenO, id_tenant];
+      if (id_ton !== null) { invWhere += ` AND (id_tonalidad <=> ?)`; invParams.push(id_ton); }
+      if (id_tal !== null) { invWhere += ` AND (id_talla <=> ?)`;     invParams.push(id_tal); }
 
       const [stockResult] = await connection.query(
-        `SELECT stock FROM inventario_stock 
-           WHERE id_sku = ? 
-           AND id_almacen = ? 
-           AND id_tenant = ?`,
-        [id_sku, almacenO, id_tenant]
+        `SELECT stock FROM inventario WHERE ${invWhere} LIMIT 1`,
+        invParams
       );
 
       const stockAnterior = stockResult.length > 0 ? parseFloat(stockResult[0].stock) : 0;
@@ -494,13 +486,10 @@ const insertNotaAndDetalle = async (req, res) => {
 
       const totalStock = stockAnterior - cantidadProducto;
 
-      // Actualizar stock
+      // Actualizar stock en `inventario`
       await connection.query(
-        `UPDATE inventario_stock SET stock = stock - ? 
-           WHERE id_sku = ? 
-           AND id_almacen = ? 
-           AND id_tenant = ?`,
-        [cantidadProducto, id_sku, almacenO, id_tenant]
+        `UPDATE inventario SET stock = stock - ? WHERE ${invWhere} AND stock >= ?`,
+        [cantidadProducto, ...invParams, cantidadProducto]
       );
 
       // Preparar bitácora
@@ -581,29 +570,29 @@ const anularNota = async (req, res) => {
     );
 
     for (let i = 0; i < detalleResult.length; i++) {
-      const { id_producto, cantidad, id_tonalidad, id_talla, id_detalle_nota, id_sku: storedSku } = detalleResult[i];
+      const { id_producto, cantidad, id_tonalidad, id_talla, id_detalle_nota } = detalleResult[i];
+      const id_ton = id_tonalidad || null;
+      const id_tal = id_talla || null;
 
-      // Consultar stock específico
-      let id_sku;
-      if (storedSku) {
-        id_sku = storedSku;
-      } else {
-        id_sku = await resolveSku(connection, id_producto, id_tonalidad, id_talla, id_tenant);
-      }
+      // Construir WHERE dinámico para localizar la fila exacta de inventario.
+      let invWhere = `id_producto = ? AND id_almacen = ? AND id_tenant = ?`;
+      const invParams = [id_producto, id_almacenO, id_tenant];
+      if (id_ton !== null) { invWhere += ` AND (id_tonalidad <=> ?)`; invParams.push(id_ton); }
+      if (id_tal !== null) { invWhere += ` AND (id_talla <=> ?)`;     invParams.push(id_tal); }
 
       // Verificar stock antes de actualizar (aunque al anular, es entrada, no debería haber problema "insuficiente")
       // Pero igual leemos para la bitácora
       const [stockResult] = await connection.query(
-        "SELECT stock FROM inventario_stock WHERE id_sku = ? AND id_almacen = ? AND id_tenant = ?",
-        [id_sku, id_almacenO, id_tenant]
+        `SELECT stock FROM inventario WHERE ${invWhere} LIMIT 1`,
+        invParams
       );
 
       const stockAnterior = stockResult.length > 0 ? parseFloat(stockResult[0].stock) : 0;
 
-      // Actualizar stock en el almacén de origen (Devolución/Anulación -> Sumar)
+      // Actualizar stock en `inventario` (Devolución/Anulación → Sumar)
       await connection.query(
-        "UPDATE inventario_stock SET stock = stock + ? WHERE id_sku = ? AND id_almacen = ? AND id_tenant = ?",
-        [cantidad, id_sku, id_almacenO, id_tenant]
+        `UPDATE inventario SET stock = stock + ? WHERE ${invWhere}`,
+        [cantidad, ...invParams]
       );
 
       const detalleId = id_detalle_nota;
@@ -623,7 +612,7 @@ const anularNota = async (req, res) => {
       // Insertar en bitácora
       await connection.query(
         "INSERT INTO bitacora_nota (id_nota, id_producto, id_almacen, id_detalle_nota, entra, stock_anterior, stock_actual, fecha, id_tenant, id_tonalidad, id_talla) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [notaId, id_producto, id_almacenO, detalleId, cantidad, stockAnterior, stockAnterior + cantidad, fechaNota, id_tenant, id_tonalidad, id_talla]
+        [notaId, id_producto, id_almacenO, detalleId, cantidad, stockAnterior, stockAnterior + cantidad, fechaNota, id_tenant, id_ton, id_tal]
       );
     }
 

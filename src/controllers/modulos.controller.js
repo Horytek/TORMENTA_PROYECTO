@@ -1,4 +1,5 @@
 import { getConnection } from "./../database/database.js";
+import { AuthZService } from "../services/authz.service.js";
 
 // Cache para consultas frecuentes
 const queryCache = new Map();
@@ -16,7 +17,7 @@ setInterval(() => {
 
 // AGREGAR MÓDULO - OPTIMIZADO
 const addModulo = async (req, res) => {
-    const { nombre, ruta } = req.body;
+    const { nombre, ruta, icon = null, group_name = null, sort_order = 0, frontend_route = null, is_visible = true } = req.body;
     const nombre_modulo = nombre;
 
     // Validaciones mejoradas
@@ -56,13 +57,16 @@ const addModulo = async (req, res) => {
 
         await connection.beginTransaction();
 
-        const query = "INSERT INTO modulo (nombre_modulo, ruta) VALUES (?, ?)";
-        const [result] = await connection.query(query, [nombre_modulo.trim(), ruta.trim()]);
+        const query = "INSERT INTO modulo (nombre_modulo, ruta, icon, group_name, sort_order, frontend_route, is_visible) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        const [result] = await connection.query(query, [nombre_modulo.trim(), ruta.trim(), icon, group_name, sort_order, frontend_route, is_visible ? 1 : 0]);
 
         await connection.commit();
 
-        // Limpiar caché
+        // Limpiar caché (propio + AuthZService compartido). Cambió metadata de
+        // módulo/submódulo → el catálogo cacheado por tenant queda stale.
+        // ponytail: clear global del AuthZService.
         queryCache.clear();
+        AuthZService.clearCache();
 
         res.json({
             success: true,
@@ -122,13 +126,23 @@ const getModulos = async (req, res) => {
 
         // Query optimizada: obtener todo en una sola consulta con LEFT JOIN
         const [rows] = await connection.query(`
-            SELECT 
+            SELECT
                 m.id_modulo,
                 m.nombre_modulo,
                 m.ruta as ruta_modulo,
+                m.icon as icon_modulo,
+                m.group_name as group_name_modulo,
+                m.sort_order as sort_order_modulo,
+                m.frontend_route as frontend_route_modulo,
+                m.is_visible as is_visible_modulo,
                 s.id_submodulo,
                 s.nombre_sub,
-                s.ruta as ruta_submodulo
+                s.ruta as ruta_submodulo,
+                s.icon as icon_submodulo,
+                s.group_name as group_name_submodulo,
+                s.sort_order as sort_order_submodulo,
+                s.frontend_route as frontend_route_submodulo,
+                s.is_visible as is_visible_submodulo
             FROM modulo m
             LEFT JOIN submodulos s ON m.id_modulo = s.id_modulo
             ORDER BY m.id_modulo, s.id_submodulo
@@ -144,7 +158,12 @@ const getModulos = async (req, res) => {
                 modulosMap.set(row.id_modulo, {
                     id_modulo: row.id_modulo,
                     nombre_modulo: row.nombre_modulo,
-                    ruta: row.ruta_modulo
+                    ruta: row.ruta_modulo,
+                    icon: row.icon_modulo,
+                    group_name: row.group_name_modulo,
+                    sort_order: row.sort_order_modulo,
+                    frontend_route: row.frontend_route_modulo,
+                    is_visible: !!row.is_visible_modulo
                 });
             }
 
@@ -156,7 +175,12 @@ const getModulos = async (req, res) => {
                     nombre_sub: row.nombre_sub,
                     ruta_submodulo: row.ruta_submodulo,
                     nombre_modulo: row.nombre_modulo,
-                    ruta_modulo: row.ruta_modulo
+                    ruta_modulo: row.ruta_modulo,
+                    icon: row.icon_submodulo,
+                    group_name: row.group_name_submodulo,
+                    sort_order: row.sort_order_submodulo,
+                    frontend_route: row.frontend_route_submodulo,
+                    is_visible: !!row.is_visible_submodulo
                 });
             }
         }
@@ -193,7 +217,7 @@ const getModulos = async (req, res) => {
 
 // AGREGAR SUBMÓDULO - OPTIMIZADO
 const addSubmodulo = async (req, res) => {
-    const { id_modulo, nombre_sub, ruta } = req.body;
+    const { id_modulo, nombre_sub, ruta, icon = null, group_name = null, sort_order = 0, frontend_route = null, is_visible = true } = req.body;
 
     // Validaciones mejoradas
     if (!id_modulo) {
@@ -240,7 +264,7 @@ const addSubmodulo = async (req, res) => {
 
         // Verificar duplicados
         const [duplicado] = await connection.query(
-            'SELECT id_submodulo FROM sub_modulo WHERE (nom_submodulo = ? OR ruta = ?) AND id_modulo = ? LIMIT 1',
+            'SELECT id_submodulo FROM submodulos WHERE (nombre_sub = ? OR ruta = ?) AND id_modulo = ? LIMIT 1',
             [nombre_sub.trim(), ruta.trim(), id_modulo]
         );
 
@@ -254,13 +278,16 @@ const addSubmodulo = async (req, res) => {
 
         await connection.beginTransaction();
 
-        const query = "INSERT INTO sub_modulo (id_modulo, nom_submodulo, ruta) VALUES (?, ?, ?)";
-        const [result] = await connection.query(query, [id_modulo, nombre_sub.trim(), ruta.trim()]);
+        const query = "INSERT INTO submodulos (id_modulo, nombre_sub, ruta, icon, group_name, sort_order, frontend_route, is_visible) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        const [result] = await connection.query(query, [id_modulo, nombre_sub.trim(), ruta.trim(), icon, group_name, sort_order, frontend_route, is_visible ? 1 : 0]);
 
         await connection.commit();
 
-        // Limpiar caché
+        // Limpiar caché (propio + AuthZService compartido). Cambió metadata de
+        // módulo/submódulo → el catálogo cacheado por tenant queda stale.
+        // ponytail: clear global del AuthZService.
         queryCache.clear();
+        AuthZService.clearCache();
 
         res.json({
             success: true,
@@ -303,7 +330,7 @@ const addSubmodulo = async (req, res) => {
 // ACTUALIZAR MÓDULO - OPTIMIZADO
 const updateModulo = async (req, res) => {
     const { id } = req.params;
-    const { nombre_modulo, ruta } = req.body;
+    const { nombre_modulo, ruta, icon, group_name, sort_order, frontend_route, is_visible } = req.body;
 
     // Validaciones mejoradas
     if (!id) {
@@ -359,9 +386,21 @@ const updateModulo = async (req, res) => {
 
         await connection.beginTransaction();
 
+        // Campos de metadata visual son opcionales: solo se actualizan si el
+        // caller los envía, para no pisar con NULL a quien todavía solo manda
+        // {nombre_modulo, ruta} (contrato original de este endpoint).
+        const updates = ["nombre_modulo = ?", "ruta = ?"];
+        const params = [nombre_modulo.trim(), ruta.trim()];
+        if (icon !== undefined) { updates.push("icon = ?"); params.push(icon); }
+        if (group_name !== undefined) { updates.push("group_name = ?"); params.push(group_name); }
+        if (sort_order !== undefined) { updates.push("sort_order = ?"); params.push(sort_order); }
+        if (frontend_route !== undefined) { updates.push("frontend_route = ?"); params.push(frontend_route); }
+        if (is_visible !== undefined) { updates.push("is_visible = ?"); params.push(is_visible ? 1 : 0); }
+        params.push(id);
+
         const [result] = await connection.query(
-            "UPDATE modulo SET nombre_modulo = ?, ruta = ? WHERE id_modulo = ?",
-            [nombre_modulo.trim(), ruta.trim(), id]
+            `UPDATE modulo SET ${updates.join(', ')} WHERE id_modulo = ?`,
+            params
         );
 
         await connection.commit();
@@ -373,8 +412,11 @@ const updateModulo = async (req, res) => {
             });
         }
 
-        // Limpiar caché
+        // Limpiar caché (propio + AuthZService compartido). Cambió metadata de
+        // módulo/submódulo → el catálogo cacheado por tenant queda stale.
+        // ponytail: clear global del AuthZService.
         queryCache.clear();
+        AuthZService.clearCache();
 
         res.json({
             code: 1,
@@ -478,8 +520,11 @@ const deleteModulo = async (req, res) => {
             });
         }
 
-        // Limpiar caché
+        // Limpiar caché (propio + AuthZService compartido). Cambió metadata de
+        // módulo/submódulo → el catálogo cacheado por tenant queda stale.
+        // ponytail: clear global del AuthZService.
         queryCache.clear();
+        AuthZService.clearCache();
 
         res.json({
             code: 1,

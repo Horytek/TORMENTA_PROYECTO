@@ -24,22 +24,24 @@ function getWsdlUrl(env) {
 }
 
 /**
- * Leer claves SUNAT de la BD para una empresa específica
- * Nota: Buscamos solo por id_empresa ya que las credenciales SUNAT son por empresa,
- * no por tenant. Una empresa tiene un único RUC y un único set de credenciales SUNAT.
+ * Leer claves SUNAT de la BD para una empresa específica.
+ * Filtra también por id_tenant: id_empresa solo no basta cuando llega desde el
+ * fallback por RUC (getConfigAndSigningMaterial en sunat.controller.js), que no
+ * garantiza que esa empresa sea del tenant que hace la llamada — sin este filtro
+ * se podían cargar y usar las credenciales/certificado SUNAT de otra empresa.
  */
 async function getClavesSunatFromDB(id_empresa, id_tenant) {
   let connection;
   try {
     connection = await getConnection();
 
-    // Buscar solo por id_empresa (las credenciales SUNAT son únicas por empresa/RUC)
-    console.log(`[SunatConfig] Fetching keys for id_empresa=${id_empresa}`);
+    console.log(`[SunatConfig] Fetching keys for id_empresa=${id_empresa}, id_tenant=${id_tenant}`);
     const [rows] = await connection.query(
-      `SELECT tipo, valor FROM clave 
-       WHERE id_empresa = ? 
+      `SELECT tipo, valor FROM clave
+       WHERE id_empresa = ?
+       AND id_tenant = ?
        AND tipo LIKE 'sunat_%'`,
-      [id_empresa]
+      [id_empresa, id_tenant]
     );
     console.log(`[SunatConfig] Found ${rows.length} keys for id_empresa=${id_empresa}`);
 

@@ -1,5 +1,5 @@
 import api from "@/api/axios";
-import type { Product, Brand, Category, Subcategory, UnitOfMeasure, ProductAttribute, AttributeValue, ProductVariant } from "../types";
+import type { Product, Brand, Category, Subcategory, UnitOfMeasure } from "../types";
 
 // 1. Productos CRUD
 export const getProducts = async (params?: { page?: number; limit?: number; q?: string }): Promise<{ data: Product[]; total: number; totalPages: number }> => {
@@ -101,39 +101,7 @@ export const getUnits = async (): Promise<UnitOfMeasure[]> => {
     }));
 };
 
-// 4. Atributos dinámicos y variantes
-export const getCategoryAttributes = async (catId: number | string): Promise<ProductAttribute[]> => {
-  const response = await api.get(`/attributes/category/${catId}`);
-  const data = response.data;
-  return data?.data || (Array.isArray(data) ? data : []);
-};
-
-export const getAttributeValues = async (attrId: number | string): Promise<AttributeValue[]> => {
-  const response = await api.get(`/attributes/${attrId}/values`);
-  const data = response.data;
-  return data?.data || (Array.isArray(data) ? data : []);
-};
-
-export const getProductAttributes = async (productId: number): Promise<{ attributes: { id_atributo: number; values: { id: number; label: string }[] }[] }> => {
-  const response = await api.get(`/productos/${productId}/attributes`);
-  const data = response.data;
-  return data?.data || data;
-};
-
-export const getProductVariants = async (productId: number): Promise<ProductVariant[]> => {
-  const response = await api.get(`/productos/${productId}/variants`);
-  const data = response.data;
-  return data?.data || (Array.isArray(data) ? data : []);
-};
-
-export const generateSKUs = async (productId: number, data: { id_atributo: number; values: { id: string | number; label: string }[] }[]): Promise<any> => {
-  const response = await api.post("/productos/skus/generate", {
-    id_producto: productId,
-    attributes: data
-  });
-  return response.data;
-};
-
+// 4. Importación masiva
 export const importExcelProducts = async (data: any[]): Promise<any> => {
   const response = await api.post("/productos/import/excel", { data });
   return response.data;

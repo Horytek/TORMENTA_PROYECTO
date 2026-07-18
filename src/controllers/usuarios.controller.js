@@ -159,16 +159,15 @@ const getUsuario_1 = async (req, res) => {
     try {
         const { id } = req.params;
         connection = await getConnection();
+        // No se seleccionan `contra`/`estado_token`: este endpoint solo se usa para
+        // resolver id_empresa/id_rol de un username (ver VendedoresForm.jsx), nunca
+        // necesitó el hash de contraseña.
         let query = `
-            SELECT id_usuario, id_rol, usua, contra, estado_usuario, estado_token, id_empresa
+            SELECT id_usuario, id_rol, usua, estado_usuario, id_empresa
             FROM usuario
-            WHERE usua = ?
+            WHERE usua = ? AND id_tenant = ?
         `;
-        let params = [id];
-        if (req.id_tenant) {
-            query += " AND id_tenant = ?";
-            params.push(req.id_tenant);
-        }
+        let params = [id, req.id_tenant];
         query += " LIMIT 1";
         const [result] = await connection.query(query, params);
 

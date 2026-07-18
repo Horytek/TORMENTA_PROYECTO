@@ -116,10 +116,10 @@ const login = async (req, res) => {
             return res.status(403).json({ success: false, message: "Tu cuenta está desactivada." });
         }
 
-        // Si es rol normal, traer más datos
-        if (userbd.id_rol !== 1 && user.usuario !== "desarrollador") {
+        // Traer datos de sucursal
+        if (user.usuario !== "desarrollador") {
             const [extra] = await connection.query(
-                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal, usu.id_tenant, usu.plan_pago
+                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal, su.id_sucursal, usu.id_tenant, usu.plan_pago
                  FROM usuario usu
                  LEFT JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
                  LEFT JOIN sucursal su ON su.dni = ven.dni
@@ -219,6 +219,7 @@ const login = async (req, res) => {
                 rol: userbd.id_rol,
                 usuario: userbd.usua,
                 sucursal: userbd.nombre_sucursal || null,
+                id_sucursal: userbd.id_sucursal || null,
                 id_tenant: userbd.id_tenant || null,
                 id_empresa: userbd.id_empresa || null,
                 plan_pago: userbd.plan_pago || null,
@@ -305,7 +306,7 @@ const verifyToken = async (req, res) => {
         let userFound;
         if (id_tenant) {
             [userFound] = await connection.query(
-                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.estado_usuario, usu.estado_token, su.nombre_sucursal, usu.id_tenant, usu.id_empresa, usu.plan_pago, usu.fecha_pago
+                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.estado_usuario, usu.estado_token, su.nombre_sucursal, su.id_sucursal, usu.id_tenant, usu.id_empresa, usu.plan_pago, usu.fecha_pago
                  FROM usuario usu
                  LEFT JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
                  LEFT JOIN sucursal su ON su.dni = ven.dni
@@ -315,7 +316,7 @@ const verifyToken = async (req, res) => {
             );
         } else {
             [userFound] = await connection.query(
-                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.estado_usuario, usu.estado_token, null as nombre_sucursal, null as id_tenant, usu.id_empresa
+                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.estado_usuario, usu.estado_token, null as nombre_sucursal, null as id_sucursal, null as id_tenant, usu.id_empresa
                  FROM usuario usu
                  WHERE usu.usua = ? AND usu.estado_usuario = 1
                  LIMIT 1`,
@@ -455,6 +456,7 @@ const verifyToken = async (req, res) => {
             rol: userbd.id_rol,
             usuario: userbd.usua,
             sucursal: userbd.nombre_sucursal || null,
+            id_sucursal: userbd.id_sucursal || null,
             id_tenant: userbd.id_tenant || null,
             id_empresa: userbd.id_empresa || null,
             plan_pago: userbd.plan_pago || null,

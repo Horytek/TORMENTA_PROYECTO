@@ -6,7 +6,6 @@ import type { Product } from "../types";
 // Sub-Panels
 import ProductsPanel from "../components/ProductsPanel";
 import ProductForm from "../components/ProductForm";
-import ViewVariantsModal from "../components/ViewVariantsModal";
 import BrandsPanel from "../components/BrandsPanel";
 import CategoriesPanel from "../components/CategoriesPanel";
 import SubcategoriesPanel from "../components/SubcategoriesPanel";
@@ -28,9 +27,6 @@ export default function ProductsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  const [isVariantsOpen, setIsVariantsOpen] = useState(false);
-  const [variantsProduct, setVariantsProduct] = useState<Product | null>(null);
-
   const handleCreateOpen = () => {
     setEditingProduct(null);
     setIsFormOpen(true);
@@ -41,13 +37,8 @@ export default function ProductsPage() {
     setIsFormOpen(true);
   };
 
-  const handleViewVariants = (product: Product) => {
-    setVariantsProduct(product);
-    setIsVariantsOpen(true);
-  };
-
   return (
-    <div className="space-y-6 max-w-7xl mx-auto animate-fade-in">
+    <div className="space-y-6 w-full animate-fade-in">
       <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val)} className="w-full space-y-6">
 
         {/* Header */}
@@ -57,7 +48,7 @@ export default function ProductsPage() {
               Gestor del catálogo
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Administra productos, marcas, categorías y variantes
+              Administra productos, marcas, categorías y subcategorías
             </p>
           </div>
 
@@ -89,7 +80,7 @@ export default function ProductsPage() {
               Nuevo producto
             </Button>
           </div>
-          <ProductsPanel onEdit={handleEditOpen} onViewVariants={handleViewVariants} />
+          <ProductsPanel onEdit={handleEditOpen} />
         </TabsContent>
 
         {/* Tab: Brands */}
@@ -116,19 +107,6 @@ export default function ProductsPage() {
           onClose={() => setIsFormOpen(false)}
           onSuccess={() => queryClient.invalidateQueries({ queryKey: ["products"] })}
           initialData={editingProduct}
-        />
-      )}
-
-      {/* Modal Variants */}
-      {isVariantsOpen && variantsProduct && (
-        <ViewVariantsModal
-          isOpen={isVariantsOpen}
-          onClose={() => {
-            setIsVariantsOpen(false);
-            setVariantsProduct(null);
-          }}
-          productId={variantsProduct.id_producto}
-          productName={variantsProduct.descripcion}
         />
       )}
     </div>

@@ -10,4 +10,4 @@ export interface RolInput {
 }
 
 /** Roles del sistema que no deben editarse/eliminarse desde el panel. */
-export const RESERVED_ROLES = [1, 10];
+export { RESERVED_ROLE_IDS as RESERVED_ROLES } from "@/hooks/usePermissions";

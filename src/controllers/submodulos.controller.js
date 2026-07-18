@@ -1,4 +1,5 @@
 import { getConnection } from "./../database/database.js";
+import { AuthZService } from "../services/authz.service.js";
 
 // Cache para consultas frecuentes
 const queryCache = new Map();
@@ -11,7 +12,7 @@ export const clearSubmodulosCache = () => {
 // ACTUALIZAR SUBMÓDULO - OPTIMIZADO
 const updateSubModulo = async (req, res) => {
     const { id } = req.params;
-    const { nombre_sub, ruta } = req.body;
+    const { nombre_sub, ruta, icon, group_name, sort_order, frontend_route, is_visible } = req.body;
     
     // Validaciones mejoradas
     if (!id) {
@@ -83,10 +84,21 @@ const updateSubModulo = async (req, res) => {
         }
         
         await connection.beginTransaction();
-        
+
+        // Igual que en updateModulo: los campos de metadata visual son
+        // opcionales y solo se tocan si el caller los envía.
+        const updates = ["nombre_sub = ?", "ruta = ?"];
+        const params = [nombre_sub.trim(), ruta.trim()];
+        if (icon !== undefined) { updates.push("icon = ?"); params.push(icon); }
+        if (group_name !== undefined) { updates.push("group_name = ?"); params.push(group_name); }
+        if (sort_order !== undefined) { updates.push("sort_order = ?"); params.push(sort_order); }
+        if (frontend_route !== undefined) { updates.push("frontend_route = ?"); params.push(frontend_route); }
+        if (is_visible !== undefined) { updates.push("is_visible = ?"); params.push(is_visible ? 1 : 0); }
+        params.push(id);
+
         const [result] = await connection.query(
-            "UPDATE submodulos SET nombre_sub = ?, ruta = ? WHERE id_submodulo = ?", 
-            [nombre_sub.trim(), ruta.trim(), id]
+            `UPDATE submodulos SET ${updates.join(', ')} WHERE id_submodulo = ?`,
+            params
         );
         
         await connection.commit();
@@ -98,8 +110,11 @@ const updateSubModulo = async (req, res) => {
             });
         }
 
-        // Limpiar caché de módulos (afecta la estructura)
+        // Limpiar caché (propio + AuthZService compartido). Cambió metadata de
+        // submódulo → el catálogo cacheado por tenant queda stale.
+        // ponytail: clear global del AuthZService.
         queryCache.clear();
+        AuthZService.clearCache();
 
         res.json({ 
             code: 1, 
@@ -199,13 +214,14 @@ const deleteSubModulo = async (req, res) => {
             });
         }
 
-        // Limpiar caché
+        // Limpiar caché (propio + AuthZService compartido). ponytail: clear global.
         queryCache.clear();
+        AuthZService.clearCache();
 
-        res.json({ 
-            code: 1, 
-            message: "Submódulo eliminado correctamente", 
-            data: recordToDelete 
+        res.json({
+            code: 1,
+            message: "Submódulo eliminado correctamente",
+            data: recordToDelete
         });
     } catch (error) {
         if (connection) {

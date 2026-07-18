@@ -1,5 +1,4 @@
 import { getConnection } from "./../database/database.js";
-import { resolveSku } from "./../utils/skuHelper.js";
 
 // Cache para queries repetitivas (opcional, para datos que no cambian frecuentemente)
 const queryCache = new Map();
@@ -702,17 +701,15 @@ const getProductos = async (req, res) => {
                 m.nom_marca AS marca,
                 p.cod_barras AS codbarras,
                 COALESCE(SUM(i.stock), 0) as stock
-            FROM 
-                producto p 
-            INNER JOIN 
+            FROM
+                producto p
+            INNER JOIN
                 marca m ON p.id_marca = m.id_marca
             LEFT JOIN
-                producto_sku sku ON p.id_producto = sku.id_producto
-            LEFT JOIN
-                inventario_stock i ON sku.id_sku = i.id_sku
+                inventario i ON p.id_producto = i.id_producto AND i.id_tenant = ?
             WHERE p.id_tenant = ?`;
 
-        const params = [id_tenant];
+        const params = [id_tenant, id_tenant];
 
         // Solo agregar condiciones si hay valores de búsqueda
         if (descripcion) {
@@ -1090,25 +1087,17 @@ const insertGuiaRemisionAndDetalle = async (req, res) => {
                 const cantidadProducto = parseFloat(cantidad[i]);
                 const id_ton = tonalidades[i] || null;
                 const id_tal = tallas[i] || null;
-                const passed_sku = skus[i] || null;
 
-                // Resolver SKU (usar el pasado o calcular)
-                let id_sku;
-                if (passed_sku) {
-                    id_sku = passed_sku;
-                } else {
-                    id_sku = await resolveSku(connection, id_producto, id_ton, id_tal, id_tenant);
-                }
+                // Construir WHERE dinámico para localizar la fila exacta de inventario.
+                let invWhere = `id_producto = ? AND id_almacen = ? AND id_tenant = ?`;
+                const invParams = [id_producto, id_almacen, id_tenant];
+                if (id_ton !== null) { invWhere += ` AND (id_tonalidad <=> ?)`; invParams.push(id_ton); }
+                if (id_tal !== null) { invWhere += ` AND (id_talla <=> ?)`;     invParams.push(id_tal); }
 
-                if (!id_sku) {
-                    console.warn(`[GuiaRemision] No se pudo resolver SKU para producto ${id_producto}, saltando descuento de stock.`);
-                    continue;
-                }
-
-                // Verificar stock actual
+                // Verificar stock actual en `inventario`
                 const [stockResult] = await connection.query(
-                    "SELECT stock FROM inventario_stock WHERE id_sku = ? AND id_almacen = ? AND id_tenant = ?",
-                    [id_sku, id_almacen, id_tenant]
+                    `SELECT stock FROM inventario WHERE ${invWhere} LIMIT 1`,
+                    invParams
                 );
 
                 const stockActual = stockResult.length > 0 ? parseFloat(stockResult[0].stock) : 0;
@@ -1118,13 +1107,13 @@ const insertGuiaRemisionAndDetalle = async (req, res) => {
                     throw new Error(`Stock insuficiente para producto ID ${id_producto}. Disponible: ${stockActual}, Solicitado: ${cantidadProducto}`);
                 }
 
-                // Descontar stock
+                // Descontar stock en `inventario`
                 await connection.query(
-                    "UPDATE inventario_stock SET stock = stock - ? WHERE id_sku = ? AND id_almacen = ? AND id_tenant = ?",
-                    [cantidadProducto, id_sku, id_almacen, id_tenant]
+                    `UPDATE inventario SET stock = stock - ? WHERE ${invWhere} AND stock >= ?`,
+                    [cantidadProducto, ...invParams, cantidadProducto]
                 );
 
-                console.log(`[GuiaRemision] Stock descontado: Producto ${id_producto}, SKU ${id_sku}, Cantidad ${cantidadProducto}, Almacén ${id_almacen}`);
+                console.log(`[GuiaRemision] Stock descontado: Producto ${id_producto}, Cantidad ${cantidadProducto}, Almacén ${id_almacen}`);
             }
         } else {
             console.log(`[GuiaRemision] Sucursal ${id_sucursal} no tiene almacén vinculado, no se descuenta stock.`);

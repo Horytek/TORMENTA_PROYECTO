@@ -1,142 +1,310 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useUserStore } from "@/store/useUserStore";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, ArrowUpRight, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  TrendingUp,
+  TrendingDown,
+  X,
+  Building2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AdaptiveCard } from "@/components/shared/AdaptiveCollection";
+import type { FieldDef } from "@/components/shared/AdaptiveCollection";
 
-type Kpi = { label: string; value: string; unit?: string; delta: string; up: boolean };
+// API endpoints
+import {
+  getSucursalesDashboard,
+  getVentasTotal,
+  getNuevosClientes,
+  getProductSell,
+  getNotasPendientes,
+  getProductosBajoStock,
+  getVentasPorSucursal,
+} from "../api/dashboard";
+import { getPL } from "@/features/accounting/api/accounting";
 
-const KPIS: Kpi[] = [
-  { label: "Ventas de hoy", value: "3,480.00", unit: "S/", delta: "+12.4%", up: true },
-  { label: "Productos activos", value: "342", delta: "+8", up: true },
-  { label: "Con stock bajo", value: "12", delta: "-3", up: false },
-  { label: "Comprobantes SUNAT", value: "27", delta: "+5", up: true },
+// Components
+import { QuickActionsCard } from "../components/QuickActionsCard";
+import { StockCard } from "../components/StockCard";
+import { PerformanceCard } from "../components/PerformanceCard";
+import { DashboardLineChart } from "../components/DashboardLineChart";
+import { RecentTransactionsTable } from "../components/RecentTransactionsTable";
+import { NotasPendientesModal } from "../components/NotasPendientesModal";
+
+interface DashboardTile {
+  id: string;
+  label: string;
+  value: number;
+  delta?: number;
+  deltaLabel?: string;
+  onClick?: () => void;
+  badge?: { label: string; tone: "success" | "warning" };
+}
+
+const tileFields: FieldDef<DashboardTile>[] = [
+  { key: "value", priority: "primary", semantic: "kpi", label: "" },
+  {
+    key: "delta", priority: "secondary", label: "",
+    render: (v, item) => {
+      if (v == null) return item.badge ? (
+        <span
+          onClick={item.onClick}
+          className={cn(
+            "cursor-pointer rounded px-1.5 py-0.5 text-[10px] font-bold",
+            item.badge.tone === "success"
+              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+              : "animate-pulse bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400"
+          )}
+        >
+          {item.badge.label}
+        </span>
+      ) : null;
+      const num = Number(v);
+      const positive = num >= 0;
+      return (
+        <span className={cn("flex items-center gap-1", positive ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>
+          {positive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+          {Math.abs(num).toFixed(1)}% {item.deltaLabel}
+        </span>
+      );
+    },
+  },
 ];
 
-const LOW_STOCK = [
-  { sku: "POL-0432", name: "Polo Oversize Negro", stock: 4 },
-  { sku: "JEA-1180", name: "Jean Mom Azul", stock: 6 },
-  { sku: "CAM-0091", name: "Camisa Lino Beige", stock: 3 },
-  { sku: "VES-0233", name: "Vestido Midi Verde", stock: 8 },
-];
-
-const RECENT = [
-  { doc: "F001-000842", client: "Consumidor Final", total: "129.90", type: "Factura" },
-  { doc: "B001-004517", client: "María Quispe", total: "49.90", type: "Boleta" },
-  { doc: "B001-004516", client: "Consumidor Final", total: "215.00", type: "Boleta" },
-  { doc: "F001-000841", client: "Textiles SAC", total: "1,240.00", type: "Factura" },
+const TAB_PERIODS = [
+  { key: "24h", label: "24H" },
+  { key: "semana", label: "Semana" },
+  { key: "mes", label: "Mes" },
+  { key: "anio", label: "Año" },
 ];
 
 export default function DashboardPage() {
-  const user = useUserStore((state) => state.user);
+  const user = useUserStore((s) => s.user);
+  const username = useUserStore((s) => s.nombre || s.usuario || "tormenta");
+
+  const [selectedTab, setSelectedTab] = useState("24h");
+  const [selectedSucursal, setSelectedSucursal] = useState<string>("all");
+  const [isNotasModalOpen, setIsNotasModalOpen] = useState(false);
+
+  // Queries
+  const { data: sucursales = [] } = useQuery({
+    queryKey: ["dashboard-sucursales"],
+    queryFn: getSucursalesDashboard,
+  });
+
+  const queryParams = {
+    tiempo: selectedTab,
+    usuario: username,
+    sucursal: selectedSucursal === "all" ? undefined : selectedSucursal,
+  };
+
+  const { data: ventasKpi, isLoading: isLoadingVentas } = useQuery({
+    queryKey: ["dashboard-ventas-total", queryParams],
+    queryFn: () => getVentasTotal(queryParams),
+  });
+
+  const { data: clientesKpi, isLoading: isLoadingClientes } = useQuery({
+    queryKey: ["dashboard-clientes-nuevos", queryParams],
+    queryFn: () => getNuevosClientes(queryParams),
+  });
+
+  const { data: productosKpi, isLoading: isLoadingProductos } = useQuery({
+    queryKey: ["dashboard-productos-vendidos", queryParams],
+    queryFn: () => getProductSell(queryParams),
+  });
+
+  const { data: notasPendientes = [], refetch: refetchNotas } = useQuery({
+    queryKey: ["dashboard-notas-pendientes", selectedSucursal],
+    queryFn: () => getNotasPendientes({
+      id_sucursal: selectedSucursal === "all" ? undefined : selectedSucursal,
+    }),
+  });
+
+  const { data: bajoStock = [], isLoading: isLoadingStock } = useQuery({
+    queryKey: ["dashboard-bajo-stock", selectedSucursal],
+    queryFn: () => getProductosBajoStock({
+      sucursal: selectedSucursal === "all" ? undefined : selectedSucursal,
+    }),
+  });
+
+  // Utilidad del mes (Contabilidad — Fase 4). Si el tenant no tiene permiso
+  // sobre el módulo, el backend responde 403 y la tarjeta simplemente
+  // queda en estado de carga silenciosa (no rompe el resto del dashboard).
+  const monthRange = (() => {
+    const d = new Date();
+    return {
+      fechaInicio: new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10),
+      fechaFin: d.toISOString().slice(0, 10),
+    };
+  })();
+  const { data: plData, isLoading: isLoadingPL } = useQuery({
+    queryKey: ["dashboard-pl", monthRange.fechaInicio, monthRange.fechaFin],
+    queryFn: () => getPL(monthRange.fechaInicio, monthRange.fechaFin),
+    retry: false,
+  });
+
+  const { data: desempenoData, isLoading: isLoadingDesempeno } = useQuery({
+    queryKey: ["dashboard-desempeno-sucursales", selectedTab, selectedSucursal],
+    queryFn: () => getVentasPorSucursal({
+      tiempo: selectedTab,
+      sucursal: selectedSucursal === "all" ? undefined : selectedSucursal,
+    }),
+  });
+
+  const formatPeriodDeltaLabel = () => {
+    if (selectedTab === "24h") return "vs. ayer";
+    if (selectedTab === "semana") return "vs. sem. ant.";
+    if (selectedTab === "mes") return "vs. mes ant.";
+    return "vs. año ant.";
+  };
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 animate-fade-in">
+    <div className="w-full space-y-8 p-1 sm:p-4 animate-fade-in font-inter">
       {/* Encabezado */}
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Resumen general
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {user?.username ? `Bienvenido, ${user.username}. ` : ""}
-          Sucursal <span className="num font-medium text-foreground">{user?.sucursal || "Matriz Central"}</span>
-        </p>
-      </header>
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
+        <div className="space-y-1.5">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Panel Principal
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Visión general del rendimiento y estado del negocio.
+          </p>
+        </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {KPIS.map((k) => (
-          <Card key={k.label}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {k.label}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-1">
-                {k.unit && <span className="num text-sm text-muted-foreground">{k.unit}</span>}
-                <span className="num text-2xl font-semibold tracking-tight text-foreground">{k.value}</span>
-              </div>
-              <div
+        <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full md:w-auto">
+          {/* Sucursal Selector */}
+          <div className="flex items-center gap-1.5 w-full sm:w-auto">
+            <Select value={selectedSucursal} onValueChange={setSelectedSucursal}>
+              <SelectTrigger className="w-full sm:w-52 h-9 text-xs font-semibold bg-card border-border rounded-xl">
+                <Building2 className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
+                <SelectValue placeholder="Todas las sucursales" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-xs">Todas las sucursales</SelectItem>
+                {sucursales.map((s) => (
+                  <SelectItem key={s.id} value={String(s.id)} className="text-xs">
+                    {s.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {selectedSucursal !== "all" && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSelectedSucursal("all")}
+                className="h-9 w-9 rounded-xl shrink-0 hover:bg-muted"
+                title="Limpiar filtro de sucursal"
+              >
+                <X className="h-4 w-4 text-destructive" />
+              </Button>
+            )}
+          </div>
+
+          {/* Time Tabs */}
+          <div className="flex bg-muted/40 p-0.5 rounded-lg border border-border/45 select-none shrink-0 w-full sm:w-auto">
+            {TAB_PERIODS.map((tab) => (
+              <Button
+                key={tab.key}
+                variant={selectedTab === tab.key ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setSelectedTab(tab.key)}
                 className={cn(
-                  "num mt-2 inline-flex items-center gap-1 text-xs font-medium",
-                  k.up ? "text-success" : "text-destructive"
+                  "h-7 px-3 text-[11px] font-bold rounded-md flex-1 sm:flex-initial",
+                  selectedTab === tab.key
+                    ? "bg-card shadow-sm text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {k.up ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-                {k.delta}
-                <span className="text-muted-foreground">vs. ayer</span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Stock bajo */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="h-4 w-4 text-warning" />
-              Productos con stock bajo
-            </CardTitle>
-            <a href="/products" className="text-xs font-medium text-brand hover:underline">Ver todos</a>
-          </CardHeader>
-          <CardContent className="divide-y divide-border">
-            {LOW_STOCK.map((p) => (
-              <div key={p.sku} className="flex items-center justify-between py-2.5">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-foreground">{p.name}</p>
-                  <p className="num text-xs text-muted-foreground">{p.sku}</p>
-                </div>
-                <Badge variant={p.stock <= 4 ? "destructive" : "secondary"} className="num">
-                  {p.stock} u.
-                </Badge>
-              </div>
+                {tab.label}
+              </Button>
             ))}
-          </CardContent>
-        </Card>
-
-        {/* Últimos comprobantes */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-base">Últimos comprobantes</CardTitle>
-            <a href="/reports/sales" className="text-xs font-medium text-brand hover:underline">Historial</a>
-          </CardHeader>
-          <CardContent className="divide-y divide-border">
-            {RECENT.map((r) => (
-              <div key={r.doc} className="flex items-center justify-between py-2.5">
-                <div className="min-w-0">
-                  <p className="num truncate text-sm font-medium text-foreground">{r.doc}</p>
-                  <p className="truncate text-xs text-muted-foreground">{r.type} · {r.client}</p>
-                </div>
-                <span className="num text-sm font-semibold text-foreground">S/ {r.total}</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Nota de estado (desarrollo) */}
-      <Card className="border-dashed">
-        <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-medium text-foreground">
-              Datos de ejemplo — se conectará a <span className="num text-brand">/api/reportes</span>.
-            </p>
-            <p className="num mt-1.5 text-[11px] text-muted-foreground">
-              tenant {user?.id_tenant ?? "—"} · empresa {user?.id_empresa ?? "—"} · rol {user?.roleId ?? "—"}
-            </p>
           </div>
-          <a
-            href="/products"
-            className="inline-flex items-center gap-1 self-start rounded-md bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Ir al catálogo
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </a>
-        </CardContent>
-      </Card>
+        </div>
+      </header>
+
+      {/* KPI Cards Grid — AdaptiveCard variant="stat-tile" (Fase 5) */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {(() => {
+          const deltaLabel = formatPeriodDeltaLabel();
+          const tiles: DashboardTile[] = [
+            {
+              id: "ventas", label: "Ventas Totales",
+              value: Number(ventasKpi?.data ?? 0),
+              delta: isLoadingVentas ? undefined : Number(ventasKpi?.cambio ?? 0),
+              deltaLabel,
+            },
+            {
+              id: "clientes", label: "Nuevos Clientes",
+              value: Number(clientesKpi?.nuevosClientes ?? 0),
+              delta: isLoadingClientes ? undefined : Number(clientesKpi?.cambio ?? 0),
+              deltaLabel,
+            },
+            {
+              id: "productos", label: "Productos Vendidos",
+              value: Number(productosKpi?.totalProductosVendidos ?? 0),
+              delta: isLoadingProductos ? undefined : Number(productosKpi?.cambio ?? 0),
+              deltaLabel,
+            },
+            {
+              id: "notas", label: "Notas en Espera",
+              value: notasPendientes.length,
+              onClick: notasPendientes.length > 0 ? () => setIsNotasModalOpen(true) : undefined,
+              badge: notasPendientes.length === 0
+                ? { label: "Al día", tone: "success" }
+                : { label: "Ver pendientes", tone: "warning" },
+            },
+            {
+              id: "utilidad", label: "Utilidad del Mes",
+              value: isLoadingPL ? 0 : Number(plData?.utilidad ?? 0),
+              badge: isLoadingPL ? undefined : undefined,
+            },
+          ];
+          return tiles.map((tile, i) => (
+            <AdaptiveCard<DashboardTile>
+              key={tile.id}
+              item={tile}
+              index={i}
+              fields={tileFields.map((f) => ({ ...f, label: f.key === "value" ? tile.label : f.label }))}
+              variant="stat-tile"
+              getItemId={(t) => t.id}
+              state={tile.id === "utilidad" ? (tile.value >= 0 ? "active" : "error") : "neutral"}
+            />
+          ));
+        })()}
+      </div>
+
+      {/* Main Charts & Table Layout */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Left Side: LineChart & Transactions */}
+        <div className="lg:col-span-2 space-y-6">
+          <DashboardLineChart sucursal={selectedSucursal === "all" ? "" : selectedSucursal} usuario={username} />
+          <RecentTransactionsTable className="flex-1" />
+        </div>
+
+        {/* Right Side: Quick Actions & Side Stats */}
+        <div className="space-y-6">
+          <QuickActionsCard />
+          <StockCard productos={bajoStock} loading={isLoadingStock} />
+          <PerformanceCard
+            sucursales={desempenoData?.sucursales || []}
+            promedioGeneral={desempenoData?.promedioGeneral || 0}
+            loading={isLoadingDesempeno}
+          />
+        </div>
+      </div>
+
+      {/* Modal de Notas Pendientes */}
+      <NotasPendientesModal
+        open={isNotasModalOpen}
+        onClose={() => setIsNotasModalOpen(false)}
+        notas={notasPendientes}
+        refetchNotas={refetchNotas}
+        usuarioName={username}
+      />
     </div>
   );
 }

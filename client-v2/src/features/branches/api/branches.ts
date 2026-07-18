@@ -2,8 +2,13 @@ import api from "@/api/axios";
 import { isOk, unwrapList } from "@/api/http";
 import type { Sucursal, Vendedor, SucursalInput } from "../types";
 
-export const getSucursales = async (): Promise<Sucursal[]> =>
-  unwrapList<Sucursal>(await api.get("/sucursales/"));
+export const getSucursales = async (): Promise<Sucursal[]> => {
+  const list = await unwrapList<Sucursal>(await api.get("/sucursales/"));
+  return list.map((item) => ({
+    ...item,
+    id_sucursal: item.id_sucursal ?? (item as any).id,
+  }));
+};
 
 export const getVendedores = async (): Promise<Vendedor[]> =>
   unwrapList<Vendedor>(await api.get("/sucursales/vendedores"));

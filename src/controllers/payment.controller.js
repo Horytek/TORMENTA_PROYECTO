@@ -5,6 +5,7 @@ import { getConnection } from "../database/database.js";
 import { getExpressConnection } from "../database/express_db.js";
 import { Resend } from "resend";
 import PDFDocument from "pdfkit";
+import { isDeveloperReq } from "../middlewares/authorize.middleware.js";
 dotenv.config();
 
 const client = new MercadoPagoConfig({
@@ -810,6 +811,9 @@ export const downloadPaymentReceipt = async (req, res) => {
     const [[payment]] = await connection.query(sql, [id]);
 
     if (!payment) return res.status(404).send("Pago no encontrado");
+    if (!isDeveloperReq(req) && payment.id_tenant !== req.id_tenant) {
+      return res.status(404).send("Pago no encontrado");
+    }
 
     // Configuración del documento
     const doc = new PDFDocument({ size: "A4", margin: 50 });

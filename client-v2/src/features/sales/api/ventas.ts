@@ -7,6 +7,7 @@ import type {
   CreateVentaResponse,
   ComprobanteTipo,
 } from "../types";
+import { mapBackendVenta } from "../types";
 
 // ── Catálogo de productos para POS ───────────────────────────
 export const getProductosVentas = async (params?: {
@@ -21,7 +22,9 @@ export const getProductosVentas = async (params?: {
 export const getVentas = async (filters?: VentasFilters): Promise<Venta[]> => {
   const response = await api.get("/ventas", { params: filters });
   const data = response.data;
-  return data?.data || data || [];
+  const raw: Record<string, unknown>[] = data?.data || data || [];
+  // mapBackendVenta normaliza los nombres del backend a los aliases del type Venta
+  return raw.map(mapBackendVenta);
 };
 
 // ── Detalle de venta por ID ──────────────────────────────────

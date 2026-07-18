@@ -5,9 +5,10 @@ import type { FieldDef } from "@/components/shared/AdaptiveCollection";
 
 interface Props {
   productos: InventarioProducto[];
+  onProductClick?: (p: InventarioProducto) => void;
 }
 
-export function InventoryTable({ productos }: Props) {
+export function InventoryTable({ productos, onProductClick }: Props) {
   if (productos.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border/50 bg-card/50 py-20 text-center">
@@ -83,6 +84,7 @@ export function InventoryTable({ productos }: Props) {
       fields={fields}
       layout="card"
       getItemId={(item) => item.codigo}
+      onRecordClick={onProductClick}
       getRhythm={(p) => ({
         type: "dot",
         color: p.estado === 0 ? "rose" : "emerald",

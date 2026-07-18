@@ -1,5 +1,6 @@
 import { getConnection } from "../database/database.js";
 import { AuthZService } from "../services/authz.service.js";
+import { isDeveloperReq } from "../middlewares/authorize.middleware.js";
 
 // Cache para consultas frecuentes
 const queryCache = new Map();
@@ -100,12 +101,18 @@ const getSubmodulos = async (req, res) => {
 // OBTENER MÓDULOS CON SUBMÓDULOS - VIA AUTHZ SERVICE
 const getModulosConSubmodulos = async (req, res) => {
     try {
-        const nameUser = req.user?.nameUser || req.user?.username || 'desconocido';
-        const isDeveloper = nameUser === 'desarrollador' || (req.user?.rol === 10);
+        const isDeveloper = isDeveloperReq(req);
         const id_tenant = req.id_tenant;
 
-        // Delegate to AuthZ Service
-        const catalog = await AuthZService.getCatalog({ tenantId: id_tenant, isDeveloper });
+        // El catálogo se filtra por el plan del tenant: es el techo real de lo
+        // que un Administrador puede llegar a ver/asignar (sidebar y editor de
+        // permisos por rol comparten esta misma fuente).
+        const planId = isDeveloper ? null : await AuthZService.resolvePlanId({
+            tenantId: id_tenant,
+            idUsuario: req.user?.id_usuario,
+        });
+
+        const catalog = await AuthZService.getCatalog({ tenantId: id_tenant, isDeveloper, planId });
 
         res.json({
             success: true,

@@ -1,41 +1,15 @@
 import { useState, useRef, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import type { FieldDef, RecordAction, RhythmConfig } from "./types";
+import type {
+  FieldDef, RecordAction, RhythmConfig,
+  CardVariant, CardSlots, MediaSpec, ItemState,
+} from "./types";
+import { mapFieldsToSlots, deriveItemState } from "./FieldAutoMap.tsx";
+import { Accent } from "./Accent";
+import { cardRootVariants, NODE_TINTS } from "./variants";
+import { KpiField } from "./fieldRenderers";
 import { sortFieldsByPriority } from "./types";
-import { renderField } from "./fieldRenderers";
 import { MoreHorizontal } from "lucide-react";
-
-// ─────────────────────────────────────────────────────────────────
-// Paleta de tintes — editorial, nunca genérica
-// ─────────────────────────────────────────────────────────────────
-const NODE_TINTS = [
-  { bg: "bg-blue-50 dark:bg-blue-950/20",    border: "border-blue-200/60 dark:border-blue-800/30",   dot: "bg-blue-400 dark:bg-blue-500",    line: "bg-blue-300 dark:bg-blue-600",    text: "text-blue-600 dark:text-blue-400" },
-  { bg: "bg-violet-50 dark:bg-violet-950/20",border: "border-violet-200/60 dark:border-violet-800/30",dot:"bg-violet-400 dark:bg-violet-500", line: "bg-violet-300 dark:bg-violet-600",text:"text-violet-600 dark:text-violet-400" },
-  { bg: "bg-cyan-50 dark:bg-cyan-950/20",    border: "border-cyan-200/60 dark:border-cyan-800/30",     dot: "bg-cyan-400 dark:bg-cyan-500",     line: "bg-cyan-300 dark:bg-cyan-600",     text: "text-cyan-600 dark:text-cyan-400" },
-  { bg: "bg-emerald-50 dark:bg-emerald-950/20",border:"border-emerald-200/60 dark:border-emerald-800/30",dot:"bg-emerald-400 dark:bg-emerald-500",line:"bg-emerald-300 dark:bg-emerald-600",text:"text-emerald-600 dark:text-emerald-400" },
-  { bg: "bg-amber-50 dark:bg-amber-950/20",   border: "border-amber-200/60 dark:border-amber-800/30",   dot: "bg-amber-400 dark:bg-amber-500",   line: "bg-amber-300 dark:bg-amber-600",   text: "text-amber-600 dark:text-amber-400" },
-  { bg: "bg-rose-50 dark:bg-rose-950/20",    border: "border-rose-200/60 dark:border-rose-800/30",     dot: "bg-rose-400 dark:bg-rose-500",    line: "bg-rose-300 dark:bg-rose-600",    text: "text-rose-600 dark:text-rose-400" },
-  { bg: "bg-indigo-50 dark:bg-indigo-950/20", border: "border-indigo-200/60 dark:border-indigo-800/30",dot:"bg-indigo-400 dark:bg-indigo-500", line: "bg-indigo-300 dark:bg-indigo-600",text:"text-indigo-600 dark:text-indigo-400" },
-  { bg: "bg-teal-50 dark:bg-teal-950/20",    border: "border-teal-200/60 dark:border-teal-800/30",     dot: "bg-teal-400 dark:bg-teal-500",    line: "bg-teal-300 dark:bg-teal-600",    text: "text-teal-600 dark:text-teal-400" },
-];
-
-function getColorIndex(val: unknown, fallbackIndex: number): number {
-  if (val === undefined || val === null || val === "") return fallbackIndex;
-  const num = Number(val);
-  if (!isNaN(num)) return num;
-  const str = String(val);
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
-function getTint(index: number, color?: string) {
-  if (!color) return null;
-  return NODE_TINTS.find(t => color.includes(t.dot.split("-")[1])) ?? NODE_TINTS[index % NODE_TINTS.length];
-}
 
 // ─────────────────────────────────────────────────────────────────
 // Context Menu — minimalista, aparece en hover
@@ -112,9 +86,9 @@ function ContextMenu({ actions, item }: { actions: RecordAction[]; item: unknown
 }
 
 // ─────────────────────────────────────────────────────────────────
-// AdaptiveCard — ficha editorial modular
+// Props públicas — compatibles con la versión anterior + nuevas.
 // ─────────────────────────────────────────────────────────────────
-interface AdaptiveCardProps<T> {
+export interface AdaptiveCardProps<T> {
   item: T;
   index: number;
   fields: FieldDef<T>[];
@@ -122,216 +96,381 @@ interface AdaptiveCardProps<T> {
   rhythm?: RhythmConfig;
   getItemId: (item: T) => string | number;
   accentPosition?: "left" | "top";
+  className?: string;
+  /** Visual archetype. Default = "default" (idéntico al card original). */
+  variant?: CardVariant;
+  /** Composición explícita por slots — sobreescribe la auto-derivación. */
+  slots?: Partial<CardSlots>;
+  /** Estado semántico explícito — sobreescribe la deducción desde rhythm. */
+  state?: ItemState;
+  /** Tinte explícito (color o nombre de paleta) para el accent. */
+  accentColor?: string;
+  /** Callback para manejar clics sobre la tarjeta. */
+  onClick?: () => void;
 }
 
-export function AdaptiveCard<T extends Record<string, unknown>>({
+// ─────────────────────────────────────────────────────────────────
+// AdaptiveCard — Phase 2 (con slots + variants, 100% backwards-compatible)
+// ─────────────────────────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function AdaptiveCard<T extends Record<string, any>>({
   item,
   index,
   fields,
   actions = [],
   rhythm,
   getItemId,
-  accentPosition: forcedAccent,
+  accentPosition = "left",
+  className,
+  variant = "default",
+  slots: explicitSlots,
+  state: explicitState,
+  accentColor,
+  onClick,
 }: AdaptiveCardProps<T>) {
   const [isHovered, setIsHovered] = useState(false);
+  void isHovered; // hover se aplica vía group/adaptive-card
 
-  const idVal = getItemId(item);
-  const idHash = getColorIndex(idVal, index);
+  // ── Estado semántico (para el accent) ───────────────────────────
+  const itemState: ItemState =
+    explicitState ??
+    rhythm?.state ??
+    deriveItemState(fields, item);
 
-  // Siempre usar acento lateral para máxima uniformidad de la grilla
-  const useAccentTop = forcedAccent === "top";
+  const isProcedural = !accentColor && (itemState === "active" || itemState === "neutral" || itemState === "info");
 
-  // Ignorar color "emerald" o "active" de rhythm para usar colores procedimentales áureos
-  const tint = (rhythm?.color && rhythm.color !== "emerald" && rhythm.color !== "active")
-    ? getTint(index, rhythm.color)
-    : null;
+  // ── Resolución del tinte (compatibilidad con card original) ──────
+  const tintClasses = resolveTint(rhythm?.color);
 
-  // Golden ratio para color procedural cuando no hay tint
-  const hue = (idHash * 137.508) % 360;
-  const hasProceduralColor = !tint;
+  // ── Auto-map si no hay slots explícitos ──────────────────────────
+  const autoMap = explicitSlots
+    ? { nodes: [], slots: {} as Partial<CardSlots> }
+    : mapFieldsToSlots(fields, item, index, {
+        subtitleClass: isProcedural ? undefined : (tintClasses?.text ?? undefined),
+      });
 
-  const sorted = sortFieldsByPriority(fields);
-  const primary = sorted.filter(f => f.priority === "primary" || f.priority === undefined);
-  const secondary = sorted.filter(f => f.priority === "secondary");
-  const meta = sorted.filter(f => f.priority === "meta");
+  const slots: Partial<CardSlots> = { ...autoMap.slots, ...explicitSlots };
+  // `contentNodes` es la lista plana en orden vertical — fidelidad visual
+  // máxima al card original (cada sección con su padding/border propios).
+  const contentNodes: React.ReactNode[] = explicitSlots
+    ? [
+        slots.header,
+        slots.body,
+        slots.footer,
+      ].filter(Boolean) as React.ReactNode[]
+    : autoMap.nodes;
 
-  const primaryField = primary[0] || sorted[0];
-  const subtitleField = secondary.find(f => f.semantic === "subtitle" || String(f.key).includes("nom_subcat") || String(f.key).includes("categoria"));
-  const chipFields = secondary.filter(f => f.semantic === "chip" || f.semantic === "badge");
-  const numberField = secondary.find(f => f.semantic === "number");
-  const codeFields = meta.filter(f => f.semantic === "code");
-  const barcodeField = meta.find(f => f.semantic === "barcode" || f.key === "cod_barras");
+  // ── Resolución de props del accent ──────────────────────────────
+  const accentKind: "solid" | "progress" =
+    rhythm?.type === "progress" ? "progress" : "solid";
+  const accentProgress = rhythm?.progress;
 
-  return (
-    <div
-      className={cn(
-        "group relative flex flex-col rounded-2xl border border-border/40 bg-card",
-        "transition-all duration-200 cursor-default select-none",
-        "hover:border-border/70 hover:bg-card/80 hover:z-20 focus-within:z-20",
-        "hover:shadow-sm hover:shadow-black/3 hover:-translate-y-px",
-      )}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={hasProceduralColor ? { "--node-hue": `${hue}` } as React.CSSProperties : undefined}
-    >
-      {/* ── Borde superior decorativo (top-accent variant) ── */}
-      {useAccentTop && (
-        <div
-          className={cn(
-            "h-0.5 w-full rounded-t-2xl transition-all duration-300",
-            tint ? tint.line : "bg-zinc-200 dark:bg-zinc-700",
-            isHovered && "opacity-80"
-          )}
-          style={hasProceduralColor ? { backgroundColor: `hsl(${hue}, 70%, 70%)` } : undefined}
+  // ── Render ──────────────────────────────────────────────────────
+  // Por ahora solo implementamos el variant `default` y `media-cover`
+  // (los demás son slots-only con mayor libertad compositiva).
+  const rootClass = cardRootVariants({ variant });
+
+  if (variant === "media-cover") {
+    return (
+      <div
+        className={cn(rootClass, className, onClick && "cursor-pointer")}
+        onClick={onClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Cover media (opcional) */}
+        {slots.media && renderMedia(slots.media)}
+
+        <div className="flex flex-col flex-1 px-4 pb-3.5 space-y-1.5">
+          {slots.header}
+          {slots.body}
+          {slots.footer}
+        </div>
+
+        <CardAside
+          index={index}
+          actions={actions}
+          item={item}
+          variant="media-cover"
         />
-      )}
+      </div>
+    );
+  }
 
-      <div className={cn("flex items-stretch gap-0 flex-1", useAccentTop ? "flex-col" : "flex-row")}>
+  if (variant === "split-row") {
+    return (
+      <div
+        className={cn(rootClass, className, onClick && "cursor-pointer")}
+        onClick={onClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {slots.media && (
+          <div className="flex shrink-0 items-center pl-4">{renderMediaCompact(slots.media)}</div>
+        )}
+        <div className="min-w-0 flex-1 space-y-1 px-4 py-3">
+          {slots.header}
+          {slots.body}
+        </div>
+        {slots.footer && (
+          <div className="hidden shrink-0 items-center px-3 text-right sm:flex">{slots.footer}</div>
+        )}
+        <CardAside index={index} actions={actions} item={item} variant="side" />
+      </div>
+    );
+  }
 
-        {/* ── Panel lateral — nodo cromático + línea de acento ── */}
-        {!useAccentTop && (
-          <div
-            className={cn(
-              "flex shrink-0 items-start pl-4 pr-3 border-r rounded-l-2xl",
-              tint ? cn(tint.bg, tint.border) : "golden-node-tint",
-              isHovered && "bg-zinc-100/80 dark:bg-zinc-800/60"
-            )}
-          >
-            {/* Wrapper to align dot and line horizontally and position it at the top */}
-            <div className="flex items-center mt-3.5">
-              {/* Círculo cromático */}
-              <div
-                className={cn(
-                  "relative flex h-5 w-5 shrink-0 items-center justify-center rounded-full",
-                  "transition-transform duration-200 group-hover:scale-110"
-                )}
-              >
-                <div
-                  className={cn("h-2 w-2 rounded-full", tint && tint.dot)}
-                  style={hasProceduralColor ? { backgroundColor: "hsl(var(--node-hue), 75%, 55%)" } : undefined}
-                />
-                {/* Halo */}
-                <div
-                  className={cn("absolute inset-0 rounded-full opacity-0 group-hover:opacity-30", tint && tint.dot)}
-                  style={hasProceduralColor ? { backgroundColor: "hsl(var(--node-hue), 75%, 55%)" } : undefined}
-                />
-              </div>
+  if (variant === "stat-tile") {
+    const sortedFields = sortFieldsByPriority(fields);
+    const kpiField = sortedFields.find(f => f.semantic === "kpi") ?? sortedFields.find(f => f.priority === "primary");
+    const restFields = sortedFields.filter(f => f !== kpiField && f.priority !== "hidden");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const anyItem = item as any;
+    const rawValue = kpiField ? anyItem[kpiField.key] : undefined;
+    const formattedValue = kpiField?.format ? kpiField.format(rawValue, item) : rawValue;
 
-              {/* Línea de acento — se extiende en hover */}
-              <div
-                className={cn(
-                  "ml-3 h-px w-4 transition-all duration-300 group-hover:w-8",
-                  tint ? tint.line : "", "opacity-50 group-hover:opacity-80"
-                )}
-                style={hasProceduralColor ? { backgroundColor: `hsl(${hue}, 70%, 70%)` } : undefined}
-              />
-            </div>
+    return (
+      <div
+        className={cn(rootClass, className, "p-4", onClick && "cursor-pointer")}
+        onClick={onClick}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+            {kpiField?.label ?? "—"}
+          </span>
+          {actions.length > 0 && <ContextMenu actions={actions} item={item} />}
+        </div>
+        <div className="mt-2">
+          <KpiField value={formattedValue} thresholds={kpiField?.thresholds} size="xl" />
+        </div>
+        {restFields.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border/40 pt-2.5">
+            {restFields.slice(0, 3).map((f, i) => {
+              const v = anyItem[f.key];
+              if (v == null || v === "") return null;
+              if (f.render) return <span key={i} className="text-xs">{f.render(v, item, index)}</span>;
+              return (
+                <span key={i} className="text-xs text-muted-foreground">
+                  {f.label ? <span className="text-muted-foreground/60">{f.label}: </span> : null}
+                  {String(f.format ? f.format(v, item) : v)}
+                </span>
+              );
+            })}
           </div>
         )}
+      </div>
+    );
+  }
 
-        {/* ── Contenido principal ── */}
-        <div className={cn("min-w-0 flex-1 px-4 py-3.5", useAccentTop && "pt-3 pb-4 flex flex-col justify-between")}>
+  // Variant `default` (idéntico al card original)
+  return (
+    <div
+      className={cn(rootClass, className, onClick && "cursor-pointer")}
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={
+        isProcedural && accentKind === "solid"
+          ? deriveHueStyle(getItemId(item))
+          : undefined
+      }
+    >
+      {/* ── Rail izquierdo — accent (top o left) ──────────────── */}
+      <Accent
+        kind={accentKind}
+        state={itemState}
+        tint={isProcedural ? undefined : (accentColor ?? rhythm?.color)}
+        position={accentPosition}
+        progress={accentProgress}
+        className={isProcedural ? "golden-node-tint" : undefined}
+      />
 
-          {/* Título — protagonista */}
-          <p className="truncate text-sm font-medium tracking-tight text-foreground/90">
-            {primaryField ? renderField(primaryField, item[primaryField.key as keyof T], item, index) : (
-              <span className="text-muted-foreground/40 italic">Sin nombre</span>
-            )}
-          </p>
-
-          {/* Subtítulo */}
-          {subtitleField && (
-            <p className={cn("mt-0.5 truncate text-xs font-medium", tint ? tint.text : "golden-node-text")}>
-              {renderField(subtitleField, item[subtitleField.key as keyof T], item, index)}
-            </p>
-          )}
-
-          {/* Chips — marca, categoría, estado */}
-          {chipFields.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {chipFields.slice(0, 3).map(f => (
-                <div key={f.key}>
-                  {renderField(f, item[f.key as keyof T], item, index)}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Número destacado */}
-          {numberField && (
-            <div className={cn("mt-2 text-base font-bold tabular-nums", tint ? tint.text : "text-foreground")}>
-              {renderField(numberField, item[numberField.key as keyof T], item, index)}
-            </div>
-          )}
-
-          {/* Metadatos en línea */}
-          {codeFields.length > 0 && (
-            <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-0.5">
-              {codeFields.slice(0, 3).map(f => (
-                <span key={f.key} className="flex items-center gap-1">
-                  {f.label && <span className="text-[10px] text-muted-foreground/40">{f.label}</span>}
-                  <span className="text-[10px] font-medium text-muted-foreground/60">{renderField(f, item[f.key as keyof T], item, index)}</span>
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Código de barras dedicado */}
-          {barcodeField && (
-            <div className="mt-2.5 pt-2 border-t border-border/30 flex justify-center w-full">
-              {renderField(barcodeField, item[barcodeField.key as keyof T], item, index)}
-            </div>
-          )}
-        </div>
-
-        {/* ── Columna derecha: índice + acciones ── */}
-        <div className={cn(
-          "flex flex-col items-end justify-between gap-2 py-3 pr-3 pl-2",
-          useAccentTop && "flex-row items-center px-4 pb-3 pt-0"
-        )}>
-          {/* Índice decorativo vertical */}
-          <span
-            className={cn(
-              "font-mono text-[10px] font-medium tracking-widest",
-              "text-muted-foreground/20 transition-colors duration-200",
-              "group-hover:text-muted-foreground/35",
-              useAccentTop ? "order-2 text-[9px]" : "order-1"
-            )}
-            style={useAccentTop ? { writingMode: "horizontal-tb" } : { writingMode: "vertical-rl", textOrientation: "mixed" }}
-          >
-            {String(index + 1).padStart(2, "0")}
-          </span>
-
-          {/* Menú contextual — aparece en hover */}
-          <div className={cn(
-            "order-1 flex items-center gap-1",
-            "opacity-0 transition-opacity duration-150 group-hover:opacity-100 focus-within:opacity-100"
-          )}>
-            {actions.length > 0 ? (
-              <ContextMenu actions={actions} item={item} />
-            ) : (
-              <div className="h-7 w-7" />
-            )}
-          </div>
-        </div>
+      {/* ── Contenido principal ──────────────────────────────── */}
+      <div
+        className={cn(
+          "min-w-0 flex-1 px-4 py-3.5 space-y-1.5",
+          accentPosition === "top" && "pt-3 pb-4 flex flex-col justify-between"
+        )}
+      >
+        {contentNodes}
       </div>
 
-      {/* ── Barra inferior decorativa (top-accent variant) ── */}
-      {useAccentTop && (
-        <div
-          className={cn(
-            "h-px w-0 group-hover:w-full rounded-b-2xl transition-all duration-500 ease-out",
-            tint ? tint.line : "bg-zinc-200 dark:bg-zinc-700",
-          )}
-          style={hasProceduralColor ? { backgroundColor: `hsl(${hue}, 70%, 70%)` } : undefined}
-        />
-      )}
+      {/* ── Aside — índice + acciones ─────────────────────────── */}
+      <CardAside
+        index={index}
+        actions={actions}
+        item={item}
+        variant={accentPosition === "top" ? "top" : "side"}
+      />
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Skeleton — pulsación editorial sin forma
+// Sub-componentes internos
+// ─────────────────────────────────────────────────────────────────
+function CardAside({
+  index, actions, item, variant: v,
+}: { index: number; actions: RecordAction[]; item: unknown; variant: "side" | "top" | "media-cover" }) {
+  if (v === "media-cover") {
+    return (
+      <div className="absolute right-3 top-3 z-10 flex items-center gap-1">
+        {actions.length > 0 && <ContextMenu actions={actions} item={item} />}
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn(
+      "flex flex-col items-end justify-between gap-2 py-3 pr-3 pl-2",
+      v === "top" && "flex-row items-center px-4 pb-3 pt-0"
+    )}>
+      {/* Índice decorativo (vertical) */}
+      <span
+        className={cn(
+          "num font-mono text-[10px] font-medium tracking-widest",
+          "text-muted-foreground/20 transition-colors duration-200",
+          "group-hover/adaptive-card:text-muted-foreground/35",
+          v === "top" ? "order-2 text-[9px]" : "order-1"
+        )}
+        style={v === "top" ? { writingMode: "horizontal-tb" } : { writingMode: "vertical-rl", textOrientation: "mixed" }}
+      >
+        {String(index + 1).padStart(2, "0")}
+      </span>
+
+      {/* Menú contextual — aparece en hover */}
+      <div className={cn(
+        "order-1 flex items-center gap-1",
+        "opacity-0 transition-opacity duration-150 group-hover/adaptive-card:opacity-100 focus-within:opacity-100"
+      )}>
+        {actions.length > 0 ? (
+          <ContextMenu actions={actions} item={item} />
+        ) : (
+          <div className="h-7 w-7" aria-hidden="true" />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function renderMedia(media: MediaSpec | React.ReactNode): React.ReactNode {
+  if (!media) return null;
+  if (ReactNode_isElement(media)) return media;
+  const m = media as MediaSpec;
+  switch (m.kind) {
+    case "image":
+      return (
+        <div className="relative w-full overflow-hidden rounded-t-2xl bg-muted aspect-[16/9]">
+          <img src={m.src} alt={m.alt ?? ""} className="h-full w-full object-cover" />
+        </div>
+      );
+    case "logo":
+      return (
+        <div className="flex w-full items-center justify-center bg-muted/40 py-6 rounded-t-2xl">
+          <img src={m.src} alt={m.alt ?? ""} className="h-12 w-12 object-contain" />
+        </div>
+      );
+    case "avatar":
+      return (
+        <div className="flex w-full items-center gap-3 bg-muted/40 px-4 py-4 rounded-t-2xl">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-card text-sm font-semibold ring-2 ring-background">
+            {getInitialsSafe(m.name)}
+          </span>
+          {m.sub && <span className="text-xs text-muted-foreground">{m.sub}</span>}
+        </div>
+      );
+    case "icon":
+      return (
+        <div className="flex w-full items-center justify-center bg-muted/40 py-6 rounded-t-2xl">
+          <span className="flex h-10 w-10 items-center justify-center text-muted-foreground">{m.node}</span>
+        </div>
+      );
+    case "node":
+      return <div className="w-full">{m.node}</div>;
+  }
+}
+
+/** Versión compacta de `renderMedia` para variantes horizontales (split-row):
+ * un círculo/cuadro de ~44px en vez del bloque "cover" a todo el ancho. */
+function renderMediaCompact(media: MediaSpec | React.ReactNode): React.ReactNode {
+  if (!media) return null;
+  if (ReactNode_isElement(media)) return media;
+  const m = media as MediaSpec;
+  switch (m.kind) {
+    case "avatar":
+      return (
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-muted text-sm font-semibold text-foreground/80 ring-1 ring-border/60">
+          {m.src ? <img src={m.src} alt="" className="h-full w-full rounded-full object-cover" /> : getInitialsSafe(m.name)}
+        </span>
+      );
+    case "image":
+      return (
+        <div className="h-11 w-11 overflow-hidden rounded-lg bg-muted">
+          <img src={m.src} alt={m.alt ?? ""} className="h-full w-full object-cover" />
+        </div>
+      );
+    case "logo":
+      return (
+        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/60 p-1.5">
+          <img src={m.src} alt={m.alt ?? ""} className="h-full w-full object-contain" />
+        </div>
+      );
+    case "icon":
+      return (
+        <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground">
+          {m.node}
+        </span>
+      );
+    case "node":
+      return m.node;
+  }
+}
+
+// Helpers sin React import para evitar circular
+function ReactNode_isElement(node: unknown): node is React.ReactElement {
+  return typeof node === "object" && node !== null && "type" in (node as object)
+    && typeof (node as { type?: unknown }).type !== "undefined";
+}
+
+function getInitialsSafe(name: string | undefined | null): string {
+  if (!name) return "—";
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "—";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+/**
+ * Resuelve el tinte "editorial" del card a partir del nombre de color
+ * (e.g. "emerald", "rose"). Devuelve `{ bg, text, dot, line }` con
+ * clases de Tailwind. `null` si no hay color.
+ */
+function resolveTint(color?: string): { bg?: string; text?: string; dot?: string; line?: string } | null {
+  if (!color) return null;
+  return NODE_TINTS.find(t => color.includes(t.id)) ?? null;
+}
+
+function deriveHueStyle(idVal: string | number): React.CSSProperties | undefined {
+  // Solo se usa cuando no hay tinte explícito: golden ratio procedural original.
+  const num = Number(idVal);
+  let hash: number;
+  if (!isNaN(num) && String(idVal).trim() !== "") hash = num;
+  else {
+    const s = String(idVal);
+    hash = 0;
+    for (let i = 0; i < s.length; i++) {
+      hash = (hash << 5) - hash + s.charCodeAt(i);
+      hash |= 0;
+    }
+  }
+  const hue = (Math.abs(hash) * 137.508) % 360;
+  return { ["--node-hue" as string]: `${hue}` } as React.CSSProperties;
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Skeleton — pulsación editorial sin forma (mantiene el del card original)
 // ─────────────────────────────────────────────────────────────────
 export function CardSkeleton({ count = 6 }: { count?: number }) {
   return (
@@ -339,21 +478,18 @@ export function CardSkeleton({ count = 6 }: { count?: number }) {
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
-          className="group relative flex items-stretch rounded-2xl border border-border/30 bg-card px-4 py-3"
+          className="group/adaptive-card relative flex items-stretch rounded-2xl border border-border/30 bg-card px-4 py-3"
         >
-          {/* Nodo skeleton */}
           <div className="flex items-center gap-3 pr-3 border-r border-border/30 rounded-l-2xl">
             <div className="h-8 w-8 shrink-0 animate-pulse rounded-full bg-muted" />
             <div className="h-px w-4 animate-pulse bg-muted" />
           </div>
-          {/* Texto skeleton */}
           <div className="min-w-0 flex-1 space-y-1.5 px-4 py-3.5">
             <div className="h-3.5 w-2/3 animate-pulse rounded-md bg-muted" />
             <div className="h-2.5 w-1/3 animate-pulse rounded-md bg-muted" />
           </div>
-          {/* Acciones skeleton */}
           <div className="flex items-center pr-3 pl-2">
-            <div className="h-7 w-7 animate-pulse rounded-lg bg-muted opacity-0 group-hover:opacity-100" />
+            <div className="h-7 w-7 animate-pulse rounded-lg bg-muted opacity-0 group-hover/adaptive-card:opacity-100" />
           </div>
         </div>
       ))}

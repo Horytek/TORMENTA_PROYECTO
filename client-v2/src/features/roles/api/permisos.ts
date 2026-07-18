@@ -1,5 +1,8 @@
 import api from "@/api/axios";
 import { isOk, unwrapList } from "@/api/http";
+import { getEffectivePermissions, type EffectivePermissions, type PermissionSource } from "@/api/authz";
+
+export { getEffectivePermissions, type EffectivePermissions, type PermissionSource };
 
 /** Fila de permiso por módulo/submódulo para un rol. */
 export interface PermisoRow {

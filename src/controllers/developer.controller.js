@@ -169,6 +169,11 @@ const clearData = async (req, res) => {
         // 4. Limpiar Guías de Remisión
         console.log("Limpiando Guías de Remisión...");
         await runTenantDelete("delete_detalle_envio", "detalle_envio", { parentTable: "guia_remision", parentPk: "id_guiaremision", childFk: "id_guiaremision" });
+        // `detalle_envio_old_v3` es una tabla legada con FK real hacia guia_remision
+        // (FK_detalle_envio_guia_remision) que no tenía limpieza propia — si tenía
+        // filas, el DELETE de guia_remision fallaba con ER_ROW_IS_REFERENCED_2 y
+        // abortaba toda la operación. Tiene su propia columna id_tenant.
+        await runTenantDelete("delete_detalle_envio_old_v3", "detalle_envio_old_v3");
         await runTenantDelete("delete_guia_remision", "guia_remision");
 
         // 5. Resetear Stock

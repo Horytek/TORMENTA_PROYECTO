@@ -2,13 +2,12 @@ import { useState, useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import type { 
-  Product, Brand, Category, Subcategory, UnitOfMeasure, ProductAttribute 
+import type {
+  Product, Brand, Category, Subcategory, UnitOfMeasure
 } from "../types";
-import { 
-  createProduct, updateProduct, getBrands, getCategories, getSubcategories, 
-  getUnits, getCategoryAttributes, getAttributeValues, generateSKUs, 
-  getProductAttributes, getLastIdProducto
+import {
+  createProduct, updateProduct, getBrands, getCategories, getSubcategories,
+  getUnits, getLastIdProducto
 } from "../api/products";
 import { useUserStore } from "@/store/useUserStore";
 
@@ -16,8 +15,7 @@ import { useUserStore } from "@/store/useUserStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -70,11 +68,6 @@ export default function ProductForm({
   const [loading, setLoading] = useState(false);
   const [loadingMetadata, setLoadingMetadata] = useState(true);
 
-  // Dynamic Attributes State
-  const [categoryAttrs, setCategoryAttrs] = useState<ProductAttribute[]>([]);
-  const [selectedAttrs, setSelectedAttrs] = useState<Record<number, string[]>>({});
-  const [loadingAttrs, setLoadingAttrs] = useState(false);
-
   const tenantId = useUserStore((state) => state.user?.id_tenant);
 
   const {
@@ -126,38 +119,6 @@ export default function ProductForm({
     }
   }, [isOpen]);
 
-  // Load dynamic attributes when category changes
-  useEffect(() => {
-    const loadAttributes = async () => {
-      if (!watchIdCategoria) {
-        setCategoryAttrs([]);
-        return;
-      }
-
-      setLoadingAttrs(true);
-      try {
-        const catId = Number(watchIdCategoria);
-        const attrs = await getCategoryAttributes(catId);
-
-        // Fetch values for each attribute in parallel
-        const attrsWithValues = await Promise.all(
-          attrs.map(async (attr) => {
-            const valuesList = await getAttributeValues(attr.id_atributo);
-            return { ...attr, values: valuesList };
-          })
-        );
-
-        setCategoryAttrs(attrsWithValues);
-      } catch (err) {
-        console.error("Error loading category attributes:", err);
-      } finally {
-        setLoadingAttrs(false);
-      }
-    };
-
-    loadAttributes();
-  }, [watchIdCategoria]);
-
   // Set default form values in Edit mode
   useEffect(() => {
     if (initialData && !loadingMetadata) {
@@ -171,26 +132,6 @@ export default function ProductForm({
         id_subcategoria: String(initialData.id_subcategoria || ""),
         estado_producto: String(initialData.estado_producto ?? "1"),
       });
-
-      // Load already selected product attributes in Edit mode
-      const loadSavedAttributes = async () => {
-        try {
-          const response = await getProductAttributes(initialData.id_producto);
-          if (response && response.attributes) {
-            const preSelected: Record<number, string[]> = {};
-            response.attributes.forEach((attr) => {
-              if (attr.values && attr.values.length > 0) {
-                preSelected[attr.id_atributo] = attr.values.map((v) => String(v.id));
-              }
-            });
-            setSelectedAttrs(preSelected);
-          }
-        } catch (err) {
-          console.error("Error loading product attributes:", err);
-        }
-      };
-
-      loadSavedAttributes();
     } else if (!initialData && !loadingMetadata && isOpen) {
       // Create mode: clear form and generate unique barcode prefix
       reset({
@@ -203,7 +144,6 @@ export default function ProductForm({
         id_subcategoria: "",
         estado_producto: "1",
       });
-      setSelectedAttrs({});
 
       const generateBarcode = async () => {
         try {
@@ -227,17 +167,6 @@ export default function ProductForm({
       (sub) => sub.id_categoria === Number(watchIdCategoria)
     );
   }, [watchIdCategoria, subcategories]);
-
-  const handleAttributeCheckboxChange = (attrId: number, valueId: string, checked: boolean) => {
-    setSelectedAttrs((prev) => {
-      const current = prev[attrId] || [];
-      if (checked) {
-        return { ...prev, [attrId]: [...current, valueId] };
-      } else {
-        return { ...prev, [attrId]: current.filter((id) => id !== valueId) };
-      }
-    });
-  };
 
   const onSubmit = async (values: ProductFormValues) => {
     setLoading(true);
@@ -266,28 +195,6 @@ export default function ProductForm({
       }
 
       if (isSuccess && productId) {
-        // Save dynamically selected variants/attributes
-        const attributesPayload: { id_atributo: number; values: { id: string; label: string }[] }[] = [];
-
-        categoryAttrs.forEach((attr) => {
-          const selectedValIds = selectedAttrs[attr.id_atributo];
-          if (selectedValIds && selectedValIds.length > 0) {
-            const selectedValues = selectedValIds.map((valId) => {
-              const valObj = attr.values?.find((v) => String(v.id_valor) === String(valId));
-              return { id: valId, label: valObj ? valObj.valor : "?" };
-            });
-
-            attributesPayload.push({
-              id_atributo: attr.id_atributo,
-              values: selectedValues,
-            });
-          }
-        });
-
-        if (attributesPayload.length > 0) {
-          await generateSKUs(productId, attributesPayload);
-        }
-
         onSuccess();
         onClose();
       }
@@ -501,55 +408,6 @@ export default function ProductForm({
                 />
               </div>
             </div>
-
-            {/* Dynamic Attributes Selection Section */}
-            {watchIdCategoria && (
-              <div className="border-t border-slate-100 dark:border-zinc-900 pt-4">
-                <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-1.5">
-                  <Plus className="h-4 w-4 text-brand" />
-                  Atributos y Variantes del Producto
-                </h4>
-                
-                {loadingAttrs ? (
-                  <div className="flex items-center gap-2 text-xs text-slate-400 py-4">
-                    <Loader2 className="h-4 w-4 animate-spin text-brand" />
-                    Cargando atributos del producto...
-                  </div>
-                ) : categoryAttrs.length === 0 ? (
-                  <p className="text-xs text-slate-400 py-2">
-                    Esta categoría no tiene atributos adicionales configurados para variantes.
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {categoryAttrs.map((attr) => (
-                      <div key={attr.id_atributo} className="bg-slate-50 dark:bg-zinc-900/40 p-4 rounded-xl border border-slate-100/50 dark:border-zinc-800/30">
-                        <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">
-                          {attr.nombre}
-                        </Label>
-                        <div className="flex flex-wrap gap-4 mt-2">
-                          {attr.values?.map((val) => {
-                            const isChecked = (selectedAttrs[attr.id_atributo] || []).includes(String(val.id_valor));
-                            return (
-                              <label key={val.id_valor} className="flex items-center gap-2 text-sm cursor-pointer select-none">
-                                <Checkbox
-                                  checked={isChecked}
-                                  onCheckedChange={(checked) => 
-                                    handleAttributeCheckboxChange(attr.id_atributo, String(val.id_valor), !!checked)
-                                  }
-                                />
-                                <span className="text-slate-700 dark:text-slate-300 font-medium">
-                                  {val.valor}
-                                </span>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
 
             <DialogFooter className="border-t border-slate-100 dark:border-zinc-900 pt-4 flex gap-2 justify-end">
               <Button type="button" variant="ghost" onClick={onClose} disabled={loading} className="rounded-xl">

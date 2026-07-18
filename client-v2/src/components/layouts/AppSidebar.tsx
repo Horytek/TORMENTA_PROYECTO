@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useUserStore } from "@/store/useUserStore";
 import {
@@ -14,41 +14,37 @@ import {
   SidebarGroupContent,
 } from "@/components/ui/sidebar";
 import {
-  Home,
-  Tags,
-  Warehouse,
-  Package,
-  FileSpreadsheet,
-  Settings,
   Terminal,
   LogOut,
-  ShieldAlert,
-  Building,
-  User,
-  Users,
-  ShoppingCart,
+  BadgeCheck,
+  CreditCard,
+  ChevronsUpDown,
 } from "lucide-react";
 import { removeToken } from "@/utils/authStorage";
 import { resetVerifyTokenCache } from "@/api/auth";
 import { cn } from "@/lib/utils";
-
-interface SidebarItem {
-  title: string;
-  url: string;
-  icon: React.ComponentType<any>;
-  capability?: string;
-}
-
-interface SidebarGroupSection {
-  label: string;
-  items: SidebarItem[];
-}
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { AccountDrawer } from "@/features/account/components/AccountDrawer";
+import { BillingDrawer } from "@/features/account/components/BillingDrawer";
+import { usePermissions } from "@/hooks/usePermissions";
+import { buildNavSections, type NavItem } from "@/lib/navigationCatalog";
 
 export default function AppSidebar() {
   const location = useLocation();
   const user = useUserStore((state) => state.user);
-  const capabilities = useUserStore((state) => state.capabilities);
+  const globalModuleConfigs = useUserStore((state) => state.globalModuleConfigs);
   const clearUser = useUserStore((state) => state.clearUser);
+  const { can, isDeveloper, isAdmin } = usePermissions();
+  const [showAccount, setShowAccount] = React.useState(false);
+  const [showBilling, setShowBilling] = React.useState(false);
 
   const handleLogout = async () => {
     await removeToken();
@@ -56,71 +52,43 @@ export default function AppSidebar() {
     clearUser();
   };
 
-  const hasAccess = (item: SidebarItem) => {
-    if (user?.roleId === 10) return true; // Developer always has access
-    if (!item.capability) return true; // Public item
-    return capabilities.has(`${item.capability}.view`) || capabilities.has("*");
+  const canManageAccount = isAdmin;
+
+  const hasAccess = (item: NavItem) => {
+    if (isDeveloper) return true;
+    if (!item.capability) return true; // "Inicio" siempre visible
+    return can(`${item.capability}.view`);
   };
 
-  const navigation: SidebarGroupSection[] = [
-    {
-      label: "General",
-      items: [
-        { title: "Inicio", url: "/dashboard", icon: Home },
-        { title: "Productos", url: "/products", icon: Tags, capability: "productos" },
-        { title: "Punto de Venta (POS)", url: "/sales", icon: ShoppingCart, capability: "ventas" },
-      ],
-    },
-    {
-      label: "Logística",
-      items: [
-        { title: "Inventario / Kárdex", url: "/inventory", icon: Package, capability: "almacen" },
-        { title: "Almacenes", url: "/logistics/warehouses", icon: Warehouse, capability: "almaceng" },
-        { title: "Sucursales", url: "/logistics/branches", icon: Building, capability: "sucursal" },
-      ],
-    },
-    {
-      label: "Personas",
-      items: [
-        { title: "Clientes", url: "/people/clients", icon: User, capability: "clientes" },
-        { title: "Proveedores", url: "/people/providers", icon: Users, capability: "proveedores" },
-        { title: "Empleados", url: "/people/employees", icon: Users, capability: "empleados" },
-      ],
-    },
-    {
-      label: "Reportes",
-      items: [
-        { title: "Historial de Ventas", url: "/reports/sales", icon: FileSpreadsheet, capability: "reportes" },
-      ],
-    },
-    {
-      label: "Ajustes",
-      items: [
-        { title: "Usuarios", url: "/settings/users", icon: Users, capability: "configuracion/usuarios" },
-        { title: "Roles y Permisos", url: "/settings/roles", icon: ShieldAlert, capability: "configuracion/roles" },
-        { title: "Configuración", url: "/settings/system", icon: Settings, capability: "configuracion/negocio" },
-      ],
-    },
-  ];
-
-  if (user?.roleId === 10) {
-    navigation.push({
-      label: "Developer Only",
-      items: [
-        { title: "Módulos y Rutas", url: "/developer/modules", icon: Terminal },
-        { title: "Permisos Globales", url: "/developer/global-permissions", icon: Settings },
-      ],
-    });
-  }
+  // Navegación derivada del catálogo real de módulos (GET /rutas/modulos, ya
+  // cargado al login) en vez de un array hardcodeado — ver navigationCatalog.ts.
+  const navigation = useMemo(() => {
+    const sections = [...buildNavSections(globalModuleConfigs)];
+    if (isDeveloper) {
+      sections.push({
+        label: "Developer Only",
+        items: [
+          { title: "Panel de Desarrollador", url: "/developer", icon: Terminal, group: "Developer Only" },
+        ],
+      });
+    }
+    return sections;
+  }, [globalModuleConfigs, isDeveloper]);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
       <SidebarHeader className="flex h-16 items-center justify-between border-b border-sidebar-border px-6">
-        <Link to="/dashboard" className="flex items-center gap-2">
+        <Link to="/dashboard" className="flex items-center gap-2.5">
+          <img
+            src="/horycore.svg"
+            alt="Horytek"
+            width={36}
+            height={36}
+            className="h-9 w-9 shrink-0 rounded-md object-contain group-data-[collapsible=icon]:mx-auto"
+          />
           <span className="font-display text-lg font-extrabold tracking-tight text-sidebar-foreground group-data-[collapsible=icon]:hidden">
             Horytek
           </span>
-          <span className="h-2 w-2 rounded-full bg-brand" />
         </Link>
       </SidebarHeader>
 
@@ -175,33 +143,64 @@ export default function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border p-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="flex items-center gap-3 rounded-md p-2 group-data-[collapsible=icon]:hidden">
-              <div className="num flex h-9 w-9 items-center justify-center rounded-md bg-brand/10 font-bold text-brand ring-1 ring-brand/25">
-                {user?.username?.substring(0, 2).toUpperCase()}
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate text-xs font-semibold text-sidebar-foreground">
-                  {user?.username}
-                </span>
-                <span className="num truncate text-[10px] text-muted-foreground">
-                  {user?.sucursal || "Sucursal Central"}
-                </span>
-              </div>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton className="h-auto w-full gap-3 rounded-md p-2 group-data-[collapsible=icon]:hidden">
+                  <div className="num flex h-9 w-9 items-center justify-center rounded-md bg-brand/10 font-bold text-brand ring-1 ring-brand/25">
+                    {user?.username?.substring(0, 2).toUpperCase()}
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col text-left">
+                    <span className="truncate text-xs font-semibold text-sidebar-foreground">
+                      {user?.username}
+                    </span>
+                    <span className="flex items-center gap-1 truncate text-[10px] text-muted-foreground">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                      Usuario activo
+                    </span>
+                  </div>
+                  <ChevronsUpDown className="size-3.5 shrink-0 text-muted-foreground" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="top" align="start" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <p className="truncate text-sm font-semibold">{user?.username}</p>
+                  <p className="truncate text-xs text-muted-foreground">{user?.sucursal || "Sucursal Central"}</p>
+                </DropdownMenuLabel>
+                {canManageAccount && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem onClick={() => setShowAccount(true)}>
+                        <BadgeCheck className="mr-2 h-4 w-4" /> Cuenta
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setShowBilling(true)}>
+                        <CreditCard className="mr-2 h-4 w-4" /> Facturación
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                  </>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+                  <LogOut className="mr-2 h-4 w-4" /> Cerrar sesión
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
 
-          <SidebarMenuItem className="mt-1">
+          <SidebarMenuItem className="mt-1 hidden group-data-[collapsible=icon]:block">
             <SidebarMenuButton
               onClick={handleLogout}
               tooltip="Cerrar Sesión"
               className="w-full gap-3 rounded-md px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/10"
             >
               <LogOut className="h-4 w-4 shrink-0 text-destructive/70" />
-              <span className="group-data-[collapsible=icon]:hidden">Cerrar Sesión</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
+
+      <AccountDrawer isOpen={showAccount} onClose={() => setShowAccount(false)} />
+      <BillingDrawer isOpen={showBilling} onClose={() => setShowBilling(false)} />
     </Sidebar>
   );
 }

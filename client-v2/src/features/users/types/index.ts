@@ -25,4 +25,4 @@ export interface UsuarioInput {
 }
 
 /** Roles que no deben asignarse desde este panel (owner y developer). */
-export const RESERVED_ROLES = [1, 10];
+export { RESERVED_ROLE_IDS as RESERVED_ROLES } from "@/hooks/usePermissions";

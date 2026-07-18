@@ -1,16 +1,18 @@
 // ─────────────────────────────────────────────────────────────────
 // Tipos — Ventas y POS
+// Adaptado al backend real: campos de GET /api/ventas (ventas.controller.js getVentas)
 // ─────────────────────────────────────────────────────────────────
 
 export type ComprobanteTipo = "Boleta" | "Factura" | "Nota";
 export type MetodoPago = "EFECTIVO" | "TARJETA" | "TRANSFERENCIA" | "YAPE" | "PLIN" | "MIXTO";
-export type VentaEstado = 1 | 0; // 1=completada, 0=anulada
+export type VentaEstado = 1 | 0;
 
 // ── Item en carrito ─────────────────────────────────────────────
+// Clave única del item: `id_producto`. Sin variantes ni SKU.
+// Si en el futuro se vuelven a manejar tallas/colores, la clave pasará
+// a ser (id_producto, id_tonalidad?, id_talla?).
 export interface CartItem {
-  id_variante: number;
   id_producto: number;
-  sku: string;
   codigo_barra?: string;
   descripcion: string;
   nom_marca?: string;
@@ -19,7 +21,8 @@ export interface CartItem {
   precio_unitario: number;
   precio_total: number;
   stock?: number;
-  attributes_json?: string; // ej. "Color: Rojo, Talla: M"
+  id_tonalidad?: number;
+  id_talla?: number;
 }
 
 // ── Detalle de venta (respuesta API / backend) ─────────────────
@@ -37,45 +40,74 @@ export interface VentaDetalle {
   id_talla?: number;
   nom_tonalidad?: string;
   nom_talla?: string;
+  nombre_producto?: string;
+  nombre?: string;
 }
 
-// ── Venta (respuesta API) ───────────────────────────────────────
+// ── Venta (respuesta GET /api/ventas — nombres reales del backend) ───────────
 export interface Venta {
-  id_venta: number;
-  id_sucursal: number;
-  id_almacen?: number;
-  id_cliente?: number;
-  nom_cliente?: string;
-  documento_cliente?: string;
-  direccion_cliente?: string;
-  id_comprobante: string; // nombre: "Boleta" | "Factura" | "Nota"
-  tipo_comprobante?: number;
-  num_comprobante: string; // ej. "B001-00001234"
-  f_venta: string; // ISO date
-  igv: number;
-  igv_b: number;
-  total_t: number;
-  totalImporte_venta: number;
-  descuento_venta: number;
-  estado_venta: VentaEstado;
-  metodo_pago: MetodoPago;
-  formadepago?: string;
-  vuelto?: number;
+  // ── campos del backend getVentas ────────────────────────
+  id?: number;                  // alias: id_venta (viene como 'id')
+  serieNum?: string;            // serie del comprobante p.ej. "B001"
+  num?: string;                 // número correlativo p.ej. "00001234"
+  tipoComprobante?: string;     // "Boleta" | "Factura" | "Nota"
+  cliente_n?: string;           // nombre del cliente
+  cliente_r?: string;           // razón social del cliente
+  dni?: string;
+  ruc?: string;
+  fecha?: string;               // YYYY-MM-DD
+  igv?: number;
+  total?: number;               // SUM(dv.total)
+  cajero?: string;              // nombre del cajero
+  cajeroId?: string;            // DNI del cajero
+  estado?: number;              // 1=completada, 0=anulada
+  nombre_sucursal?: string;
+  id_sucursal?: number;
+  ubicacion?: string;
+  direccion?: string;
+  fecha_iso?: string;
+  metodo_pago?: string;
   recibido?: number;
-  observacion?: string;
+  vuelto?: number;
+  descuento?: number;
   estado_sunat?: string;
-  comprobante_pago?: string;
-  nombre_pdf?: string;
-  id_usuario: number;
-  nom_usuario?: string;
+  usua?: string;
+  observacion?: string;
+  hora_creacion?: string;
+  fecha_anulacion?: string;
+  u_modifica?: string;
   detalles?: VentaDetalle[];
+
+  // ── aliases convenientes (para compatibilidad) ──────────
+  /** alias de `id` */
+  id_venta?: number;
+  /** alias: tipoComprobante */
+  id_comprobante?: string;
+  /** alias: fecha */
+  f_venta?: string;
+  /** nombre del cliente (cli_n o cli_r) */
+  nom_cliente?: string;
+  /** documento del cliente (dni o ruc) */
+  documento_cliente?: string;
+  /** alias de total */
+  total_t?: number;
+  /** alias de estado */
+  estado_venta?: VentaEstado;
+  /** serie + num */
+  num_comprobante?: string;
+  /** alias de usua */
+  nom_usuario?: string;
+  /** dirección del cliente */
+  direccion_cliente?: string;
+  /** descuento */
+  descuento_venta?: number;
 }
 
 // ── Payload para crear venta ────────────────────────────────────
 export interface VentaPayload {
   id_sucursal: number;
   id_almacen?: number;
-  id_cliente?: number;
+  id_cliente?: number | null;
   nombre_cliente?: string;
   documento_cliente?: string;
   direccion_cliente?: string;
@@ -83,7 +115,8 @@ export interface VentaPayload {
   estado_venta?: 1;
   f_venta: string;
   fecha_iso?: string;
-  metodo_pago: MetodoPago;
+  // string codificado: "EFECTIVO:50,YAPE:30" o "EFECTIVO" para notas
+  metodo_pago: string;
   formadepago?: string;
   igv: number;
   igv_b?: number;
@@ -99,8 +132,6 @@ export interface VentaPayload {
 
 export interface VentaDetallePayload {
   id_producto: number;
-  id_variante?: number;
-  sku?: string;
   cantidad: number;
   precio_unitario: number;
   precio_total: number;
@@ -126,7 +157,7 @@ export interface VentasStats {
 
 // ── Producto en catálogo POS ────────────────────────────────────
 export interface POSProduct {
-  codigo: number; // id_producto
+  codigo: number;
   nombre: string;
   precio: number;
   stock: number;
@@ -136,7 +167,7 @@ export interface POSProduct {
   codigo_barras?: string;
 }
 
-// ── Carrito completo (para PaymentModal) ───────────────────────
+// ── Carrito completo ────────────────────────────────────────────
 export interface CartSummary {
   items: CartItem[];
   subtotal: number;
@@ -149,7 +180,6 @@ export interface CartSummary {
   montoRecibido: number;
 }
 
-// ── Helper para clientes en venta ────────────────────────────────
 export interface ClienteForSale {
   id_cliente: number;
   nombres?: string;
@@ -179,4 +209,36 @@ export interface CreateVentaResponse {
   message?: string;
   estado_sunat?: string;
   venta?: Venta;
+}
+
+// ── Mapeo de campos del backend ──────────────────────────────────
+// El backend GET /api/ventas devuelve nombres distintos a los types.
+// Se aplica este mapping para normalizar antes de usar en el frontend.
+export function mapBackendVenta(raw: Record<string, unknown>): Venta {
+  const serieNum = String(raw.serieNum ?? "");
+  const num = String(raw.num ?? "");
+  const serie = serieNum.replace(/\D/g, "");
+  const correlativo = num.padStart(8, "0");
+  const nomCliente = (raw.cliente_n as string | undefined)?.trim()
+    || (raw.cliente_r as string | undefined)?.trim()
+    || undefined;
+  const docCliente = (raw.dni as string | undefined)?.trim()
+    || (raw.ruc as string | undefined)?.trim()
+    || undefined;
+
+  return {
+    ...(raw as unknown as Venta),
+    // aliases convenientes
+    id_venta: (raw.id as number) ?? raw.id_venta as number,
+    id_comprobante: raw.tipoComprobante as string,
+    f_venta: raw.fecha as string,
+    nom_cliente: nomCliente,
+    documento_cliente: docCliente,
+    total_t: raw.total as number,
+    estado_venta: raw.estado as VentaEstado,
+    num_comprobante: serie && num ? `${serie}-${correlativo}` : (raw.num_comprobante as string),
+    nom_usuario: raw.usua as string ?? raw.cajero as string,
+    direccion_cliente: (raw.direccion as string) || (raw.ubicacion as string),
+    descuento_venta: raw.descuento as number,
+  };
 }

@@ -37,9 +37,7 @@ export function ProductCatalog() {
     if (product.stock !== undefined && product.stock <= 0) return;
 
     const cartItem: CartItem = {
-      id_variante: product.codigo,
       id_producto: product.codigo,
-      sku: String(product.codigo),
       codigo_barra: product.codigo_barras,
       descripcion: product.nombre,
       nom_marca: product.nom_marca,

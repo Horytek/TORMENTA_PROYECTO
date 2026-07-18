@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { methods as empleadosController } from "../controllers/vendedores.controller.js";
 import { auth } from "../middlewares/auth.middleware.js";
+import { requireCapability } from "../middlewares/authorize.middleware.js";
 
 const router = Router();
 
@@ -10,9 +11,9 @@ router.use(auth);
 
 router.get("/", empleadosController.getVendedores);
 router.get("/:dni", empleadosController.getVendedor);
-router.post("/", empleadosController.addVendedor);
-router.put("/update/:dni", empleadosController.updateVendedor);
-router.put("/deactivate/:dni", empleadosController.deactivateVendedor);
-router.delete("/:dni", empleadosController.deleteVendedor);
+router.post("/", requireCapability("empleados", "crear"), empleadosController.addVendedor);
+router.put("/update/:dni", requireCapability("empleados", "editar"), empleadosController.updateVendedor);
+router.put("/deactivate/:dni", requireCapability("empleados", "desactivar"), empleadosController.deactivateVendedor);
+router.delete("/:dni", requireCapability("empleados", "eliminar"), empleadosController.deleteVendedor);
 
 export default router;

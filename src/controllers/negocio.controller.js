@@ -51,7 +51,8 @@ export const getNegocio = async (req, res) => {
                 email: empresa.email,
                 telefono: empresa.telefono,
                 moneda: empresa.moneda,
-                pais: empresa.pais
+                pais: empresa.pais,
+                igv_incluido: Boolean(empresa.igv_incluido)
             }
         });
 
@@ -81,7 +82,8 @@ export const updateNegocio = async (req, res) => {
             eliminar_logo,
             logotipo, // URL from ImageKit
             // New fields
-            distrito, provincia, departamento, codigoPostal, email, telefono, moneda, pais
+            distrito, provincia, departamento, codigoPostal, email, telefono, moneda, pais,
+            igv_incluido
         } = req.body;
 
         let final_logo_url = undefined;
@@ -126,6 +128,7 @@ export const updateNegocio = async (req, res) => {
         if (telefono !== undefined) { updates.push("telefono = ?"); params.push(telefono.trim()); }
         if (moneda !== undefined) { updates.push("moneda = ?"); params.push(moneda.trim()); }
         if (pais !== undefined) { updates.push("pais = ?"); params.push(pais.trim()); }
+        if (igv_incluido !== undefined) { updates.push("igv_incluido = ?"); params.push(igv_incluido ? 1 : 0); }
 
         if (final_logo_url !== undefined) {
             updates.push("logotipo = ?");
@@ -146,7 +149,7 @@ export const updateNegocio = async (req, res) => {
             data: {
                 nombre_negocio: empresa.nombreComercial,
                 direccion: empresa.direccion,
-                logo_url: empresa.logotipo,
+                logotipo_url: empresa.logotipo,
                 ruc: empresa.ruc,
                 // Return new fields
                 distrito: empresa.distrito,
@@ -156,7 +159,8 @@ export const updateNegocio = async (req, res) => {
                 email: empresa.email,
                 telefono: empresa.telefono,
                 moneda: empresa.moneda,
-                pais: empresa.pais
+                pais: empresa.pais,
+                igv_incluido: Boolean(empresa.igv_incluido)
             },
             message: "Configuración guardada correctamente"
         });

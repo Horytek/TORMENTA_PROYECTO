@@ -6,14 +6,16 @@ import { SalesReportPanel } from "@/features/sales/components/shared/SalesReport
  */
 export default function ReportsPage() {
   return (
-    <div className="mx-auto max-w-6xl space-y-6 animate-fade-in">
-      <div className="border-b border-border pb-4">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Historial de ventas</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Consulta y filtra los comprobantes emitidos.
-        </p>
+    <div className="flex flex-col h-full animate-fade-in">
+      {/* Header compacto */}
+      <div className="shrink-0 px-4 pt-4 pb-1">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">Historial de ventas</h1>
+        <p className="text-xs text-muted-foreground mt-0.5">Consulta y filtra los comprobantes emitidos.</p>
       </div>
-      <SalesReportPanel />
+      {/* Panel ocupa todo el espacio restante */}
+      <div className="flex-1 min-h-0">
+        <SalesReportPanel />
+      </div>
     </div>
   );
 }

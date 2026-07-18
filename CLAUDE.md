@@ -48,7 +48,7 @@ Prioridades del negocio, en orden: **1) no romper facturación/cobros, 2) no fil
 │       ├── pages/        # Una carpeta por módulo del ERP
 │       ├── store/        # Zustand (useStore.js, …)
 │       ├── components/ context/ hooks/ layouts/ services/
-├── api/, vercel.json     # ⚠️ CONFIG MUERTA de Vercel — no desplegamos ahí. Ver §9.
+├── api/, vercel.json     # Configuración opcional de Vercel (apunta a client-v2) — Ver §9.
 └── scripts/sunat/        # Pruebas/certificados SUNAT
 ```
 
@@ -108,7 +108,7 @@ npm run dev:fullstack     # backend (4000) + frontend (5173) juntos, con colores
 ## 9. Despliegue
 
 - **Producción = Azure Web App** (`.github/workflows/master_horytek.yml`, push a `master`). Es un **proceso Node persistente** vía `index.js`, por eso Socket.io y `node-cron` funcionan.
-- ⚠️ `vercel.json` + `api/index.js` son **config muerta**: NO desplegamos en Vercel. Si tocas deploy, ignóralos (o propón eliminarlos); no bases decisiones en ellos.
+- `vercel.json` + `api/index.js` están configurados para desplegar el frontend `client-v2` en Vercel de forma opcional/pruebas. La producción oficial corre en Azure.
 
 ## 10. Límites de escala a tener presentes
 

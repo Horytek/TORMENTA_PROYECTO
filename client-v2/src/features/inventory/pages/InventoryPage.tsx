@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Package, AlertTriangle, Filter, RefreshCw } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Package, AlertTriangle, Filter, RefreshCw, ClipboardList, Plus, Settings } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,18 +10,63 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { useUserStore } from "@/store/useUserStore";
+import { usePermissions } from "@/hooks/usePermissions";
 import { InventoryTable } from "../components/InventoryTable";
 import { StockMinTable } from "../components/StockMinTable";
-import { KardexDetalleTable } from "../components/KardexDetalleTable";
+import { HistoricoPanel } from "../components/HistoricoPanel";
+import { LotesTable } from "../components/LotesTable";
+import { LoteRequestDialog } from "../components/LoteRequestDialog";
+import { LoteDetailDialog } from "../components/LoteDetailDialog";
+import { VerificationConfigDialog } from "../components/VerificationConfigDialog";
 import {
   getProductos, getMarcas, getCategorias, getSubcategorias,
-  getAlmacenes, getStockMinimo, getDetalleKardex,
+  getAlmacenes, getStockMinimo, getDetalleKardex, getDetalleKardexAnteriores, getInfProducto,
 } from "../api/kardex";
-import type { InventarioFiltros } from "../types";
+import { verifyLote, approveLote } from "../api/lotes";
+import type { InventarioFiltros, Lote } from "../types";
 
 export default function InventoryPage() {
-  const [filtros, setFiltros] = useState<InventarioFiltros>({ stock: "" });
+  const [filtros, setFiltros] = useState<InventarioFiltros>({ stock: "con_stock" });
   const [activeTab, setActiveTab] = useState("catalogo");
+
+  // Solicitudes de inventario (lotes)
+  const queryClient = useQueryClient();
+  const user = useUserStore((s) => s.user);
+  const { can, isAdmin } = usePermissions();
+  const [loteStage, setLoteStage] = useState<"verificar" | "aprobar">("verificar");
+  const [isRequestOpen, setIsRequestOpen] = useState(false);
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [selectedLote, setSelectedLote] = useState<Lote | null>(null);
+
+  const verifyMutation = useMutation({
+    mutationFn: (lote: Lote) => verifyLote(lote.id_lote, Number(user?.id)),
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["lotes"] });
+        setSelectedLote(null);
+      }
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: ({ lote, almacenD }: { lote: Lote; almacenD: string }) =>
+      approveLote(lote.id_lote, Number(user?.id), almacenD, `Ingreso Lote #${lote.id_lote}`),
+    onSuccess: (result) => {
+      if (result.success) {
+        queryClient.invalidateQueries({ queryKey: ["lotes"] });
+        setSelectedLote(null);
+      }
+    },
+  });
+
+  const handleConfirmLote = (lote: Lote, almacenD?: string) => {
+    if (loteStage === "verificar") {
+      verifyMutation.mutate(lote);
+    } else if (almacenD) {
+      approveMutation.mutate({ lote, almacenD });
+    }
+  };
 
   // Detalle kardex params
   const [dkFechaInicio, setDkFechaInicio] = useState(() => {
@@ -31,6 +76,11 @@ export default function InventoryPage() {
   const [dkFechaFin, setDkFechaFin] = useState(() => new Date().toISOString().split("T")[0]);
   const [dkProducto, setDkProducto] = useState("");
   const [dkAlmacen, setDkAlmacen] = useState("");
+
+  const handleSelectProductForKardex = (productoId: number) => {
+    setDkProducto(String(productoId));
+    setActiveTab("kardex");
+  };
 
   // Filtros dependientes
   const { data: marcas = [] } = useQuery({ queryKey: ["inventario-marcas"], queryFn: getMarcas });
@@ -56,14 +106,25 @@ export default function InventoryPage() {
   const dkParams = {
     fechaInicio: dkFechaInicio,
     fechaFin: dkFechaFin,
-    idProducto: dkProducto ? Number(dkProducto) : undefined,
-    idAlmacen: dkAlmacen ? Number(dkAlmacen) : undefined,
+    idProducto: dkProducto && dkProducto !== "__all__" ? Number(dkProducto) : undefined,
+    idAlmacen: dkAlmacen && dkAlmacen !== "__all__" ? Number(dkAlmacen) : undefined,
   };
   const { data: movimientos = [], isLoading: loadingMovimientos, refetch: refetchMovimientos } = useQuery({
     queryKey: ["inventario-kardex", dkParams],
     queryFn: () => getDetalleKardex(dkParams),
-    enabled: activeTab === "kardex",
+    enabled: activeTab === "kardex" && !!dkParams.idProducto,
   });
+  const { data: kardexPrevio, refetch: refetchPrevio } = useQuery({
+    queryKey: ["inventario-kardex-previo", dkParams],
+    queryFn: () => getDetalleKardexAnteriores(dkParams),
+    enabled: activeTab === "kardex" && !!dkParams.idProducto,
+  });
+  const { data: kardexProductoInfo, refetch: refetchProductoInfo } = useQuery({
+    queryKey: ["inventario-kardex-producto", dkParams.idProducto, dkParams.idAlmacen],
+    queryFn: () => getInfProducto({ idProducto: dkParams.idProducto, idAlmacen: dkParams.idAlmacen }),
+    enabled: activeTab === "kardex" && !!dkParams.idProducto,
+  });
+  const canGenerateReports = can("almacen.generate");
 
   const update = (key: keyof InventarioFiltros, value: string) => {
     const next = { ...filtros, [key]: value };
@@ -103,6 +164,7 @@ export default function InventoryPage() {
             )}
           </TabsTrigger>
           <TabsTrigger value="kardex"><Filter className="h-4 w-4 mr-1.5" />Detalle Kardex</TabsTrigger>
+          <TabsTrigger value="solicitudes"><ClipboardList className="h-4 w-4 mr-1.5" />Solicitudes</TabsTrigger>
         </TabsList>
 
         {/* ── CATÁLOGO ─────────────────────────────────────────── */}
@@ -159,7 +221,7 @@ export default function InventoryPage() {
           {loadingProductos ? (
             <div className="flex justify-center py-12"><Spinner /></div>
           ) : (
-            <InventoryTable productos={productos} />
+            <InventoryTable productos={productos} onProductClick={(p) => handleSelectProductForKardex(p.codigo)} />
           )}
         </TabsContent>
 
@@ -185,14 +247,20 @@ export default function InventoryPage() {
                 <Input type="date" value={dkFechaFin} onChange={e => setDkFechaFin(e.target.value)} className="h-9 w-40" />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs text-muted-foreground">Producto (ID)</label>
-                <Input
-                  type="number"
-                  placeholder="Todos"
-                  value={dkProducto}
-                  onChange={e => setDkProducto(e.target.value)}
-                  className="h-9 w-28"
-                />
+                <label className="text-xs text-muted-foreground">Producto</label>
+                <Select value={dkProducto} onValueChange={setDkProducto}>
+                  <SelectTrigger className="h-9 w-64 text-xs font-semibold bg-card border-border rounded-xl">
+                    <SelectValue placeholder="Seleccione un producto..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px] overflow-y-auto">
+                    <SelectItem value="__all__" className="text-xs">Seleccione un producto...</SelectItem>
+                    {productos.map(p => (
+                      <SelectItem key={p.codigo} value={String(p.codigo)} className="text-xs font-medium">
+                        {p.descripcion}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <Select value={dkAlmacen} onValueChange={setDkAlmacen}>
                 <SelectTrigger className="h-9 w-44"><SelectValue placeholder="Almacén" /></SelectTrigger>
@@ -201,19 +269,70 @@ export default function InventoryPage() {
                   {almacenes.map(a => <SelectItem key={a.id} value={String(a.id)}>{a.nom_almacen}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Button onClick={() => refetchMovimientos()} size="sm" className="h-9">
+              <Button onClick={() => { refetchMovimientos(); refetchPrevio(); refetchProductoInfo(); }} size="sm" className="h-9">
                 <RefreshCw className="h-4 w-4 mr-1.5" />Buscar
               </Button>
             </div>
           </Card>
 
-          {loadingMovimientos ? (
+          {!dkParams.idProducto ? (
+            <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border/50 bg-card/50 py-20 text-center">
+              <Filter className="h-8 w-8 text-muted-foreground/40 mb-3" />
+              <p className="text-sm font-semibold text-foreground">Seleccione un producto</p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                Elija un producto en los filtros de arriba (o haga clic en uno desde el Catálogo) para ver su histórico de movimientos.
+              </p>
+            </div>
+          ) : loadingMovimientos ? (
             <div className="flex justify-center py-12"><Spinner /></div>
           ) : (
-            <KardexDetalleTable movimientos={movimientos} />
+            <HistoricoPanel
+              transacciones={movimientos}
+              previo={kardexPrevio ?? null}
+              productoInfo={kardexProductoInfo ?? null}
+              fechaInicio={dkFechaInicio}
+              fechaFin={dkFechaFin}
+              canGeneratePdf={canGenerateReports}
+            />
           )}
         </TabsContent>
+
+        {/* ── SOLICITUDES DE INVENTARIO (LOTES) ─────────────────── */}
+        <TabsContent value="solicitudes" className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <Tabs value={loteStage} onValueChange={(v) => { setLoteStage(v as "verificar" | "aprobar"); setSelectedLote(null); }}>
+              <TabsList>
+                <TabsTrigger value="verificar">Por Verificar (Paso 1)</TabsTrigger>
+                <TabsTrigger value="aprobar">Por Aprobar (Paso 2)</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className="flex items-center gap-2">
+              {isAdmin && (
+                <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setIsConfigOpen(true)}>
+                  <Settings className="h-4 w-4" /> Configurar roles
+                </Button>
+              )}
+              <Button size="sm" className="gap-1.5" onClick={() => setIsRequestOpen(true)}>
+                <Plus className="h-4 w-4" /> Nueva solicitud
+              </Button>
+            </div>
+          </div>
+
+          <Card className="border border-border bg-card p-4 shadow-sm">
+            <LotesTable estado={loteStage === "verificar" ? 0 : 1} onAction={setSelectedLote} />
+          </Card>
+        </TabsContent>
       </Tabs>
+
+      <LoteRequestDialog isOpen={isRequestOpen} onClose={() => setIsRequestOpen(false)} />
+      <LoteDetailDialog
+        lote={selectedLote}
+        isApproval={loteStage === "aprobar"}
+        onClose={() => setSelectedLote(null)}
+        onConfirm={handleConfirmLote}
+        isPending={verifyMutation.isPending || approveMutation.isPending}
+      />
+      <VerificationConfigDialog isOpen={isConfigOpen} onClose={() => setIsConfigOpen(false)} />
     </div>
   );
 }

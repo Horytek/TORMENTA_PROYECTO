@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Brand } from "../types";
 import { getBrands, createBrand, updateBrand, deleteBrand, checkBrandUsage } from "../api/products";
-import { useUserStore } from "@/store/useUserStore";
+import { usePermissions } from "@/hooks/usePermissions";
 import EntityCardsGrid from "@/components/shared/EntityCardsGrid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,11 +33,10 @@ export default function BrandsPanel() {
     queryFn: getBrands,
   });
 
-  const capabilities = useUserStore((s) => s.capabilities);
-  const user = useUserStore((s) => s.user);
-  const canEdit = user?.roleId === 10 || capabilities.has("productos.edit") || capabilities.has("*");
-  const canDelete = user?.roleId === 10 || capabilities.has("productos.delete") || capabilities.has("*");
-  const canCreate = user?.roleId === 10 || capabilities.has("productos.create") || capabilities.has("*");
+  const { can } = usePermissions();
+  const canEdit = can("productos.edit");
+  const canDelete = can("productos.delete");
+  const canCreate = can("productos.create");
 
   const filteredBrands = brands.filter((b) =>
     (b.nombre || "").toLowerCase().includes(searchTerm.toLowerCase().trim())

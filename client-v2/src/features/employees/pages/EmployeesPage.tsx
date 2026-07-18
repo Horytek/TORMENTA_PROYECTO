@@ -162,21 +162,7 @@ export default function EmployeesPage() {
         </Button>
       </div>
 
-      {/* Stats cards */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="border border-border bg-card rounded-2xl p-4 shadow-sm">
-          <p className="text-xs text-muted-foreground font-medium">Total</p>
-          <p className="text-2xl font-bold text-foreground mt-1">{vendedores.length}</p>
-        </div>
-        <div className="border border-emerald-500/20 bg-emerald-500/5 rounded-2xl p-4 shadow-sm">
-          <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold">Activos</p>
-          <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{activos}</p>
-        </div>
-        <div className="border border-red-500/20 bg-red-500/5 rounded-2xl p-4 shadow-sm">
-          <p className="text-xs text-red-600 dark:text-red-400 font-semibold">Inactivos</p>
-          <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{inactivos}</p>
-        </div>
-      </div>
+
 
       {/* Search */}
       <div className="relative max-w-md">

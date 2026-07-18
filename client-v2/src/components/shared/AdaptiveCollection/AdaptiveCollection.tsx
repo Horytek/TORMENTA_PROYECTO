@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import type { FieldDef, SortConfig, ViewMode } from "./types";
+import { sortFieldsByPriority } from "./types";
 import { AdaptiveRecord, RecordSkeleton } from "./AdaptiveRecord";
 import { AdaptiveCard, CardSkeleton } from "./AdaptiveCard";
 import {
@@ -134,9 +135,14 @@ function CollectionHeader({
             <div className="flex items-center gap-2 mr-2">
               <span className="text-xs text-muted-foreground">{selectedIds.length} sel.</span>
               <Button variant="ghost" size="sm" className="h-8 px-2.5 text-xs rounded-xl" onClick={() => onSelectionChange([])}>Limpiar</Button>
-              {globalActions?.map(action => (
+            </div>
+          )}
+
+          {globalActions && globalActions.length > 0 && (
+            <div className="flex items-center gap-2">
+              {globalActions.map(action => (
                 <Button key={action.id} variant="default" size="sm" className="h-8 px-3 text-xs gap-1.5 rounded-xl"
-                  onClick={() => action.onClick(selectedIds)} disabled={action.disabled}>
+                  onClick={() => action.onClick(selectedIds ?? [])} disabled={action.disabled}>
                   {action.icon}{action.label}
                 </Button>
               ))}
@@ -229,6 +235,31 @@ function ColumnSelector<T extends Record<string, unknown>>({
   );
 }
 
+/**
+ * Encabezados del modo lista, derivados de los `fields` reales en vez de un
+ * grid fijo pensado solo para catálogos de producto ("Descripción / Marca /
+ * Código / Precio-Estado"). Mantiene el mismo grid de 12 columnas que usa
+ * `AdaptiveRecord` (col 1-5 / 6-7 / 8-9 / 10-11 / 12) — solo cambian las
+ * etiquetas, no la disposición.
+ */
+function deriveListHeaders<T>(fields: FieldDef<T>[]): { primary: string; detail: string; code: string; value: string } {
+  const sorted = sortFieldsByPriority(fields);
+  const primary = sorted.find(f => f.priority === "primary");
+  const secondary = sorted.filter(f => f.priority === "secondary");
+  const meta = sorted.filter(f => f.priority === "meta");
+
+  const detailFields = secondary.filter(f => f.semantic === "subtitle" || f.semantic === "chip").slice(0, 2);
+  const codeField = meta.find(f => f.semantic === "code" || f.semantic === "barcode") ?? meta[0];
+  const valueFields = secondary.filter(f => f.semantic === "number" || f.semantic === "badge" || f.semantic === "status-dot").slice(0, 2);
+
+  return {
+    primary: primary?.label ?? "Descripción",
+    detail: detailFields.map(f => f.label).filter(Boolean).join(" / ") || "Detalle",
+    code: codeField?.label ?? "Código",
+    value: valueFields.map(f => f.label).filter(Boolean).join(" / ") || "Valor",
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────
 // Componente principal
 // ─────────────────────────────────────────────────────────────────
@@ -275,6 +306,11 @@ export function AdaptiveCollection<T extends AnyRecord>({
   const viewMode = controlledViewMode ?? internalViewMode;
   const setViewMode = onViewModeChange ?? setInternalViewMode;
 
+  // Columnas visibles (selector opcional) — por defecto, todas las `fields`.
+  const [visibleFields, setVisibleFields] = useState<FieldDef<T>[]>(fields);
+  useEffect(() => { setVisibleFields(fields); }, [fields]);
+  const renderFields = availableFields && availableFields.length > 0 ? visibleFields : fields;
+
   const [internalPage, setInternalPage] = useState(1);
 
   useEffect(() => {
@@ -282,9 +318,12 @@ export function AdaptiveCollection<T extends AnyRecord>({
   }, [search, filters]);
 
   const getId = useCallback((item: T) => {
-    if (getItemId) return getItemId(item);
+    if (getItemId) {
+      const val = getItemId(item);
+      if (val !== undefined && val !== null && String(val) !== "NaN") return String(val);
+    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fallback = (item as any).id ?? Math.random();
+    const fallback = (item as any).id_sucursal ?? (item as any).id ?? (item as any).id_usuario ?? (item as any).dni ?? Math.random();
     return String(fallback);
   }, [getItemId]);
 
@@ -363,8 +402,9 @@ export function AdaptiveCollection<T extends AnyRecord>({
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             availableFields={availableFields as any}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            fields={fields as any}
-            onChange={() => {}}
+            fields={visibleFields as any}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            onChange={(next) => setVisibleFields(next as FieldDef<T>[])}
           />
         </div>
       )}
@@ -396,10 +436,11 @@ export function AdaptiveCollection<T extends AnyRecord>({
               key={String(getId(item))}
               item={item}
               index={index}
-              fields={fields}
+              fields={renderFields}
               actions={actions ?? []}
               rhythm={getRhythm ? getRhythm(item, index) : undefined}
               getItemId={getId}
+              onClick={onRecordClick ? () => handleRecordClick(item) : undefined}
             />
           ))}
         </div>
@@ -409,15 +450,18 @@ export function AdaptiveCollection<T extends AnyRecord>({
       {hasContent && layout === "list" && (
         <div className="flex flex-col rounded-xl border border-border bg-card overflow-hidden">
           {/* Column Header Row */}
-          {viewMode !== "compact" && (
-            <div className="hidden md:grid grid-cols-12 gap-3 px-4 py-2.5 text-[10px] font-semibold text-muted-foreground/80 uppercase tracking-wider border-b border-border bg-muted/20 select-none">
-              <div className="col-span-5 pl-7">Descripción</div>
-              <div className="col-span-2">Marca / Subcategoría</div>
-              <div className="col-span-2 text-left md:text-center">Código</div>
-              <div className="col-span-2 text-left md:text-right">Precio / Estado</div>
-              <div className="col-span-1 text-right">Acciones</div>
-            </div>
-          )}
+          {viewMode !== "compact" && (() => {
+            const headers = deriveListHeaders(renderFields);
+            return (
+              <div className="hidden md:grid grid-cols-12 gap-3 px-4 py-2.5 text-[10px] font-semibold text-muted-foreground/80 uppercase tracking-wider border-b border-border bg-muted/20 select-none">
+                <div className="col-span-5 pl-7">{headers.primary}</div>
+                <div className="col-span-2">{headers.detail}</div>
+                <div className="col-span-2 text-left md:text-center">{headers.code}</div>
+                <div className="col-span-2 text-left md:text-right">{headers.value}</div>
+                <div className="col-span-1 text-right">Acciones</div>
+              </div>
+            );
+          })()}
           <div className="divide-y divide-border/40">
             {paginatedItems.map((item, index) => {
               const id = getId(item);
@@ -427,7 +471,7 @@ export function AdaptiveCollection<T extends AnyRecord>({
               return (
                 <div key={String(id)}>
                   <AdaptiveRecord<any>
-                    item={item} index={index} fields={fields}
+                    item={item} index={index} fields={renderFields}
                     actions={actions} rhythm={rhythm} viewMode={viewMode}
                     isSelected={isSelected} isExpanded={isExpanded}
                     onSelect={onSelectionChange ? (sid) => {

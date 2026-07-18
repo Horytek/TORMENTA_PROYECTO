@@ -11,7 +11,8 @@ export interface Negocio {
   codigoPostal?: string;
   moneda?: string;
   pais?: string;
-  logotipo?: string;
+  logotipo_url?: string;  // backend returns logotipo_url (maps from empresa.logotipo)
+  igv_incluido?: boolean; // true=precio incluye IGV, false=precio sin IGV
 }
 
 export type NegocioInput = Partial<Negocio>;

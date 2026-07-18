@@ -14,7 +14,7 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { useUserStore } from "@/store/useUserStore";
+import { usePermissions } from "@/hooks/usePermissions";
 import { cn } from "@/lib/utils";
 
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -34,10 +34,7 @@ export default function RolesPage() {
   const [deleting, setDeleting] = useState<Rol | null>(null);
   const [permsRole, setPermsRole] = useState<Rol | null>(null);
 
-  const capabilities = useUserStore((s) => s.capabilities);
-  const user = useUserStore((s) => s.user);
-  const can = (perm: string) =>
-    user?.roleId === 10 || capabilities.has(perm) || capabilities.has("*");
+  const { can } = usePermissions();
   const canEdit = can("configuracion/roles.edit");
   const canDelete = can("configuracion/roles.delete");
 
@@ -150,14 +147,17 @@ export default function RolesPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className="pr-4">
-                      <div className="flex items-center justify-end gap-1">
-                        <IconAction
-                          label={reserved ? "Rol del sistema" : "Permisos"}
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 gap-1.5"
                           onClick={() => setPermsRole(r)}
                           disabled={!canEdit || reserved}
                         >
-                          <SlidersHorizontal className="h-4 w-4" />
-                        </IconAction>
+                          <SlidersHorizontal className="h-3.5 w-3.5" />
+                          Permisos
+                        </Button>
                         <IconAction
                           label={reserved ? "Rol del sistema" : "Editar"}
                           onClick={() => openEdit(r)}

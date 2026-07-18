@@ -14,10 +14,14 @@
     "sunat:test:gre": "node scripts/sunat/test_gre_beta.js",
     "sunat:cert:inspect": "node scripts/sunat/inspect_cert.js",
     "sunat:cert:to-base64": "node scripts/sunat/convert_pfx_to_base64.js",
-    "build:client": "npm --prefix ./client ci && npm --prefix ./client run build",
+    "build": "npm --prefix ./client-v2 install && npm --prefix ./client-v2 run build",
+    "build:client": "npm --prefix ./client-v2 install && npm --prefix ./client-v2 run build",
+    "build:client-v2": "npm --prefix ./client-v2 install && npm --prefix ./client-v2 run build",
     "start": "node index.js",
     "migrate:passwords": "node migrate-passwords.js",
-    "security:install": "npm install bcryptjs"
+    "security:install": "npm install bcryptjs",
+    "validate:authz": "node scripts/validate-authz.js",
+    "validate:registry-sync": "node scripts/validate-registry-sync.js"
   },
   "engines": {
     "node": ">=20"
