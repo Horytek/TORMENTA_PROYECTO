@@ -491,17 +491,19 @@ const generarComprobante = async (req, res) => {
 const getProductosVentas = async (req, res) => {
   let connection;
   try {
-    const { id_sucursal } = req.query;
+    const { id_sucursal, id_almacen } = req.query;
     const id_tenant = req.id_tenant;
     connection = await getConnection();
 
-    // Catálogo POS: usa solo la tabla `inventario` como fuente de stock.
-    // Se mantiene el filtro por sucursal para que cada cajero vea stock
-    // del almacén que le corresponde.
+    // Catálogo POS: usa la tabla `inventario` como fuente de stock.
+    // Permite filtrar por `id_almacen` específico o por `id_sucursal`.
     let almacenCondition = '';
     const queryParams = [];
 
-    if (id_sucursal && !isNaN(id_sucursal)) {
+    if (id_almacen && !isNaN(id_almacen)) {
+      almacenCondition = ` AND i.id_almacen = ? `;
+      queryParams.push(id_almacen);
+    } else if (id_sucursal && !isNaN(id_sucursal)) {
       // id_sucursal numérico: filtrar por almacenes ligados a esa sucursal.
       almacenCondition = `
         AND i.id_almacen IN (

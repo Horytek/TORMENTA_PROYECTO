@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Info, AlertTriangle, Check, Trash2 } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
 import {
   insertNotaIngreso,
   insertNotaSalida,
@@ -78,7 +77,7 @@ export function NotasPendientesModal({
         // Obtener correlativo
         const docs = await getDocumentosIngreso();
         if (docs && docs.length > 0) {
-          nuevoNumComprobante = docs[0].nota || docs[0].nuevo_numero_de_nota || "-";
+          nuevoNumComprobante = (docs[0] as any).nota || (docs[0] as any).nuevo_numero_de_nota || "-";
         }
 
         result = await insertNotaIngreso({
@@ -100,7 +99,7 @@ export function NotasPendientesModal({
       } else {
         const docs = await getDocumentosSalida();
         if (docs && docs.length > 0) {
-          nuevoNumComprobante = docs[0].nota || docs[0].nuevo_numero_de_nota || "-";
+          nuevoNumComprobante = (docs[0] as any).nota || (docs[0] as any).nuevo_numero_de_nota || "-";
         }
 
         result = await insertNotaSalida({

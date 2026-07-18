@@ -1,15 +1,19 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Building2, Lock } from "lucide-react";
 import { ProductCatalog } from "./ProductCatalog";
 import { CartPanel } from "./CartPanel";
 import { PaymentModal } from "./PaymentModal";
 import { ClientSelector, CLIENTE_VARIOS } from "./ClientSelector";
 import { HeldTicketsPanel } from "./HeldTicketsPanel";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCartStore } from "@/store/useCartStore";
 import { useConfigStore } from "@/store/useConfigStore";
 import { useUserStore } from "@/store/useUserStore";
+import { usePermissions } from "@/hooks/usePermissions";
 import { getNegocio } from "@/features/settings/api/settings";
+import { getKardexInventarioAlmacenes } from "@/features/kardex-inventario/api/kardexInventario";
 
 // ─────────────────────────────────────────────────────────────────
 // POSScreen — Pantalla principal del Punto de Venta
@@ -24,14 +28,56 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
   const cliente = useCartStore((s) => s.cliente);
   const setCliente = useCartStore((s) => s.setCliente);
   const setIgvIncluido = useConfigStore((s) => s.setIgvIncluido);
+  const { isAdmin, isDeveloper, can } = usePermissions();
+
+  // El Administrador/Desarrollador (o quien tenga permiso explícito) puede elegir almacén.
+  // Otros roles están vinculados únicamente a su almacén asignado por regla de negocio.
+  const canSelectWarehouse = isAdmin || isDeveloper || can("pos.change_warehouse");
+
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [lastSaleId, setLastSaleId] = useState<number | null>(null);
+  const [selectedAlmacenId, setSelectedAlmacenId] = useState<number | null>(null);
+
+  // Obtener lista de almacenes disponibles
+  const { data: almacenes = [] } = useQuery({
+    queryKey: ["pos-almacenes"],
+    queryFn: getKardexInventarioAlmacenes,
+  });
+
+  // Almacenes visibles según el rol del usuario
+  const availableAlmacenes = useMemo(() => {
+    if (canSelectWarehouse) {
+      return almacenes;
+    }
+    // Para roles no administradores: filtrar solo por el almacén vinculado a su perfil o sucursal
+    const assignedId = user?.original?.id_almacen || user?.original?.idAlmacen;
+    if (assignedId) {
+      const found = almacenes.filter((a) => a.id_almacen === Number(assignedId));
+      if (found.length > 0) return found;
+    }
+    if (user?.sucursal) {
+      const found = almacenes.filter(
+        (a) => a.sucursal?.toLowerCase() === user.sucursal.toLowerCase()
+      );
+      if (found.length > 0) return found;
+    }
+    return almacenes.length > 0 ? [almacenes[0]] : [];
+  }, [almacenes, canSelectWarehouse, user]);
+
+  // Asignación inicial de almacén seleccionado
+  useEffect(() => {
+    if (selectedAlmacenId) return;
+
+    if (availableAlmacenes.length > 0) {
+      setSelectedAlmacenId(availableAlmacenes[0].id_almacen);
+    }
+  }, [availableAlmacenes, selectedAlmacenId]);
 
   // Cargar configuración global de IGV al montar
   const { data: negocio } = useQuery({
     queryKey: ["negocio"],
     queryFn: getNegocio,
-    staleTime: Infinity, // la config de empresa cambia poco; no refetch en background
+    staleTime: Infinity,
   });
 
   // Sincronizar igv_incluido al store de config global
@@ -49,10 +95,13 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
     setIsPaymentOpen(true);
   }, [cliente, setCliente]);
 
-  const handleSaleComplete = useCallback((saleId: number, numComprobante: string) => {
-    setLastSaleId(saleId);
-    onSaleComplete?.(saleId, numComprobante);
-  }, [onSaleComplete]);
+  const handleSaleComplete = useCallback(
+    (saleId: number, numComprobante: string) => {
+      setLastSaleId(saleId);
+      onSaleComplete?.(saleId, numComprobante);
+    },
+    [onSaleComplete]
+  );
 
   const handleClosePayment = useCallback(() => {
     setLastSaleId(null);
@@ -62,12 +111,40 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
   return (
     <div className="flex flex-col h-full">
       {/* ── Header bar ─────────────────────────────────────── */}
-      <div className="relative z-30 flex items-center justify-between px-4 py-2 border-b border-border bg-card/80 backdrop-blur-sm shrink-0">
-        <div className="flex items-center gap-3">
+      <div className="relative z-30 flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-border bg-card/80 backdrop-blur-sm shrink-0">
+        <div className="flex flex-wrap items-center gap-3">
           <ClientSelector
             value={cliente}
             onChange={(c) => setCliente(c ?? CLIENTE_VARIOS)}
           />
+
+          {/* Selector de Almacén de Stock */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl border border-border bg-background text-xs">
+            <Building2 className="h-3.5 w-3.5 text-primary" />
+            <span className="text-muted-foreground font-medium hidden sm:inline">Stock de:</span>
+            <Select
+              value={selectedAlmacenId ? String(selectedAlmacenId) : ""}
+              onValueChange={(val) => setSelectedAlmacenId(Number(val))}
+              disabled={!canSelectWarehouse || availableAlmacenes.length <= 1}
+            >
+              <SelectTrigger className="h-6 border-0 bg-transparent p-0 shadow-none text-xs font-semibold focus:ring-0 gap-1 min-w-[120px]">
+                <SelectValue placeholder="Cargando almacén…" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableAlmacenes.map((alm) => (
+                  <SelectItem key={alm.id_almacen} value={String(alm.id_almacen)}>
+                    {alm.nom_almacen} {alm.sucursal ? `(${alm.sucursal})` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!canSelectWarehouse && (
+              <Lock
+                className="h-3 w-3 text-muted-foreground/70 shrink-0"
+              />
+            )}
+          </div>
+
           <HeldTicketsPanel />
         </div>
 
@@ -88,7 +165,7 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
       {/* ── Body ───────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col md:flex-row gap-3 p-3 min-h-0 overflow-hidden">
         <div className="flex-1 min-h-0">
-          <ProductCatalog />
+          <ProductCatalog selectedAlmacenId={selectedAlmacenId ?? undefined} />
         </div>
         <div className="w-full md:w-[380px] lg:w-[440px] xl:w-[500px] shrink-0 flex flex-col min-h-0">
           <CartPanel onCheckout={handleCheckout} disabled={false} />
@@ -100,6 +177,7 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
         open={isPaymentOpen}
         onClose={handleClosePayment}
         onSaleComplete={handleSaleComplete}
+        selectedAlmacenId={selectedAlmacenId ?? undefined}
       />
     </div>
   );

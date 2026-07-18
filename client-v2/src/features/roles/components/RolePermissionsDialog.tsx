@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 
 import { getModulosConSubmodulos } from "@/api/rutas";
 import { getPermisosByRol, savePermisos, getEffectivePermissions, type PermisoRow, type PermissionSource } from "../api/permisos";

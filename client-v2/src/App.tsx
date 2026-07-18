@@ -43,7 +43,6 @@ const WarehouseNotesPage = lazy(() => import("@/features/warehouse-notes/pages/W
 const GuidesPage = lazy(() => import("@/features/despatch-guides/pages/GuidesPage"));
 const DeveloperPage = lazy(() => import("@/features/developer/pages/DeveloperPage"));
 const ExpressHomePage = lazy(() => import("@/features/express/pages/ExpressHomePage"));
-const HistoricoKardexPage = lazy(() => import("@/features/kardex/pages/HistoricoKardexPage"));
 const AccountingPage = lazy(() => import("@/features/accounting/pages/AccountingPage"));
 
 // Initialize Query Client for TanStack Query

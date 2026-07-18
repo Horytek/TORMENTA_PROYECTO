@@ -28,7 +28,7 @@ interface ApiResponse<T> {
 
 const unwrap = <T>(res: { data: ApiResponse<T> }): T => res.data.data;
 
-const cleanParams = (params: Record<string, any>) => {
+export const cleanParams = (params: Record<string, any>) => {
   const cleaned: Record<string, any> = {};
   Object.entries(params).forEach(([key, val]) => {
     if (

@@ -6,7 +6,6 @@ import { ScrollUpButton } from "../components/ScrollUpButton";
 import { useMode } from "../hooks/useMode";
 import { useUserStore } from "@/store/useUserStore";
 import {
-  Shield,
   Lock,
   Eye,
   Cookie,

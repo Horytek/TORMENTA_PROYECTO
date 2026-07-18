@@ -30,6 +30,7 @@ interface PaymentModalProps {
   open: boolean;
   onClose: () => void;
   onSaleComplete: (saleId: number, numComprobante: string) => void;
+  selectedAlmacenId?: number;
 }
 
 // ── Tipos de pago ──────────────────────────────────────────────
@@ -48,7 +49,7 @@ const METODOS_DISPONIBLES: { value: MetodoPago; label: string }[] = [
 
 const MAX_METODOS = 3;
 
-export function PaymentModal({ open, onClose, onSaleComplete }: PaymentModalProps) {
+export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId }: PaymentModalProps) {
   const cart = useCartStore();
   const user = useUserStore((s) => s.user);
 
@@ -223,7 +224,7 @@ export function PaymentModal({ open, onClose, onSaleComplete }: PaymentModalProp
 
       const payload: VentaPayload = {
         id_sucursal: user?.id_sucursal ?? user?.id ?? 1,
-        id_almacen: 1,
+        id_almacen: selectedAlmacenId ?? 1,
         id_cliente: clienteFinal.id_cliente === 0 ? null : clienteFinal.id_cliente,
         nombre_cliente: clienteNombre,
         documento_cliente: clienteFinal.id_cliente === 0 ? "00000000" : (clienteFinal.ruc || clienteFinal.dni),

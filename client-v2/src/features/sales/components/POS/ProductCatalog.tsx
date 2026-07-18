@@ -11,14 +11,18 @@ import { getProductosVentas } from "@/features/sales/api/ventas";
 // ProductCatalog — Grid de productos para el POS
 // ─────────────────────────────────────────────────────────────────
 
-export function ProductCatalog() {
+interface ProductCatalogProps {
+  selectedAlmacenId?: number;
+}
+
+export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
   const [search, setSearch] = useState("");
   const addItem = useCartStore((s) => s.addItem);
   const cartItems = useCartStore((s) => s.items);
 
   const { data: products = [], isLoading } = useQuery<POSProduct[]>({
-    queryKey: ["productos-ventas"],
-    queryFn: () => getProductosVentas(),
+    queryKey: ["productos-ventas", selectedAlmacenId],
+    queryFn: () => getProductosVentas(selectedAlmacenId ? { id_almacen: selectedAlmacenId } : undefined),
   });
 
   const filtered = useMemo(() => {

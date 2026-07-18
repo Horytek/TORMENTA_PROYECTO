@@ -292,7 +292,7 @@ export function KardexDetalle({ almacenFiltro }: KardexDetalleProps) {
                       {formatNum(anteriores.sale, 0)}
                     </TableCell>
                     <TableCell className="pr-4 text-right">
-                      <Badge variant="muted" className="num tabular-nums">
+                      <Badge variant="secondary" className="num tabular-nums">
                         {formatNum(totales.stockIni, 0)}
                       </Badge>
                     </TableCell>
@@ -343,7 +343,7 @@ export function KardexDetalle({ almacenFiltro }: KardexDetalleProps) {
                       )}
                     </TableCell>
                     <TableCell className="pr-4 text-right">
-                      <Badge variant="muted" className="num tabular-nums">
+                      <Badge variant="secondary" className="num tabular-nums">
                         {formatNum(m.stock, 0)}
                       </Badge>
                     </TableCell>

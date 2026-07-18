@@ -144,7 +144,7 @@ export const getKardexInventarioAlmacenes = async (): Promise<KardexInventarioAl
   // El backend devuelve `id` y `almacen`; el resto de `client-v2` consume `id_almacen`/
   // `nom_almacen` — normalizamos aquí para no tocar cada consumidor.
   const data = unwrap(res) ?? [];
-  return data.map((a: Record<string, unknown>) => ({
+  return data.map((a: any) => ({
     id_almacen: (a.id_almacen ?? a.id) as number,
     nom_almacen: (a.nom_almacen ?? a.almacen ?? a.nombre) as string,
     sucursal: (a.sucursal ?? undefined) as string | undefined,

@@ -12,6 +12,7 @@ import { mapBackendVenta } from "../types";
 // ── Catálogo de productos para POS ───────────────────────────
 export const getProductosVentas = async (params?: {
   id_sucursal?: number | string;
+  id_almacen?: number | string;
 }): Promise<POSProduct[]> => {
   const response = await api.get("/ventas/producto_venta", { params });
   const data = response.data;

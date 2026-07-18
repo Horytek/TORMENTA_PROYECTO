@@ -8,7 +8,6 @@ import {
   ArrowDownCircle,
   ArrowUpCircle,
   Search,
-  Inbox,
   ArrowRight,
   User,
   Package,
