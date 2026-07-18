@@ -1,24 +1,39 @@
+/** Metadata visual/dinámica compartida por módulo y submódulo (sidebar). */
+export interface CatalogMeta {
+  icon?: string | null;
+  group_name?: string | null;
+  sort_order?: number;
+  frontend_route?: string | null;
+  is_visible?: boolean;
+}
+
 /** Módulo de navegación (tabla `modulo`) — define la estructura de menú del ERP. */
-export interface Modulo {
+export interface Modulo extends CatalogMeta {
   id_modulo: number;
   nombre_modulo: string;
   ruta: string;
 }
 
 /** Submódulo (tabla `submodulo`), hijo de un módulo. */
-export interface Submodulo {
+export interface Submodulo extends CatalogMeta {
   id_submodulo: number;
   id_modulo: number;
   nombre_sub: string;
   ruta_submodulo: string;
 }
 
-export interface ModuloInput {
+export interface ModuloInput extends CatalogMeta {
   nombre: string;
   ruta: string;
 }
 
-export interface SubmoduloInput {
+/** Payload de `PUT /modulos/:id` — este endpoint espera `nombre_modulo`, no `nombre` (ver ModuloInput). */
+export interface ModuloUpdateInput extends CatalogMeta {
+  nombre_modulo: string;
+  ruta: string;
+}
+
+export interface SubmoduloInput extends CatalogMeta {
   id_modulo: number;
   nombre_sub: string;
   ruta: string;
@@ -67,4 +82,26 @@ export interface CatalogActionInput {
   action_key: string;
   name: string;
   description?: string;
+}
+
+/** Plan de suscripción (tabla `plan_pago`). */
+export interface Plan {
+  id_plan: number;
+  descripcion_plan: string;
+}
+
+/** Versión de plantilla de entitlements de un plan (tabla `plan_template_version`). */
+export interface PlanTemplateVersion {
+  id: number;
+  id_plan: number;
+  version: number;
+  status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  created_at: string;
+  published_at: string | null;
+}
+
+/** Módulos/submódulos incluidos en una versión de plantilla. */
+export interface PlanEntitlements {
+  modulos: number[];
+  submodulos: number[];
 }

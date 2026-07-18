@@ -9,7 +9,6 @@ import { Calendar } from "lucide-react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { useUserStore } from "@/store/useUserStore";
 import { usePermissions } from "@/hooks/usePermissions";
 import { getVentas, annulVenta } from "@/features/sales/api/ventas";
 import type { Venta, VentasFilters } from "@/features/sales/types";
@@ -55,9 +54,8 @@ function parseMetodoPago(metodoPago?: string, totalVenta: number = 0) {
 }
 
 export function SalesHistoryTab() {
-  const user = useUserStore((s) => s.user);
-  const { isDeveloper } = usePermissions();
-  const canDelete = isDeveloper || user?.roleId === 3;
+  const { isDeveloper, can } = usePermissions();
+  const canDelete = isDeveloper || can("ventas.delete");
 
   const [filters, setFilters] = useState<VentasFilters>({
     fecha_inicio: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split("T")[0],

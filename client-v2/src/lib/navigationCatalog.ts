@@ -1,19 +1,13 @@
 /**
  * Fuente única de la navegación del sistema (sidebar + búsqueda global).
  *
- * Antes, `AppSidebar.tsx` y `searchableRoutes.ts` tenían cada uno su propio
- * array hardcodeado con {título, url, ícono, capability} — había que
- * sincronizarlos a mano cada vez que se agregaba un módulo (y de hecho ya
- * estaban desincronizados: "Usuarios"/"Roles" tenían capabilities distintas
- * en cada archivo). Acá se arma la navegación a partir del catálogo real de
- * módulos (`GET /rutas/modulos`, ya usado para calcular `capabilities`) — la
- * única pieza que sigue siendo estática es `MODULE_META`, porque la tabla
- * `modulo` no guarda ícono/URL/agrupación visual, solo `nombre` y `ruta`.
- *
- * Agregar un módulo nuevo en BD (ej. Contabilidad) + una entrada acá alcanza
- * para que aparezca en sidebar y buscador — ya no hay que tocar dos archivos.
+ * `modulo`/`submodulos` ya guardan su propia metadata visual (icon/group_name/
+ * sort_order/frontend_route/is_visible — ver migration_006_catalog_metadata.js),
+ * así que agregar un módulo nuevo desde el panel Developer alcanza para que
+ * aparezca en sidebar y buscador, sin tocar código. `MODULE_META` se conserva
+ * solo como fallback (módulos aún no migrados) y como fuente de `keywords`
+ * para el buscador, que la BD no guarda.
  */
-import type { ComponentType } from "react";
 import {
   Home,
   Tags,
@@ -30,9 +24,10 @@ import {
   ShieldAlert,
   Wallet,
 } from "lucide-react";
-import type { RouteModule } from "@/api/rutas";
+import type { RouteModule, CatalogMeta } from "@/api/rutas";
+import { getIcon, type NavIcon } from "@/lib/iconRegistry";
 
-export type NavIcon = ComponentType<{ className?: string }>;
+export type { NavIcon };
 
 export interface NavItem {
   title: string;
@@ -90,28 +85,50 @@ export function normalizeSlug(ruta?: string | null): string {
   return ruta.toString().toLowerCase().replace(/^\/+/, "");
 }
 
-/** true si ese módulo/submódulo (por su `ruta` en BD) tiene una pantalla real hoy en client-v2. */
-export function isActiveInClientV2(ruta?: string | null): boolean {
+type CatalogRow = CatalogMeta & { nombre?: string; nombre_sub?: string };
+
+/** true si ese módulo/submódulo tiene una pantalla real hoy en client-v2 y no está oculto. */
+export function isActiveInClientV2(ruta?: string | null, row?: CatalogRow): boolean {
+  if (row?.frontend_route) return row.is_visible !== false;
   return normalizeSlug(ruta) in MODULE_META;
 }
 
-/** Metadata del sidebar (grupo, título, ícono) para ese módulo/submódulo, si tiene pantalla en client-v2. */
-export function getModuleMeta(ruta?: string | null): ModuleMeta | undefined {
-  return MODULE_META[normalizeSlug(ruta)];
+/**
+ * Metadata del sidebar (grupo, título, ícono) para ese módulo/submódulo.
+ * Prioriza la metadata dinámica de BD (`row`) sobre `MODULE_META`; conserva
+ * `title`/`keywords` curados del mapa estático cuando existen (más confiables
+ * que `nombre_modulo`, que tiene inconsistencias reales de datos legado).
+ */
+export function getModuleMeta(ruta?: string | null, row?: CatalogRow): ModuleMeta | undefined {
+  const slug = normalizeSlug(ruta);
+  const staticMeta = MODULE_META[slug];
+
+  if (row?.frontend_route && row.is_visible !== false) {
+    return {
+      url: row.frontend_route,
+      icon: row.icon ? getIcon(row.icon) : staticMeta?.icon ?? getIcon(null),
+      group: row.group_name || staticMeta?.group || "General",
+      title: staticMeta?.title ?? row.nombre_sub ?? row.nombre,
+      keywords: staticMeta?.keywords,
+    };
+  }
+  return staticMeta;
 }
 
-/** Recorre módulos + submódulos del catálogo buscando metadata mapeada. */
-function collectMappedItems(catalog: RouteModule[]): { slug: string; nombre: string; meta: ModuleMeta }[] {
-  const out: { slug: string; nombre: string; meta: ModuleMeta }[] = [];
+/** Recorre módulos + submódulos del catálogo buscando metadata (dinámica o del mapa estático). */
+function collectMappedItems(catalog: RouteModule[]): { slug: string; nombre: string; meta: ModuleMeta; sortOrder: number }[] {
+  const out: { slug: string; nombre: string; meta: ModuleMeta; sortOrder: number }[] = [];
   for (const modulo of catalog) {
     const moduloSlug = normalizeSlug(modulo.ruta);
-    if (MODULE_META[moduloSlug]) {
-      out.push({ slug: moduloSlug, nombre: modulo.nombre, meta: MODULE_META[moduloSlug] });
+    const moduloMeta = getModuleMeta(modulo.ruta, modulo);
+    if (moduloMeta) {
+      out.push({ slug: moduloSlug, nombre: modulo.nombre, meta: moduloMeta, sortOrder: modulo.sort_order ?? 0 });
     }
     for (const sub of modulo.submodulos ?? []) {
       const subSlug = normalizeSlug(sub.ruta);
-      if (MODULE_META[subSlug]) {
-        out.push({ slug: subSlug, nombre: sub.nombre_sub, meta: MODULE_META[subSlug] });
+      const subMeta = getModuleMeta(sub.ruta, { ...sub, nombre_sub: sub.nombre_sub });
+      if (subMeta) {
+        out.push({ slug: subSlug, nombre: sub.nombre_sub, meta: subMeta, sortOrder: sub.sort_order ?? 0 });
       }
     }
   }
@@ -124,7 +141,8 @@ export function buildNavSections(catalog: RouteModule[]): NavSection[] {
   groups.set("General", [{ title: "Inicio", url: "/dashboard", icon: Home, group: "General" }]);
 
   const seenUrls = new Set<string>(["/dashboard"]);
-  for (const { slug, nombre, meta } of collectMappedItems(catalog)) {
+  const items = collectMappedItems(catalog).sort((a, b) => a.sortOrder - b.sortOrder);
+  for (const { slug, nombre, meta } of items) {
     if (seenUrls.has(meta.url)) continue; // un módulo puede tener 2 submódulos con la misma pantalla
     seenUrls.add(meta.url);
     const list = groups.get(meta.group) ?? [];

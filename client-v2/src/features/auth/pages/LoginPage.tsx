@@ -142,11 +142,7 @@ export default function LoginPage() {
         if (roleId) {
           await useUserStore.getState().loadPermissionsAndCapabilities(roleId);
         }
-        if (data.rol === 3) {
-          navigate("/express/dashboard");
-        } else {
-          navigate("/dashboard");
-        }
+        navigate("/dashboard");
       } else {
         setError(message || "Usuario o contraseña incorrectos.");
       }
@@ -215,9 +211,11 @@ export default function LoginPage() {
 
         {/* Marca */}
         <div className="relative flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-white/10 text-lg font-bold ring-1 ring-white/15">
-            H
-          </div>
+          <img
+            src="/horycore.svg"
+            alt="Horytek"
+            className="h-10 w-10 shrink-0 object-contain"
+          />
           <div className="leading-tight">
             <p className="text-lg font-semibold tracking-tight">Horytek ERP</p>
             <p className="text-xs text-slate-400">Sistema de gestión</p>
@@ -287,9 +285,11 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           {/* Marca compacta (móvil) */}
           <div className="mb-10 flex items-center gap-3 lg:hidden">
-            <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
-              H
-            </div>
+            <img
+              src="/horycore.svg"
+              alt="Horytek"
+              className="h-9 w-9 shrink-0 object-contain"
+            />
             <div className="leading-tight">
               <p className="text-base font-semibold text-foreground">Horytek ERP</p>
               <p className="text-[11px] text-muted-foreground">Sistema de gestión</p>

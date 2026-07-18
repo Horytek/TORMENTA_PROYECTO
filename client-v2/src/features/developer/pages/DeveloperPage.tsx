@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Terminal, Users, ListChecks, DatabaseZap, ShieldCheck } from "lucide-react";
+import { Terminal, Users, ListChecks, DatabaseZap, ShieldCheck, LayoutTemplate, KeyRound } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { ModulosTab } from "../components/ModulosTab";
@@ -7,6 +7,8 @@ import { UsersPlanTab } from "../components/UsersPlanTab";
 import { ActionCatalogTab } from "../components/ActionCatalogTab";
 import { DatabaseCleanerTab } from "../components/DatabaseCleanerTab";
 import { PermissionsAuditTab } from "../components/PermissionsAuditTab";
+import { PlanEntitlementsTab } from "../components/PlanEntitlementsTab";
+import { AdminPlanPermissionsTab } from "../components/AdminPlanPermissionsTab";
 
 export default function DeveloperPage() {
   const [activeTab, setActiveTab] = useState("modulos");
@@ -21,6 +23,8 @@ export default function DeveloperPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="modulos"><Terminal className="mr-1.5 h-4 w-4" />Módulos y Rutas</TabsTrigger>
+          <TabsTrigger value="planes"><LayoutTemplate className="mr-1.5 h-4 w-4" />Entitlements por Plan</TabsTrigger>
+          <TabsTrigger value="permisos-admin"><KeyRound className="mr-1.5 h-4 w-4" />Permisos del Administrador</TabsTrigger>
           <TabsTrigger value="usuarios"><Users className="mr-1.5 h-4 w-4" />Usuarios y Planes</TabsTrigger>
           <TabsTrigger value="acciones"><ListChecks className="mr-1.5 h-4 w-4" />Catálogo de Acciones</TabsTrigger>
           <TabsTrigger value="auditoria"><ShieldCheck className="mr-1.5 h-4 w-4" />Auditoría de Permisos</TabsTrigger>
@@ -28,6 +32,8 @@ export default function DeveloperPage() {
         </TabsList>
 
         <TabsContent value="modulos"><ModulosTab /></TabsContent>
+        <TabsContent value="planes"><PlanEntitlementsTab /></TabsContent>
+        <TabsContent value="permisos-admin"><AdminPlanPermissionsTab /></TabsContent>
         <TabsContent value="usuarios"><UsersPlanTab /></TabsContent>
         <TabsContent value="acciones"><ActionCatalogTab /></TabsContent>
         <TabsContent value="auditoria"><PermissionsAuditTab /></TabsContent>

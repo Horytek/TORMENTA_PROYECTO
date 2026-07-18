@@ -14,11 +14,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 import { getModulosConSubmodulos } from "@/api/rutas";
-import { getPermisosByRol, savePermisos, type PermisoRow } from "../api/permisos";
+import { getPermisosByRol, savePermisos, getEffectivePermissions, type PermisoRow, type PermissionSource } from "../api/permisos";
 import type { Rol } from "../types";
+
+/** Mismo mapeo que src/services/authz.service.js (ACTION_COLUMNS) del backend. */
+const ACTION_TO_CAP: Record<"ver" | "crear" | "editar" | "eliminar" | "desactivar" | "generar", string> = {
+  ver: "view", crear: "create", editar: "edit", eliminar: "delete", desactivar: "deactivate", generar: "generate",
+};
 
 type ActionKey = "ver" | "crear" | "editar" | "eliminar" | "desactivar" | "generar";
 type Flags = Record<ActionKey, number>;
@@ -38,6 +44,7 @@ interface Row {
   key: string;
   id_modulo: number;
   id_submodulo: number | null;
+  ruta: string;
   active: Set<string> | null;
   /** Metadata del sidebar (grupo, título, ícono). Si no hay match, el módulo no tiene pantalla en client-v2. */
   meta?: ModuleMeta;
@@ -74,19 +81,55 @@ export default function RolePermissionsDialog({ role, open, onClose }: Props) {
     enabled: open,
   });
 
+  // Solo para anotar de dónde viene cada permiso ya guardado (plantilla del plan
+  // vs. override propio del tenant) — no participa en el guardado, que sigue
+  // yendo por savePermisos/getPermisosByRol tal cual.
+  const { data: effective } = useQuery({
+    queryKey: ["permisos-rol-efectivos", role.id_rol],
+    queryFn: () => getEffectivePermissions(role.id_rol),
+    enabled: open,
+  });
+
   // Todas las filas de BD (incluye módulos legacy sin pantalla en client-v2) — se
   // conserva completa para no perder permisos ya otorgados sobre esos módulos al
   // guardar, aunque el diálogo ya no los muestre (ver `displayRows`).
   const rows = useMemo<Row[]>(() => {
     const out: Row[] = [];
     for (const m of modules) {
-      out.push({ key: rowKey(m.id, null), id_modulo: m.id, id_submodulo: null, active: parseActive(m.active_actions), meta: getModuleMeta(m.ruta) });
+      out.push({ key: rowKey(m.id, null), id_modulo: m.id, id_submodulo: null, ruta: m.ruta ?? "", active: parseActive(m.active_actions), meta: getModuleMeta(m.ruta, m) });
       for (const s of m.submodulos) {
-        out.push({ key: rowKey(m.id, s.id_submodulo), id_modulo: m.id, id_submodulo: s.id_submodulo, active: parseActive(s.active_actions), meta: getModuleMeta(s.ruta) });
+        out.push({ key: rowKey(m.id, s.id_submodulo), id_modulo: m.id, id_submodulo: s.id_submodulo, ruta: s.ruta ?? "", active: parseActive(s.active_actions), meta: getModuleMeta(s.ruta, s) });
       }
     }
     return out;
   }, [modules]);
+
+  // Mapa de URL de client-v2 → la clave de fila (rowKey) primaria para evitar duplicados visuales
+  const urlToPrimaryRowKey = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const r of rows) {
+      if (r.meta?.url) {
+        if (!map.has(r.meta.url)) {
+          map.set(r.meta.url, r.key);
+        }
+      }
+    }
+    return map;
+  }, [rows]);
+
+  // Fuente del permiso: si alguna acción concedida en esta fila viene de un
+  // override propio del tenant, se prioriza sobre "plantilla del plan" (mismo
+  // criterio de precedencia que AuthZService.getEffectivePermissions).
+  const sourceFor = (row: Row): PermissionSource | null => {
+    if (!effective || !row.ruta) return null;
+    const slug = row.ruta.toLowerCase().replace(/^\/+/, "");
+    const found = Object.values(ACTION_TO_CAP)
+      .map((cap) => effective.sources[`${slug}.${cap}`])
+      .filter(Boolean);
+    if (found.includes("TENANT_OVERRIDE")) return "TENANT_OVERRIDE";
+    if (found.includes("DEFAULT_PLAN")) return "DEFAULT_PLAN";
+    return null;
+  };
 
   useEffect(() => {
     if (!open) {
@@ -96,13 +139,22 @@ export default function RolePermissionsDialog({ role, open, onClose }: Props) {
     if (!current) return;
     const map: Record<string, Flags> = {};
     for (const p of current) {
-      map[rowKey(p.id_modulo, p.id_submodulo ?? null)] = {
-        ver: p.ver ? 1 : 0, crear: p.crear ? 1 : 0, editar: p.editar ? 1 : 0,
-        eliminar: p.eliminar ? 1 : 0, desactivar: p.desactivar ? 1 : 0, generar: p.generar ? 1 : 0,
+      const origKey = rowKey(p.id_modulo, p.id_submodulo ?? null);
+      const matchingRow = rows.find(r => r.key === origKey);
+      const targetKey = (matchingRow?.meta?.url && urlToPrimaryRowKey.get(matchingRow.meta.url)) || origKey;
+
+      const prevFlags = map[targetKey] ?? ZERO;
+      map[targetKey] = {
+        ver: (p.ver || prevFlags.ver) ? 1 : 0,
+        crear: (p.crear || prevFlags.crear) ? 1 : 0,
+        editar: (p.editar || prevFlags.editar) ? 1 : 0,
+        eliminar: (p.eliminar || prevFlags.eliminar) ? 1 : 0,
+        desactivar: (p.desactivar || prevFlags.desactivar) ? 1 : 0,
+        generar: (p.generar || prevFlags.generar) ? 1 : 0,
       };
     }
     setPerms(map);
-  }, [current, open, role.id_rol]);
+  }, [current, open, role.id_rol, rows, urlToPrimaryRowKey]);
 
   // Solo módulos con pantalla real en client-v2, agrupados y ordenados igual que
   // el sidebar (mismos nombres/grupos) — el resto (legacy) no se muestra ni se
@@ -111,10 +163,11 @@ export default function RolePermissionsDialog({ role, open, onClose }: Props) {
     const q = search.toLowerCase().trim();
     return rows.filter((r): r is Row & { meta: ModuleMeta } => {
       if (!r.meta) return false;
+      if (urlToPrimaryRowKey.get(r.meta.url) !== r.key) return false;
       if (!q) return true;
       return r.meta.title!.toLowerCase().includes(q) || r.meta.group.toLowerCase().includes(q);
     });
-  }, [rows, search]);
+  }, [rows, search, urlToPrimaryRowKey]);
 
   const groupedRows = useMemo(() => {
     const byGroup = new Map<string, (Row & { meta: ModuleMeta })[]>();
@@ -168,6 +221,10 @@ export default function RolePermissionsDialog({ role, open, onClose }: Props) {
     mutationFn: () => {
       const payload: PermisoRow[] = [];
       for (const r of rows) {
+        // Ignorar filas duplicadas al guardar (solo se guardan/conservan las primarias)
+        if (r.meta?.url && urlToPrimaryRowKey.get(r.meta.url) !== r.key) {
+          continue;
+        }
         const f = flagsOf(r.key);
         if (f.ver || f.crear || f.editar || f.eliminar || f.desactivar || f.generar) {
           payload.push({ id_modulo: r.id_modulo, id_submodulo: r.id_submodulo, ...f });
@@ -251,18 +308,26 @@ export default function RolePermissionsDialog({ role, open, onClose }: Props) {
                       {items.map((r) => {
                         const f = flagsOf(r.key);
                         const Icon = r.meta.icon;
+                        const source = sourceFor(r);
                         return (
                           <tr key={r.key} className="border-b border-border/60 last:border-0">
                             <td className="px-3 py-1.5 font-medium">
-                              <button
-                                type="button"
-                                onClick={() => toggleRowAll(r)}
-                                className="flex items-center gap-2 truncate rounded px-1 py-0.5 text-left text-foreground hover:bg-accent"
-                                title="Marcar/desmarcar toda la fila"
-                              >
-                                <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                                {r.meta.title}
-                              </button>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleRowAll(r)}
+                                  className="flex items-center gap-2 truncate rounded px-1 py-0.5 text-left text-foreground hover:bg-accent"
+                                  title="Marcar/desmarcar toda la fila"
+                                >
+                                  <Icon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                  {r.meta.title}
+                                </button>
+                                {source && (
+                                  <Badge variant={source === "TENANT_OVERRIDE" ? "outline" : "secondary"} className="shrink-0 font-normal">
+                                    {source === "TENANT_OVERRIDE" ? "Personalizado" : "Plantilla del plan"}
+                                  </Badge>
+                                )}
+                              </div>
                             </td>
                             {ACTIONS.map((a) => (
                               <td key={a.key} className="px-2 py-1.5 text-center">

@@ -1,6 +1,7 @@
 import { getConnection } from "./../database/database.js";
 import { logAudit } from "../utils/auditLogger.js";
 import { isDeveloperReq, DEVELOPER_ROLE_ID } from "../middlewares/authorize.middleware.js";
+import { AuthZService } from "../services/authz.service.js";
 
 // Cache para consultas frecuentes
 const queryCache = new Map();
@@ -496,6 +497,7 @@ const savePermisos = async (req, res) => {
                         p.ver !== undefined ? p.ver : 0,
                         p.editar !== undefined ? p.editar : 0,
                         p.eliminar !== undefined ? p.eliminar : 0,
+                        p.desactivar !== undefined ? p.desactivar : 0,
                         p.generar !== undefined ? p.generar : 0,
                         JSON.stringify(p.actions_json || {}),
                         id_tenant
@@ -525,8 +527,11 @@ const savePermisos = async (req, res) => {
 
         await connection.commit();
 
-        // Limpiar caché
+        // Limpiar caché (propio de este controller + AuthZService compartido).
+        // ponytail: clear global del AuthZService — reemplazar con invalidación
+        // por tenant si los clears se vuelven un cuello de botella.
         queryCache.clear();
+        AuthZService.clearCache();
 
         // ---------------------------------------------------------
         // NUEVA ARQUITECTURA: Auditoría (Async)

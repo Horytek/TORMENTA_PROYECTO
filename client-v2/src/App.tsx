@@ -152,21 +152,64 @@ export default function App() {
               <Route element={<ProtectedRoute />}>
                 {/* Main Dashboard Layout */}
                 <Route element={<DashboardLayout />}>
+                  {/* "Inicio" no requiere capability — visible para cualquier usuario autenticado. */}
                   <Route path="/dashboard" element={<DashboardPage />} />
-                  <Route path="/products" element={<ProductsPage />} />
-                  <Route path="/sales" element={<SalesPage />} />
-                  <Route path="/sales/pos" element={<SalesPage />} />
-                  <Route path="/people/clients" element={<ClientesPage />} />
-                  <Route path="/people/providers" element={<SuppliersPage />} />
-                  <Route path="/suppliers" element={<SuppliersPage />} />
-                  <Route path="/inventory" element={<InventoryPage />} />
-                  <Route path="/people/employees" element={<EmployeesPage />} />
-                  <Route path="/logistics/branches" element={<BranchesPage />} />
-                  <Route path="/logistics/warehouses" element={<WarehousesPage />} />
-                  <Route path="/logistics/warehouse-notes" element={<WarehouseNotesPage />} />
-                  <Route path="/logistics/guides" element={<GuidesPage />} />
-                  <Route path="/logistics/kardex" element={<KardexPage />} />
-                  <Route path="/settings/users" element={<UsersPage />} />
+                  <Route
+                    path="/products"
+                    element={<RequireCapability capability="productos.view"><ProductsPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/sales"
+                    element={<RequireCapability capability="ventas.view"><SalesPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/sales/pos"
+                    element={<RequireCapability capability="ventas.view"><SalesPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/people/clients"
+                    element={<RequireCapability capability="clientes.view"><ClientesPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/people/providers"
+                    element={<RequireCapability capability="proveedores.view"><SuppliersPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/suppliers"
+                    element={<RequireCapability capability="proveedores.view"><SuppliersPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/inventory"
+                    element={<RequireCapability capability="almacen.view"><InventoryPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/people/employees"
+                    element={<RequireCapability capability="empleados.view"><EmployeesPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/logistics/branches"
+                    element={<RequireCapability capability="sucursal.view"><BranchesPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/logistics/warehouses"
+                    element={<RequireCapability capability="almaceng.view"><WarehousesPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/logistics/warehouse-notes"
+                    element={<RequireCapability capability="nota_almacen.view"><WarehouseNotesPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/logistics/guides"
+                    element={<RequireCapability capability="guia_remision.view"><GuidesPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/logistics/kardex"
+                    element={<RequireCapability capability="almacen.view"><KardexPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/settings/users"
+                    element={<RequireCapability capability="configuracion/usuarios.view"><UsersPage /></RequireCapability>}
+                  />
                   <Route
                     path="/settings/roles"
                     element={<RequireCapability capability="configuracion/roles.view"><RolesPage /></RequireCapability>}
@@ -175,7 +218,10 @@ export default function App() {
                     path="/settings/system"
                     element={<RequireCapability capability="configuracion/negocio.view"><SettingsPage /></RequireCapability>}
                   />
-                  <Route path="/reports/sales" element={<ReportsPage />} />
+                  <Route
+                    path="/reports/sales"
+                    element={<RequireCapability capability="reportes.view"><ReportsPage /></RequireCapability>}
+                  />
                   <Route
                     path="/accounting"
                     element={<RequireCapability capability="contabilidad.view"><AccountingPage /></RequireCapability>}
@@ -186,9 +232,6 @@ export default function App() {
                   />
                   {/* Other routes can be registered here as features are developed from scratch */}
                 </Route>
-                
-                {/* POS Express layout placeholder */}
-                <Route path="/express/dashboard" element={<DashboardPage />} />
                 
                 {/* Fallback wildcard redirects to dashboard */}
                 <Route path="/*" element={<Navigate to="/dashboard" replace />} />

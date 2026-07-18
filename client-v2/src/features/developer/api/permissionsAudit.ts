@@ -16,6 +16,11 @@ export interface MergedPermissionNode {
   type: "modulo" | "submodulo";
   id: number;
   name: string;
+  icon?: string | null;
+  groupName?: string | null;
+  /** true si tiene pantalla real en client-v2 y no está oculto (mismo criterio que el sidebar). */
+  inSidebar: boolean;
+  isVisible: boolean;
   availableActions: string[];
   permissions: Record<string, boolean>;
   children?: MergedPermissionNode[];

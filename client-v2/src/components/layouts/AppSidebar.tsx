@@ -62,16 +62,18 @@ export default function AppSidebar() {
 
   // Navegación derivada del catálogo real de módulos (GET /rutas/modulos, ya
   // cargado al login) en vez de un array hardcodeado — ver navigationCatalog.ts.
-  const navigation = useMemo(() => buildNavSections(globalModuleConfigs), [globalModuleConfigs]);
-
-  if (isDeveloper) {
-    navigation.push({
-      label: "Developer Only",
-      items: [
-        { title: "Panel de Desarrollador", url: "/developer", icon: Terminal, group: "Developer Only" },
-      ],
-    });
-  }
+  const navigation = useMemo(() => {
+    const sections = [...buildNavSections(globalModuleConfigs)];
+    if (isDeveloper) {
+      sections.push({
+        label: "Developer Only",
+        items: [
+          { title: "Panel de Desarrollador", url: "/developer", icon: Terminal, group: "Developer Only" },
+        ],
+      });
+    }
+    return sections;
+  }, [globalModuleConfigs, isDeveloper]);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">

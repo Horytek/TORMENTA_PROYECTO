@@ -1,6 +1,7 @@
 import { getConnection } from "./../database/database.js";
 import { logAudit } from "../utils/auditLogger.js";
 import { isDeveloperReq, DEVELOPER_ROLE_ID } from "../middlewares/authorize.middleware.js";
+import { AuthZService } from "../services/authz.service.js";
 
 // Helper para obtener el nombre de usuario de forma flexible
 function getUserName(req) {
@@ -29,8 +30,9 @@ async function isDeveloperUser(req, connection) {
 }
 
 const getModulosConSubmodulosPorPlan = async (req, res) => {
+  let connection;
   try {
-    const connection = await getConnection();
+    connection = await getConnection();
     const nameUser = getUserName(req);
     const id_tenant = req.id_tenant;
 
@@ -83,31 +85,67 @@ const getModulosConSubmodulosPorPlan = async (req, res) => {
 
     const planEmpresa = userInfo[0].plan_pago;
 
-    let modulosQuery = `
-      SELECT m.* FROM modulo m
-      LEFT JOIN plan_modulo pm ON m.id_modulo = pm.id_modulo
-      WHERE pm.id_plan <= ? OR pm.id_plan IS NULL
-      ORDER BY m.id_modulo
-    `;
+    // E4/E5 (nueva_arquitectura.md): si el plan tiene una plantilla PUBLISHED,
+    // usar los entitlements versionados; si no existe (plan sin migrar aún),
+    // caer al join legado plan_modulo/plan_submodulo sin romper nada.
+    const [templateRows] = await connection.query(
+      `SELECT id FROM plan_template_version WHERE id_plan = ? AND status = 'PUBLISHED' ORDER BY version DESC LIMIT 1`,
+      [planEmpresa]
+    );
+    const templateVersionId = templateRows[0]?.id || null;
 
-    const [modulos] = await connection.query(modulosQuery, [planEmpresa]);
-    const moduloIds = modulos.map(m => m.id_modulo);
+    let modulos;
     let submodulos = [];
 
-    if (moduloIds.length > 0) {
-      const [submodulosResult] = await connection.query(`
-        SELECT 
-          s.id_submodulo,
-          s.id_modulo,
-          s.nombre_sub,
-          s.ruta as ruta_submodulo
-        FROM submodulos s
-        LEFT JOIN plan_submodulo ps ON s.id_submodulo = ps.id_submodulo
-        WHERE s.id_modulo IN (${moduloIds.map(() => '?').join(',')})
-        AND (ps.id_plan <= ? OR ps.id_plan IS NULL)
-        ORDER BY s.id_modulo, s.id_submodulo
-      `, [...moduloIds, planEmpresa]);
-      submodulos = submodulosResult;
+    if (templateVersionId) {
+      [modulos] = await connection.query(`
+        SELECT m.* FROM modulo m
+        INNER JOIN plan_entitlement_modulo pem ON pem.id_modulo = m.id_modulo
+        WHERE pem.template_version_id = ?
+        ORDER BY m.id_modulo
+      `, [templateVersionId]);
+
+      const moduloIds = modulos.map(m => m.id_modulo);
+      if (moduloIds.length > 0) {
+        const [submodulosResult] = await connection.query(`
+          SELECT
+            s.id_submodulo,
+            s.id_modulo,
+            s.nombre_sub,
+            s.ruta as ruta_submodulo
+          FROM submodulos s
+          INNER JOIN plan_entitlement_submodulo pes ON pes.id_submodulo = s.id_submodulo
+          WHERE pes.template_version_id = ? AND s.id_modulo IN (${moduloIds.map(() => '?').join(',')})
+          ORDER BY s.id_modulo, s.id_submodulo
+        `, [templateVersionId, ...moduloIds]);
+        submodulos = submodulosResult;
+      }
+    } else {
+      const modulosQuery = `
+        SELECT m.* FROM modulo m
+        LEFT JOIN plan_modulo pm ON m.id_modulo = pm.id_modulo
+        WHERE pm.id_plan <= ? OR pm.id_plan IS NULL
+        ORDER BY m.id_modulo
+      `;
+
+      [modulos] = await connection.query(modulosQuery, [planEmpresa]);
+      const moduloIds = modulos.map(m => m.id_modulo);
+
+      if (moduloIds.length > 0) {
+        const [submodulosResult] = await connection.query(`
+          SELECT
+            s.id_submodulo,
+            s.id_modulo,
+            s.nombre_sub,
+            s.ruta as ruta_submodulo
+          FROM submodulos s
+          LEFT JOIN plan_submodulo ps ON s.id_submodulo = ps.id_submodulo
+          WHERE s.id_modulo IN (${moduloIds.map(() => '?').join(',')})
+          AND (ps.id_plan <= ? OR ps.id_plan IS NULL)
+          ORDER BY s.id_modulo, s.id_submodulo
+        `, [...moduloIds, planEmpresa]);
+        submodulos = submodulosResult;
+      }
     }
 
     const modulosConSubmodulos = modulos.map(modulo => {
@@ -135,6 +173,8 @@ const getModulosConSubmodulosPorPlan = async (req, res) => {
       success: false,
       message: error.message
     });
+  } finally {
+    if (connection) connection.release();
   }
 };
 
@@ -198,10 +238,11 @@ const getRolesPorPlan = async (req, res) => {
 };
 
 const getPermisosByRolGlobal = async (req, res) => {
+  let connection;
   try {
     const { id_rol } = req.params;
     const { plan } = req.query;
-    const connection = await getConnection();
+    connection = await getConnection();
     const nameUser = getUserName(req);
     const id_tenant = req.id_tenant;
 
@@ -285,6 +326,8 @@ const getPermisosByRolGlobal = async (req, res) => {
       success: false,
       message: error.message,
     });
+  } finally {
+    if (connection) connection.release();
   }
 };
 
@@ -378,6 +421,13 @@ const savePermisosGlobales = async (req, res) => {
 
     await connection.commit();
 
+    // Invalidar caché de AuthZService: las filas `permisos` con `id_plan=planObjetivo`
+    // cambiaron para todos los tenants en ese plan → el catálogo/entitlements y
+    // las capabilities efectivas de cada rol en esos tenants pueden haber cambiado.
+    // ponytail: global clear — reemplazar con invalidación por clave si el catálogo
+    // crece y los clears se convierten en un cuello de botella.
+    AuthZService.clearCache();
+
     // ---------------------------------------------------------
     // Audit Log (Async)
     // ---------------------------------------------------------
@@ -423,6 +473,7 @@ const savePermisosGlobales = async (req, res) => {
 };
 
 const checkPermisoGlobal = async (req, res) => {
+  let connection;
   try {
     const idModulo = parseInt(req.query.idModulo);
     const idSubmodulo = req.query.idSubmodulo ? parseInt(req.query.idSubmodulo) : null;
@@ -443,7 +494,7 @@ const checkPermisoGlobal = async (req, res) => {
       });
     }
 
-    const connection = await getConnection();
+    connection = await getConnection();
     const id_tenant = req.id_tenant;
 
     const isDeveloper = await isDeveloperUser(req, connection);
@@ -483,11 +534,11 @@ const checkPermisoGlobal = async (req, res) => {
     }
 
     const [permisos] = await connection.query(`
-      SELECT ver, crear, editar, eliminar, desactivar, generar 
-      FROM permisos 
-      WHERE id_rol = ? AND id_modulo = ? AND id_plan = ?
+      SELECT ver, crear, editar, eliminar, desactivar, generar
+      FROM permisos
+      WHERE id_rol = ? AND id_tenant = ? AND id_modulo = ? AND id_plan = ?
       AND (id_submodulo = ? OR (id_submodulo IS NULL AND ? IS NULL))
-    `, [id_rol, idModulo, plan_pago, idSubmodulo, idSubmodulo]);
+    `, [id_rol, id_tenant, idModulo, plan_pago, idSubmodulo, idSubmodulo]);
 
     const hasPermission = permisos.length > 0 && permisos[0].ver === 1;
     const hasCreatePermission = permisos.length > 0 && permisos[0].crear === 1;
@@ -516,6 +567,8 @@ const checkPermisoGlobal = async (req, res) => {
       hasDeactivatePermission: false,
       message: "Error interno del servidor"
     });
+  } finally {
+    if (connection) connection.release();
   }
 };
 

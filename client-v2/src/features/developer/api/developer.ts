@@ -1,8 +1,8 @@
 import api from "@/api/axios";
 import type {
-  Modulo, Submodulo, ModuloInput, SubmoduloInput,
+  Modulo, Submodulo, ModuloInput, ModuloUpdateInput, SubmoduloInput,
   PlatformUser, Empresa, NewUserInput, UpdateUserPlanInput,
-  CatalogAction, CatalogActionInput,
+  CatalogAction, CatalogActionInput, Plan, PlanTemplateVersion, PlanEntitlements,
 } from "../types";
 
 // ─────────────────────────────────────────────────────────────────
@@ -20,13 +20,23 @@ export const createModulo = async (input: ModuloInput): Promise<boolean> => {
   return res.data?.code === 1;
 };
 
-export const updateModulo = async (id: number, input: ModuloInput): Promise<boolean> => {
+export const updateModulo = async (id: number, input: ModuloUpdateInput): Promise<boolean> => {
   const res = await api.put(`/modulos/${id}`, input);
   return res.data?.code === 1 || res.status === 200;
 };
 
 export const deleteModulo = async (id: number): Promise<void> => {
   await api.delete(`/modulos/${id}`);
+};
+
+/** Toggle rápido de "visible en menú" sin abrir el formulario completo. */
+export const setModuloVisibility = async (modulo: Modulo, is_visible: boolean): Promise<boolean> => {
+  const res = await api.put(`/modulos/${modulo.id_modulo}`, {
+    nombre_modulo: modulo.nombre_modulo,
+    ruta: modulo.ruta,
+    is_visible,
+  });
+  return res.data?.code === 1 || res.status === 200;
 };
 
 export const createSubmodulo = async (input: SubmoduloInput): Promise<boolean> => {
@@ -41,6 +51,16 @@ export const updateSubmodulo = async (id: number, input: Omit<SubmoduloInput, "i
 
 export const deleteSubmodulo = async (id: number): Promise<void> => {
   await api.delete(`/submodulos/${id}`);
+};
+
+/** Toggle rápido de "visible en menú" sin abrir el formulario completo. */
+export const setSubmoduloVisibility = async (submodulo: Submodulo, is_visible: boolean): Promise<boolean> => {
+  const res = await api.put(`/submodulos/${submodulo.id_submodulo}`, {
+    nombre_sub: submodulo.nombre_sub,
+    ruta: submodulo.ruta_submodulo,
+    is_visible,
+  });
+  return res.data?.code === 1 || res.status === 200;
 };
 
 // ─────────────────────────────────────────────────────────────────
@@ -104,16 +124,63 @@ export const deleteAction = async (id: number): Promise<boolean> => {
 };
 
 // ─────────────────────────────────────────────────────────────────
+// Plantillas de plan (entitlements versionados — E4/E5 nueva_arquitectura.md)
+// ─────────────────────────────────────────────────────────────────
+
+export const getPlanes = async (): Promise<Plan[]> => {
+  const res = await api.get("/planes");
+  return res.data?.data ?? [];
+};
+
+export const listPlanVersions = async (idPlan: number): Promise<PlanTemplateVersion[]> => {
+  const res = await api.get(`/plan-templates/${idPlan}/versions`);
+  return res.data?.data ?? [];
+};
+
+export const getPlanEntitlements = async (templateVersionId: number): Promise<PlanEntitlements> => {
+  const res = await api.get(`/plan-templates/${templateVersionId}/entitlements`);
+  return res.data?.data ?? { modulos: [], submodulos: [] };
+};
+
+export const createPlanDraft = async (idPlan: number): Promise<{ id: number; version: number }> => {
+  const res = await api.post("/plan-templates/draft", { id_plan: idPlan });
+  if (!res.data?.success) throw new Error(res.data?.message || "No se pudo crear el borrador");
+  return { id: res.data.id, version: res.data.version };
+};
+
+export const savePlanEntitlements = async (templateVersionId: number, entitlements: PlanEntitlements): Promise<boolean> => {
+  const res = await api.put(`/plan-templates/${templateVersionId}/entitlements`, entitlements);
+  return !!res.data?.success;
+};
+
+export const publishPlanVersion = async (templateVersionId: number): Promise<boolean> => {
+  const res = await api.post(`/plan-templates/${templateVersionId}/publish`);
+  return !!res.data?.success;
+};
+
+export const discardPlanDraft = async (templateVersionId: number): Promise<boolean> => {
+  const res = await api.delete(`/plan-templates/${templateVersionId}`);
+  return !!res.data?.success;
+};
+
+// ─────────────────────────────────────────────────────────────────
 // Limpiador de base de datos (herramienta destructiva, solo developer)
 // ─────────────────────────────────────────────────────────────────
 
-export const clearTenantData = async (targetTenantId: number | string): Promise<{ success: boolean; message?: string }> => {
+export interface ClearTenantDataResult {
+  success: boolean;
+  message?: string;
+  /** Pasos que se saltaron por falta de tabla/columna en esta BD (diagnóstico, no error). */
+  skipped?: string[];
+}
+
+export const clearTenantData = async (targetTenantId: number | string): Promise<ClearTenantDataResult> => {
   try {
     const res = await api.delete("/developer/clear-data", { data: { password: "dev1234", target_tenant_id: targetTenantId } });
-    return { success: res.data?.code === 1, message: res.data?.message };
+    return { success: res.data?.code === 1, message: res.data?.message, skipped: res.data?.skipped ?? [] };
   } catch (err) {
-    const data = (err as { response?: { data?: { message?: string; step?: string } } })?.response?.data;
+    const data = (err as { response?: { data?: { message?: string; step?: string; skipped?: string[] } } })?.response?.data;
     const message = data?.step ? `${data.message} (paso: ${data.step})` : data?.message;
-    return { success: false, message: message || "Error de conexión o servidor" };
+    return { success: false, message: message || "Error de conexión o servidor", skipped: data?.skipped ?? [] };
   }
 };

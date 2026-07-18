@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ShieldCheck, ChevronRight } from "lucide-react";
+import { ShieldCheck, ChevronRight, Eye, EyeOff } from "lucide-react";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
+import { getIcon } from "@/lib/iconRegistry";
+import { SECTION_ORDER } from "@/lib/navigationCatalog";
 import {
   getPlanesDisponibles, getRolesPorPlan, getUnifiedCatalog,
   type MergedPermissionNode,
@@ -17,8 +19,11 @@ const ACTION_LABELS: Record<string, string> = {
   desactivar: "Desactivar", generar: "Generar",
 };
 
+const SIN_PANTALLA = "Sin pantalla en client-v2";
+
 function PermissionRow({ node, depth = 0 }: { node: MergedPermissionNode; depth?: number }) {
   const granted = node.availableActions.filter((a) => node.permissions[a]);
+  const Icon = depth === 0 ? getIcon(node.icon) : null;
   return (
     <div>
       <div
@@ -28,9 +33,19 @@ function PermissionRow({ node, depth = 0 }: { node: MergedPermissionNode; depth?
         )}
       >
         {depth > 0 && <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40" />}
+        {Icon && <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />}
         <span className={cn("min-w-[180px] text-sm", depth === 0 ? "font-semibold text-foreground" : "text-muted-foreground")}>
           {node.name}
         </span>
+        {node.inSidebar ? (
+          <Badge variant="outline" className="gap-1 text-[10px] font-normal text-muted-foreground">
+            <Eye className="h-3 w-3" /> En sidebar
+          </Badge>
+        ) : (
+          <Badge variant="secondary" className="gap-1 text-[10px] font-normal text-muted-foreground/70">
+            <EyeOff className="h-3 w-3" /> {node.isVisible ? "Sin pantalla" : "Oculto"}
+          </Badge>
+        )}
         <div className="flex flex-wrap gap-1.5">
           {node.availableActions.length === 0 && (
             <span className="text-xs text-muted-foreground/60">Sin acciones configuradas</span>
@@ -55,10 +70,10 @@ function PermissionRow({ node, depth = 0 }: { node: MergedPermissionNode; depth?
 
 /**
  * Vista de solo lectura del árbol módulo→submódulo→acciones fusionado para
- * un rol + plan. Conecta `GET /permisos-globales/v2/unified-catalog`
- * (permissions.v2.controller.js) — ya existía en el backend pero ningún
- * frontend lo consumía. Útil para auditar qué puede hacer realmente un rol
- * sin tener que cruzar manualmente la matriz de permisos.
+ * un rol + plan. Agrupa igual que el sidebar real de client-v2 (mismo
+ * `SECTION_ORDER` de navigationCatalog.ts) y marca qué módulos tienen
+ * pantalla/visibilidad real ahí — antes mostraba el catálogo crudo en orden
+ * alfabético, mezclando módulos legacy sin pantalla con los reales.
  */
 export function PermissionsAuditTab() {
   const { data: planes = [] } = useQuery({ queryKey: ["dev-audit-planes"], queryFn: getPlanesDisponibles });
@@ -80,13 +95,35 @@ export function PermissionsAuditTab() {
     enabled: !!roleId && !!planId,
   });
 
+  const sections = useMemo(() => {
+    const byGroup = new Map<string, MergedPermissionNode[]>();
+    const sinPantalla: MergedPermissionNode[] = [];
+    for (const node of tree) {
+      if (!node.inSidebar) {
+        sinPantalla.push(node);
+        continue;
+      }
+      const group = node.groupName || "General";
+      const list = byGroup.get(group) ?? [];
+      list.push(node);
+      byGroup.set(group, list);
+    }
+    const ordered = SECTION_ORDER
+      .map((label) => ({ label, items: byGroup.get(label) ?? [] }))
+      .filter((s) => s.items.length > 0);
+    if (sinPantalla.length > 0) ordered.push({ label: SIN_PANTALLA, items: sinPantalla });
+    return ordered;
+  }, [tree]);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4">
         <ShieldCheck className="h-5 w-5 text-brand" />
         <div className="flex-1 min-w-[200px]">
           <p className="text-sm font-semibold text-foreground">Auditoría de permisos</p>
-          <p className="text-xs text-muted-foreground">Vista de solo lectura del catálogo módulo/submódulo fusionado con la matriz de permisos.</p>
+          <p className="text-xs text-muted-foreground">
+            Mismo agrupamiento que el sidebar de client-v2 — "{SIN_PANTALLA}" son módulos legacy sin pantalla React todavía.
+          </p>
         </div>
         <Select value={roleId} onValueChange={setRoleId}>
           <SelectTrigger className="w-48"><SelectValue placeholder="Rol" /></SelectTrigger>
@@ -111,14 +148,19 @@ export function PermissionsAuditTab() {
           <div className="flex items-center justify-center gap-2 p-10 text-sm text-muted-foreground">
             <Spinner size="sm" /> Cargando catálogo…
           </div>
-        ) : tree.length === 0 ? (
+        ) : sections.length === 0 ? (
           <p className="p-8 text-center text-sm text-muted-foreground">Sin módulos configurados.</p>
         ) : (
-          <div className="px-4">
-            {tree.map((node) => (
-              <PermissionRow key={node.uniqueId} node={node} />
-            ))}
-          </div>
+          sections.map((section) => (
+            <div key={section.label} className="border-b border-border/60 px-4 last:border-0">
+              <p className="pt-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {section.label}
+              </p>
+              {section.items.map((node) => (
+                <PermissionRow key={node.uniqueId} node={node} />
+              ))}
+            </div>
+          ))
         )}
       </div>
     </div>
