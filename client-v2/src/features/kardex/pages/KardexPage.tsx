@@ -104,7 +104,7 @@ export default function KardexPage() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 animate-fade-in">
+    <div className="max-w-6xl space-y-6 animate-fade-in">
       {/* Encabezado */}
       <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

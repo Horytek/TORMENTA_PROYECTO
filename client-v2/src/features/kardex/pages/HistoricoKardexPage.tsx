@@ -397,7 +397,7 @@ export default function HistoricoKardexPage() {
    * ────────────────────────────────────────────────────────── */
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-4 md:p-6 animate-fade-in">
+    <div className="max-w-6xl space-y-6 animate-fade-in">
       {/* Header superior */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
@@ -410,7 +410,7 @@ export default function HistoricoKardexPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               Historial del Producto
             </h1>
             <p className="text-sm text-muted-foreground">

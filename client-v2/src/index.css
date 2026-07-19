@@ -246,42 +246,17 @@
   color: hsl(var(--node-hue), 75%, 75%);
 }
 
-/* Sidebar scrollbar styling */
+/* Sidebar: scrollable en pantallas cortas pero SIN barra visible (se sentía
+   como un scroll no intencional). El contenido sigue accesible por rueda/touch. */
 [data-sidebar="content"] {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.25) transparent; /* Firefox */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
 }
 
-/* For Webkit browsers (Chrome, Safari, Edge) */
 [data-sidebar="content"]::-webkit-scrollbar {
-  width: 5px; /* very thin scrollbar */
-}
-
-[data-sidebar="content"]::-webkit-scrollbar-track {
-  background: transparent; /* track is invisible */
-}
-
-[data-sidebar="content"]::-webkit-scrollbar-thumb {
-  background-color: rgba(148, 163, 184, 0.2); /* slate-400/20 */
-  border-radius: 9999px;
-  background-clip: padding-box;
-}
-
-[data-sidebar="content"]::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(148, 163, 184, 0.45); /* slate-400/45 */
-}
-
-/* Dark mode scrollbar variables overrides */
-.dark [data-sidebar="content"] {
-  scrollbar-color: rgba(113, 113, 122, 0.25) transparent;
-}
-
-.dark [data-sidebar="content"]::-webkit-scrollbar-thumb {
-  background-color: rgba(113, 113, 122, 0.25);
-}
-
-.dark [data-sidebar="content"]::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(113, 113, 122, 0.5);
+  width: 0;
+  height: 0;
+  display: none; /* Chrome, Safari, Edge */
 }
 
 /* Scrollbar hiding utility */

@@ -7,7 +7,6 @@ import { useUserStore } from "@/store/useUserStore";
 import { verifyTokenRequest } from "@/api/auth";
 import { setAuthReady } from "@/api/axios";
 import { getToken } from "@/utils/authStorage";
-import { Loader2 } from "lucide-react";
 
 // Layout + login + landing cargan de inmediato; las páginas van diferidas (code-split por ruta).
 import LoginPage from "@/features/auth/pages/LoginPage";
@@ -65,13 +64,12 @@ function ProtectedRoute() {
   const isAuthenticated = useUserStore((state) => state.isAuthenticated);
   const loading = useUserStore((state) => state.loading);
 
+  // Mientras se verifica el token no mostramos una pantalla de "Sincronizando
+  // sesión" (se sentía lenta y bloqueaba el render). La verificación es un
+  // round-trip breve; renderizamos vacío para no parpadear al login antes de
+  // saber si hay sesión.
   if (loading) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background">
-        <Loader2 className="h-10 w-10 animate-spin text-brand" />
-        <p className="num mt-4 text-sm text-muted-foreground">Sincronizando sesión…</p>
-      </div>
-    );
+    return null;
   }
 
   if (!isAuthenticated) {

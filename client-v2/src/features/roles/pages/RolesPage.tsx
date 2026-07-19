@@ -67,7 +67,7 @@ export default function RolesPage() {
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 animate-fade-in">
+    <div className="max-w-4xl space-y-6 animate-fade-in">
       {/* Encabezado */}
       <div className="flex flex-col gap-4 border-b border-border pb-4 md:flex-row md:items-center md:justify-between">
         <div>
