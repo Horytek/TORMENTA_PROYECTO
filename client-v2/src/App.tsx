@@ -44,6 +44,7 @@ const GuidesPage = lazy(() => import("@/features/despatch-guides/pages/GuidesPag
 const DeveloperPage = lazy(() => import("@/features/developer/pages/DeveloperPage"));
 const ExpressHomePage = lazy(() => import("@/features/express/pages/ExpressHomePage"));
 const AccountingPage = lazy(() => import("@/features/accounting/pages/AccountingPage"));
+const SystemLogsPage = lazy(() => import("@/features/system-logs/pages/SystemLogsPage"));
 
 // Initialize Query Client for TanStack Query
 const queryClient = new QueryClient({
@@ -216,6 +217,10 @@ export default function App() {
                   <Route
                     path="/settings/system"
                     element={<RequireCapability capability="configuracion/negocio.view"><SettingsPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/settings/logs"
+                    element={<RequireCapability adminOnly><SystemLogsPage /></RequireCapability>}
                   />
                   <Route
                     path="/reports/sales"
