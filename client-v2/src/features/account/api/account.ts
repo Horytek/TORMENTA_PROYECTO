@@ -12,6 +12,17 @@ export const addClave = async (input: ClaveInput): Promise<boolean> => {
   return res.data?.code === 1;
 };
 
+/** Valor vacío o enmascarado (bullets) = el backend conserva el valor actual. */
+export const updateClave = async (id: number, input: ClaveInput): Promise<boolean> => {
+  const res = await api.put(`/clave/${id}`, input);
+  return res.data?.code === 1;
+};
+
+export const deleteClave = async (id: number): Promise<boolean> => {
+  const res = await api.delete(`/clave/${id}`);
+  return res.data?.code === 1;
+};
+
 export const getFunciones = async (): Promise<Funcion[]> => unwrapList<Funcion>(await api.get("/funciones"));
 
 export const getPlanes = async (): Promise<Plan[]> => unwrapList<Plan>(await api.get("/planes"));

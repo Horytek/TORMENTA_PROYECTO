@@ -209,9 +209,19 @@ const publishVersion = async (req, res) => {
             [id]
         );
 
+        // Fase 1: los entitlements del plan cambiaron → subir perm_version de
+        // todos los tenants en ese plan para invalidar sus cachés versionadas.
+        await connection.query(
+            `UPDATE empresa e SET e.perm_version = e.perm_version + 1
+             WHERE e.id_tenant IN (
+                SELECT DISTINCT u.id_tenant FROM usuario u
+                WHERE u.plan_pago = ? AND u.id_rol = 1 AND u.id_tenant IS NOT NULL
+             )`,
+            [rows[0].id_plan]
+        );
+
         // Una nueva versión PUBLISHED entra en vigor → todos los tenants en este
         // `id_plan` ahora ven los nuevos entitlements en su catálogo.
-        // ponytail: clear global.
         AuthZService.clearCache();
 
         logAudit(req, {

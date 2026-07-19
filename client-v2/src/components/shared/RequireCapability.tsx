@@ -7,6 +7,8 @@ interface RequireCapabilityProps {
   capability?: string;
   /** El panel Developer no tiene módulo/capability en BD — se exige id_rol=10 directo. */
   developerOnly?: boolean;
+  /** Pantallas sin módulo en BD gateadas por rol admin del tenant (ej. logs de auditoría). */
+  adminOnly?: boolean;
   children: ReactNode;
 }
 
@@ -17,10 +19,16 @@ interface RequireCapabilityProps {
  * la URL podía navegar directo. Esto complementa (no reemplaza) la
  * autorización real ya agregada en el backend (Fase 1).
  */
-export function RequireCapability({ capability, developerOnly, children }: RequireCapabilityProps) {
-  const { can, isDeveloper } = usePermissions();
+export function RequireCapability({ capability, developerOnly, adminOnly, children }: RequireCapabilityProps) {
+  const { can, isDeveloper, isAdmin } = usePermissions();
 
-  const allowed = developerOnly ? isDeveloper : capability ? can(capability) : true;
+  const allowed = developerOnly
+    ? isDeveloper
+    : adminOnly
+      ? isAdmin
+      : capability
+        ? can(capability)
+        : true;
 
   if (!allowed) {
     return (

@@ -126,18 +126,12 @@ export class PlanSynchronizer {
                 }
             }
 
-            // 4. Update Tenant Version Info
+            // 4. Versionado (Fase 1): perm_version es un CONTADOR de invalidación,
+            // no el id de la plantilla. Antes esto hacía dos updates con
+            // `WHERE id_empresa = idTenant` (columna equivocada) y además pisaba
+            // el contador con targetVersionId — quedaba corrupto o sin efecto.
             await connection.query(
-                `UPDATE empresa SET perm_version = ?, last_synced_at = NOW() WHERE id_empresa = ?`,
-                [targetVersionId, idTenant] // Assuming perm_version stores the template version ID? Or just a counter?
-                // Re-reading migration: `perm_version` in `empresa` is INT DEFAULT 1. `plan_template_version` has `version_name`.
-                // We should probably store `current_plan_version_id` in empresa if we want strict tracking.
-                // For now, we just increment `perm_version` to signal cache invalidation.
-            );
-
-            // Increment perm_version for Cache Invalidation (Audit/Controller logic)
-            await connection.query(
-                `UPDATE empresa SET perm_version = perm_version + 1 WHERE id_empresa = ?`,
+                `UPDATE empresa SET perm_version = perm_version + 1, last_synced_at = NOW() WHERE id_tenant = ?`,
                 [idTenant]
             );
 

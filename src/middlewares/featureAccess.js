@@ -9,10 +9,11 @@ const featureMap = {
 
 // Middleware solo para almacenes y sucursales
 export const checkFeatureAccess = (featureKey, opts = {}) => async (req, res, next) => {
+  let connection;
   try {
     const id_tenant = req.id_tenant;
     const nameUser = req.user?.nameUser;
-    const connection = await getConnection();
+    connection = await getConnection();
 
     // Obtener el plan del usuario y el tenant
     const [userInfo] = await connection.query(
@@ -49,23 +50,27 @@ export const checkFeatureAccess = (featureKey, opts = {}) => async (req, res, ne
 
     // Validar límites de cantidad si aplica
     if (feature.max && opts.checkLimit) {
+      // Antes esto hacía `[[{ total }]] = ...` sin declarar la variable:
+      // ReferenceError en ESM → siempre respondía 500 cuando checkLimit aplicaba.
       let count = 0;
       switch (featureKey) {
-        case "almacenes":
-          [[{ total }]] = await connection.query(
+        case "almacenes": {
+          const [[row]] = await connection.query(
             "SELECT COUNT(*) AS total FROM almacen WHERE id_tenant = ?",
             [id_tenant]
           );
-          count = total;
+          count = row.total;
           break;
+        }
         case "multiples_sucursales":
-        case "sucursales_ilimitadas":
-          [[{ total }]] = await connection.query(
+        case "sucursales_ilimitadas": {
+          const [[row]] = await connection.query(
             "SELECT COUNT(*) AS total FROM sucursal WHERE id_tenant = ?",
             [id_tenant]
           );
-          count = total;
+          count = row.total;
           break;
+        }
       }
       if (count >= feature.max) {
         return res.status(403).json({ message: `Límite alcanzado para ${featureKey}: máximo ${feature.max}` });
@@ -74,6 +79,9 @@ export const checkFeatureAccess = (featureKey, opts = {}) => async (req, res, ne
 
     next();
   } catch (error) {
+    console.error("Error en checkFeatureAccess:", error);
     return res.status(500).json({ message: "Error validando acceso a la funcionalidad" });
+  } finally {
+    if (connection) connection.release();
   }
 };

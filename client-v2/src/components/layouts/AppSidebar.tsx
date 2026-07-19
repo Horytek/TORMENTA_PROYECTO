@@ -19,6 +19,7 @@ import {
   BadgeCheck,
   CreditCard,
   ChevronsUpDown,
+  ScrollText,
 } from "lucide-react";
 import { removeToken } from "@/utils/authStorage";
 import { resetVerifyTokenCache } from "@/api/auth";
@@ -64,6 +65,13 @@ export default function AppSidebar() {
   // cargado al login) en vez de un array hardcodeado — ver navigationCatalog.ts.
   const navigation = useMemo(() => {
     const sections = [...buildNavSections(globalModuleConfigs)];
+    // Logs de auditoría: sin módulo/capability en BD (gate por rol admin, como en v1).
+    if (isAdmin) {
+      const logsItem = { title: "Logs del Sistema", url: "/settings/logs", icon: ScrollText, group: "Ajustes" };
+      const ajustes = sections.find((s) => s.label === "Ajustes");
+      if (ajustes) ajustes.items.push(logsItem);
+      else sections.push({ label: "Ajustes", items: [logsItem] });
+    }
     if (isDeveloper) {
       sections.push({
         label: "Developer Only",
@@ -73,7 +81,7 @@ export default function AppSidebar() {
       });
     }
     return sections;
-  }, [globalModuleConfigs, isDeveloper]);
+  }, [globalModuleConfigs, isAdmin, isDeveloper]);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">

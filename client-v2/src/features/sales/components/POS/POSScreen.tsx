@@ -119,18 +119,18 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
           />
 
           {/* Selector de Almacén de Stock */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl border border-border bg-background text-xs">
-            <Building2 className="h-3.5 w-3.5 text-primary" />
-            <span className="text-muted-foreground font-medium hidden sm:inline">Stock de:</span>
+          <div className="flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 h-8 text-xs shrink-0 transition-colors hover:border-muted-foreground/40">
+            <Building2 className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="text-muted-foreground font-medium whitespace-nowrap hidden sm:inline">Stock de:</span>
             <Select
               value={selectedAlmacenId ? String(selectedAlmacenId) : ""}
               onValueChange={(val) => setSelectedAlmacenId(Number(val))}
               disabled={!canSelectWarehouse || availableAlmacenes.length <= 1}
             >
-              <SelectTrigger className="h-6 border-0 bg-transparent p-0 shadow-none text-xs font-semibold focus:ring-0 gap-1 min-w-[120px]">
+              <SelectTrigger className="h-full border-0 bg-transparent p-0 shadow-none text-xs font-semibold focus:ring-0 gap-1 min-w-[110px] focus:outline-none">
                 <SelectValue placeholder="Cargando almacén…" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent align="start">
                 {availableAlmacenes.map((alm) => (
                   <SelectItem key={alm.id_almacen} value={String(alm.id_almacen)}>
                     {alm.nom_almacen} {alm.sucursal ? `(${alm.sucursal})` : ""}
@@ -148,14 +148,14 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
           <HeldTicketsPanel />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 shrink-0">
           {user?.sucursal && (
-            <Badge variant="secondary" className="text-xs">
+            <Badge variant="secondary" className="h-8 px-2.5 text-xs font-medium rounded-lg">
               📍 {user.sucursal}
             </Badge>
           )}
           {lastSaleId && (
-            <Badge variant="outline" className="text-xs text-emerald-600 border-emerald-200">
+            <Badge variant="outline" className="h-8 px-2.5 text-xs font-medium text-emerald-600 border-emerald-200 rounded-lg">
               ✓ Venta #{lastSaleId}
             </Badge>
           )}
