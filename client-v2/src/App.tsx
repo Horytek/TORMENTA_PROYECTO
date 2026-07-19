@@ -45,6 +45,7 @@ const DeveloperPage = lazy(() => import("@/features/developer/pages/DeveloperPag
 const ExpressHomePage = lazy(() => import("@/features/express/pages/ExpressHomePage"));
 const AccountingPage = lazy(() => import("@/features/accounting/pages/AccountingPage"));
 const SystemLogsPage = lazy(() => import("@/features/system-logs/pages/SystemLogsPage"));
+const StatusPage = lazy(() => import("@/features/status/pages/StatusPage"));
 
 // Initialize Query Client for TanStack Query
 const queryClient = new QueryClient({
@@ -135,6 +136,7 @@ export default function App() {
               <Route path="/actualizaciones" element={<UpdatesPage />} />
               <Route path="/contactanos" element={<ContactPage />} />
               <Route path="/registro" element={<RegisterPage />} />
+              <Route path="/status" element={<StatusPage />} />
               <Route path="/success" element={<PaymentResultPage />} />
               <Route path="/failure" element={<PaymentResultPage />} />
               <Route path="/pending" element={<PaymentResultPage />} />
