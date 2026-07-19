@@ -135,6 +135,105 @@
 
 ---
 
+### Fase 5 — Diferenciadores: "Permisos Vivos" (el valor agregado)
+
+> El dolor histórico: agregar un permiso significaba crear registros en
+> `modulo`/`submodulos`/`permisos` **y** hardcodear el botón en el frontend.
+> Esta fase convierte los permisos en una feature vendible del ERP, no en
+> plomería. Los ERPs PYME típicos del mercado peruano manejan roles fijos por
+> pantalla; todo lo de abajo es terreno donde Horytek puede diferenciarse.
+> Importante: gran parte de la base YA existe (catálogo de acciones +
+> `permisos.actions_json` + el resolver ya emite capabilities dinámicas
+> `slug.accion`) — falta cerrar el círculo en el frontend.
+
+#### 5.1 Acciones 100 % dinámicas end-to-end (mata el hardcodeo de botones) — EL PRIMERO
+
+Hoy: el backend ya soporta acciones dinámicas (`actions_json` + ActionCatalogTab
+en Developer + el resolver las convierte en capabilities). Lo que falta:
+
+- **`<Can capability="ventas.aplicar_descuento">…</Can>`** — componente único en
+  client-v2 que envuelve cualquier botón/menú. Ya existe `usePermissions().can()`;
+  esto es solo la capa declarativa + variantes (`hide` / `disable` / `askUpgrade`).
+- **La matriz de roles renderiza las acciones desde el catálogo**, no desde las
+  6 columnas fijas (`ver/crear/editar/...`): agregar la acción
+  "anular_venta" en el catálogo la hace aparecer sola en RolePermissionsDialog.
+- **Registro automático al crear módulos**: crear un módulo en Developer siembra
+  sus acciones CRUD estándar en el catálogo (hoy son dos pasos manuales).
+- Resultado medible: **agregar un permiso nuevo = 1 registro en el catálogo +
+  envolver el botón en `<Can>`. Cero migraciones, cero SQL, cero deploys de backend.**
+
+#### 5.2 Permisos con condiciones (ABAC ligero sobre el RBAC actual)
+
+Columna `conditions_json` en `permisos` interpretada por el resolver:
+
+| Condición | Ejemplo real de PYME peruana |
+|---|---|
+| Límite por monto | "Vendedor aplica descuentos hasta 10 %; anula ventas hasta S/ 200" |
+| Alcance por sucursal/almacén | "El cajero de la sucursal Norte solo ve SU caja y SU stock" |
+| Horario/turno | "Caja solo opera de 8 am a 10 pm; fuera de eso, ni con permiso" |
+| Cantidad por período | "Máximo 3 anulaciones por día por usuario" |
+
+El frontend recibe las condiciones junto con las capabilities y puede pre-validar
+(ej. deshabilitar el botón de descuento arriba del 10 %), pero el enforcement
+real vive en el resolver del backend.
+
+#### 5.3 Aprobación en línea con PIN de supervisor (dual control) — EL "WOW" RETAIL
+
+El flujo de supermercado que ningún ERP PYME local hace bien: el cajero intenta
+una acción fuera de su permiso/condición (anular venta, descuento excesivo) y en
+vez de un 403 seco, aparece un modal **"Requiere aprobación del supervisor"** →
+el supervisor digita su PIN (o aprueba desde su propia sesión/celular vía el
+socket ya existente) → la acción se ejecuta **auditada con ambos actores**.
+- Tabla `approval_request (id, id_tenant, solicitante, aprobador, capability, payload_json, estado, created_at)`.
+- El PIN es un credencial corto por usuario (bcrypt, como todo lo demás).
+- Se apoya en 4.1 (403 distinguibles): `LIMIT_REACHED`/`ROLE_DENIED` +
+  `approvable: true` disparan el modal en vez del toast de error.
+
+#### 5.4 Delegación temporal ("modo vacaciones")
+
+"Le presto mis permisos de aprobación a Juan del 20 al 27 de julio": tabla
+`permiso_delegado` con vencimiento automático (el cron ya existe), visible y
+revocable desde Roles, todo auditado. Cero fricción para el dueño de la PYME que
+viaja.
+
+#### 5.5 Plantillas de rol por industria (time-to-value)
+
+Al crear el tenant (o desde Roles → "Crear desde plantilla"): roles pre-armados
+por rubro — Bodega/Minimarket (Cajero, Reponedor), Farmacia (Químico regente,
+Técnico), Textil/Confecciones (Vendedor mostrador, Almacenero, Costurera),
+Ferretería. Datos, no código: tabla `rol_template` + seed. Ataca directamente la
+prioridad Nº3 del negocio (time-to-value de clientes nuevos).
+
+#### 5.6 Explicabilidad y simulación ("ver como")
+
+- UI del `GET /authz/why` que ya existe: en Roles, botón "¿Por qué no puede?" —
+  respuesta en lenguaje claro ("El plan Básico no incluye Contabilidad").
+- **Modo "Ver como"**: el Administrador previsualiza el ERP exactamente como lo
+  ve un rol (read-only, banner visible, sin re-login) antes de guardarle
+  permisos. Barato de construir: las capabilities ya llegan por
+  `/authz/roles/:id/effective` — es cambiar el set en el store con un flag.
+
+#### 5.7 Permisos en tiempo real
+
+Al guardar permisos, push por Socket.io (ya hay socket de presencia) con el
+nuevo `perm_version` → los clientes conectados refrescan capabilities al vuelo.
+Se acabó el "dile a tu cajero que cierre sesión y vuelva a entrar".
+
+#### 5.8 Segregación de funciones SUNAT (ángulo compliance)
+
+Reglas SoD declarativas: "quien emite no anula", "quien registra compras no
+aprueba pagos". El editor de roles avisa combinaciones tóxicas al guardarlas y
+la auditoría las reporta. Argumento de venta serio para contadores y para
+empresas que pasan revisiones — y encaja con el `audit_log` ya construido.
+
+**Orden recomendado del paquete diferencial:** 5.1 (mata el dolor interno) →
+5.3 (el "wow" demo-able a clientes) → 5.2 límites por monto (completa a 5.3) →
+5.6 "ver como" → 5.7 → 5.4/5.5/5.8 según tracción comercial.
+**Prerequisito:** Fase 1 terminada (un solo resolver) — todo lo anterior se
+enchufa al resolver, no a queries sueltas.
+
+---
+
 ## 3. Decisiones abiertas (para decidir antes de Fase 2/3)
 
 1. **¿Tabla `plan_role_template` separada (backlog E4-02 original) o seguir con
@@ -166,6 +265,8 @@
 
 ## 5. Orden sugerido
 
-`Fase 0` (ya) → `Fase 1` → `Fase 4.1–4.2` (dependen solo de F1) → `Fase 2` →
-`Fase 3` → `Fase 4.3–4.4`. Total estimado: ~3 semanas de trabajo efectivo,
-entregable por PRs chicos e independientes.
+`Fase 0` (✅ hecha, 2026-07-18) → `Fase 1` → `Fase 4.1–4.2` (dependen solo de F1)
+→ `Fase 5.1` (acciones dinámicas end-to-end) → `Fase 5.3 + 5.2` (aprobaciones con
+PIN + límites por monto) → `Fase 2` → `Fase 3` → resto de F4/F5 según tracción.
+Base técnica (F0–F3): ~3 semanas. Paquete diferencial (F5.1–5.3): ~2 semanas
+adicionales. Todo entregable por PRs chicos e independientes.

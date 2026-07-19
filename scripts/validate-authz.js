@@ -43,7 +43,7 @@ const CAPABILITY_EXEMPT = new Set([
 
 const MUTATING_VERBS = ["post", "put", "delete", "patch"];
 const AUTH_MARKERS = [/\bauth\b/, /verifyToken/, /expressAuth/];
-const CAPABILITY_MARKERS = [/requireCapability/, /requireDeveloper/, /checkFeatureAccess/];
+const CAPABILITY_MARKERS = [/requireCapability/, /requireDeveloper/, /requireAdmin/, /checkFeatureAccess/];
 
 function analyzeFile(filename, content) {
     if (CAPABILITY_EXEMPT.has(filename)) return [];

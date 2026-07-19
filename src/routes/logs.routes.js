@@ -1,11 +1,15 @@
 import { Router } from "express";
 import { methods as logsController } from "../controllers/logs.controller.js";
 import { auth } from "../middlewares/auth.middleware.js";
+import { requireAdmin } from "../middlewares/authorize.middleware.js";
 import { forceLogCleanup, logMaintenanceService } from "../services/logMaintenance.service.js";
 
 const router = Router();
 
-router.use(auth);
+// Los logs de auditoría son de gestión del tenant: solo Administrador (mismo
+// gate que la pantalla /settings/logs en client-v2 y /configuracion/logs en v1).
+// Incluye el POST /cleanup, que borra registros.
+router.use(auth, requireAdmin);
 router.get("/", logsController.getLogs);
 router.get("/stats", logsController.getLogStats);
 router.get("/:id", logsController.getLog);
