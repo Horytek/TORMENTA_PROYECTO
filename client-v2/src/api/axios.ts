@@ -69,8 +69,10 @@ api.interceptors.response.use(
     }
 
     // Rechazo de autorización estructurado (Fase 4.1): emite un evento global
-    // para que un handler de UI (toast/modal de upgrade) reaccione según el
-    // motivo. Los componentes también pueden usar parseAuthzDenial en su onError.
+    // con el método HTTP incluido. El toast global solo reacciona a acciones
+    // del usuario (mutaciones); los GET denegados por plan son fetches de fondo
+    // que cada pantalla maneja sola. Los componentes pueden usar parseAuthzDenial
+    // en su onError para un manejo específico.
     const denial = parseAuthzDenial(e);
     if (denial) emitAuthzDenied(denial);
 

@@ -11,6 +11,15 @@ export type AuthzDenialCode = "ROLE_DENIED" | "PLAN_NOT_INCLUDED" | "TENANT_SUSP
 export interface AuthzDenial {
   code: AuthzDenialCode;
   message: string;
+  /** Método HTTP del request denegado — el toast global solo reacciona a
+   *  acciones del usuario (POST/PUT/DELETE/PATCH), no a GETs de fondo. */
+  method?: string;
+}
+
+/** true si el request nació de una acción explícita del usuario (mutación). */
+export function isUserAction(method?: string): boolean {
+  const m = (method || "").toUpperCase();
+  return m === "POST" || m === "PUT" || m === "DELETE" || m === "PATCH";
 }
 
 const KNOWN_CODES: AuthzDenialCode[] = ["ROLE_DENIED", "PLAN_NOT_INCLUDED", "TENANT_SUSPENDED"];
@@ -34,6 +43,7 @@ export function parseAuthzDenial(err: unknown): AuthzDenial | null {
   return {
     code: code as AuthzDenialCode,
     message: e.response.data?.message || DENIAL_COPY[code as AuthzDenialCode].title,
+    method: e.config?.method,
   };
 }
 
