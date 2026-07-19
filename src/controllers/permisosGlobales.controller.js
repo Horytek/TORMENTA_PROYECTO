@@ -419,14 +419,27 @@ const savePermisosGlobales = async (req, res) => {
       await connection.query(batchQuery, params);
     }
 
+    // Fase 1: subir perm_version de todos los tenants afectados dentro de la
+    // misma transacción — así sus cachés versionadas (backend y futuras del
+    // frontend) quedan invalidadas por construcción.
+    if (tenantsToUpdate.length > 0) {
+      const tenantIds = tenantsToUpdate.map(t => t.id_tenant);
+      await connection.query(
+        `UPDATE empresa SET perm_version = perm_version + 1 WHERE id_tenant IN (${tenantIds.map(() => '?').join(',')})`,
+        tenantIds
+      );
+    }
+
     await connection.commit();
 
-    // Invalidar caché de AuthZService: las filas `permisos` con `id_plan=planObjetivo`
-    // cambiaron para todos los tenants en ese plan → el catálogo/entitlements y
-    // las capabilities efectivas de cada rol en esos tenants pueden haber cambiado.
-    // ponytail: global clear — reemplazar con invalidación por clave si el catálogo
-    // crece y los clears se convierten en un cuello de botella.
-    AuthZService.clearCache();
+    // Invalidación (Fase 1): selectiva si el cambio es de un solo tenant
+    // (admin editando su propio rol); global si el developer empujó el default
+    // a todos los tenants del plan.
+    if (!isDeveloper && tenantsToUpdate.length === 1) {
+      AuthZService.onPermissionsChanged(tenantsToUpdate[0].id_tenant);
+    } else {
+      AuthZService.clearCache();
+    }
 
     // ---------------------------------------------------------
     // Audit Log (Async)

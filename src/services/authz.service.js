@@ -3,6 +3,26 @@ import { getConnection } from "../database/database.js";
 const queryCache = new Map();
 const CACHE_TTL = 60000; // 1 minute
 
+// ── Fase 1 (PLAN_PERMISOS_PLAN_ROLES.md): caché por versión ──────────────────
+// perm_version del tenant (60 s, o invalidada al instante por los escritores de
+// este mismo proceso vía onPermissionsChanged — hoy corre una sola instancia,
+// CLAUDE.md §10; si algún día hay 2+, esto migra a Redis con las mismas keys).
+const permVersionCache = new Map(); // tenantId -> { version, timestamp }
+const planIdCache = new Map(); // tenantId -> { planId, timestamp }
+// Capabilities efectivas resueltas: key `${tenant}:${rol}:${plan}:v${version}`.
+// Al subir perm_version la key vieja queda huérfana; el TTL la recolecta.
+const effectiveCache = new Map();
+const EFFECTIVE_TTL = 5 * 60000;
+const EFFECTIVE_MAX_ENTRIES = 2000;
+
+function pruneEffectiveCache() {
+    if (effectiveCache.size < EFFECTIVE_MAX_ENTRIES) return;
+    const now = Date.now();
+    for (const [key, entry] of effectiveCache) {
+        if (now - entry.timestamp > EFFECTIVE_TTL) effectiveCache.delete(key);
+    }
+}
+
 // Helper to decode buffers
 const decodeBuffer = (field) => {
     return field && typeof field === "object" && field.toString
@@ -98,6 +118,12 @@ export const AuthZService = {
      */
     async resolvePlanId({ tenantId }) {
         if (!tenantId) return null;
+
+        const cached = planIdCache.get(tenantId);
+        if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+            return cached.planId;
+        }
+
         let connection;
         try {
             connection = await getConnection();
@@ -105,9 +131,70 @@ export const AuthZService = {
                 "SELECT plan_pago FROM usuario WHERE id_tenant = ? AND id_rol = 1 ORDER BY id_usuario ASC LIMIT 1",
                 [tenantId]
             );
-            return rows[0]?.plan_pago ?? null;
+            const planId = rows[0]?.plan_pago ?? null;
+            planIdCache.set(tenantId, { planId, timestamp: Date.now() });
+            return planId;
         } finally {
             if (connection) connection.release();
+        }
+    },
+
+    /**
+     * perm_version vigente del tenant (MAX entre sus empresas — el contador solo
+     * sirve para invalidar cachés, no importa cuál fila lo lleve). Cacheada 60 s;
+     * los escritores del propio proceso la invalidan al instante con
+     * `onPermissionsChanged`, así el cambio de permisos es coherente de inmediato.
+     */
+    async getPermVersion(tenantId) {
+        if (!tenantId) return 1;
+
+        const cached = permVersionCache.get(tenantId);
+        if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+            return cached.version;
+        }
+
+        let connection;
+        try {
+            connection = await getConnection();
+            const [rows] = await connection.query(
+                "SELECT COALESCE(MAX(perm_version), 1) AS version FROM empresa WHERE id_tenant = ?",
+                [tenantId]
+            );
+            const version = Number(rows[0]?.version) || 1;
+            permVersionCache.set(tenantId, { version, timestamp: Date.now() });
+            return version;
+        } finally {
+            if (connection) connection.release();
+        }
+    },
+
+    /**
+     * Incrementa perm_version del tenant DENTRO de la transacción del escritor
+     * (pásale la misma `connection`). El fix importante: antes los escritores
+     * hacían `WHERE id_empresa = ?` pasando el id_tenant — actualizaban la
+     * empresa equivocada (o ninguna) y el contador nunca subía de verdad.
+     */
+    async bumpPermVersion(connection, tenantId) {
+        if (!tenantId) return;
+        await connection.query(
+            "UPDATE empresa SET perm_version = perm_version + 1 WHERE id_tenant = ?",
+            [tenantId]
+        );
+    },
+
+    /**
+     * Invalidación selectiva tras COMMIT de cualquier escritor de permisos.
+     * Reemplaza el `clearCache()` global para cambios de un solo tenant.
+     */
+    onPermissionsChanged(tenantId) {
+        if (!tenantId) return;
+        permVersionCache.delete(tenantId);
+        planIdCache.delete(tenantId);
+        for (const key of effectiveCache.keys()) {
+            if (key.startsWith(`${tenantId}:`)) effectiveCache.delete(key);
+        }
+        for (const key of queryCache.keys()) {
+            if (key.startsWith(`catalog_${tenantId}_`)) queryCache.delete(key);
         }
     },
 
@@ -236,6 +323,15 @@ export const AuthZService = {
             return { capabilities: new Set(["*"]), sources: {} };
         }
 
+        // Caché por versión (Fase 1): la key incluye perm_version, así un cambio
+        // de permisos invalida por construcción sin TTLs mágicos.
+        const version = await this.getPermVersion(tenantId);
+        const cacheKey = `${tenantId}:${roleId}:${planId ?? "null"}:v${version}`;
+        const cached = effectiveCache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < EFFECTIVE_TTL) {
+            return cached.data;
+        }
+
         let connection;
         try {
             connection = await getConnection();
@@ -307,13 +403,34 @@ export const AuthZService = {
                 }
             }
 
-            return { capabilities, sources };
+            const result = { capabilities, sources };
+            pruneEffectiveCache();
+            effectiveCache.set(cacheKey, { data: result, timestamp: Date.now() });
+            return result;
         } finally {
             if (connection) connection.release();
         }
     },
 
+    /**
+     * Decisión puntual "¿este rol puede hacer `accion` sobre `slug`?" para el
+     * middleware requireCapability (Fase 1). Mismo resolver y misma caché que
+     * alimenta al frontend — enforcement y UI no pueden divergir.
+     * `accion` en español (ver/crear/...) como la usan las rutas; también acepta
+     * acciones dinámicas de `actions_json` (se pasan tal cual).
+     */
+    async canRole({ tenantId, roleId, slug, accion, isDeveloper = false }) {
+        if (isDeveloper) return true;
+        const planId = await this.resolvePlanId({ tenantId });
+        const { capabilities } = await this.getEffectivePermissions({ tenantId, roleId, planId });
+        const action = ACTION_COLUMNS[accion] ?? accion;
+        return capabilities.has("*") || capabilities.has(`${normalizeSlug(slug)}.${action}`);
+    },
+
     clearCache() {
         queryCache.clear();
+        permVersionCache.clear();
+        planIdCache.clear();
+        effectiveCache.clear();
     }
 };

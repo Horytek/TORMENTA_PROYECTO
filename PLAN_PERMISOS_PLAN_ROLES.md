@@ -97,7 +97,14 @@
 | 0.3 | Gatear las 9 rutas con warnings del validador. SUNAT y payment primero (solo agregar middleware, cero cambios de lógica — zona sagrada). Meta: `validate-authz.js` en 0 warnings y correrlo en CI. | `sunat.routes.js`, `payment.routes.js`, `uploads`, `logs`, `talla`, `tonalidad`, `unidades`, `funciones`, `email` |
 | 0.4 | Arreglar el ReferenceError de `featureAccess.js` (`[[{ total }]]` sin declarar) y liberar la conexión en `finally` (hoy se fuga en cada llamada). | `featureAccess.js` |
 
-### Fase 1 — Un solo resolver, cacheado por versión (2–4 días)
+### Fase 1 — Un solo resolver, cacheado por versión ✅ (hecha 2026-07-18, en MODO SHADOW)
+
+> Estado: implementada. `requireCapability` corre en **modo shadow** por defecto
+> (decide el SQL legado; el resolver unificado compara y loguea
+> `[authz-shadow] divergencia …` en consola). Tras ~1 semana sin divergencias
+> en producción, activar `AUTHZ_UNIFIED=1` en el App Service de Azure y luego
+> borrar `legacyCapabilityCheck`. Bonus encontrado: los bumps de `perm_version`
+> estaban rotos (hacían `WHERE id_empresa = id_tenant`) — corregidos.
 
 | # | Tarea | Detalle |
 |---|---|---|

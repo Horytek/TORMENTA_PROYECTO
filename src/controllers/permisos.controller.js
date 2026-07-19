@@ -518,20 +518,22 @@ const savePermisos = async (req, res) => {
         // NUEVA ARQUITECTURA: Versionado
         // ---------------------------------------------------------
         if (!isDeveloper && id_tenant) {
-            // Incrementar perm_version del tenant antes de confirmar la transacción
-            await connection.query(
-                "UPDATE empresa SET perm_version = perm_version + 1 WHERE id_empresa = ?",
-                [id_tenant]
-            );
+            // Incrementar perm_version del tenant antes de confirmar la
+            // transacción. Fix (Fase 1): antes era WHERE id_empresa = id_tenant
+            // — actualizaba la empresa equivocada y el contador no subía.
+            await AuthZService.bumpPermVersion(connection, id_tenant);
         }
 
         await connection.commit();
 
-        // Limpiar caché (propio de este controller + AuthZService compartido).
-        // ponytail: clear global del AuthZService — reemplazar con invalidación
-        // por tenant si los clears se vuelven un cuello de botella.
+        // Invalidación (Fase 1): selectiva por tenant; el developer escribe en
+        // todos los tenants → clear global.
         queryCache.clear();
-        AuthZService.clearCache();
+        if (isDeveloper) {
+            AuthZService.clearCache();
+        } else {
+            AuthZService.onPermissionsChanged(id_tenant);
+        }
 
         // ---------------------------------------------------------
         // NUEVA ARQUITECTURA: Auditoría (Async)
@@ -604,8 +606,9 @@ const checkPermiso = async (req, res) => {
         });
     }
 
-    // Si es desarrollador, tiene todos los permisos
-    if (isDeveloperReq(req) || nameUser === 'desarrollador') {
+    // Si es desarrollador, tiene todos los permisos (solo por rol — el bypass
+    // por nombre de usuario se eliminó en la Fase 0, era escalable cross-tenant)
+    if (isDeveloperReq(req)) {
         return res.json({
             hasPermission: true,
             hasCreatePermission: true,
@@ -647,9 +650,9 @@ const checkPermiso = async (req, res) => {
                 AND p.id_modulo = ? 
                 AND (p.id_submodulo = ? OR (p.id_submodulo IS NULL AND ? IS NULL))
                 AND p.id_tenant = u.id_tenant
-                AND p.id_tenant = u.id_tenant
                 AND (u.id_rol != 1 OR (p.id_plan = u.plan_pago OR p.id_plan IS NULL))
             WHERE u.usua = ? AND u.id_tenant = ?
+            ORDER BY (p.id_plan IS NULL) DESC
             LIMIT 1`,
             [idModulo, idSubmodulo, idSubmodulo, nameUser, id_tenant]
         );
