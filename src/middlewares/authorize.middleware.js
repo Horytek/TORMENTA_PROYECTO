@@ -24,7 +24,7 @@ export const isDeveloperReq = (req) => {
 // borrado de datos, permisos globales por plan).
 export const requireDeveloper = (req, res, next) => {
     if (isDeveloperReq(req)) return next();
-    return res.status(403).json({ success: false, message: "Acceso restringido a Developer" });
+    return res.status(403).json({ success: false, code: "ROLE_DENIED", message: "Acceso restringido a Developer" });
 };
 
 /** id_rol reservado para el Administrador/titular de cada tenant. */
@@ -35,13 +35,26 @@ export const ADMIN_ROLE_ID = 1;
 export const requireAdmin = (req, res, next) => {
     const idRol = Number(req.user?.rol);
     if (idRol === ADMIN_ROLE_ID || isDeveloperReq(req)) return next();
-    return res.status(403).json({ success: false, message: "Acceso restringido al Administrador" });
+    return res.status(403).json({ success: false, code: "ROLE_DENIED", message: "Acceso restringido al Administrador" });
 };
 
 const normalizeRuta = (ruta) =>
     (ruta || "").toString().trim().toLowerCase().replace(/^\/+/, "");
 
 const ACCIONES_VALIDAS = new Set(["ver", "crear", "editar", "eliminar", "desactivar", "generar"]);
+
+// Mensaje al usuario según el motivo del rechazo (Fase 4.1). El `code` viaja
+// también en el body para que el frontend distinga "mejora tu plan" de "sin
+// permiso" y de "suscripción suspendida" en vez de un 403 genérico.
+const DENIAL_MESSAGES = {
+    PLAN_NOT_INCLUDED: "Tu plan actual no incluye esta función.",
+    ROLE_DENIED: "No tienes permiso para realizar esta acción.",
+};
+
+function denyResponse(res, code) {
+    const c = DENIAL_MESSAGES[code] ? code : "ROLE_DENIED";
+    return res.status(403).json({ success: false, code: c, message: DENIAL_MESSAGES[c] });
+}
 
 /**
  * Exige que el rol del usuario tenga la acción habilitada para el módulo/submódulo
@@ -61,36 +74,50 @@ export const requireCapability = (rutaSlug, accion) => {
         const id_rol = Number(req.user?.rol);
         const id_tenant = req.id_tenant;
         if (!id_rol || !id_tenant) {
-            return res.status(403).json({ success: false, message: "No autorizado" });
+            return denyResponse(res, "ROLE_DENIED");
         }
 
         try {
             if (AUTHZ_UNIFIED) {
-                const allowed = await AuthZService.canRole({ tenantId: id_tenant, roleId: id_rol, slug, accion });
-                if (!allowed) {
-                    return res.status(403).json({ success: false, message: "No tienes permiso para realizar esta acción" });
-                }
+                const { allowed, code } = await AuthZService.explainCapability({ tenantId: id_tenant, roleId: id_rol, slug, accion });
+                if (!allowed) return denyResponse(res, code);
                 return next();
             }
 
             // MODO SHADOW (default): decide el SQL legado; el resolver corre en
-            // paralelo solo para detectar divergencias antes de darle el mando.
+            // paralelo para detectar divergencias antes de darle el mando.
             const legacyAllowed = await legacyCapabilityCheck({ id_rol, id_tenant, slug, accion });
 
-            AuthZService.canRole({ tenantId: id_tenant, roleId: id_rol, slug, accion })
-                .then((unifiedAllowed) => {
-                    if (unifiedAllowed !== legacyAllowed) {
+            if (!legacyAllowed) {
+                // Denegación (poco frecuente): esperamos al resolver para (a)
+                // comparar y (b) devolver el motivo estructurado al frontend.
+                const explained = await AuthZService
+                    .explainCapability({ tenantId: id_tenant, roleId: id_rol, slug, accion })
+                    .catch((err) => {
+                        console.error("[authz-shadow] error del resolver:", err.message);
+                        return { allowed: false, code: "ROLE_DENIED" };
+                    });
+                if (explained.allowed !== false) {
+                    console.warn(
+                        `[authz-shadow] divergencia tenant=${id_tenant} rol=${id_rol} ${slug}.${accion} ` +
+                        `legacy=deny unified=allow — revisar antes de activar AUTHZ_UNIFIED`
+                    );
+                }
+                return denyResponse(res, explained.code);
+            }
+
+            // Camino permitido (común): compara en segundo plano sin sumar latencia.
+            AuthZService.explainCapability({ tenantId: id_tenant, roleId: id_rol, slug, accion })
+                .then((u) => {
+                    if (!u.allowed) {
                         console.warn(
                             `[authz-shadow] divergencia tenant=${id_tenant} rol=${id_rol} ${slug}.${accion} ` +
-                            `legacy=${legacyAllowed} unified=${unifiedAllowed} — revisar antes de activar AUTHZ_UNIFIED`
+                            `legacy=allow unified=deny(${u.code}) — revisar antes de activar AUTHZ_UNIFIED`
                         );
                     }
                 })
                 .catch((err) => console.error("[authz-shadow] error del resolver:", err.message));
 
-            if (!legacyAllowed) {
-                return res.status(403).json({ success: false, message: "No tienes permiso para realizar esta acción" });
-            }
             return next();
         } catch (error) {
             console.error("Error en requireCapability:", error);

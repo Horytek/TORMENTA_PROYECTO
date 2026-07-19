@@ -135,7 +135,7 @@
 
 | # | Tarea | Detalle |
 |---|---|---|
-| 4.1 | Errores 403 distinguibles | Respuesta estándar `{ success:false, code: "ROLE_DENIED" \| "PLAN_NOT_INCLUDED" \| "LIMIT_REACHED" \| "TENANT_SUSPENDED" }` desde el middleware. El interceptor de axios los mapea a UI distinta. |
+| 4.1 ✅ | Errores 403 distinguibles (hecha 2026-07-18) | Respuesta estándar `{ success:false, code: "ROLE_DENIED" \| "PLAN_NOT_INCLUDED" \| "TENANT_SUSPENDED" }` desde el middleware. Motivo resuelto por `AuthZService.explainCapability` (misma fuente que `/authz/why`, ya refactorizado). Frontend: helper `api/authzError.ts` (`parseAuthzDenial` + evento global `authz:denied`) e interceptor de axios que lo emite. Falta el consumidor visual (toast/modal) → llega con 4.2/4.3; requiere decidir librería de toast (no hay ninguna en client-v2 aún). `LIMIT_REACHED` queda para 4.3 (depende de `plan_feature` de 2.3). |
 | 4.2 | Módulos fuera del plan visibles en gris | En RolePermissionsDialog y sidebar: "No incluido en tu plan — Mejorar" (hoy desaparecen y el admin cree que es un bug). Requiere que el catálogo devuelva también los no-entitled con un flag `in_plan`. |
 | 4.3 | Cuotas visibles | "2/3 sucursales usadas" en Branches/Warehouses + CTA de upgrade al llegar al límite (datos de `plan_feature` de 2.3). |
 | 4.4 | UI de why-denied | Modal "Explicar acceso" en Developer/Roles usando `GET /authz/why` (ya existe el backend). |
