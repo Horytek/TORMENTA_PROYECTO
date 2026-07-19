@@ -175,11 +175,15 @@ const updateClave = async (req, res) => {
 
     // Construir objeto de actualización dinámicamente
     // Si valor está vacío o es la representación enmascarada, NO lo incluimos (mantener el existente)
+    // No se toca id_tenant: la fila conserva su tenant. Antes se escribía
+    // req.id_tenant siempre, y un developer que editara la clave de otro
+    // tenant se la reasignaba a su propio tenant (rompía la facturación de
+    // esa empresa). Para usuarios normales era un no-op (el WHERE ya filtra
+    // por su tenant), así que quitarlo no cambia su comportamiento.
     const clave = {
       id_empresa,
       tipo,
-      estado_clave,
-      id_tenant: req.id_tenant
+      estado_clave
     };
 
     // Solo actualizar el valor si se proporciona uno nuevo (no vacío ni representación con puntos)
