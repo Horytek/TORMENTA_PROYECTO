@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Brand } from "../types";
 import { getBrands, createBrand, updateBrand, deleteBrand, checkBrandUsage } from "../api/products";
 import { usePermissions } from "@/hooks/usePermissions";
+import { Can } from "@/components/shared/Can";
 import EntityCardsGrid from "@/components/shared/EntityCardsGrid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +37,6 @@ export default function BrandsPanel() {
   const { can } = usePermissions();
   const canEdit = can("productos.edit");
   const canDelete = can("productos.delete");
-  const canCreate = can("productos.create");
 
   const filteredBrands = brands.filter((b) =>
     (b.nombre || "").toLowerCase().includes(searchTerm.toLowerCase().trim())
@@ -114,7 +114,7 @@ export default function BrandsPanel() {
           />
         </div>
 
-        {canCreate && (
+        <Can capability="productos.create">
           <Button
             onClick={handleOpenCreate}
             className="gap-2 self-start sm:self-auto"
@@ -122,7 +122,7 @@ export default function BrandsPanel() {
             <Plus className="h-4 w-4" />
             <span>Agregar Marca</span>
           </Button>
-        )}
+        </Can>
       </div>
 
       {/* Brands Cards Grid */}

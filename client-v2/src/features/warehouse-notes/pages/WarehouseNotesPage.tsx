@@ -19,6 +19,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { Can } from "@/components/shared/Can";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -255,16 +256,16 @@ export default function WarehouseNotesPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {canGenerate && (
+          <Can capability="nota_almacen.generate">
             <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={handleExport} disabled={filtered.length === 0}>
               <FileSpreadsheet className="h-4 w-4" /> Exportar Excel
             </Button>
-          )}
-          {canCreate && (
+          </Can>
+          <Can capability="nota_almacen.create">
             <Button size="sm" className="h-9 gap-1.5" onClick={() => setIsFormOpen(true)}>
               <Plus className="h-4 w-4" /> Nueva nota
             </Button>
-          )}
+          </Can>
         </div>
       </div>
 

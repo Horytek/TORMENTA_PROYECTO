@@ -158,9 +158,12 @@
 Hoy: el backend ya soporta acciones dinámicas (`actions_json` + ActionCatalogTab
 en Developer + el resolver las convierte en capabilities). Lo que falta:
 
-- **`<Can capability="ventas.aplicar_descuento">…</Can>`** — componente único en
-  client-v2 que envuelve cualquier botón/menú. Ya existe `usePermissions().can()`;
-  esto es solo la capa declarativa + variantes (`hide` / `disable` / `askUpgrade`).
+- **`<Can capability="ventas.aplicar_descuento">…</Can>`** — ✅ HECHO (2026-07-18):
+  `components/shared/Can.tsx` (`<Can>` + hook `useCan`). Soporta capabilities
+  estándar y dinámicas, modo ocultar (children nodo), deshabilitar (children
+  función `(allowed)=>node`), `fallback`, y combos `anyOf`/`allOf`. Adoptado en
+  WarehouseNotesPage y BrandsPanel. Verificado en runtime: renderiza cuando el
+  rol tiene la capability, oculta cuando no (incl. dinámica `ventas.anular_venta`).
 - **La matriz de roles renderiza las acciones desde el catálogo**, no desde las
   6 columnas fijas (`ver/crear/editar/...`): agregar la acción
   "anular_venta" en el catálogo la hace aparecer sola en RolePermissionsDialog.
