@@ -23,6 +23,8 @@ import RegisterPage from "@/features/registration/pages/RegisterPage";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { PageLoader } from "@/components/shared/PageLoader";
 import { RequireCapability } from "@/components/shared/RequireCapability";
+import { Toaster } from "@/components/ui/sonner";
+import { AuthzToastBridge } from "@/components/shared/AuthzToastBridge";
 
 const ProductsPage = lazy(() => import("@/features/products/pages/ProductsPage"));
 const LandingSubPage = lazy(() => import("@/features/landing/pages/LandingSubPage"));
@@ -244,6 +246,8 @@ export default function App() {
               </Route>
             </Routes>
             </Suspense>
+            <Toaster />
+            <AuthzToastBridge />
           </TooltipProvider>
         </NuqsAdapter>
       </Router>
