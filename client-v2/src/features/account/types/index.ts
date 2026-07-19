@@ -7,6 +7,8 @@ export interface Clave {
   valor: string;
   hasValue: boolean;
   estado_clave: number;
+  /** Razón social de la empresa (viene del JOIN en GET /clave). */
+  razonSocial?: string;
 }
 
 export interface ClaveInput {

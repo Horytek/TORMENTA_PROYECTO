@@ -55,6 +55,27 @@ export interface Empresa {
   razonSocial: string;
 }
 
+/** Empresa completa (tabla `empresa`) para el directorio SUNAT del panel Developer. */
+export interface EmpresaSunat {
+  id_empresa: number;
+  ruc?: string | null;
+  razonSocial: string;
+  nombreComercial?: string | null;
+  direccion?: string | null;
+  distrito?: string | null;
+  provincia?: string | null;
+  departamento?: string | null;
+  codigoPostal?: string | null;
+  telefono?: string | null;
+  email?: string | null;
+  logotipo?: string | null;
+  pais?: string | null;
+  /** Códigos ISO separados por coma, ej. "PEN, USD". */
+  moneda?: string | null;
+}
+
+export type EmpresaSunatInput = Omit<EmpresaSunat, "id_empresa">;
+
 export interface NewUserInput {
   id_rol: number;
   usua: string;
