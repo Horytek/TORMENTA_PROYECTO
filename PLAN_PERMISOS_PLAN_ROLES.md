@@ -173,8 +173,17 @@ en Developer + el resolver las convierte en capabilities). Lo que falta:
   sembrando `anular_venta` en el `active_actions` de ventas + otorgándola al rol,
   la columna aparece sola, se carga marcada donde está otorgada, y "—" donde no
   aplica; el payload del save incluye `actions_json` en todas las filas.
-  Falta la UI para DECLARAR acciones en `active_actions` de un módulo (hoy no hay
-  editor; se hace por BD) — es lo que cierra el auto-servicio.
+- **Editor de acciones por módulo** — ✅ HECHO (2026-07-19): `ModuloFormDialog`
+  gana la sección "Acciones habilitadas" (6 estándar como checkboxes + acciones
+  custom del catálogo). Guarda a `active_actions` (null = todas las estándar,
+  default legado; array si se recorta o se agrega custom). Backend:
+  `modulos.controller` add/update/get ahora manejan `active_actions`.
+  Verificado en runtime: PUT/GET round-trip persiste el array; el form precarga
+  el estado real (ej. Desactivar desmarcado cuando no está en el array).
+  Con esto el auto-servicio queda: crear acción en "Catálogo de Acciones" →
+  marcarla en el módulo → aparece sola en la matriz de roles → `<Can>` en el
+  botón. Pendiente menor: mismo editor para SUBMÓDULOS (SubmoduloFormDialog +
+  submodulos.controller) — patrón idéntico.
 - **Registro automático al crear módulos**: crear un módulo en Developer siembra
   sus acciones CRUD estándar en el catálogo (hoy son dos pasos manuales).
 - Resultado medible: **agregar un permiso nuevo = 1 registro en el catálogo +

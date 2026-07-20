@@ -5,6 +5,10 @@ export interface CatalogMeta {
   sort_order?: number;
   frontend_route?: string | null;
   is_visible?: boolean;
+  /** Acciones habilitadas del módulo: null = todas las estándar; array = solo
+   *  esas (estándar + custom del catálogo). Al leer de BD puede venir como
+   *  string JSON; al enviar se manda array o null. */
+  active_actions?: string[] | string | null;
 }
 
 /** Módulo de navegación (tabla `modulo`) — define la estructura de menú del ERP. */
