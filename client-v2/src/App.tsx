@@ -38,6 +38,7 @@ const RolesPage = lazy(() => import("@/features/roles/pages/RolesPage"));
 const SettingsPage = lazy(() => import("@/features/settings/pages/SettingsPage"));
 const ReportsPage = lazy(() => import("@/features/reports/pages/ReportsPage"));
 const SalesPage = lazy(() => import("@/features/sales/pages/SalesPage"));
+const ReturnsPage = lazy(() => import("@/features/returns/pages/ReturnsPage"));
 const InventoryPage = lazy(() => import("@/features/inventory/pages/InventoryPage"));
 const EmployeesPage = lazy(() => import("@/features/employees/pages/EmployeesPage"));
 const WarehouseNotesPage = lazy(() => import("@/features/warehouse-notes/pages/WarehouseNotesPage"));
@@ -167,6 +168,10 @@ export default function App() {
                   <Route
                     path="/sales/pos"
                     element={<RequireCapability capability="ventas.view"><SalesPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/sales/returns"
+                    element={<RequireCapability capability="devoluciones.view"><ReturnsPage /></RequireCapability>}
                   />
                   <Route
                     path="/people/clients"

@@ -179,7 +179,7 @@ export default function EmployeesPage() {
         items={filtered}
         fields={fields}
         actions={actions}
-        layout="card"
+        layout="auto"
         isLoading={isLoading}
         getItemId={(item) => item.dni}
         getRhythm={(v) => ({

@@ -142,7 +142,7 @@ export default function ProductsPanel({ onEdit }: ProductsPanelProps) {
         items={products}
         fields={fields}
         actions={actions}
-        layout="card"
+        layout="auto"
         isLoading={isLoading}
         search={searchTerm}
         searchPlaceholder="Buscar por descripción, ID o código…"

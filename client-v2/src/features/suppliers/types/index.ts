@@ -37,8 +37,11 @@ export interface ProveedorInput {
   estado?: number;
 }
 
-export const proveedorTipo = (p: Proveedor): TipoProveedor =>
-  p.ruc || p.razon_social ? "juridico" : "natural";
+export const proveedorTipo = (p: Proveedor): TipoProveedor => {
+  const doc = (p.ruc || p.dni || p.documento || "").trim();
+  if (p.razon_social || p.ruc || doc.length === 11) return "juridico";
+  return "natural";
+};
 
 export const proveedorNombre = (p: Proveedor): string =>
   p.razon_social?.trim() ||

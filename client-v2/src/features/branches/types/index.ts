@@ -31,8 +31,5 @@ export const sucursalVendedor = (s: Sucursal): string => {
   const name = (s.nombre_vendedor && s.nombre_vendedor !== "Sin vendedor")
     ? s.nombre_vendedor.trim()
     : (s.nombre_completo?.trim() || s.nombres?.trim());
-  if (name && s.dni) {
-    return `${name} · ${s.dni}`;
-  }
   return name || (s.dni ? `DNI ${s.dni}` : "Sin asignar");
 };

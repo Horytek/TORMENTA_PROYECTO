@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { useUserStore } from "@/store/useUserStore";
 
 /** id_rol reservado para el usuario Developer/SuperAdmin. Antes este literal
@@ -21,10 +22,16 @@ export function usePermissions() {
   const isDeveloper = roleId === DEVELOPER_ROLE_ID;
   const isAdmin = isDeveloper || roleId === ADMIN_ROLE_ID;
 
-  const can = (perm: string): boolean => {
-    if (isDeveloper) return true;
-    return capabilities.has(perm) || capabilities.has("*");
-  };
+  // useCallback: `can` se usa como dependencia de useMemo/useEffect en
+  // AdaptiveCollection y otros; una identidad nueva por render invalida esos
+  // memos innecesariamente.
+  const can = useCallback(
+    (perm: string): boolean => {
+      if (isDeveloper) return true;
+      return capabilities.has(perm) || capabilities.has("*");
+    },
+    [isDeveloper, capabilities]
+  );
 
   return { can, isDeveloper, isAdmin, capabilities, roleId };
 }

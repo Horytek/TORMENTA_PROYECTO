@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, ChevronDown, Plus, Trash2, BookLock } from "lucide-react";
+import { SearchInput } from "@/components/shared/SearchInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -180,11 +181,11 @@ export function ChartOfAccountsPanel() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4">
-        <Input
+        <SearchInput
           placeholder="Buscar por código o nombre..."
           value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="h-9 max-w-xs"
+          onChangeValue={setFilter}
+          wrapperClassName="max-w-xs"
         />
         <Button onClick={() => { setDefaultPadre(null); setIsFormOpen(true); }} className="ml-auto gap-2">
           <Plus className="h-4 w-4" /> Nueva cuenta

@@ -180,9 +180,9 @@ export default function HistoricoKardexPage() {
     const salidasActual = sortedDesc.reduce((acc, t) => acc + (Number(t.sale) || 0), 0);
     const stockPrev = Math.max(0, stockInventario + salidasActual - entradasActual);
 
-    const prev: KardexStockAnterior = previousTransactions?.[0] ?? {};
-    const entradasPrev = Math.max(0, Number(prev.entra) || 0);
-    const salidasPrev = Math.max(0, Number(prev.sale) || 0);
+    const prev = previousTransactions?.[0];
+    const entradasPrev = Math.max(0, Number(prev?.entra) || 0);
+    const salidasPrev = Math.max(0, Number(prev?.sale) || 0);
 
     const ventasReales = sortedDesc.filter(
       (t) =>
@@ -199,7 +199,7 @@ export default function HistoricoKardexPage() {
         : ventasReales[0]
           ? Number(ventasReales[0].precio)
           : 0;
-    const precioUnitPrev = Number((prev as any).precio) || precioUnitActual;
+    const precioUnitPrev = Number((prev as any)?.precio) || precioUnitActual;
 
     const rotacion = entradasActual > 0 ? (salidasActual / entradasActual) * 100 : 0;
     const velocidadVenta =

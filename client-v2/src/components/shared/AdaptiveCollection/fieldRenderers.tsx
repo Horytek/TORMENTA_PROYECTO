@@ -49,27 +49,31 @@ function formatCode(value: unknown): string {
 
 // Renderizadores por tipo semántico
 function Title({ value, className }: { value: string; className?: string }) {
-  return <span className={cn("text-sm font-medium text-foreground leading-tight line-clamp-1", className)}>{value || "—"}</span>;
+  return <span className={cn("text-sm font-semibold text-foreground leading-snug tracking-tight line-clamp-1 group-hover:text-primary transition-colors", className)}>{value || "—"}</span>;
 }
 
 function Subtitle({ value, className }: { value: string; className?: string }) {
-  return <span className={cn("text-xs text-muted-foreground leading-tight line-clamp-1", className)}>{value || "—"}</span>;
+  return <span className={cn("text-xs text-muted-foreground leading-normal line-clamp-1", className)}>{value || "—"}</span>;
 }
 
 function BadgeField({ value, className }: { value: string | number; className?: string }) {
   const colors = getStatusColor(value);
   const label = String(value).charAt(0).toUpperCase() + String(value).slice(1);
   return (
-    <span className={cn("inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium leading-none", colors.bg, colors.text, className)}>
-      {colors.dot && <span className={cn("h-1 w-1 rounded-full", colors.dot)} />}
-      {label}
+    <span className={cn(
+      "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold leading-tight border transition-all shadow-xs",
+      colors.bg, colors.text,
+      className
+    )}>
+      {colors.dot && <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", colors.dot)} />}
+      <span>{label}</span>
     </span>
   );
 }
 
 function NumberField({ value, prefix, className }: { value: unknown; prefix?: string; className?: string }) {
   return (
-    <span className={cn("num text-sm font-semibold tabular-nums text-foreground", className)}>
+    <span className={cn("num text-sm font-bold tracking-tight tabular-nums text-foreground", className)}>
       {prefix && <span className="text-xs font-normal text-muted-foreground mr-0.5">{prefix}</span>}
       {formatNumber(value)}
     </span>
@@ -77,12 +81,39 @@ function NumberField({ value, prefix, className }: { value: unknown; prefix?: st
 }
 
 function DateField({ value, className }: { value: unknown; className?: string }) {
-  return <span className={cn("text-xs text-muted-foreground", className)}>{formatDate(value)}</span>;
+  return <span className={cn("text-xs font-medium text-muted-foreground", className)}>{formatDate(value)}</span>;
 }
 
 function CodeField({ value, className }: { value: unknown; className?: string }) {
+  if (!value || value === "—" || value === "-") return <span className="text-xs text-muted-foreground">—</span>;
+  const str = String(value).trim();
+
+  // Detect document format "RUC: 20568242271" or "DNI: 74766053"
+  const docMatch = str.match(/^(RUC|DNI):\s*(.+)$/i);
+  if (docMatch) {
+    const tipo = docMatch[1].toUpperCase();
+    const num = docMatch[2];
+    const isRuc = tipo === "RUC";
+    return (
+      <span className={cn("inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-muted/60 text-xs font-mono font-medium border border-border/50 text-foreground/80 tracking-tight", className)}>
+        <span className={cn(
+          "text-[9px] font-sans font-bold uppercase tracking-wider px-1 py-0.2 rounded leading-none",
+          isRuc
+            ? "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-500/20"
+            : "bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 border border-purple-500/20"
+        )}>
+          {tipo}
+        </span>
+        <span>{num}</span>
+      </span>
+    );
+  }
+
   return (
-    <span className={cn("inline-flex px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-[11px] font-mono text-zinc-600 dark:text-zinc-300 tracking-wide", className)}>
+    <span className={cn(
+      "inline-flex items-center px-2 py-0.5 rounded-md bg-muted/60 text-[11px] font-mono font-medium text-foreground/80 border border-border/50 tracking-wider shadow-2xs",
+      className
+    )}>
       {formatCode(value)}
     </span>
   );
@@ -90,9 +121,16 @@ function CodeField({ value, className }: { value: unknown; className?: string })
 
 function ChipField({ value, color, className }: { value: string; color?: string; className?: string }) {
   const colorClass = color
-    ? `bg-${color}-50 dark:bg-${color}-950/30 text-${color}-600 dark:text-${color}-400`
-    : "bg-zinc-50 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300";
-  return <span className={cn("inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium leading-none", colorClass, className)}>{value}</span>;
+    ? `bg-${color}-500/10 text-${color}-600 dark:text-${color}-400 border-${color}-500/20`
+    : "bg-muted/70 text-foreground/80 border-border/60";
+  return (
+    <span className={cn(
+      "inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-medium leading-none border shadow-2xs",
+      colorClass, className
+    )}>
+      {value}
+    </span>
+  );
 }
 
 function IconTextField({ value, icon, className }: { value: unknown; icon?: ReactNode; className?: string }) {
@@ -117,13 +155,7 @@ function ProgressBar({ value, className }: { value: unknown; className?: string 
 }
 
 function StatusDot({ value, className }: { value: string; className?: string }) {
-  const colors = getStatusColor(value);
-  return (
-    <span className={cn("inline-flex items-center gap-1.5", className)}>
-      <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", colors.dot ?? "bg-zinc-400")} />
-      <span className={cn("text-xs", colors.text)}>{String(value).charAt(0).toUpperCase() + String(value).slice(1)}</span>
-    </span>
-  );
+  return <BadgeField value={value} className={className} />;
 }
 
 function BarcodeField({ value, className }: { value: unknown; className?: string }) {

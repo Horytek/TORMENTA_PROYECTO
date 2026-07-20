@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { MoreHorizontal, ChevronRight } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────
@@ -36,7 +37,7 @@ function getRhythmColors(color?: string) {
 // ─────────────────────────────────────────────────────────────────
 // Ritmo visual — barra lateral, índice o punto
 // ─────────────────────────────────────────────────────────────────
-function RhythmMarker({ rhythm, index }: { rhythm?: RhythmConfig; index: number }) {
+export function RhythmMarker({ rhythm, index }: { rhythm?: RhythmConfig; index: number }) {
   if (!rhythm) {
     // Índice genérico cuando no hay ritmo configurado
     return (
@@ -99,9 +100,9 @@ function RhythmMarker({ rhythm, index }: { rhythm?: RhythmConfig; index: number 
 }
 
 // ─────────────────────────────────────────────────────────────────
-// Acciones — menú contextual de tres puntos
+// Acciones — menú contextual de tres puntos e inline persistentes
 // ─────────────────────────────────────────────────────────────────
-function RecordActions({
+export function RecordActions({
   actions,
   item,
 }: {
@@ -109,50 +110,72 @@ function RecordActions({
   item: unknown;
 }) {
   const visible = actions.filter(a => !a.hidden || !a.hidden(item));
-  const destructive = visible.filter(a => a.variant === "destructive");
-  const normal = visible.filter(a => a.variant !== "destructive");
+  const persistent = visible.filter(a => a.persistent);
+  const menuActions = visible.filter(a => !a.persistent);
 
   const isActionDisabled = (a: RecordAction) => {
     if (typeof a.disabled === "function") return a.disabled(item);
     return !!a.disabled;
   };
 
+  const destructive = menuActions.filter(a => a.variant === "destructive");
+  const normal = menuActions.filter(a => a.variant !== "destructive");
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          className="opacity-0 group-hover:opacity-100 transition-all duration-150 p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-muted-foreground hover:text-foreground cursor-pointer"
-          onClick={e => e.stopPropagation()}
+    <div className="flex items-center gap-1.5 shrink-0" onClick={e => e.stopPropagation()}>
+      {persistent.map(a => (
+        <Button
+          key={a.id}
+          variant="outline"
+          size="sm"
+          className="h-7 px-2.5 text-xs font-medium gap-1.5 hover:border-primary/50 cursor-pointer"
+          onClick={() => a.onClick(item)}
+          disabled={isActionDisabled(a)}
         >
-          <MoreHorizontal className="h-4 w-4" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[140px]">
-        {normal.map(action => (
-          <DropdownMenuItem
-            key={action.id}
-            onClick={() => action.onClick(item)}
-            disabled={isActionDisabled(action)}
-            className="gap-2 cursor-pointer"
-          >
-            {action.icon && <span className="h-4 w-4 shrink-0">{action.icon}</span>}
-            {action.label}
-          </DropdownMenuItem>
-        ))}
-        {destructive.length > 0 && normal.length > 0 && <DropdownMenuSeparator />}
-        {destructive.map(action => (
-          <DropdownMenuItem
-            key={action.id}
-            onClick={() => action.onClick(item)}
-            disabled={isActionDisabled(action)}
-            className="gap-2 text-destructive focus:text-destructive cursor-pointer"
-          >
-            {action.icon && <span className="h-4 w-4 shrink-0">{action.icon}</span>}
-            {action.label}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          {a.icon && <span className="h-3.5 w-3.5 shrink-0">{a.icon}</span>}
+          {a.label}
+        </Button>
+      ))}
+
+      {menuActions.length > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className="opacity-60 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 transition-all duration-150 p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-muted-foreground hover:text-foreground cursor-pointer"
+              aria-label="Acciones del registro"
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="min-w-[140px]">
+            {normal.map(action => (
+              <DropdownMenuItem
+                key={action.id}
+                onClick={() => action.onClick(item)}
+                disabled={isActionDisabled(action)}
+                title={isActionDisabled(action) ? action.disabledReason : undefined}
+                className="gap-2 cursor-pointer"
+              >
+                {action.icon && <span className="h-4 w-4 shrink-0">{action.icon}</span>}
+                {action.label}
+              </DropdownMenuItem>
+            ))}
+            {destructive.length > 0 && normal.length > 0 && <DropdownMenuSeparator />}
+            {destructive.map(action => (
+              <DropdownMenuItem
+                key={action.id}
+                onClick={() => action.onClick(item)}
+                disabled={isActionDisabled(action)}
+                className="gap-2 text-destructive focus:text-destructive cursor-pointer"
+              >
+                {action.icon && <span className="h-4 w-4 shrink-0">{action.icon}</span>}
+                {action.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
   );
 }
 
@@ -246,27 +269,56 @@ export function AdaptiveRecord<T extends Record<string, unknown>>({
   const secondary = visible.filter(f => f.priority === "secondary");
   const meta = visible.filter(f => f.priority === "meta");
 
+  const primaryField = primary[0] || sorted[0];
+
+  // Subtitle field: secondary field with semantic "subtitle"
+  const subtitleField = secondary.find(f => f.semantic === "subtitle");
+  const subtitleRawVal = subtitleField ? item[subtitleField.key as keyof T] : null;
+  const hasSubtitleVal = subtitleRawVal !== null && subtitleRawVal !== undefined && String(subtitleRawVal).trim() !== "" && String(subtitleRawVal).trim() !== "—";
+
+  // Col 6-7: Secondary Detail Chips / Text (excluding badges, status, numbers, codes)
+  const detailChips = secondary.filter(f =>
+    (f.semantic === "chip" || f.semantic === "text" || f.semantic === "icon-text") &&
+    f.key !== primaryField?.key &&
+    f.key !== subtitleField?.key
+  );
+  const hasDetail = detailChips.length > 0;
+
+  // Col 8-9: Code / Unit / Barcode
+  const codeFields = visible.filter(f =>
+    f.semantic === "barcode" || f.semantic === "code" || f.key === "cod_barras" || f.key === "undm" || f.key.startsWith("id_")
+  );
+  const primaryCode = codeFields[0];
+
+  // Col 10-11: Price / Number AND Badges / Status (Excluding any field key already used in Col 6-7 or Col 8-9!)
+  const numberFields = secondary.filter(f => f.semantic === "number" && f.key !== primaryCode?.key);
+  const statusBadgeFields = secondary.filter(f =>
+    (f.semantic === "badge" || f.semantic === "status-dot" || f.key.includes("estado")) &&
+    f.key !== primaryCode?.key &&
+    !detailChips.some(d => d.key === f.key)
+  );
+
   return (
     <div
       className={cn(
         "group relative flex items-stretch gap-0 border-b border-border/40 last:border-0",
-        "transition-all duration-200 cursor-pointer",
-        "hover:bg-zinc-50/80 dark:hover:bg-zinc-900/40",
-        isSelected && "bg-blue-50/50 dark:bg-blue-950/20 border-blue-200/50 dark:border-blue-800/30",
-        isExpanded && "bg-zinc-50/60 dark:bg-zinc-900/50 border-border/60",
+        "transition-all duration-150 cursor-pointer",
+        "hover:bg-accent/40 dark:hover:bg-accent/20",
+        isSelected && "bg-primary/10 dark:bg-primary/20 border-primary/30",
+        isExpanded && "bg-muted/60 dark:bg-muted/40 border-border/60",
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onRecordClick?.(item)}
-      style={{ paddingLeft: "0.25rem" }}
+      style={{ paddingLeft: "0.5rem" }}
     >
       {/* ── Ritmo visual ── */}
-      <div className="pt-3 pb-2.5 shrink-0 flex items-center">
+      <div className="pt-3 pb-3 shrink-0 flex items-center pr-2">
         <RhythmMarker rhythm={rhythm} index={index} />
       </div>
 
       {/* ── Contenido principal ── */}
-      <div className={cn("flex-1 py-2.5 pr-2.5 min-w-0", layout.primaryCol)}>
+      <div className={cn("flex-1 py-3 pr-4 min-w-0", layout.primaryCol)}>
         {viewMode === "compact" ? (
           /* Compact View */
           <div className="flex items-center justify-between gap-4">
@@ -276,7 +328,7 @@ export function AdaptiveRecord<T extends Record<string, unknown>>({
               </span>
               <div className="hidden sm:flex items-center gap-2 text-[11px] text-muted-foreground truncate">
                 {secondary.filter(f => f.semantic !== "subtitle").slice(0, 3).map((f) => (
-                  <span key={f.key} className="border-l border-zinc-200 dark:border-zinc-800 pl-2">
+                  <span key={f.key} className="border-l border-border/60 pl-2">
                     {renderField(f, item[f.key as keyof T], item, index)}
                   </span>
                 ))}
@@ -287,8 +339,8 @@ export function AdaptiveRecord<T extends Record<string, unknown>>({
               {onSelect && (
                 <button
                   className={cn(
-                    "h-4 w-4 rounded border transition-all flex items-center justify-center hover:border-blue-400 cursor-pointer",
-                    isSelected ? "border-blue-500 bg-blue-500 text-white" : "border-zinc-300 dark:border-zinc-600 opacity-0 group-hover:opacity-100"
+                    "h-4 w-4 rounded border transition-all flex items-center justify-center hover:border-primary cursor-pointer",
+                    isSelected ? "border-primary bg-primary text-primary-foreground" : "border-border opacity-0 group-hover:opacity-100"
                   )}
                   onClick={e => { e.stopPropagation(); onSelect(id); }}
                 >
@@ -299,60 +351,50 @@ export function AdaptiveRecord<T extends Record<string, unknown>>({
             </div>
           </div>
         ) : (
-          /* Comfortable & Expanded Views: Premium SaaS 12-Column Grid Layout */
+          /* Comfortable & Expanded Views: Dynamic 12-Column Grid Layout */
           <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-            {/* Col 1-5: Product Title + Subcategory / ID */}
-            <div className="md:col-span-5 min-w-0 flex flex-col justify-center">
-              <div className="font-semibold text-foreground text-sm tracking-tight truncate">
-                {renderField(primary[0] || sorted[0], item[(primary[0] || sorted[0])?.key as keyof T], item, index)}
+            {/* Col 1-5 (or Col 1-6 if no detail): Title + Subtitle */}
+            <div className={cn("min-w-0 flex flex-col justify-center pr-2", hasDetail ? "md:col-span-5" : "md:col-span-6")}>
+              <div className="font-semibold text-foreground text-sm tracking-tight truncate group-hover:text-primary transition-colors">
+                {renderField(primaryField, item[primaryField?.key as keyof T], item, index)}
               </div>
-              <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
-                {secondary.find(f => f.semantic === "subtitle" || f.key.includes("nom_") || f.key.includes("categoria")) && (
-                  <span className="truncate opacity-80">
-                    {renderField(
-                      secondary.find(f => f.semantic === "subtitle" || f.key.includes("nom_") || f.key.includes("categoria"))!,
-                      item[secondary.find(f => f.semantic === "subtitle" || f.key.includes("nom_") || f.key.includes("categoria"))!.key as keyof T],
-                      item,
-                      index
-                    )}
-                  </span>
-                )}
-              </div>
+              {subtitleField && hasSubtitleVal && (
+                <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground truncate">
+                  {renderField(subtitleField, subtitleRawVal, item, index)}
+                </div>
+              )}
             </div>
 
-            {/* Col 6-7: Brand / Badges / Chips */}
-            <div className="md:col-span-2 flex flex-wrap gap-1.5 items-center">
-              {secondary.filter(f => (f.semantic === "chip" || f.semantic === "badge") && f.key !== "estado_producto" && f.key !== "estado").map(f => (
-                <div key={f.key}>
-                  {renderField(f, item[f.key as keyof T], item, index)}
-                </div>
-              ))}
-            </div>
+            {/* Col 6-7: Brand / Category Chips / Detail Fields (Only if detail exists) */}
+            {hasDetail && (
+              <div className="md:col-span-2 flex flex-wrap gap-1.5 items-center">
+                {detailChips.map(f => (
+                  <div key={f.key}>
+                    {renderField(f, item[f.key as keyof T], item, index)}
+                  </div>
+                ))}
+              </div>
+            )}
 
-            {/* Col 8-9: Barcode SVG */}
-            <div className="md:col-span-2 flex items-center justify-start md:justify-center overflow-visible py-0.5">
-              {visible.filter(f => f.semantic === "barcode" || f.key === "cod_barras").map(f => (
-                <div key={f.key} className="w-full flex justify-start md:justify-center overflow-visible">
-                  {renderField(f, item[f.key as keyof T], item, index)}
+            {/* Col 8-9 (or Col 7-9 if no detail): Barcode / Unit / ID Code */}
+            <div className={cn("flex items-center justify-start md:justify-center overflow-visible py-0.5", hasDetail ? "md:col-span-2" : "md:col-span-3")}>
+              {primaryCode && (
+                <div className="w-full flex justify-start md:justify-center overflow-visible">
+                  {renderField(primaryCode, item[primaryCode.key as keyof T], item, index)}
                 </div>
-              ))}
+              )}
             </div>
 
             {/* Col 10-11: Price + Status Badge */}
-            <div className="md:col-span-2 flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-1.5">
-              {secondary.filter(f => f.semantic === "number").map(f => (
-                <div key={f.key} className="text-sm font-bold text-foreground">
+            <div className="md:col-span-2 flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center gap-1">
+              {numberFields.map(f => (
+                <div key={f.key} className="text-sm font-bold text-foreground tracking-tight">
                   {renderField(f, item[f.key as keyof T], item, index)}
                 </div>
               ))}
               <div className="flex items-center gap-1.5">
-                {secondary.filter(f => f.key === "estado_producto" || f.key === "estado").map(f => (
-                  <div key={f.key} className="scale-90 origin-right">
-                    {renderField(f, item[f.key as keyof T], item, index)}
-                  </div>
-                ))}
-                {meta.filter(f => f.semantic === "code" && f.key !== "cod_barras").map(f => (
-                  <div key={f.key} className="text-[10px] text-muted-foreground uppercase bg-zinc-100 dark:bg-zinc-800 px-1 py-0.2 rounded">
+                {statusBadgeFields.map(f => (
+                  <div key={f.key}>
                     {renderField(f, item[f.key as keyof T], item, index)}
                   </div>
                 ))}
@@ -365,10 +407,10 @@ export function AdaptiveRecord<T extends Record<string, unknown>>({
                 <button
                   className={cn(
                     "h-5 w-5 rounded border-2 transition-all duration-150 flex items-center justify-center",
-                    "hover:border-blue-400 cursor-pointer",
+                    "hover:border-primary cursor-pointer",
                     isSelected
-                      ? "border-blue-500 bg-blue-500 text-white"
-                      : "border-zinc-300 dark:border-zinc-600 opacity-0 group-hover:opacity-100",
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border opacity-0 group-hover:opacity-100",
                   )}
                   onClick={e => { e.stopPropagation(); onSelect(id); }}
                   aria-label="Seleccionar"

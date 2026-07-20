@@ -3,13 +3,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Brand } from "../types";
 import { getBrands, createBrand, updateBrand, deleteBrand, checkBrandUsage } from "../api/products";
 import { usePermissions } from "@/hooks/usePermissions";
-import { Can } from "@/components/shared/Can";
-import EntityCardsGrid from "@/components/shared/EntityCardsGrid";
+import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection";
+import type { FieldDef, RecordAction, RhythmConfig } from "@/components/shared/AdaptiveCollection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit, Trash2, Loader2, ShieldAlert, AlertTriangle, CheckCircle2, Search } from "lucide-react";
+import { Plus, Edit, Trash2, Loader2, ShieldAlert, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 
 export default function BrandsPanel() {
@@ -35,12 +35,34 @@ export default function BrandsPanel() {
   });
 
   const { can } = usePermissions();
+  const canCreate = can("productos.create");
   const canEdit = can("productos.edit");
   const canDelete = can("productos.delete");
 
-  const filteredBrands = brands.filter((b) =>
-    (b.nombre || "").toLowerCase().includes(searchTerm.toLowerCase().trim())
-  );
+  // ── Fields ─────────────────────────────────────────────────────
+  const fields: FieldDef<Brand>[] = [
+    {
+      key: "nombre", priority: "primary", semantic: "title",
+      label: "Marca",
+      className: "font-semibold text-foreground text-sm",
+    },
+    {
+      key: "id_marca", priority: "meta", semantic: "code",
+      label: "ID",
+      format: (v) => `#${v}`,
+    },
+    {
+      key: "estado", priority: "secondary", semantic: "badge",
+      label: "Estado",
+      format: (v) => Number(v) === 1 ? "Activo" : "Inactivo",
+    },
+  ];
+
+  // ── Rhythm ────────────────────────────────────────────────────
+  const getRhythm = (b: Brand): RhythmConfig => ({
+    type: "dot",
+    color: Number(b.estado) === 0 ? "rose" : "emerald",
+  });
 
   // ── Handlers ──────────────────────────────────────────────────
   const handleOpenCreate = () => {
@@ -100,60 +122,47 @@ export default function BrandsPanel() {
     setDeleteUsageInfo(null);
   };
 
+  // ── Actions ────────────────────────────────────────────────────
+  const actions: RecordAction[] = [
+    {
+      id: "edit", label: "Editar",
+      icon: <Edit className="h-3.5 w-3.5" />,
+      onClick: (item) => handleOpenEdit(item as Brand),
+      disabled: !canEdit,
+    },
+    {
+      id: "delete", label: "Eliminar",
+      icon: <Trash2 className="h-3.5 w-3.5" />,
+      onClick: (item) => handleOpenDelete(item as Brand),
+      variant: "destructive",
+      disabled: !canDelete,
+    },
+  ];
+
   return (
     <div className="space-y-4">
-      {/* Search & Actions Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar marcas..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-
-        <Can capability="productos.create">
-          <Button
-            onClick={handleOpenCreate}
-            className="gap-2 self-start sm:self-auto"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Agregar Marca</span>
-          </Button>
-        </Can>
-      </div>
-
-      {/* Brands Cards Grid */}
-      <EntityCardsGrid
-        items={filteredBrands}
-        getItemId={(b) => b.id_marca}
-        columns={[{ labelKey: "nombre" }]}
-        nodeTint={(b) => (b.estado === 0 ? "rose" : undefined)}
+      <AdaptiveCollection<Brand>
+        title="Marcas"
+        items={brands}
+        fields={fields}
+        actions={actions}
+        layout="auto"
         isLoading={isLoading}
-        searchTerm={searchTerm}
-        emptyMessage={{
+        search={searchTerm}
+        searchPlaceholder="Buscar marcas por nombre o ID…"
+        onSearch={setSearchTerm}
+        empty={{
           title: "No se encontraron marcas",
           description: searchTerm
             ? `Ninguna marca coincide con "${searchTerm}"`
-            : "Registra tu primera marca.",
+            : "Registra tu primera marca para organizar tu catálogo.",
         }}
-        getActions={(b) => [
-          {
-            label: "Editar",
-            icon: <Edit className="h-4 w-4" />,
-            onClick: () => handleOpenEdit(b),
-            disabled: !canEdit,
-          },
-          {
-            label: "Eliminar",
-            icon: <Trash2 className="h-4 w-4" />,
-            onClick: () => handleOpenDelete(b),
-            variant: "destructive",
-            disabled: !canDelete,
-          },
-        ]}
+        getItemId={(b) => b.id_marca}
+        globalActions={canCreate ? [{
+          id: "create", label: "Agregar Marca",
+          icon: <Plus className="h-4 w-4" />,
+          onClick: handleOpenCreate,
+        }] : undefined}
       />
 
       {/* Create / Edit Dialog */}
@@ -191,7 +200,6 @@ export default function BrandsPanel() {
       {/* Delete Dialog */}
       <Dialog open={isDeleteOpen} onOpenChange={(o) => !o && handleCloseDeleteDialog()}>
         <DialogContent className="max-w-sm border-border bg-card">
-
           {deleteMode === "confirm" && (
             <>
               <DialogHeader>

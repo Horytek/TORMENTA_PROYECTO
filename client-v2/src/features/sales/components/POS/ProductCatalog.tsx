@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Package, X } from "lucide-react";
+import { Package } from "lucide-react";
+import { SearchInput } from "@/components/shared/SearchInput";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useCartStore } from "@/store/useCartStore";
@@ -63,23 +64,12 @@ export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
     <div className="flex flex-col h-full bg-card rounded-2xl border border-border overflow-hidden">
       {/* Header con búsqueda */}
       <div className="p-3 border-b border-border space-y-2">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nombre, código o barras…"
-            className="h-9 pl-8 pr-3 text-sm"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          )}
-        </div>
+        <SearchInput
+          value={search}
+          onChangeValue={setSearch}
+          placeholder="Buscar por nombre, código o barras…"
+          wrapperClassName="w-full max-w-none"
+        />
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Package className="h-3 w-3" />

@@ -46,7 +46,7 @@ export default function WarehousesPage() {
     setIsFormOpen(true);
   };
 
-  // ── Fields para AdaptiveCard ──────────────────────────────
+  // ── Fields para AdaptiveCollection ────────────────────────
   const fields: FieldDef<Almacen>[] = [
     {
       key: "nom_almacen",
@@ -58,19 +58,21 @@ export default function WarehousesPage() {
       key: "ubicacion",
       label: "Ubicación",
       priority: "secondary",
-      semantic: "subtitle",
+      semantic: "chip",
+      format: (val) => (val as string)?.trim() || "Sin dirección",
     },
     {
       key: "nombre_sucursal",
       label: "Sucursal",
       priority: "secondary",
-      semantic: "badge",
+      semantic: "chip",
+      format: (val) => (val as string)?.trim() || "General",
     },
     {
       key: "estado_almacen",
       label: "Estado",
       priority: "secondary",
-      semantic: "status-dot",
+      semantic: "badge",
       format: (val) => (Number(val) === 1 ? "Activo" : "Inactivo"),
     },
     {
@@ -111,7 +113,7 @@ export default function WarehousesPage() {
         search={searchTerm}
         searchPlaceholder="Buscar por nombre, ubicación o sucursal…"
         onSearch={setSearchTerm}
-        layout="card"
+        layout="auto"
         getItemId={(a) => a.id_almacen}
         empty={{
           title: "No se encontraron almacenes",

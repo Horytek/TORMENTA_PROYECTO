@@ -101,7 +101,7 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-3xl space-y-4">
+      <div className="w-full max-w-5xl space-y-4">
         {[...Array(3)].map((_, i) => (
           <div key={i} className="h-40 w-full animate-pulse rounded-lg bg-muted" />
         ))}
@@ -110,7 +110,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <form onSubmit={handleSubmit((v) => mutation.mutate(v))} className="max-w-3xl space-y-6 animate-fade-in">
+    <form onSubmit={handleSubmit((v) => mutation.mutate(v))} className="w-full max-w-5xl space-y-6 animate-fade-in">
       {/* Encabezado */}
       <div className="flex flex-col gap-4 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

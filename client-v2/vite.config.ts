@@ -14,7 +14,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: (process.env.VITE_API_URL || 'http://localhost:4000').replace(/\/+api\/?$/, ''),
+        target: (process.env.VITE_API_URL && process.env.VITE_API_URL.startsWith('http'))
+          ? process.env.VITE_API_URL.replace(/\/+api\/?$/, '')
+          : 'http://localhost:4000',
         changeOrigin: true,
         secure: false
       }
