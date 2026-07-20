@@ -14,6 +14,11 @@ export interface PermisoRow {
   eliminar: number;
   desactivar: number;
   generar: number;
+  /** Acciones dinámicas (`{ "anular_venta": 1 }`) fuera de las 6 estándar. El
+   *  backend ya la persiste y el resolver la convierte en capabilities
+   *  `slug.accion`; se round-trippea para no borrarla al editar los permisos
+   *  estándar. Puede venir como objeto o string JSON según el driver. */
+  actions_json?: Record<string, number> | string | null;
 }
 
 export const getPermisosByRol = async (idRol: number): Promise<PermisoRow[]> =>

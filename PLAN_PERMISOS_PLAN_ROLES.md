@@ -164,9 +164,17 @@ en Developer + el resolver las convierte en capabilities). Lo que falta:
   función `(allowed)=>node`), `fallback`, y combos `anyOf`/`allOf`. Adoptado en
   WarehouseNotesPage y BrandsPanel. Verificado en runtime: renderiza cuando el
   rol tiene la capability, oculta cuando no (incl. dinámica `ventas.anular_venta`).
-- **La matriz de roles renderiza las acciones desde el catálogo**, no desde las
-  6 columnas fijas (`ver/crear/editar/...`): agregar la acción
-  "anular_venta" en el catálogo la hace aparecer sola en RolePermissionsDialog.
+- **La matriz de roles renderiza las acciones desde el catálogo** — ✅ HECHO
+  (2026-07-18): RolePermissionsDialog ahora agrega columnas dinámicas por cada
+  acción no estándar declarada en el `active_actions` de un módulo (unión de los
+  visibles), además de las 6 fijas. Y round-trippea `actions_json` (antes el
+  save omitía las acciones dinámicas → se borraban al editar los permisos
+  estándar: bug de pérdida de datos, ya corregido). Verificado en runtime:
+  sembrando `anular_venta` en el `active_actions` de ventas + otorgándola al rol,
+  la columna aparece sola, se carga marcada donde está otorgada, y "—" donde no
+  aplica; el payload del save incluye `actions_json` en todas las filas.
+  Falta la UI para DECLARAR acciones en `active_actions` de un módulo (hoy no hay
+  editor; se hace por BD) — es lo que cierra el auto-servicio.
 - **Registro automático al crear módulos**: crear un módulo en Developer siembra
   sus acciones CRUD estándar en el catálogo (hoy son dos pasos manuales).
 - Resultado medible: **agregar un permiso nuevo = 1 registro en el catálogo +
