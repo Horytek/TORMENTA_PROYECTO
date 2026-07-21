@@ -210,6 +210,7 @@ export default function CategoriesPanel() {
             : "Registra tu primera categoría para organizar tu inventario.",
         }}
         getItemId={(c) => c.id_categoria}
+        getRhythm={getRhythm}
         globalActions={hasCreatePermission ? [{
           id: "create", label: "Agregar Categoría",
           icon: <Plus className="h-4 w-4" />,

@@ -158,6 +158,7 @@ export default function BrandsPanel() {
             : "Registra tu primera marca para organizar tu catálogo.",
         }}
         getItemId={(b) => b.id_marca}
+        getRhythm={getRhythm}
         globalActions={canCreate ? [{
           id: "create", label: "Agregar Marca",
           icon: <Plus className="h-4 w-4" />,

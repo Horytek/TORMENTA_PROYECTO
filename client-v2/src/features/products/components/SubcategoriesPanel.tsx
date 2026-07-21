@@ -228,6 +228,7 @@ export default function SubcategoriesPanel() {
             : "Registra tu primera subcategoría.",
         }}
         getItemId={(s) => s.id_subcategoria}
+        getRhythm={getRhythm}
         globalActions={hasCreatePermission ? [{
           id: "create", label: "Agregar Subcategoría",
           icon: <Plus className="h-4 w-4" />,

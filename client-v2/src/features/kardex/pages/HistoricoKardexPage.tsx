@@ -25,7 +25,6 @@ import { cn } from "@/lib/utils";
 import {
   getKardexInventarioAlmacenes as getKardexAlmacenes,
   getKardexInventarioDetalleCompleto as getKardexDetalleCompleto,
-  type KardexInventarioStockAnterior as KardexStockAnterior,
 } from "@/features/kardex-inventario/api/kardexInventario";
 
 import { useUserStore } from "@/store/useUserStore";

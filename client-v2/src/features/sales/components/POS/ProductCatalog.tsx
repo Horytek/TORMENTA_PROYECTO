@@ -2,7 +2,6 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Package } from "lucide-react";
 import { SearchInput } from "@/components/shared/SearchInput";
-import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { useCartStore } from "@/store/useCartStore";
 import type { POSProduct, CartItem } from "@/features/sales/types";

@@ -1,13 +1,12 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryState, parseAsString } from "nuqs";
-import { Plus, Search, Truck, User, Ban, ArrowRight } from "lucide-react";
+import { Plus, Truck, User, Ban, ArrowRight } from "lucide-react";
 
 import { useUserStore } from "@/store/useUserStore";
 import { usePermissions } from "@/hooks/usePermissions";
 import { SearchInput } from "@/components/shared/SearchInput";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import {
   Select,

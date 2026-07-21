@@ -7,7 +7,6 @@ import {
   FileSpreadsheet,
   ArrowDownCircle,
   ArrowUpCircle,
-  Search,
   ArrowRight,
   User,
   Package,
@@ -18,7 +17,6 @@ import { useUserStore } from "@/store/useUserStore";
 import { usePermissions } from "@/hooks/usePermissions";
 import { SearchInput } from "@/components/shared/SearchInput";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Can } from "@/components/shared/Can";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";

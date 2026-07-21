@@ -267,7 +267,6 @@ export function AdaptiveRecord<T extends Record<string, unknown>>({
 
   const primary = visible.filter(f => f.priority === "primary");
   const secondary = visible.filter(f => f.priority === "secondary");
-  const meta = visible.filter(f => f.priority === "meta");
 
   const primaryField = primary[0] || sorted[0];
 

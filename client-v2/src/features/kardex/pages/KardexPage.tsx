@@ -6,13 +6,11 @@ import {
   AlertTriangle,
   FileText,
   Inbox,
-  Search,
   PackageSearch,
   RefreshCw,
 } from "lucide-react";
 
 import { SearchInput } from "@/components/shared/SearchInput";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
