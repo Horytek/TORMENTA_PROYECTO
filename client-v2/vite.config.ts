@@ -39,7 +39,13 @@ export default defineConfig({
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
           'query-vendor': ['@tanstack/react-query', 'axios'],
-          'ui-vendor': ['framer-motion', 'lucide-react']
+          'ui-vendor': ['framer-motion', 'lucide-react'],
+          // Vendors app-wide que estaban inflando el chunk principal. Separarlos
+          // reduce el parseo inicial y permite cachearlos entre deploys de la app.
+          'radix-vendor': ['radix-ui'],
+          'form-vendor': ['react-hook-form', 'zod'],
+          'chart-vendor': ['recharts'], // dedup entre dashboard/reports (solo carga en esas rutas)
+          'command-vendor': ['cmdk']
         }
       }
     }

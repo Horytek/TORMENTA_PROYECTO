@@ -8,22 +8,26 @@ import { verifyTokenRequest } from "@/api/auth";
 import { setAuthReady } from "@/api/axios";
 import { getToken } from "@/utils/authStorage";
 
-// Layout + login + landing cargan de inmediato; las páginas van diferidas (code-split por ruta).
+// Solo el layout, el login y la infra de UI cargan de inmediato; TODO lo demás
+// (páginas de app Y de marketing) va diferido (code-split por ruta). Las páginas
+// públicas de landing NO deben pesar en el bundle que se baja un usuario logueado.
 import LoginPage from "@/features/auth/pages/LoginPage";
-import LandingPage from "@/features/landing/pages/LandingPage";
-import LegalPage from "@/features/landing/pages/LegalPage";
-import ServiciosPage from "@/features/landing/pages/ServiciosPage";
-import AboutPage from "@/features/landing/pages/AboutPage";
-import TeamPage from "@/features/landing/pages/TeamPage";
-import UpdatesPage from "@/features/landing/pages/UpdatesPage";
-import ContactPage from "@/features/landing/pages/ContactPage";
-import PaymentResultPage from "@/features/landing/pages/PaymentResultPage";
-import RegisterPage from "@/features/registration/pages/RegisterPage";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { PageLoader } from "@/components/shared/PageLoader";
 import { RequireCapability } from "@/components/shared/RequireCapability";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthzToastBridge } from "@/components/shared/AuthzToastBridge";
+
+// Landing / marketing / registro — diferidas (un usuario del ERP nunca las ve).
+const LandingPage = lazy(() => import("@/features/landing/pages/LandingPage"));
+const LegalPage = lazy(() => import("@/features/landing/pages/LegalPage"));
+const ServiciosPage = lazy(() => import("@/features/landing/pages/ServiciosPage"));
+const AboutPage = lazy(() => import("@/features/landing/pages/AboutPage"));
+const TeamPage = lazy(() => import("@/features/landing/pages/TeamPage"));
+const UpdatesPage = lazy(() => import("@/features/landing/pages/UpdatesPage"));
+const ContactPage = lazy(() => import("@/features/landing/pages/ContactPage"));
+const PaymentResultPage = lazy(() => import("@/features/landing/pages/PaymentResultPage"));
+const RegisterPage = lazy(() => import("@/features/registration/pages/RegisterPage"));
 
 const ProductsPage = lazy(() => import("@/features/products/pages/ProductsPage"));
 const LandingSubPage = lazy(() => import("@/features/landing/pages/LandingSubPage"));
