@@ -630,21 +630,22 @@ export const getNotasPendientes = async (req, res) => {
     const ingresos = ingresosRes[0];
     const salidas = salidasRes[0];
 
-    // Obtener detalles para todos los id_nota involucrados
-    const allNotasIds = [
-      ...new Set([...ingresos.map(n => n.id_nota), ...salidas.map(n => n.id_nota)])
-    ];
-    let detallesNotas = [];
-    if (allNotasIds.length > 0) {
-      const [detalles] = await connection.query(
-        `SELECT id_nota, id_producto, cantidad FROM detalle_nota WHERE id_nota IN (?) AND id_tenant = ?`,
-        [allNotasIds, id_tenant]
-      );
-      detallesNotas = detalles;
+    // Las consultas anteriores ya incluyen cada detalle. Reutilizarlos evita
+    // una tercera lectura de detalle_nota y búsquedas repetidas sobre el arreglo.
+    const detallesPorNota = new Map();
+    for (const nota of [...ingresos, ...salidas]) {
+      if (!detallesPorNota.has(nota.id_nota)) {
+        detallesPorNota.set(nota.id_nota, []);
+      }
+
+      detallesPorNota.get(nota.id_nota).push({
+        id_nota: nota.id_nota,
+        id_producto: nota.id_producto,
+        cantidad: nota.cantidad,
+      });
     }
 
-    const getDetalles = (id_nota) =>
-      detallesNotas.filter(d => d.id_nota === id_nota);
+    const getDetalles = (id_nota) => detallesPorNota.get(id_nota) || [];
 
     const pendientesIngreso = ingresos.filter(ing =>
       ing.estado_espera === 0 &&
@@ -874,4 +875,3 @@ export const methods = {
   getNotificaciones,
   getNuevosClientes
 };
-

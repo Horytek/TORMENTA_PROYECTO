@@ -3,6 +3,8 @@ import { methods as ventasController } from "./../controllers/ventas.controller.
 import { auth } from "../middlewares/auth.middleware.js";
 import { logMiddleware } from "../middlewares/log.middleware.js";
 import { requireCapability } from "../middlewares/authorize.middleware.js";
+import { validateSchema } from "../middlewares/validator.middleware.js";
+import { crearVentaSchema } from "../schemas/ventas.schema.js";
 
 const router = Router();
 
@@ -12,7 +14,7 @@ router.use(logMiddleware);
 
 router.get("/", ventasController.getVentas);
 router.get("/producto_venta", ventasController.getProductosVentas);
-router.post("/agregar_venta", requireCapability("ventas", "crear"), ventasController.addVenta);
+router.post("/agregar_venta", requireCapability("ventas", "crear"), validateSchema(crearVentaSchema), ventasController.addVenta);
 router.get("/cliente_venta", ventasController.getClienteVentas);
 router.post("/cliente", requireCapability("ventas", "crear"), ventasController.addCliente);
 router.get("/comprobante", ventasController.getComprobante);
