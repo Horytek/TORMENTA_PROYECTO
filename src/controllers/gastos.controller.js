@@ -134,7 +134,7 @@ const getPL = async (req, res) => {
              FROM venta v
              INNER JOIN detalle_venta dv ON dv.id_venta = v.id_venta
              WHERE v.id_tenant = ? AND v.estado_venta = 1
-               AND DATE(v.f_venta) BETWEEN ? AND ?`,
+               AND v.f_venta BETWEEN ? AND ?`, // sin DATE(): f_venta ya es DATE y la función impedía usar el índice
             [req.id_tenant, fechaInicio, fechaFin]
         );
 

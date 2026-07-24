@@ -70,8 +70,11 @@ const getIngresos = async (req, res) => {
     const loteWhere = [
       'l.estado < 2',
       'l.id_tenant = ?',
-      'DATE(l.fecha_creacion) >= ?',
-      'DATE(l.fecha_creacion) <= ?',
+      // Rango sobre la columna desnuda: `fecha_creacion` es TIMESTAMP y envolverla
+      // en DATE() impedía usar cualquier índice. `< fecha_e + 1 día` cubre el mismo
+      // conjunto que `DATE(fecha_creacion) <= fecha_e`.
+      'l.fecha_creacion >= ?',
+      'l.fecha_creacion < DATE_ADD(?, INTERVAL 1 DAY)',
       '(l.descripcion LIKE ? OR CONCAT("LOTE-", l.id_lote) LIKE ?)'
     ];
     const loteParams = [id_tenant, fecha_i, fecha_e, `%${razon_social}%`, `%${razon_social}%`];
