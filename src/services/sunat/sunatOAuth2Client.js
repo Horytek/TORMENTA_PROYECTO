@@ -20,6 +20,18 @@ const OAUTH2_ENDPOINT = 'https://api-seguridad.sunat.gob.pe/v1/clientessol';
 const tokenCache = new Map();
 
 /**
+ * Oculta el access_token/refresh_token de un cuerpo antes de loguearlo o de
+ * incluirlo en un mensaje de error. Un token filtrado en logs vale tanto como
+ * la contraseña SOL mientras no expire.
+ */
+function enmascararToken(cuerpo) {
+  return String(cuerpo ?? '').replace(
+    /("(?:access|refresh|id)_token"\s*:\s*")[^"]+"/gi,
+    '$1********"'
+  );
+}
+
+/**
  * Obtiene el endpoint base de OAuth2
  * @param {'beta'|'prod'} env 
  */
@@ -139,7 +151,13 @@ export async function getOAuth2Token({
   }, formData);
 
   console.log(`[SUNAT OAuth2] Response status: ${response.statusCode}`);
-  console.log(`[SUNAT OAuth2] Response body: ${response.body.substring(0, 500)}`);
+  // En una respuesta 200 el cuerpo ES el access_token: solo se loguea el cuerpo
+  // cuando hubo error (ahí trae el motivo y no credenciales utilizables).
+  if (response.statusCode === 200) {
+    console.log('[SUNAT OAuth2] Token recibido (cuerpo omitido por contener el access_token)');
+  } else {
+    console.log(`[SUNAT OAuth2] Response body: ${enmascararToken(response.body).substring(0, 500)}`);
+  }
 
   if (response.statusCode !== 200) {
     let errorDetail = response.body;
@@ -156,7 +174,7 @@ export async function getOAuth2Token({
   try {
     tokenData = JSON.parse(response.body);
   } catch (e) {
-    throw new Error(`OAuth2 respuesta inválida: ${response.body}`);
+    throw new Error(`OAuth2 respuesta inválida: ${enmascararToken(response.body)}`);
   }
 
   // Guardar en cache

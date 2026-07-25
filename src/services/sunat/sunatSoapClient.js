@@ -5,6 +5,19 @@ import { SunatWSSecurity } from './sunatWsSecurity.js';
 
 // Nota: No usar caché de cliente para evitar 401 por reutilización de conexión
 
+/**
+ * Oculta credenciales antes de escribirlas a un log.
+ *
+ * El sobre SOAP de SUNAT lleva la contraseña SOL en claro dentro de
+ * <wsse:Password>, y el ZIP en base64 en <contentFile>. Ninguno de los dos
+ * debe quedar en los logs (que en Azure se retienen y se consultan).
+ */
+export function enmascararSecretos(texto) {
+  return String(texto ?? '')
+    .replace(/(<(?:\w+:)?Password[^>]*>)[^<]*(<\/(?:\w+:)?Password>)/gi, '$1********$2')
+    .replace(/(<(?:\w+:)?contentFile[^>]*>)[^<]{40,}(<\/(?:\w+:)?contentFile>)/gi, '$1[zip omitido]$2');
+}
+
 function getWsdlHeaders() {
   // Algunos endpoints SUNAT responden 401 a clientes con headers “raros” al descargar imports (WSDL/XSD).
   // Forzamos un User-Agent y Accept simples para mejorar compatibilidad.
@@ -144,8 +157,10 @@ export async function sunatSendBill({ fileName, zipBuffer, config } = {}) {
 
   // DEBUG: Log the raw SOAP request to verify WS-Security headers
   client.on('request', function (xmlRequest) {
-    // Log first 2000 chars to see headers without flooding console
-    console.log('[SunatSoapClient] SOAP Request (first 2000 chars):', xmlRequest.substring(0, 2000));
+    // Log first 2000 chars to see headers without flooding console.
+    // La contraseña SOL viaja en <wsse:Password> dentro de ese tramo: se
+    // enmascara antes de loguear para no dejarla en claro en los logs de Azure.
+    console.log('[SunatSoapClient] SOAP Request (first 2000 chars):', enmascararSecretos(xmlRequest.substring(0, 2000)));
     // Check if WS-Security header is present
     if (xmlRequest.includes('wsse:Security')) {
       console.log('[SunatSoapClient] WS-Security header: PRESENT');
@@ -198,8 +213,9 @@ export async function sunatSendBill({ fileName, zipBuffer, config } = {}) {
 
       console.error(`[SunatSoapClient] Attempt ${attempt}/${maxRetries} failed:`, err.message || 'No message');
       console.error(`[SunatSoapClient] HTTP Status:`, httpStatus, `| is401:`, isTrueHttp401, `| isNginx401:`, isNginx401);
-      if (err.response) console.error('[SunatSoapClient] SOAP/HTTP Response:', httpStatus, responseData.substring(0, 500));
-      if (err.body) console.error('[SunatSoapClient] Response body:', String(err.body).substring(0, 500));
+      // Una SOAP Fault puede devolver eco del request: se enmascara igual.
+      if (err.response) console.error('[SunatSoapClient] SOAP/HTTP Response:', httpStatus, enmascararSecretos(responseData.substring(0, 500)));
+      if (err.body) console.error('[SunatSoapClient] Response body:', enmascararSecretos(String(err.body).substring(0, 500)));
 
       // Only retry on true 401 auth errors, NOT on SUNAT business errors
       if ((isTrueHttp401 || isNginx401) && !isSunatBusinessError && attempt < maxRetries) {
