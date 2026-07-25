@@ -8,14 +8,17 @@ import {
   useCommandK,
 } from "@/components/layouts/SearchCommandDialog";
 import { NotificationsPopover } from "@/components/layouts/NotificationsPopover";
+import { applyTheme, type Theme } from "@/lib/theme";
 
 export default function Navbar() {
   const user = useUserStore((state) => state.user);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<Theme>("light");
   const [searchOpen, setSearchOpen] = useState(false);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+    const savedTheme = localStorage.getItem("theme") as Theme | null;
+    // Estado inicial: NO usar applyTheme (no queremos suprimir transiciones al
+    // montar, solo al alternar). La clase ya suele venir puesta por el arranque.
     if (savedTheme) {
       setTheme(savedTheme);
       document.documentElement.classList.toggle("dark", savedTheme === "dark");
@@ -26,10 +29,11 @@ export default function Navbar() {
   }, []);
 
   const toggleTheme = () => {
-    const nextTheme = theme === "light" ? "dark" : "light";
+    const nextTheme: Theme = theme === "light" ? "dark" : "light";
     setTheme(nextTheme);
     localStorage.setItem("theme", nextTheme);
-    document.documentElement.classList.toggle("dark", nextTheme === "dark");
+    // Cambio instantáneo (sin animar los ~130 elementos con transition-*).
+    applyTheme(nextTheme);
   };
 
   // Atajo global Ctrl/Cmd + K para abrir la búsqueda

@@ -6,10 +6,11 @@ import {
   deleteSubcategory, checkSubcategoryUsage,
 } from "../api/products";
 import { usePermissions } from "@/hooks/usePermissions";
+import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection";
+import type { FieldDef, RecordAction, RhythmConfig } from "@/components/shared/AdaptiveCollection";
 
 // UI Components
 import { Button } from "@/components/ui/button";
-import EntityCardsGrid from "@/components/shared/EntityCardsGrid";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Plus, Search, Edit, Trash2, Loader2, ShieldAlert,
+  Plus, Edit, Trash2, Loader2, ShieldAlert,
   AlertTriangle, CheckCircle2,
 } from "lucide-react";
 import {
@@ -57,7 +58,7 @@ export default function SubcategoriesPanel() {
   });
 
   // Fetch Categories for selection dropdown
-  const { data: categories = [], isLoading: isLoadingCats } = useQuery<Category[]>({
+  const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["categories"],
     queryFn: getCategories,
   });
@@ -68,10 +69,35 @@ export default function SubcategoriesPanel() {
   const hasEditPermission = can("productos.edit");
   const hasDeletePermission = can("productos.delete");
 
-  const filteredSubs = subcategories.filter((s) =>
-    (s.nombre_sub || "").toLowerCase().includes(searchTerm.toLowerCase().trim()) ||
-    (s.nom_categoria || "").toLowerCase().includes(searchTerm.toLowerCase().trim())
-  );
+  // ── Fields ─────────────────────────────────────────────────────
+  const fields: FieldDef<Subcategory>[] = [
+    {
+      key: "nombre_sub", priority: "primary", semantic: "title",
+      label: "Subcategoría",
+      className: "font-semibold text-foreground text-sm",
+    },
+    {
+      key: "nom_categoria", priority: "secondary", semantic: "chip",
+      label: "Categoría Padre",
+      format: (v) => (v as string) || "General",
+    },
+    {
+      key: "id_subcategoria", priority: "meta", semantic: "code",
+      label: "ID",
+      format: (v) => `#${v}`,
+    },
+    {
+      key: "estado", priority: "secondary", semantic: "badge",
+      label: "Estado",
+      format: (v) => Number(v) === 1 ? "Activo" : "Inactivo",
+    },
+  ];
+
+  // ── Rhythm ────────────────────────────────────────────────────
+  const getRhythm = (s: Subcategory): RhythmConfig => ({
+    type: "dot",
+    color: Number(s.estado) === 0 ? "rose" : "emerald",
+  });
 
   const handleOpenCreate = () => {
     setEditingSub(null);
@@ -166,60 +192,48 @@ export default function SubcategoriesPanel() {
     setDeleteUsageInfo(null);
   };
 
+  // ── Actions ────────────────────────────────────────────────────
+  const actions: RecordAction[] = [
+    {
+      id: "edit", label: "Editar",
+      icon: <Edit className="h-3.5 w-3.5" />,
+      onClick: (item) => handleOpenEdit(item as Subcategory),
+      disabled: !hasEditPermission,
+    },
+    {
+      id: "delete", label: "Eliminar",
+      icon: <Trash2 className="h-3.5 w-3.5" />,
+      onClick: (item) => handleOpenDelete(item as Subcategory),
+      variant: "destructive",
+      disabled: !hasDeletePermission,
+    },
+  ];
+
   return (
     <div className="space-y-4">
-      {/* Search & Actions Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar subcategorías..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-
-        <Button
-          onClick={handleOpenCreate}
-          disabled={!hasCreatePermission}
-          className="gap-2 self-start sm:self-auto"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Agregar Subcategoría</span>
-        </Button>
-      </div>
-
-      {/* Subcategories Cards Grid */}
-      <EntityCardsGrid
-        items={filteredSubs}
-        getItemId={(s) => s.id_subcategoria}
-        columns={[{ labelKey: "nombre_sub" }]}
-        subtitleKey="nom_categoria"
-        nodeTint={(s) => (s.estado === 0 ? "rose" : undefined)}
-        isLoading={isLoadingSubs || isLoadingCats}
-        searchTerm={searchTerm}
-        emptyMessage={{
+      <AdaptiveCollection<Subcategory>
+        title="Subcategorías"
+        items={subcategories}
+        fields={fields}
+        actions={actions}
+        layout="auto"
+        isLoading={isLoadingSubs}
+        search={searchTerm}
+        searchPlaceholder="Buscar subcategorías por nombre o categoría padre…"
+        onSearch={setSearchTerm}
+        empty={{
           title: "No se encontraron subcategorías",
           description: searchTerm
             ? `Ninguna subcategoría coincide con "${searchTerm}"`
             : "Registra tu primera subcategoría.",
         }}
-        getActions={(s) => [
-          {
-            label: "Editar",
-            icon: <Edit className="h-4 w-4" />,
-            onClick: () => handleOpenEdit(s),
-            disabled: !hasEditPermission,
-          },
-          {
-            label: "Eliminar",
-            icon: <Trash2 className="h-4 w-4" />,
-            onClick: () => handleOpenDelete(s),
-            variant: "destructive",
-            disabled: !hasDeletePermission,
-          },
-        ]}
+        getItemId={(s) => s.id_subcategoria}
+        getRhythm={getRhythm}
+        globalActions={hasCreatePermission ? [{
+          id: "create", label: "Agregar Subcategoría",
+          icon: <Plus className="h-4 w-4" />,
+          onClick: handleOpenCreate,
+        }] : undefined}
       />
 
       {/* Dialog Create/Edit Subcategory */}
@@ -233,14 +247,22 @@ export default function SubcategoriesPanel() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="category-select">Categoría Padre</Label>
-              <Select
-                value={selectedCatId}
-                onValueChange={setSelectedCatId}
+              <Label htmlFor="sub-name">Nombre de la Subcategoría</Label>
+              <Input
+                id="sub-name"
+                placeholder="Ej: Zapatillas Urbanas, Polos Manga Corta"
+                value={subName}
+                onChange={(e) => setSubName(e.target.value)}
                 disabled={actionLoading}
-              >
-                <SelectTrigger id="category-select" className="w-full">
-                  <SelectValue placeholder="Selecciona Categoría Padre" />
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="parent-cat">Categoría Padre</Label>
+              <Select value={selectedCatId} onValueChange={setSelectedCatId} disabled={actionLoading}>
+                <SelectTrigger id="parent-cat" className="w-full">
+                  <SelectValue placeholder="Seleccionar categoría..." />
                 </SelectTrigger>
                 <SelectContent position="popper">
                   {categories.map((c) => (
@@ -250,18 +272,6 @@ export default function SubcategoriesPanel() {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="sub-name">Nombre de la Subcategoría</Label>
-              <Input
-                id="sub-name"
-                placeholder="Ej: Polos, Zapatillas, Laptops"
-                value={subName}
-                onChange={(e) => setSubName(e.target.value)}
-                disabled={actionLoading}
-                required
-              />
             </div>
 
             <div className="space-y-2">
@@ -293,7 +303,6 @@ export default function SubcategoriesPanel() {
       {/* Dialog Delete — 3 estados */}
       <Dialog open={isDeleteOpen} onOpenChange={(open) => !open && handleCloseDeleteDialog()}>
         <DialogContent className="max-w-sm border-border bg-card">
-
           {deleteMode === "confirm" && (
             <>
               <DialogHeader>
@@ -310,8 +319,8 @@ export default function SubcategoriesPanel() {
                     <div className="flex items-start gap-2 rounded-lg border border-amber-200/50 bg-amber-50/30 p-3 text-xs text-amber-700 dark:text-amber-400">
                       <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                       <span>
-                        Esta subcategoría está asociada a{" "}
-                        <strong>{deleteUsageInfo.productCount} producto(s)</strong>.
+                        Esta subcategoría tiene{" "}
+                        <strong>{deleteUsageInfo.productCount} producto(s)</strong> asociados.
                         Al eliminarla se <strong>desactivará</strong> en lugar de borrarse.
                       </span>
                     </div>
@@ -349,9 +358,8 @@ export default function SubcategoriesPanel() {
                 </div>
                 <DialogTitle className="text-md font-bold">Subcategoría desactivada</DialogTitle>
                 <DialogDescription className="text-muted-foreground">
-                  La subcategoría <strong>"{deletingSub?.nombre_sub}"</strong> estaba asociada a
-                  productos, por lo que se <strong>desactivó</strong> en lugar de eliminarse.
-                  Ya no aparecerá en el sistema, pero sus datos históricos se mantienen.
+                  La subcategoría <strong>"{deletingSub?.nombre_sub}"</strong> tenía productos
+                  asociados, por lo que se <strong>desactivó</strong> en lugar de eliminarse.
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter className="mt-4">

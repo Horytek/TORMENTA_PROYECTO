@@ -3,7 +3,7 @@
 // Adaptado al backend real: campos de GET /api/ventas (ventas.controller.js getVentas)
 // ─────────────────────────────────────────────────────────────────
 
-export type ComprobanteTipo = "Boleta" | "Factura" | "Nota";
+export type ComprobanteTipo = "Boleta" | "Factura" | "Nota de venta";
 export type MetodoPago = "EFECTIVO" | "TARJETA" | "TRANSFERENCIA" | "YAPE" | "PLIN" | "MIXTO";
 export type VentaEstado = 1 | 0;
 
@@ -105,7 +105,8 @@ export interface Venta {
 
 // ── Payload para crear venta ────────────────────────────────────
 export interface VentaPayload {
-  id_sucursal: number;
+  idempotency_key?: string;
+  id_sucursal?: number;
   id_almacen?: number;
   id_cliente?: number | null;
   nombre_cliente?: string;

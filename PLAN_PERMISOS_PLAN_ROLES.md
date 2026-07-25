@@ -135,7 +135,7 @@
 
 | # | Tarea | Detalle |
 |---|---|---|
-| 4.1 | Errores 403 distinguibles | Respuesta estándar `{ success:false, code: "ROLE_DENIED" \| "PLAN_NOT_INCLUDED" \| "LIMIT_REACHED" \| "TENANT_SUSPENDED" }` desde el middleware. El interceptor de axios los mapea a UI distinta. |
+| 4.1 ✅ | Errores 403 distinguibles (hecha 2026-07-18) | Respuesta estándar `{ success:false, code: "ROLE_DENIED" \| "PLAN_NOT_INCLUDED" \| "TENANT_SUSPENDED" }` desde el middleware. Motivo resuelto por `AuthZService.explainCapability` (misma fuente que `/authz/why`, ya refactorizado). Frontend: helper `api/authzError.ts` (`parseAuthzDenial` + evento global `authz:denied`) e interceptor de axios que lo emite. Falta el consumidor visual (toast/modal) → llega con 4.2/4.3; requiere decidir librería de toast (no hay ninguna en client-v2 aún). `LIMIT_REACHED` queda para 4.3 (depende de `plan_feature` de 2.3). |
 | 4.2 | Módulos fuera del plan visibles en gris | En RolePermissionsDialog y sidebar: "No incluido en tu plan — Mejorar" (hoy desaparecen y el admin cree que es un bug). Requiere que el catálogo devuelva también los no-entitled con un flag `in_plan`. |
 | 4.3 | Cuotas visibles | "2/3 sucursales usadas" en Branches/Warehouses + CTA de upgrade al llegar al límite (datos de `plan_feature` de 2.3). |
 | 4.4 | UI de why-denied | Modal "Explicar acceso" en Developer/Roles usando `GET /authz/why` (ya existe el backend). |
@@ -158,12 +158,32 @@
 Hoy: el backend ya soporta acciones dinámicas (`actions_json` + ActionCatalogTab
 en Developer + el resolver las convierte en capabilities). Lo que falta:
 
-- **`<Can capability="ventas.aplicar_descuento">…</Can>`** — componente único en
-  client-v2 que envuelve cualquier botón/menú. Ya existe `usePermissions().can()`;
-  esto es solo la capa declarativa + variantes (`hide` / `disable` / `askUpgrade`).
-- **La matriz de roles renderiza las acciones desde el catálogo**, no desde las
-  6 columnas fijas (`ver/crear/editar/...`): agregar la acción
-  "anular_venta" en el catálogo la hace aparecer sola en RolePermissionsDialog.
+- **`<Can capability="ventas.aplicar_descuento">…</Can>`** — ✅ HECHO (2026-07-18):
+  `components/shared/Can.tsx` (`<Can>` + hook `useCan`). Soporta capabilities
+  estándar y dinámicas, modo ocultar (children nodo), deshabilitar (children
+  función `(allowed)=>node`), `fallback`, y combos `anyOf`/`allOf`. Adoptado en
+  WarehouseNotesPage y BrandsPanel. Verificado en runtime: renderiza cuando el
+  rol tiene la capability, oculta cuando no (incl. dinámica `ventas.anular_venta`).
+- **La matriz de roles renderiza las acciones desde el catálogo** — ✅ HECHO
+  (2026-07-18): RolePermissionsDialog ahora agrega columnas dinámicas por cada
+  acción no estándar declarada en el `active_actions` de un módulo (unión de los
+  visibles), además de las 6 fijas. Y round-trippea `actions_json` (antes el
+  save omitía las acciones dinámicas → se borraban al editar los permisos
+  estándar: bug de pérdida de datos, ya corregido). Verificado en runtime:
+  sembrando `anular_venta` en el `active_actions` de ventas + otorgándola al rol,
+  la columna aparece sola, se carga marcada donde está otorgada, y "—" donde no
+  aplica; el payload del save incluye `actions_json` en todas las filas.
+- **Editor de acciones por módulo** — ✅ HECHO (2026-07-19): `ModuloFormDialog`
+  gana la sección "Acciones habilitadas" (6 estándar como checkboxes + acciones
+  custom del catálogo). Guarda a `active_actions` (null = todas las estándar,
+  default legado; array si se recorta o se agrega custom). Backend:
+  `modulos.controller` add/update/get ahora manejan `active_actions`.
+  Verificado en runtime: PUT/GET round-trip persiste el array; el form precarga
+  el estado real (ej. Desactivar desmarcado cuando no está en el array).
+  Con esto el auto-servicio queda: crear acción en "Catálogo de Acciones" →
+  marcarla en el módulo → aparece sola en la matriz de roles → `<Can>` en el
+  botón. Pendiente menor: mismo editor para SUBMÓDULOS (SubmoduloFormDialog +
+  submodulos.controller) — patrón idéntico.
 - **Registro automático al crear módulos**: crear un módulo en Developer siembra
   sus acciones CRUD estándar en el catálogo (hoy son dos pasos manuales).
 - Resultado medible: **agregar un permiso nuevo = 1 registro en el catálogo +

@@ -91,8 +91,10 @@ const addClave = async (req, res) => {
 
     const developer = isDeveloperUser(req);
 
-    // Detectar si es valor enmascarado
-    const isMasked = /^[•●]+$/.test(valor.trim());
+    // Detectar si es valor enmascarado (cualquier carácter de máscara, no solo
+    // string puro de bullets: un valor parcialmente editado como "•••abc" no
+    // es un valor real y no debe encriptarse ni pisar el existente).
+    const isMasked = /[•●]/.test(valor);
     let valorEncriptado = null;
     if (!isMasked) {
       valorEncriptado = encrypt(valor);
@@ -187,8 +189,9 @@ const updateClave = async (req, res) => {
     };
 
     // Solo actualizar el valor si se proporciona uno nuevo (no vacío ni representación con puntos)
-    // Detectar si es representación enmascarada: solo contiene • o es vacío
-    const isMaskedOrEmpty = !valor || valor.trim() === '' || /^[•●]+$/.test(valor.trim());
+    // Detectar si es representación enmascarada: vacío o contiene cualquier • (aunque
+    // esté mezclado con otros caracteres, ej. una edición parcial de la máscara)
+    const isMaskedOrEmpty = !valor || valor.trim() === '' || /[•●]/.test(valor);
     if (!isMaskedOrEmpty) {
       clave.valor = encrypt(valor);
     }

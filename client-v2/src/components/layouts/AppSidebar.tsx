@@ -20,6 +20,7 @@ import {
   CreditCard,
   ChevronsUpDown,
   ScrollText,
+  FileCheck2,
 } from "lucide-react";
 import { removeToken } from "@/utils/authStorage";
 import { resetVerifyTokenCache } from "@/api/auth";
@@ -65,6 +66,21 @@ export default function AppSidebar() {
   // cargado al login) en vez de un array hardcodeado — ver navigationCatalog.ts.
   const navigation = useMemo(() => {
     const sections = [...buildNavSections(globalModuleConfigs)];
+    // Comprobantes electrónicos: no tiene fila propia en `modulo`/`submodulos`
+    // (reusa la capability `ventas`, igual que /api/cpe en el backend), así que
+    // el catálogo dinámico no lo emite — se inyecta acá, como los Logs.
+    if (isDeveloper || can("ventas.view")) {
+      const cpeItem = {
+        title: "Comprobantes electrónicos",
+        url: "/sales/comprobantes",
+        icon: FileCheck2,
+        group: "Reportes",
+        keywords: ["sunat", "factura", "boleta", "cdr", "cpe", "facturación electrónica"],
+      };
+      const reportes = sections.find((s) => s.label === "Reportes");
+      if (reportes) reportes.items.push(cpeItem);
+      else sections.push({ label: "Reportes", items: [cpeItem] });
+    }
     // Logs de auditoría: sin módulo/capability en BD (gate por rol admin, como en v1).
     if (isAdmin) {
       const logsItem = { title: "Logs del Sistema", url: "/settings/logs", icon: ScrollText, group: "Ajustes" };
@@ -81,7 +97,7 @@ export default function AppSidebar() {
       });
     }
     return sections;
-  }, [globalModuleConfigs, isAdmin, isDeveloper]);
+  }, [globalModuleConfigs, isAdmin, isDeveloper, can]);
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">

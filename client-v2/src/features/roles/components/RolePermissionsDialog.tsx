@@ -39,6 +39,18 @@ const ACTIONS: { key: ActionKey; label: string }[] = [
 
 const ZERO: Flags = { ver: 0, crear: 0, editar: 0, eliminar: 0, desactivar: 0, generar: 0 };
 
+const STANDARD_KEYS = new Set<string>(["ver", "crear", "editar", "eliminar", "desactivar", "generar"]);
+
+/** `actions_json` puede venir como objeto o string JSON según el driver. */
+const parseActionsJson = (raw: unknown): Record<string, number> => {
+  if (!raw) return {};
+  if (typeof raw === "object") return raw as Record<string, number>;
+  if (typeof raw === "string") {
+    try { const o = JSON.parse(raw); return o && typeof o === "object" ? (o as Record<string, number>) : {}; } catch { return {}; }
+  }
+  return {};
+};
+
 interface Row {
   key: string;
   id_modulo: number;
@@ -66,6 +78,10 @@ interface Props { role: Rol; open: boolean; onClose: () => void; }
 export default function RolePermissionsDialog({ role, open, onClose }: Props) {
   const queryClient = useQueryClient();
   const [perms, setPerms] = useState<Record<string, Flags>>({});
+  // Acciones dinámicas (fuera de las 6 estándar), por fila: rowKey → { key: 0|1 }.
+  // Se cargan y se vuelven a guardar para no borrarlas al editar los permisos
+  // estándar (antes el payload las omitía → se perdían en el delete+reinsert).
+  const [customPerms, setCustomPerms] = useState<Record<string, Record<string, number>>>({});
   const [search, setSearch] = useState("");
 
   const { data: modules = [], isLoading: loadingModules } = useQuery({
@@ -133,10 +149,12 @@ export default function RolePermissionsDialog({ role, open, onClose }: Props) {
   useEffect(() => {
     if (!open) {
       setPerms({});
+      setCustomPerms({});
       return;
     }
     if (!current) return;
     const map: Record<string, Flags> = {};
+    const customMap: Record<string, Record<string, number>> = {};
     for (const p of current) {
       const origKey = rowKey(p.id_modulo, p.id_submodulo ?? null);
       const matchingRow = rows.find(r => r.key === origKey);
@@ -151,8 +169,16 @@ export default function RolePermissionsDialog({ role, open, onClose }: Props) {
         desactivar: (p.desactivar || prevFlags.desactivar) ? 1 : 0,
         generar: (p.generar || prevFlags.generar) ? 1 : 0,
       };
+
+      const cj = parseActionsJson(p.actions_json);
+      if (Object.keys(cj).length) {
+        const prevCustom = customMap[targetKey] ?? {};
+        for (const [k, v] of Object.entries(cj)) prevCustom[k] = (v || prevCustom[k]) ? 1 : 0;
+        customMap[targetKey] = prevCustom;
+      }
     }
     setPerms(map);
+    setCustomPerms(customMap);
   }, [current, open, role.id_rol, rows, urlToPrimaryRowKey]);
 
   // Solo módulos con pantalla real en client-v2, agrupados y ordenados igual que
@@ -184,6 +210,25 @@ export default function RolePermissionsDialog({ role, open, onClose }: Props) {
   const setFlag = (key: string, action: ActionKey, on: boolean) =>
     setPerms((prev) => ({ ...prev, [key]: { ...(prev[key] ?? ZERO), [action]: on ? 1 : 0 } }));
 
+  const customFlagsOf = (key: string) => customPerms[key] ?? {};
+  const setCustomFlag = (key: string, action: string, on: boolean) =>
+    setCustomPerms((prev) => ({ ...prev, [key]: { ...(prev[key] ?? {}), [action]: on ? 1 : 0 } }));
+  /** Una acción custom aplica a una fila solo si su `active_actions` la declara (nunca por null = solo estándar). */
+  const customAllowed = (row: Row, key: string) => row.active !== null && row.active.has(key);
+
+  // Columnas dinámicas: unión de las acciones no estándar declaradas en el
+  // `active_actions` de los módulos visibles. Sin acciones custom (estado
+  // actual), queda vacío y la matriz se ve idéntica a antes.
+  const customActionKeys = useMemo(() => {
+    const keys = new Set<string>();
+    for (const r of displayRows) {
+      if (r.active) for (const k of r.active) if (!STANDARD_KEYS.has(k)) keys.add(k);
+    }
+    return [...keys].sort();
+  }, [displayRows]);
+
+  const totalCols = 1 + ACTIONS.length + customActionKeys.length;
+
   const toggleRowAll = (row: Row) => {
     const acts = ACTIONS.filter((a) => allowed(row, a.key));
     const allOn = acts.every((a) => flagsOf(row.key)[a.key]);
@@ -212,8 +257,12 @@ export default function RolePermissionsDialog({ role, open, onClose }: Props) {
   };
 
   const grantedModules = useMemo(
-    () => displayRows.filter((r) => { const f = flagsOf(r.key); return f.ver || f.crear || f.editar || f.eliminar || f.desactivar || f.generar; }).length,
-    [displayRows, perms] // eslint-disable-line react-hooks/exhaustive-deps
+    () => displayRows.filter((r) => {
+      const f = flagsOf(r.key);
+      if (f.ver || f.crear || f.editar || f.eliminar || f.desactivar || f.generar) return true;
+      return Object.values(customFlagsOf(r.key)).some(Boolean);
+    }).length,
+    [displayRows, perms, customPerms] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const mutation = useMutation({
@@ -225,8 +274,12 @@ export default function RolePermissionsDialog({ role, open, onClose }: Props) {
           continue;
         }
         const f = flagsOf(r.key);
-        if (f.ver || f.crear || f.editar || f.eliminar || f.desactivar || f.generar) {
-          payload.push({ id_modulo: r.id_modulo, id_submodulo: r.id_submodulo, ...f });
+        const cf = customFlagsOf(r.key);
+        const hasCustom = Object.values(cf).some(Boolean);
+        if (f.ver || f.crear || f.editar || f.eliminar || f.desactivar || f.generar || hasCustom) {
+          // actions_json se re-envía tal cual se cargó/editó, para no borrar
+          // acciones dinámicas al guardar los permisos estándar.
+          payload.push({ id_modulo: r.id_modulo, id_submodulo: r.id_submodulo, ...f, actions_json: cf });
         }
       }
       return savePermisos(role.id_rol, payload);
@@ -294,13 +347,18 @@ export default function RolePermissionsDialog({ role, open, onClose }: Props) {
                         </th>
                       );
                     })}
+                    {customActionKeys.map((k) => (
+                      <th key={k} className="px-2 py-1.5 text-center" title="Acción personalizada del módulo">
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-brand">{k}</span>
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {groupedRows.map(({ group, items }) => (
                     <Fragment key={group}>
                       <tr className="bg-muted/40">
-                        <td colSpan={7} className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        <td colSpan={totalCols} className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                           {group}
                         </td>
                       </tr>
@@ -340,13 +398,28 @@ export default function RolePermissionsDialog({ role, open, onClose }: Props) {
                                 </div>
                               </td>
                             ))}
+                            {customActionKeys.map((k) => (
+                              <td key={k} className="px-2 py-1.5 text-center">
+                                <div className="flex justify-center">
+                                  {customAllowed(r, k) ? (
+                                    <Checkbox
+                                      checked={!!customFlagsOf(r.key)[k]}
+                                      onCheckedChange={(v) => setCustomFlag(r.key, k, !!v)}
+                                      aria-label={`${k} ${r.meta.title}`}
+                                    />
+                                  ) : (
+                                    <span className="text-muted-foreground/30">—</span>
+                                  )}
+                                </div>
+                              </td>
+                            ))}
                           </tr>
                         );
                       })}
                     </Fragment>
                   ))}
                   {displayRows.length === 0 && (
-                    <tr><td colSpan={7} className="px-3 py-8 text-center text-sm text-muted-foreground">Ningún módulo coincide con la búsqueda.</td></tr>
+                    <tr><td colSpan={totalCols} className="px-3 py-8 text-center text-sm text-muted-foreground">Ningún módulo coincide con la búsqueda.</td></tr>
                   )}
                 </tbody>
               </table>

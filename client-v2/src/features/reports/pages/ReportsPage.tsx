@@ -8,9 +8,9 @@ export default function ReportsPage() {
   return (
     <div className="flex flex-col h-full animate-fade-in">
       {/* Header compacto */}
-      <div className="shrink-0 px-4 pt-4 pb-1">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">Historial de ventas</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">Consulta y filtra los comprobantes emitidos.</p>
+      <div className="shrink-0 pb-3">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Historial de ventas</h1>
+        <p className="text-sm text-muted-foreground mt-1">Consulta y filtra los comprobantes emitidos.</p>
       </div>
       {/* Panel ocupa todo el espacio restante */}
       <div className="flex-1 min-h-0">

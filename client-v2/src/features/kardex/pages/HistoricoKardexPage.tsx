@@ -25,7 +25,6 @@ import { cn } from "@/lib/utils";
 import {
   getKardexInventarioAlmacenes as getKardexAlmacenes,
   getKardexInventarioDetalleCompleto as getKardexDetalleCompleto,
-  type KardexInventarioStockAnterior as KardexStockAnterior,
 } from "@/features/kardex-inventario/api/kardexInventario";
 
 import { useUserStore } from "@/store/useUserStore";
@@ -180,9 +179,9 @@ export default function HistoricoKardexPage() {
     const salidasActual = sortedDesc.reduce((acc, t) => acc + (Number(t.sale) || 0), 0);
     const stockPrev = Math.max(0, stockInventario + salidasActual - entradasActual);
 
-    const prev: KardexStockAnterior = previousTransactions?.[0] ?? {};
-    const entradasPrev = Math.max(0, Number(prev.entra) || 0);
-    const salidasPrev = Math.max(0, Number(prev.sale) || 0);
+    const prev = previousTransactions?.[0];
+    const entradasPrev = Math.max(0, Number(prev?.entra) || 0);
+    const salidasPrev = Math.max(0, Number(prev?.sale) || 0);
 
     const ventasReales = sortedDesc.filter(
       (t) =>
@@ -199,7 +198,7 @@ export default function HistoricoKardexPage() {
         : ventasReales[0]
           ? Number(ventasReales[0].precio)
           : 0;
-    const precioUnitPrev = Number((prev as any).precio) || precioUnitActual;
+    const precioUnitPrev = Number((prev as any)?.precio) || precioUnitActual;
 
     const rotacion = entradasActual > 0 ? (salidasActual / entradasActual) * 100 : 0;
     const velocidadVenta =
@@ -397,7 +396,7 @@ export default function HistoricoKardexPage() {
    * ────────────────────────────────────────────────────────── */
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-4 md:p-6 animate-fade-in">
+    <div className="max-w-6xl space-y-6 animate-fade-in">
       {/* Header superior */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
@@ -410,7 +409,7 @@ export default function HistoricoKardexPage() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               Historial del Producto
             </h1>
             <p className="text-sm text-muted-foreground">

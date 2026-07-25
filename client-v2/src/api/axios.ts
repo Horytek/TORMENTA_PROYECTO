@@ -1,6 +1,7 @@
 import axios from "axios";
 import type { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
 import { getToken } from "../utils/authStorage";
+import { parseAuthzDenial, emitAuthzDenied } from "./authzError";
 
 let authReady = false;
 let waiters: (() => void)[] = [];
@@ -66,6 +67,15 @@ api.interceptors.response.use(
     if (e?.response?.status === 401) {
       console.warn("[auth] 401:", e.config?.url);
     }
+
+    // Rechazo de autorización estructurado (Fase 4.1): emite un evento global
+    // con el método HTTP incluido. El toast global solo reacciona a acciones
+    // del usuario (mutaciones); los GET denegados por plan son fetches de fondo
+    // que cada pantalla maneja sola. Los componentes pueden usar parseAuthzDenial
+    // en su onError para un manejo específico.
+    const denial = parseAuthzDenial(e);
+    if (denial) emitAuthzDenied(denial);
+
     return Promise.reject(e);
   }
 );

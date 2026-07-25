@@ -109,7 +109,7 @@ export class LogsRepository extends BaseRepository {
         const where = filtros.length ? `WHERE ${filtros.join(" AND ")}` : "";
 
         const query = `
-      SELECT SQL_CALC_FOUND_ROWS 
+      SELECT
         l.id_log,
         l.fecha,
         l.id_usuario,
@@ -133,18 +133,10 @@ export class LogsRepository extends BaseRepository {
 
         const rows = await this.query(query, [...params, parseInt(limit), parseInt(offset)]);
 
-        // Get total rows using a separate connection query or helper if available. 
-        // BaseRepository `query` releases connection, so `FOUND_ROWS()` might fail if not same connection.
-        // Ah, `FOUND_ROWS()` must be in the same connection.
-        // My BaseRepository `query` gets a connection, executes, and releases.
-        // So `SQL_CALC_FOUND_ROWS` won't work with `this.query()` if I call another query.
-        // Refactoring: I should add a method to get data + count or handle it inside `findAll` manually.
-        // Or I can modify `findAll` to use `getConnection` manually.
-
         return rows;
     }
 
-    // Custom method to handle FOUND_ROWS correctly
+    // El conteo separado permite que la consulta paginada se detenga en LIMIT.
     async findAllWithCount({ from, to, usuario, accion, modulo, id_tenant, limit, offset }) {
         let connection;
         try {
@@ -183,7 +175,7 @@ export class LogsRepository extends BaseRepository {
             const where = filtros.length ? `WHERE ${filtros.join(" AND ")}` : "";
 
             const query = `
-          SELECT SQL_CALC_FOUND_ROWS 
+          SELECT
             l.id_log,
             l.fecha,
             l.id_usuario,
@@ -205,8 +197,14 @@ export class LogsRepository extends BaseRepository {
           LIMIT ? OFFSET ?
         `;
 
+            const countQuery = `
+              SELECT COUNT(*) AS total
+              FROM ${this.tableName} l
+              ${where}
+            `;
+
             const [rows] = await connection.query(query, [...params, parseInt(limit), parseInt(offset)]);
-            const [totalResult] = await connection.query("SELECT FOUND_ROWS() as total");
+            const [totalResult] = await connection.query(countQuery, params);
 
             return { rows, total: totalResult[0].total };
         } finally {

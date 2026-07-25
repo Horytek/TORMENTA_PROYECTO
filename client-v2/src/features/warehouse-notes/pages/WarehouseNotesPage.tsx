@@ -7,7 +7,6 @@ import {
   FileSpreadsheet,
   ArrowDownCircle,
   ArrowUpCircle,
-  Search,
   ArrowRight,
   User,
   Package,
@@ -16,9 +15,10 @@ import {
 
 import { useUserStore } from "@/store/useUserStore";
 import { usePermissions } from "@/hooks/usePermissions";
+import { SearchInput } from "@/components/shared/SearchInput";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { Can } from "@/components/shared/Can";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -234,15 +234,12 @@ export default function WarehouseNotesPage() {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 items-center gap-2">
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" strokeWidth={1.5} />
-            <Input
-              value={searchTerm}
-              onChange={(e) => { setSearchTerm(e.target.value); setSelectedNote(null); }}
-              placeholder="Buscar por documento, proveedor, concepto o usuario…"
-              className="h-9 pl-9"
-            />
-          </div>
+          <SearchInput
+            value={searchTerm}
+            onChangeValue={(v) => { setSearchTerm(v); setSelectedNote(null); }}
+            placeholder="Buscar por documento, proveedor, concepto o usuario…"
+            wrapperClassName="w-full max-w-sm"
+          />
           <Select value={almacenFiltro || "__all__"} onValueChange={(v) => { setAlmacenFiltro(v === "__all__" ? "" : v); setSelectedNote(null); }}>
             <SelectTrigger className="h-9 w-44 shrink-0"><SelectValue placeholder="Todos los almacenes" /></SelectTrigger>
             <SelectContent>
@@ -255,16 +252,16 @@ export default function WarehouseNotesPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {canGenerate && (
+          <Can capability="nota_almacen.generate">
             <Button variant="outline" size="sm" className="h-9 gap-1.5" onClick={handleExport} disabled={filtered.length === 0}>
               <FileSpreadsheet className="h-4 w-4" /> Exportar Excel
             </Button>
-          )}
-          {canCreate && (
+          </Can>
+          <Can capability="nota_almacen.create">
             <Button size="sm" className="h-9 gap-1.5" onClick={() => setIsFormOpen(true)}>
               <Plus className="h-4 w-4" /> Nueva nota
             </Button>
-          )}
+          </Can>
         </div>
       </div>
 
@@ -273,7 +270,7 @@ export default function WarehouseNotesPage() {
         fields={fields}
         actions={actions}
         isLoading={isLoading}
-        layout="card"
+        layout="auto"
         getItemId={(note) => note.id}
         getRhythm={getRhythm}
         onRecordClick={(note) => setSelectedNote(note)}

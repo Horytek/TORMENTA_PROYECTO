@@ -104,6 +104,17 @@ export const handleCobrar = async (datosVenta, callback, datosVentaSunat, useles
 
         if (response.data.code === 1) {
             const id_venta = response.data.id_venta || response.data.data?.id_venta;
+            const numComprobanteReal = response.data.num_comprobante || response.data.data?.num_comprobante;
+            const [serieReal, correlativoReal] = String(numComprobanteReal || '').split('-');
+            const datosSunatConCorrelativo = datosVentaSunat && serieReal && correlativoReal
+                ? {
+                    ...datosVentaSunat,
+                    serie: serieReal,
+                    correlativo: correlativoReal,
+                    serieNum: serieReal,
+                    num: correlativoReal
+                }
+                : datosVentaSunat;
 
             // 2. Éxito BD -> Intentar SUNAT (Si corresponde)
             let sunatSuccess = false;
@@ -123,7 +134,7 @@ export const handleCobrar = async (datosVenta, callback, datosVentaSunat, useles
 
                 // Intentamos SUNAT silenciando su toast de éxito interno
                 try {
-                    sunatSuccess = await handleSunatUnique(datosVentaSunat, false);
+                    sunatSuccess = await handleSunatUnique(datosSunatConCorrelativo, false);
                     console.log('[handleCobrar] Resultado SUNAT:', sunatSuccess);
                 } catch (err) {
                     console.error("[handleCobrar] Error SUNAT:", err);
@@ -158,7 +169,7 @@ export const handleCobrar = async (datosVenta, callback, datosVentaSunat, useles
                 toast.success("Venta registrada exitosamente");
             }
 
-            if (callback) callback();
+            if (callback) callback(numComprobanteReal);
             return true;
         } else {
             toast.error(response.data.message || "Error al registrar venta");

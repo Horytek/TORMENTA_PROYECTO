@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useUserStore } from "@/store/useUserStore";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,11 @@ import { getPL } from "@/features/accounting/api/accounting";
 import { QuickActionsCard } from "../components/QuickActionsCard";
 import { StockCard } from "../components/StockCard";
 import { PerformanceCard } from "../components/PerformanceCard";
-import { DashboardLineChart } from "../components/DashboardLineChart";
+// recharts (~132KB gzip) pesa solo por este gráfico → diferido para que el
+// dashboard (KPIs + tablas) pinte al instante y el chart cargue después.
+const DashboardLineChart = lazy(() =>
+  import("../components/DashboardLineChart").then((m) => ({ default: m.DashboardLineChart }))
+);
 import { RecentTransactionsTable } from "../components/RecentTransactionsTable";
 import { NotasPendientesModal } from "../components/NotasPendientesModal";
 
@@ -280,7 +284,9 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left Side: LineChart & Transactions */}
         <div className="lg:col-span-2 space-y-6">
-          <DashboardLineChart sucursal={selectedSucursal === "all" ? "" : selectedSucursal} usuario={username} />
+          <Suspense fallback={<div className="h-[340px] w-full animate-pulse rounded-xl border border-border/60 bg-muted/40" />}>
+            <DashboardLineChart sucursal={selectedSucursal === "all" ? "" : selectedSucursal} usuario={username} />
+          </Suspense>
           <RecentTransactionsTable className="flex-1" />
         </div>
 

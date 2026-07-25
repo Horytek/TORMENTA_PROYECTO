@@ -1,10 +1,9 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import {
     useProductosData,
     useClientesData,
     useSucursalData,
-    generateComprobanteNumber,
     handleCobrar
 } from "@/services/ventas.services";
 import { handlePrintThermal } from '@/services/print.services';
@@ -15,6 +14,7 @@ export const usePOS = () => {
     const nombreUsuario = useUserStore((state) => state.nombre);
     const usuario = useUserStore(state => state.usuario);
     const sur = useUserStore(state => state.sur);
+    const pendingSaleKeyRef = useRef(null);
 
     // --- Data Sources ---
     const { productos, setProductos } = useProductosData();
@@ -37,7 +37,6 @@ export const usePOS = () => {
     const [cart, setCart] = useState([]);
     const [client, setClient] = useState(null); // { id, nombre, documento, direccion, tipo }
     const [documentType, setDocumentType] = useState('Boleta');
-    const [comprobanteNumber, setComprobanteNumber] = useState(null);
     const [globalFilter, setGlobalFilter] = useState('');
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [empresaData, setEmpresaData] = useState(null);
@@ -220,25 +219,12 @@ export const usePOS = () => {
     }, [cart]);
 
     // --- Helpers ---
-    const generateNumber = async () => {
-        try {
-            const num = await generateComprobanteNumber(documentType, nombreUsuario);
-            setComprobanteNumber(num);
-            return num;
-        } catch (e) {
-            console.error(e);
-            return null;
-        }
-    };
-
     // --- Submit Logic (Saving Sale) ---
     const submitSale = async (paymentDetails, observacion) => {
-        const numComprobante = await generateNumber();
-        if (!numComprobante) {
-            toast.error("Error generando número de comprobante");
-            return false;
+        if (!pendingSaleKeyRef.current) {
+            pendingSaleKeyRef.current = globalThis.crypto?.randomUUID?.()
+                ?? `venta-${Date.now()}-${Math.random().toString(36).slice(2)}`;
         }
-
         const now = new Date();
         const tzOffset = now.getTimezoneOffset() * 60000;
         const localDate = new Date(now.getTime() - tzOffset).toISOString().slice(0, 10);
@@ -246,6 +232,7 @@ export const usePOS = () => {
 
         // Construct Data Object (Legacy Format)
         const datosVenta = {
+            idempotency_key: pendingSaleKeyRef.current,
             usuario: usuario || nombreUsuario || 'admin',
             id_comprobante: documentType,
             id_cliente: client?.id || client?.nombre || client?.razon_social || 'Clientes Varios', // Prefer ID for robust lookup
@@ -316,11 +303,6 @@ export const usePOS = () => {
 
         // Construct Data Object specifically for handleSunatUnique
         // Use detalles_b format which includes nombre, undm for SUNAT
-        // Parse numComprobante: "B600-00000001" => serie="B600", correlativo="00000001"
-        const comprobantePartes = numComprobante.split('-');
-        const serieCompleta = comprobantePartes[0]; // "B600" or "F001" - keep full serie with prefix
-        const correlativoFromComprobante = comprobantePartes[1] || '00000001'; // Get "00000001"
-
         // Calculate tax values for SUNAT
         const mtoOperGravadas = totals.subtotal; // Base gravada (sin IGV)
         const mtoIGV = totals.igv;
@@ -339,8 +321,6 @@ export const usePOS = () => {
             ublVersion: '2.1',
             tipoOperacion: '0101', // Venta interna
             tipoDoc: tipoDoc,
-            serie: serieCompleta,
-            correlativo: correlativoFromComprobante,
             fechaEmision: fechaIsoLocal,
             tipoMoneda: 'PEN',
 
@@ -398,25 +378,24 @@ export const usePOS = () => {
             }),
 
             // Keep original fields for backward compatibility
-            tipoComprobante: documentType,
-            num: correlativoFromComprobante,
-            serieNum: serieCompleta
+            tipoComprobante: documentType
         };
 
         // Call Legacy Save Function
         await handleCobrar(
             datosVenta, // Payload for Backend
-            () => {
+            (numComprobanteReal) => {
                 // Success Callback - Print
                 handlePrintThermal(
                     datosVentaComprobante,
                     datosVenta,
                     observacion,
                     nombreUsuario,
-                    numComprobante,
+                    numComprobanteReal,
                     'window'
                 );
                 // toast handled in services
+                pendingSaleKeyRef.current = null;
                 completeSale();
             },
             datosVentaSunat, // Payload for handleSunatUnique (Critical Fix)
@@ -445,7 +424,6 @@ export const usePOS = () => {
         updatePrice,
         clearCart: cancelCart, // UI "Clear" button restores stock
         completeSale,          // Internal use for successful sales
-        generateNumber,
         submitSale,
         sucursalV
     };

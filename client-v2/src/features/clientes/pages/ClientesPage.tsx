@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryState, parseAsString } from "nuqs";
 import { Plus, Pencil, Trash2, Ban, RotateCcw } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection";
 import type { FieldDef, RecordAction } from "@/components/shared/AdaptiveCollection";
 import { usePermissions } from "@/hooks/usePermissions";
@@ -78,14 +79,27 @@ export default function ClientesPage() {
       priority: "meta",
       semantic: "code",
       label: "Documento",
-      render: (_, c) => `${clienteTipo(c) === "juridico" ? "RUC" : "DNI"}: ${clienteDocumento(c)}`,
+      render: (_, c) => {
+        const num = clienteDocumento(c);
+        if (!num || num === "Sin documento") return null;
+        const isRuc = num.length === 11 || clienteTipo(c) === "juridico";
+        const tipo = isRuc ? "RUC" : "DNI";
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-card text-xs font-mono font-medium border border-border/80 text-foreground/90 shadow-2xs">
+            <span className={cn(
+              "text-[9px] font-sans font-bold uppercase tracking-wider px-1 py-0.5 rounded leading-none",
+              isRuc
+                ? "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-500/20"
+                : "bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 border border-purple-500/20"
+            )}>
+              {tipo}
+            </span>
+            <span>{num}</span>
+          </span>
+        );
+      },
     },
   ];
-
-  const getRhythm = (c: Cliente) => ({
-    type: "dot" as const,
-    color: Number(c.estado) === 1 ? "emerald" as const : "rose" as const,
-  });
 
   const actions: RecordAction[] = [
     {
@@ -160,7 +174,7 @@ export default function ClientesPage() {
         items={clientes}
         fields={fields}
         actions={actions}
-        layout="card"
+        layout="auto"
         isLoading={isLoading}
         search={searchTerm}
         searchPlaceholder="Buscar por nombre o documento…"
@@ -173,7 +187,6 @@ export default function ClientesPage() {
           action: canEdit ? { label: "Nuevo cliente", onClick: openCreate } : undefined,
         }}
         getItemId={(c: Cliente) => c.id}
-        getRhythm={getRhythm}
         globalActions={
           canEdit
             ? [{ id: "create", label: "Nuevo cliente", icon: <Plus className="h-4 w-4" />, onClick: () => openCreate() }]

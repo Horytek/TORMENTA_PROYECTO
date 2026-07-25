@@ -128,7 +128,7 @@ export default function UsersPage() {
         items={filtered}
         fields={fields}
         actions={actions}
-        layout="card"
+        layout="auto"
         isLoading={isLoading}
         search={searchTerm}
         searchPlaceholder="Buscar por usuario o rol…"

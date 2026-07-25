@@ -124,7 +124,7 @@ export default function BranchesPage() {
         search={searchTerm}
         searchPlaceholder="Buscar por nombre, ubicación o vendedor…"
         onSearch={setSearchTerm}
-        layout="card"
+        layout="auto"
         getItemId={(s) => s.id_sucursal}
         empty={{
           title: "No se encontraron sucursales",

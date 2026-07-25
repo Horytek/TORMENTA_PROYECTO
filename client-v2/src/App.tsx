@@ -7,22 +7,27 @@ import { useUserStore } from "@/store/useUserStore";
 import { verifyTokenRequest } from "@/api/auth";
 import { setAuthReady } from "@/api/axios";
 import { getToken } from "@/utils/authStorage";
-import { Loader2 } from "lucide-react";
 
-// Layout + login + landing cargan de inmediato; las páginas van diferidas (code-split por ruta).
+// Solo el layout, el login y la infra de UI cargan de inmediato; TODO lo demás
+// (páginas de app Y de marketing) va diferido (code-split por ruta). Las páginas
+// públicas de landing NO deben pesar en el bundle que se baja un usuario logueado.
 import LoginPage from "@/features/auth/pages/LoginPage";
-import LandingPage from "@/features/landing/pages/LandingPage";
-import LegalPage from "@/features/landing/pages/LegalPage";
-import ServiciosPage from "@/features/landing/pages/ServiciosPage";
-import AboutPage from "@/features/landing/pages/AboutPage";
-import TeamPage from "@/features/landing/pages/TeamPage";
-import UpdatesPage from "@/features/landing/pages/UpdatesPage";
-import ContactPage from "@/features/landing/pages/ContactPage";
-import PaymentResultPage from "@/features/landing/pages/PaymentResultPage";
-import RegisterPage from "@/features/registration/pages/RegisterPage";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { PageLoader } from "@/components/shared/PageLoader";
 import { RequireCapability } from "@/components/shared/RequireCapability";
+import { Toaster } from "@/components/ui/sonner";
+import { AuthzToastBridge } from "@/components/shared/AuthzToastBridge";
+
+// Landing / marketing / registro — diferidas (un usuario del ERP nunca las ve).
+const LandingPage = lazy(() => import("@/features/landing/pages/LandingPage"));
+const LegalPage = lazy(() => import("@/features/landing/pages/LegalPage"));
+const ServiciosPage = lazy(() => import("@/features/landing/pages/ServiciosPage"));
+const AboutPage = lazy(() => import("@/features/landing/pages/AboutPage"));
+const TeamPage = lazy(() => import("@/features/landing/pages/TeamPage"));
+const UpdatesPage = lazy(() => import("@/features/landing/pages/UpdatesPage"));
+const ContactPage = lazy(() => import("@/features/landing/pages/ContactPage"));
+const PaymentResultPage = lazy(() => import("@/features/landing/pages/PaymentResultPage"));
+const RegisterPage = lazy(() => import("@/features/registration/pages/RegisterPage"));
 
 const ProductsPage = lazy(() => import("@/features/products/pages/ProductsPage"));
 const LandingSubPage = lazy(() => import("@/features/landing/pages/LandingSubPage"));
@@ -37,6 +42,7 @@ const RolesPage = lazy(() => import("@/features/roles/pages/RolesPage"));
 const SettingsPage = lazy(() => import("@/features/settings/pages/SettingsPage"));
 const ReportsPage = lazy(() => import("@/features/reports/pages/ReportsPage"));
 const SalesPage = lazy(() => import("@/features/sales/pages/SalesPage"));
+const ReturnsPage = lazy(() => import("@/features/returns/pages/ReturnsPage"));
 const InventoryPage = lazy(() => import("@/features/inventory/pages/InventoryPage"));
 const EmployeesPage = lazy(() => import("@/features/employees/pages/EmployeesPage"));
 const WarehouseNotesPage = lazy(() => import("@/features/warehouse-notes/pages/WarehouseNotesPage"));
@@ -45,6 +51,7 @@ const DeveloperPage = lazy(() => import("@/features/developer/pages/DeveloperPag
 const ExpressHomePage = lazy(() => import("@/features/express/pages/ExpressHomePage"));
 const AccountingPage = lazy(() => import("@/features/accounting/pages/AccountingPage"));
 const SystemLogsPage = lazy(() => import("@/features/system-logs/pages/SystemLogsPage"));
+const ComprobantesPage = lazy(() => import("@/features/comprobantes/pages/ComprobantesPage"));
 const StatusPage = lazy(() => import("@/features/status/pages/StatusPage"));
 
 // Initialize Query Client for TanStack Query
@@ -63,13 +70,12 @@ function ProtectedRoute() {
   const isAuthenticated = useUserStore((state) => state.isAuthenticated);
   const loading = useUserStore((state) => state.loading);
 
+  // Mientras se verifica el token no mostramos una pantalla de "Sincronizando
+  // sesión" (se sentía lenta y bloqueaba el render). La verificación es un
+  // round-trip breve; renderizamos vacío para no parpadear al login antes de
+  // saber si hay sesión.
   if (loading) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background">
-        <Loader2 className="h-10 w-10 animate-spin text-brand" />
-        <p className="num mt-4 text-sm text-muted-foreground">Sincronizando sesión…</p>
-      </div>
-    );
+    return null;
   }
 
   if (!isAuthenticated) {
@@ -106,7 +112,7 @@ export default function App() {
         } else {
           clearUser();
         }
-      } catch (error) {
+      } catch {
         // 401 means no valid session — expected, no need to surface as error
         clearUser();
       } finally {
@@ -169,6 +175,10 @@ export default function App() {
                     element={<RequireCapability capability="ventas.view"><SalesPage /></RequireCapability>}
                   />
                   <Route
+                    path="/sales/returns"
+                    element={<RequireCapability capability="devoluciones.view"><ReturnsPage /></RequireCapability>}
+                  />
+                  <Route
                     path="/people/clients"
                     element={<RequireCapability capability="clientes.view"><ClientesPage /></RequireCapability>}
                   />
@@ -228,6 +238,12 @@ export default function App() {
                     path="/reports/sales"
                     element={<RequireCapability capability="reportes.view"><ReportsPage /></RequireCapability>}
                   />
+                  {/* Comprobantes electrónicos: gateado por `ventas` — el backend
+                      /api/cpe usa esa misma capacidad (ver/generar). */}
+                  <Route
+                    path="/sales/comprobantes"
+                    element={<RequireCapability capability="ventas.view"><ComprobantesPage /></RequireCapability>}
+                  />
                   <Route
                     path="/accounting"
                     element={<RequireCapability capability="contabilidad.view"><AccountingPage /></RequireCapability>}
@@ -244,6 +260,8 @@ export default function App() {
               </Route>
             </Routes>
             </Suspense>
+            <Toaster />
+            <AuthzToastBridge />
           </TooltipProvider>
         </NuqsAdapter>
       </Router>

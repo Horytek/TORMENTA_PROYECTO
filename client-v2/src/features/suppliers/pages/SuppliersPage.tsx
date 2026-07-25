@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus, Pencil, Trash2, Phone, Mail } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 
+import { cn } from "@/lib/utils";
 import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection/AdaptiveCollection";
 import type { FieldDef, RecordAction } from "@/components/shared/AdaptiveCollection/types";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
@@ -56,32 +57,31 @@ export default function SuppliersPage() {
       format: (v) => (v as string) || "—",
     },
     {
-      key: "telefono",
-      label: "Teléfono",
+      key: "contacto",
+      label: "Teléfono / Email",
       priority: "secondary",
-      semantic: "icon-text",
-      render: (v) => {
-        if (!v) return null;
+      semantic: "chip",
+      render: (_v, item) => {
+        const hasPhone = item.telefono && item.telefono.trim() !== "" && item.telefono !== "-";
+        const hasEmail = item.email && item.email.trim() !== "" && item.email !== "-";
+        if (!hasPhone && !hasEmail) {
+          return null;
+        }
         return (
-          <span className="flex items-center gap-1.5 min-w-0">
-            <Phone className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-            <span className="truncate">{String(v)}</span>
-          </span>
-        );
-      },
-    },
-    {
-      key: "email",
-      label: "Email",
-      priority: "secondary",
-      semantic: "icon-text",
-      render: (v) => {
-        if (!v) return null;
-        return (
-          <span className="flex items-center gap-1.5 min-w-0">
-            <Mail className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-            <span className="truncate">{String(v)}</span>
-          </span>
+          <div className="flex flex-col justify-center gap-0.5 text-xs text-muted-foreground">
+            {hasPhone && (
+              <span className="flex items-center gap-1.5 truncate">
+                <Phone className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                <span className="truncate">{item.telefono}</span>
+              </span>
+            )}
+            {hasEmail && (
+              <span className="flex items-center gap-1.5 truncate">
+                <Mail className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                <span className="truncate">{item.email}</span>
+              </span>
+            )}
+          </div>
         );
       },
     },
@@ -105,9 +105,23 @@ export default function SuppliersPage() {
       priority: "meta",
       semantic: "code",
       render: (_v, item) => {
-        const tipo = proveedorTipo(item) === "juridico" ? "RUC" : "DNI";
         const num = proveedorDocumento(item);
-        return num ? `${tipo}: ${num}` : null;
+        if (!num || num === "Sin documento") return null;
+        const isRuc = num.length === 11 || proveedorTipo(item) === "juridico";
+        const tipo = isRuc ? "RUC" : "DNI";
+        return (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-card text-xs font-mono font-medium border border-border/80 text-foreground/90 shadow-2xs">
+            <span className={cn(
+              "text-[9px] font-sans font-bold uppercase tracking-wider px-1 py-0.5 rounded leading-none",
+              isRuc
+                ? "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-500/20"
+                : "bg-purple-500/10 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 border border-purple-500/20"
+            )}>
+              {tipo}
+            </span>
+            <span>{num}</span>
+          </span>
+        );
       },
     },
     {
@@ -146,7 +160,7 @@ export default function SuppliersPage() {
         search={search}
         searchPlaceholder="Buscar por nombre o documento…"
         onSearch={setSearch}
-        layout="card"
+        layout="auto"
         getItemId={(p) => p.id}
         empty={{
           title: "No se encontraron proveedores",

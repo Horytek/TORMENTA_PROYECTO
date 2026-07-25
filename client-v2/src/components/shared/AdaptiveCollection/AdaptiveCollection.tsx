@@ -1,9 +1,13 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import type { FieldDef, SortConfig, ViewMode } from "./types";
-import { sortFieldsByPriority } from "./types";
+import type { FieldDef, SortConfig, ViewMode, GroupByConfig } from "./types";
+import { sortFieldsByPriority, filterByCapability, buildCsv } from "./types";
+import { usePermissions } from "@/hooks/usePermissions";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { AdaptiveRecord, RecordSkeleton } from "./AdaptiveRecord";
 import { AdaptiveCard, CardSkeleton } from "./AdaptiveCard";
+import { AdaptiveTable, TableSkeleton } from "./AdaptiveTable";
+import { SearchInput } from "@/components/shared/SearchInput";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +16,6 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -21,10 +24,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Search,
   SlidersHorizontal,
   Plus,
   Info,
+  Download,
 } from "lucide-react";
 
 // ─────────────────────────────────────────────────────────────────
@@ -33,9 +36,11 @@ import {
 type AnyRecord = object;
 
 // ─────────────────────────────────────────────────────────────────
-// Layout
+// Layout — "auto" resuelve card en móvil / table en escritorio (la
+// tabla real es la vista más intuitiva para datos densos con muchas
+// columnas). "list" y "card" siguen disponibles como modos explícitos.
 // ─────────────────────────────────────────────────────────────────
-export type LayoutMode = "list" | "card";
+export type LayoutMode = "list" | "card" | "table" | "auto";
 
 interface CollectionProps<T extends AnyRecord> {
   title?: string;
@@ -63,6 +68,8 @@ interface CollectionProps<T extends AnyRecord> {
   expandedId?: string | number | null;
   renderExpanded?: (item: T) => React.ReactNode;
   className?: string;
+  groupBy?: GroupByConfig<T>;
+  exportFileName?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -118,15 +125,12 @@ function CollectionHeader({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {/* Search Bar */}
         {onSearch && (
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 pointer-events-none" strokeWidth={1.5} />
-            <Input
-              value={search}
-              onChange={e => onSearch(e.target.value)}
-              placeholder={searchPlaceholder ?? "Buscar…"}
-              className="h-9 pl-10 pr-4 text-sm bg-card/50 border-border/80 focus-visible:ring-1 focus-visible:ring-ring rounded-xl w-full"
-            />
-          </div>
+          <SearchInput
+            value={search ?? ""}
+            onChangeValue={onSearch}
+            placeholder={searchPlaceholder ?? "Buscar…"}
+            wrapperClassName="max-w-md"
+          />
         )}
 
         {/* Global Actions / Filters */}
@@ -242,21 +246,32 @@ function ColumnSelector<T extends Record<string, unknown>>({
  * `AdaptiveRecord` (col 1-5 / 6-7 / 8-9 / 10-11 / 12) — solo cambian las
  * etiquetas, no la disposición.
  */
-function deriveListHeaders<T>(fields: FieldDef<T>[]): { primary: string; detail: string; code: string; value: string } {
+function deriveListHeaders<T>(fields: FieldDef<T>[]): { primary: string; detail: string; code: string; value: string; hasDetail: boolean } {
   const sorted = sortFieldsByPriority(fields);
   const primary = sorted.find(f => f.priority === "primary");
   const secondary = sorted.filter(f => f.priority === "secondary");
   const meta = sorted.filter(f => f.priority === "meta");
 
-  const detailFields = secondary.filter(f => f.semantic === "subtitle" || f.semantic === "chip").slice(0, 2);
-  const codeField = meta.find(f => f.semantic === "code" || f.semantic === "barcode") ?? meta[0];
-  const valueFields = secondary.filter(f => f.semantic === "number" || f.semantic === "badge" || f.semantic === "status-dot").slice(0, 2);
+  // Col 6-7: Secondary Detail Chips / Text
+  const detailFields = secondary.filter(f => f.semantic === "chip" || f.semantic === "text" || f.semantic === "icon-text");
+
+  // Col 8-9: Code / Unit / Barcode
+  const codeFields = [...meta.filter(f => f.semantic === "code" || f.semantic === "barcode"), ...secondary.filter(f => f.semantic === "code" || f.semantic === "barcode")];
+  const primaryCode = codeFields[0];
+
+  // Col 10-11: Price / Number AND Badges / Status (excluding any field in Col 6-7 or Col 8-9)
+  const valueFields = secondary.filter(f =>
+    (f.semantic === "number" || f.semantic === "badge" || f.semantic === "status-dot" || f.key.includes("estado")) &&
+    f.key !== primaryCode?.key &&
+    !detailFields.some(d => d.key === f.key)
+  );
 
   return {
     primary: primary?.label ?? "Descripción",
-    detail: detailFields.map(f => f.label).filter(Boolean).join(" / ") || "Detalle",
-    code: codeField?.label ?? "Código",
-    value: valueFields.map(f => f.label).filter(Boolean).join(" / ") || "Valor",
+    detail: detailFields.map(f => f.label).filter(Boolean).join(" / ") || "",
+    code: primaryCode?.label ?? "ID",
+    value: valueFields.map(f => f.label).filter(Boolean).join(" / ") || "Estado",
+    hasDetail: detailFields.length > 0,
   };
 }
 
@@ -288,6 +303,8 @@ export function AdaptiveCollection<T extends AnyRecord>({
   empty,
   expandedId,
   renderExpanded,
+  groupBy,
+  exportFileName,
   page,
   totalPages,
   onPageChange,
@@ -306,16 +323,39 @@ export function AdaptiveCollection<T extends AnyRecord>({
   const viewMode = controlledViewMode ?? internalViewMode;
   const setViewMode = onViewModeChange ?? setInternalViewMode;
 
-  // Columnas visibles (selector opcional) — por defecto, todas las `fields`.
-  const [visibleFields, setVisibleFields] = useState<FieldDef<T>[]>(fields);
-  useEffect(() => { setVisibleFields(fields); }, [fields]);
-  const renderFields = availableFields && availableFields.length > 0 ? visibleFields : fields;
+  // Permisos: campos y acciones pueden declarar `capability` — se filtran acá,
+  // así ningún consumidor tiene que condicionar sus configs a mano.
+  const { can } = usePermissions();
+  const permittedFields = useMemo(() => filterByCapability(fields, can), [fields, can]);
+  const permittedActions = useMemo(() => filterByCapability(actions ?? [], can), [actions, can]);
+
+  // Layout "auto": card en móvil, table (tabla real) en escritorio.
+  const isMobile = useIsMobile();
+  const resolvedLayout: "list" | "card" | "table" = layout === "auto" ? (isMobile ? "card" : "table") : layout;
+
+  // Columnas visibles (selector opcional). Se guardan solo las CLAVES elegidas
+  // por el usuario (null = default) y las columnas se derivan en render.
+  // Nunca espejamos props en estado con useEffect: los consumidores pasan
+  // `fields` inline (referencia nueva en cada render) y eso producía un
+  // "Maximum update depth exceeded".
+  const [selectedKeys, setSelectedKeys] = useState<string[] | null>(null);
+  const permittedAvailable = useMemo(
+    () => (availableFields && availableFields.length > 0 ? filterByCapability(availableFields, can) : null),
+    [availableFields, can]
+  );
+  const renderFields = useMemo(() => {
+    if (!permittedAvailable || selectedKeys === null) return permittedFields;
+    return permittedAvailable.filter((f) => selectedKeys.includes(f.key));
+  }, [permittedAvailable, permittedFields, selectedKeys]);
 
   const [internalPage, setInternalPage] = useState(1);
 
+  // Dep serializada: los consumidores crean `filters` inline en cada render;
+  // comparar por valores evita re-ejecutar el efecto innecesariamente.
+  const filterSignature = filters?.map((f) => `${f.id}:${f.value ?? ""}`).join("|") ?? "";
   useEffect(() => {
     setInternalPage(1);
-  }, [search, filters]);
+  }, [search, filterSignature]);
 
   const getId = useCallback((item: T) => {
     if (getItemId) {
@@ -334,12 +374,13 @@ export function AdaptiveCollection<T extends AnyRecord>({
     if (search?.trim()) {
       const q = search.toLowerCase();
       result = result.filter(item =>
-        fields.some(field => {
+        permittedFields.some(field => {
           const val = item[field.key as keyof T];
           return val != null && String(val).toLowerCase().includes(q);
         })
       );
     }
+    // (la búsqueda solo mira campos permitidos — no filtra por datos que el usuario no ve)
     if (filters) {
       filters.forEach(f => {
         if (f.value) result = result.filter(item => {
@@ -349,7 +390,7 @@ export function AdaptiveCollection<T extends AnyRecord>({
       });
     }
     return result;
-  }, [items, search, fields, filters, serverSide]);
+  }, [items, search, permittedFields, filters, serverSide]);
 
   // Ordenamiento
   const sorted = useMemo(() => {
@@ -384,6 +425,42 @@ export function AdaptiveCollection<T extends AnyRecord>({
 
   const hasContent = !isLoading && sorted.length > 0;
 
+  // Agrupación por campo: parte la página actual en grupos ordenados (estado,
+  // categoría, sucursal…). Sin `groupBy`, un único grupo anónimo.
+  const groupedItems = useMemo((): { key: string; value: unknown; items: T[] }[] => {
+    if (!groupBy) return [{ key: "__all__", value: null, items: paginatedItems }];
+    const map = new Map<string, { value: unknown; items: T[] }>();
+    for (const item of paginatedItems) {
+      const value = item[groupBy.field as keyof T];
+      const key = String(value ?? "—");
+      const group = map.get(key) ?? { value, items: [] };
+      group.items.push(item);
+      map.set(key, group);
+    }
+    return Array.from(map.entries()).map(([key, g]) => ({ key, ...g }));
+  }, [paginatedItems, groupBy]);
+
+  const renderGroupHeader = (g: { key: string; value: unknown; items: T[] }) =>
+    groupBy ? (
+      <div className="flex items-center gap-2 px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/80 bg-muted/30 border-b border-border/40 select-none">
+        {groupBy.label ? groupBy.label(g.value, g.items) : g.key}
+        <span className="font-normal normal-case tracking-normal text-muted-foreground/50">{g.items.length}</span>
+      </div>
+    ) : null;
+
+  // Exportación CSV (con BOM para Excel) sobre todos los registros filtrados.
+  const handleExport = useCallback(() => {
+    const csv = buildCsv(sorted, renderFields);
+    // "﻿" = BOM para que Excel abra el CSV como UTF-8
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = exportFileName ?? "export.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [sorted, renderFields, exportFileName]);
+
   return (
     <div className={cn("w-full", className)}>
       <CollectionHeader
@@ -395,23 +472,30 @@ export function AdaptiveCollection<T extends AnyRecord>({
         selectedIds={selectedIds} onSelectionChange={onSelectionChange}
       />
 
-      {/* ── Selector de columnas ── */}
-      {availableFields && availableFields.length > 0 && (
-        <div className="flex justify-end mb-3 -mt-1">
-          <ColumnSelector
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            availableFields={availableFields as any}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            fields={visibleFields as any}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            onChange={(next) => setVisibleFields(next as FieldDef<T>[])}
-          />
+      {/* ── Selector de columnas / Exportar ── */}
+      {((availableFields && availableFields.length > 0) || exportFileName) && (
+        <div className="flex justify-end items-center gap-1 mb-3 -mt-1">
+          {exportFileName && (
+            <Button variant="ghost" size="sm" className="h-8 px-2.5 text-xs gap-1.5 rounded-xl" onClick={handleExport} disabled={!hasContent}>
+              <Download className="h-3.5 w-3.5" />Exportar
+            </Button>
+          )}
+          {permittedAvailable && (
+            <ColumnSelector
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              availableFields={permittedAvailable as any}
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              fields={renderFields as any}
+              onChange={(next) => setSelectedKeys((next as FieldDef<T>[]).map((f) => f.key))}
+            />
+          )}
         </div>
       )}
 
       {/* ── Loading ── */}
-      {isLoading && layout === "card" && <CardSkeleton count={6} />}
-      {isLoading && layout === "list" && (
+      {isLoading && resolvedLayout === "card" && <CardSkeleton count={6} />}
+      {isLoading && resolvedLayout === "table" && <TableSkeleton columns={renderFields.length || 5} />}
+      {isLoading && resolvedLayout === "list" && (
         <div className="flex flex-col rounded-xl border border-border bg-card overflow-hidden">
           {Array.from({ length: 6 }).map((_, i) => <RecordSkeleton key={i} />)}
         </div>
@@ -429,67 +513,116 @@ export function AdaptiveCollection<T extends AnyRecord>({
       )}
 
       {/* ── LAYOUT: CARD GRID ── */}
-      {hasContent && layout === "card" && (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {paginatedItems.map((item, index) => (
-            <AdaptiveCard<any>
-              key={String(getId(item))}
-              item={item}
-              index={index}
-              fields={renderFields}
-              actions={actions ?? []}
-              rhythm={getRhythm ? getRhythm(item, index) : undefined}
-              getItemId={getId}
-              onClick={onRecordClick ? () => handleRecordClick(item) : undefined}
-            />
+      {hasContent && resolvedLayout === "card" && (
+        <div className="space-y-3">
+          {groupedItems.map((group) => (
+            <div key={group.key}>
+              {renderGroupHeader(group)}
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {group.items.map((item, index) => (
+                  <AdaptiveCard<any>
+                    key={String(getId(item))}
+                    item={item}
+                    index={index}
+                    fields={renderFields}
+                    actions={permittedActions}
+                    rhythm={getRhythm ? getRhythm(item, index) : undefined}
+                    getItemId={getId}
+                    onClick={onRecordClick ? () => handleRecordClick(item) : undefined}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
 
+      {/* ── LAYOUT: TABLE ── */}
+      {hasContent && resolvedLayout === "table" && (
+        <AdaptiveTable<any>
+          groups={groupedItems.map((g) => ({
+            key: g.key,
+            label: groupBy ? (
+              <>
+                {groupBy.label ? groupBy.label(g.value, g.items) : g.key}
+                <span className="font-normal normal-case tracking-normal text-muted-foreground/50 ml-1.5">{g.items.length}</span>
+              </>
+            ) : undefined,
+            items: g.items,
+          }))}
+          fields={renderFields}
+          actions={permittedActions}
+          getItemId={getId}
+          getRhythm={getRhythm}
+          selectedIds={selectedIds}
+          onSelectionChange={onSelectionChange}
+          onRecordClick={onRecordClick ? handleRecordClick : undefined}
+          expandedId={expandedId}
+          renderExpanded={renderExpanded}
+          sort={internalSort}
+          onSort={handleSort}
+        />
+      )}
+
       {/* ── LAYOUT: LIST ── */}
-      {hasContent && layout === "list" && (
+      {hasContent && resolvedLayout === "list" && (
         <div className="flex flex-col rounded-xl border border-border bg-card overflow-hidden">
           {/* Column Header Row */}
           {viewMode !== "compact" && (() => {
             const headers = deriveListHeaders(renderFields);
             return (
               <div className="hidden md:grid grid-cols-12 gap-3 px-4 py-2.5 text-[10px] font-semibold text-muted-foreground/80 uppercase tracking-wider border-b border-border bg-muted/20 select-none">
-                <div className="col-span-5 pl-7">{headers.primary}</div>
-                <div className="col-span-2">{headers.detail}</div>
-                <div className="col-span-2 text-left md:text-center">{headers.code}</div>
-                <div className="col-span-2 text-left md:text-right">{headers.value}</div>
+                {headers.hasDetail ? (
+                  <>
+                    <div className="col-span-5 pl-7">{headers.primary}</div>
+                    <div className="col-span-2">{headers.detail}</div>
+                    <div className="col-span-2 text-left md:text-center">{headers.code}</div>
+                    <div className="col-span-2 text-left md:text-right">{headers.value}</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="col-span-6 pl-7">{headers.primary}</div>
+                    <div className="col-span-3 text-left md:text-center">{headers.code}</div>
+                    <div className="col-span-2 text-left md:text-right">{headers.value}</div>
+                  </>
+                )}
                 <div className="col-span-1 text-right">Acciones</div>
               </div>
             );
           })()}
-          <div className="divide-y divide-border/40">
-            {paginatedItems.map((item, index) => {
-              const id = getId(item);
-              const rhythm = getRhythm ? getRhythm(item, index) : undefined;
-              const isSelected = selectedIds?.includes(id) ?? false;
-              const isExpanded = expandedId === id;
-              return (
-                <div key={String(id)}>
-                  <AdaptiveRecord<any>
-                    item={item} index={index} fields={renderFields}
-                    actions={actions} rhythm={rhythm} viewMode={viewMode}
-                    isSelected={isSelected} isExpanded={isExpanded}
-                    onSelect={onSelectionChange ? (sid) => {
-                      const current = selectedIds ?? [];
-                      const next = current.includes(sid) ? current.filter(x => x !== sid) : [...current, sid];
-                      onSelectionChange(next);
-                    } : undefined}
-                    onRecordClick={handleRecordClick} getItemId={getId}
-                  />
-                  {isExpanded && renderExpanded && (
-                    <div className="px-4 pb-4 pt-0 border-t border-border/40 bg-zinc-50/30 dark:bg-zinc-900/30">
-                      {renderExpanded(item)}
+          {groupedItems.map((group) => (
+            <div key={group.key}>
+              {renderGroupHeader(group)}
+              <div className="divide-y divide-border/40">
+                {group.items.map((item, index) => {
+                  const id = getId(item);
+                  const rhythm = getRhythm ? getRhythm(item, index) : undefined;
+                  const isSelected = selectedIds?.includes(id) ?? false;
+                  const isExpanded = expandedId === id;
+                  return (
+                    <div key={String(id)}>
+                      <AdaptiveRecord<any>
+                        item={item} index={index} fields={renderFields}
+                        actions={permittedActions} rhythm={rhythm} viewMode={viewMode}
+                        isSelected={isSelected} isExpanded={isExpanded}
+                        onSelect={onSelectionChange ? (sid) => {
+                          const current = selectedIds ?? [];
+                          const next = current.includes(sid) ? current.filter(x => x !== sid) : [...current, sid];
+                          onSelectionChange(next);
+                        } : undefined}
+                        onRecordClick={handleRecordClick} getItemId={getId}
+                      />
+                      {isExpanded && renderExpanded && (
+                        <div className="px-4 pb-4 pt-0 border-t border-border/40 bg-zinc-50/30 dark:bg-zinc-900/30">
+                          {renderExpanded(item)}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

@@ -69,10 +69,13 @@ async function getConfigAndSigningMaterial(req, payload) {
     let connection;
     try {
       connection = await getConnection();
-      // Buscar por RUC sin filtrar por tenant (el RUC es único globalmente)
+      // El RUC llega en el body (payload.company.ruc), así que se acota al
+      // tenant del token: sin ese filtro un tenant podía resolver el
+      // id_empresa de otro mandando su RUC (Regla de Oro Nº1). Las claves ya
+      // se leen filtradas por tenant, pero el id_empresa no debe cruzarse.
       const [rows] = await connection.query(
-        'SELECT id_empresa, id_tenant FROM empresa WHERE ruc = ? LIMIT 1',
-        [ruc]
+        'SELECT id_empresa, id_tenant FROM empresa WHERE ruc = ? AND id_tenant = ? LIMIT 1',
+        [ruc, id_tenant]
       );
       if (rows.length > 0) {
         id_empresa = rows[0].id_empresa;

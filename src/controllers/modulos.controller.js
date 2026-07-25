@@ -17,8 +17,9 @@ setInterval(() => {
 
 // AGREGAR MÓDULO - OPTIMIZADO
 const addModulo = async (req, res) => {
-    const { nombre, ruta, icon = null, group_name = null, sort_order = 0, frontend_route = null, is_visible = true } = req.body;
+    const { nombre, ruta, icon = null, group_name = null, sort_order = 0, frontend_route = null, is_visible = true, active_actions = null } = req.body;
     const nombre_modulo = nombre;
+    const activeActionsJson = Array.isArray(active_actions) && active_actions.length > 0 ? JSON.stringify(active_actions) : null;
 
     // Validaciones mejoradas
     if (!nombre_modulo || nombre_modulo.trim() === '') {
@@ -57,8 +58,8 @@ const addModulo = async (req, res) => {
 
         await connection.beginTransaction();
 
-        const query = "INSERT INTO modulo (nombre_modulo, ruta, icon, group_name, sort_order, frontend_route, is_visible) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        const [result] = await connection.query(query, [nombre_modulo.trim(), ruta.trim(), icon, group_name, sort_order, frontend_route, is_visible ? 1 : 0]);
+        const query = "INSERT INTO modulo (nombre_modulo, ruta, icon, group_name, sort_order, frontend_route, is_visible, active_actions) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        const [result] = await connection.query(query, [nombre_modulo.trim(), ruta.trim(), icon, group_name, sort_order, frontend_route, is_visible ? 1 : 0, activeActionsJson]);
 
         await connection.commit();
 
@@ -135,6 +136,7 @@ const getModulos = async (req, res) => {
                 m.sort_order as sort_order_modulo,
                 m.frontend_route as frontend_route_modulo,
                 m.is_visible as is_visible_modulo,
+                m.active_actions as active_actions_modulo,
                 s.id_submodulo,
                 s.nombre_sub,
                 s.ruta as ruta_submodulo,
@@ -142,7 +144,8 @@ const getModulos = async (req, res) => {
                 s.group_name as group_name_submodulo,
                 s.sort_order as sort_order_submodulo,
                 s.frontend_route as frontend_route_submodulo,
-                s.is_visible as is_visible_submodulo
+                s.is_visible as is_visible_submodulo,
+                s.active_actions as active_actions_submodulo
             FROM modulo m
             LEFT JOIN submodulos s ON m.id_modulo = s.id_modulo
             ORDER BY m.id_modulo, s.id_submodulo
@@ -163,7 +166,8 @@ const getModulos = async (req, res) => {
                     group_name: row.group_name_modulo,
                     sort_order: row.sort_order_modulo,
                     frontend_route: row.frontend_route_modulo,
-                    is_visible: !!row.is_visible_modulo
+                    is_visible: !!row.is_visible_modulo,
+                    active_actions: row.active_actions_modulo
                 });
             }
 
@@ -180,7 +184,8 @@ const getModulos = async (req, res) => {
                     group_name: row.group_name_submodulo,
                     sort_order: row.sort_order_submodulo,
                     frontend_route: row.frontend_route_submodulo,
-                    is_visible: !!row.is_visible_submodulo
+                    is_visible: !!row.is_visible_submodulo,
+                    active_actions: row.active_actions_submodulo
                 });
             }
         }
@@ -330,7 +335,7 @@ const addSubmodulo = async (req, res) => {
 // ACTUALIZAR MÓDULO - OPTIMIZADO
 const updateModulo = async (req, res) => {
     const { id } = req.params;
-    const { nombre_modulo, ruta, icon, group_name, sort_order, frontend_route, is_visible } = req.body;
+    const { nombre_modulo, ruta, icon, group_name, sort_order, frontend_route, is_visible, active_actions } = req.body;
 
     // Validaciones mejoradas
     if (!id) {
@@ -396,6 +401,12 @@ const updateModulo = async (req, res) => {
         if (sort_order !== undefined) { updates.push("sort_order = ?"); params.push(sort_order); }
         if (frontend_route !== undefined) { updates.push("frontend_route = ?"); params.push(frontend_route); }
         if (is_visible !== undefined) { updates.push("is_visible = ?"); params.push(is_visible ? 1 : 0); }
+        // active_actions: null = todas las estándar (default legado); array =
+        // solo esas acciones (estándar + custom) habilitadas para el módulo.
+        if (active_actions !== undefined) {
+            updates.push("active_actions = ?");
+            params.push(Array.isArray(active_actions) && active_actions.length > 0 ? JSON.stringify(active_actions) : null);
+        }
         params.push(id);
 
         const [result] = await connection.query(

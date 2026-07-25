@@ -6,10 +6,11 @@ import {
   checkCategoryUsage,
 } from "../api/products";
 import { usePermissions } from "@/hooks/usePermissions";
+import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection";
+import type { FieldDef, RecordAction, RhythmConfig } from "@/components/shared/AdaptiveCollection";
 
 // UI Components
 import { Button } from "@/components/ui/button";
-import EntityCardsGrid from "@/components/shared/EntityCardsGrid";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Plus, Search, Edit, Trash2, Loader2, ShieldAlert,
+  Plus, Edit, Trash2, Loader2, ShieldAlert,
   AlertTriangle, CheckCircle2,
 } from "lucide-react";
 import {
@@ -61,9 +62,30 @@ export default function CategoriesPanel() {
   const hasEditPermission = can("productos.edit");
   const hasDeletePermission = can("productos.delete");
 
-  const filteredCategories = categories.filter((c) =>
-    (c.nombre || "").toLowerCase().includes(searchTerm.toLowerCase().trim())
-  );
+  // ── Fields ─────────────────────────────────────────────────────
+  const fields: FieldDef<Category>[] = [
+    {
+      key: "nombre", priority: "primary", semantic: "title",
+      label: "Categoría",
+      className: "font-semibold text-foreground text-sm",
+    },
+    {
+      key: "id_categoria", priority: "meta", semantic: "code",
+      label: "ID",
+      format: (v) => `#${v}`,
+    },
+    {
+      key: "estado", priority: "secondary", semantic: "badge",
+      label: "Estado",
+      format: (v) => Number(v) === 1 ? "Activo" : "Inactivo",
+    },
+  ];
+
+  // ── Rhythm ────────────────────────────────────────────────────
+  const getRhythm = (c: Category): RhythmConfig => ({
+    type: "dot",
+    color: Number(c.estado) === 0 ? "rose" : "emerald",
+  });
 
   const handleOpenCreate = () => {
     setEditingCategory(null);
@@ -152,59 +174,48 @@ export default function CategoriesPanel() {
     setDeleteUsageInfo(null);
   };
 
+  // ── Actions ────────────────────────────────────────────────────
+  const actions: RecordAction[] = [
+    {
+      id: "edit", label: "Editar",
+      icon: <Edit className="h-3.5 w-3.5" />,
+      onClick: (item) => handleOpenEdit(item as Category),
+      disabled: !hasEditPermission,
+    },
+    {
+      id: "delete", label: "Eliminar",
+      icon: <Trash2 className="h-3.5 w-3.5" />,
+      onClick: (item) => handleOpenDelete(item as Category),
+      variant: "destructive",
+      disabled: !hasDeletePermission,
+    },
+  ];
+
   return (
     <div className="space-y-4">
-      {/* Search & Actions Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar categorías..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-
-        <Button
-          onClick={handleOpenCreate}
-          disabled={!hasCreatePermission}
-          className="gap-2 self-start sm:self-auto"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Agregar Categoría</span>
-        </Button>
-      </div>
-
-      {/* Categories Cards Grid */}
-      <EntityCardsGrid
-        items={filteredCategories}
-        getItemId={(c) => c.id_categoria}
-        columns={[{ labelKey: "nombre" }]}
-        nodeTint={(c) => (c.estado === 0 ? "rose" : undefined)}
+      <AdaptiveCollection<Category>
+        title="Categorías"
+        items={categories}
+        fields={fields}
+        actions={actions}
+        layout="auto"
         isLoading={isLoading}
-        searchTerm={searchTerm}
-        emptyMessage={{
+        search={searchTerm}
+        searchPlaceholder="Buscar categorías por nombre o ID…"
+        onSearch={setSearchTerm}
+        empty={{
           title: "No se encontraron categorías",
           description: searchTerm
             ? `Ninguna categoría coincide con "${searchTerm}"`
-            : "Registra tu primera categoría.",
+            : "Registra tu primera categoría para organizar tu inventario.",
         }}
-        getActions={(c) => [
-          {
-            label: "Editar",
-            icon: <Edit className="h-4 w-4" />,
-            onClick: () => handleOpenEdit(c),
-            disabled: !hasEditPermission,
-          },
-          {
-            label: "Eliminar",
-            icon: <Trash2 className="h-4 w-4" />,
-            onClick: () => handleOpenDelete(c),
-            variant: "destructive",
-            disabled: !hasDeletePermission,
-          },
-        ]}
+        getItemId={(c) => c.id_categoria}
+        getRhythm={getRhythm}
+        globalActions={hasCreatePermission ? [{
+          id: "create", label: "Agregar Categoría",
+          icon: <Plus className="h-4 w-4" />,
+          onClick: handleOpenCreate,
+        }] : undefined}
       />
 
       {/* Dialog Create/Edit Category */}
@@ -258,7 +269,6 @@ export default function CategoriesPanel() {
       {/* Dialog Delete — 3 estados */}
       <Dialog open={isDeleteOpen} onOpenChange={(open) => !open && handleCloseDeleteDialog()}>
         <DialogContent className="max-w-sm border-border bg-card">
-
           {deleteMode === "confirm" && (
             <>
               <DialogHeader>
@@ -316,7 +326,6 @@ export default function CategoriesPanel() {
                 <DialogDescription className="text-muted-foreground">
                   La categoría <strong>"{deletingCategory?.nombre}"</strong> tenía subcategorías
                   asociadas, por lo que se <strong>desactivó</strong> en lugar de eliminarse.
-                  Ya no aparecerá en el sistema, pero sus datos históricos se mantienen.
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter className="mt-4">

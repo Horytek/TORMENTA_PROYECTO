@@ -1,8 +1,13 @@
+import { lazy, Suspense } from "react";
 import { List, CalendarDays, BarChart3 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SalesHistoryTab } from "./tabs/SalesHistoryTab";
 import { SalesCalendarTab } from "./tabs/SalesCalendarTab";
-import { SalesCalculatorTab } from "./tabs/SalesCalculatorTab";
+// recharts vive solo aquí (pestaña "Analítica", no default) → diferido para no
+// pesar en el chunk de reportes/ventas hasta que se abra esa pestaña.
+const SalesCalculatorTab = lazy(() =>
+  import("./tabs/SalesCalculatorTab").then((m) => ({ default: m.SalesCalculatorTab }))
+);
 
 // SalesReportPanel  3 pestañas: Historial | Calendario | Analítica
 
@@ -28,7 +33,9 @@ export function SalesReportPanel() {
         <SalesCalendarTab />
       </TabsContent>
       <TabsContent value="analitica" className="flex-1 min-h-0 mt-0">
-        <SalesCalculatorTab />
+        <Suspense fallback={<div className="h-full min-h-[300px] w-full animate-pulse rounded-xl border border-border/60 bg-muted/40" />}>
+          <SalesCalculatorTab />
+        </Suspense>
       </TabsContent>
     </Tabs>
   );

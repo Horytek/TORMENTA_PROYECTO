@@ -5,6 +5,7 @@ export {
   AdaptiveCard,
   CardSkeleton,
 } from "./AdaptiveCollection";
+export { AdaptiveTable, TableSkeleton, type TableGroup } from "./AdaptiveTable";
 export { renderField, SEMANTIC_COLOR_MAP, inferState } from "./fieldRenderers";
 export type {
   FieldDef,
@@ -24,8 +25,9 @@ export type {
   MediaSpec,
   ItemState,
   AdaptiveCardProps,
+  GroupByConfig,
 } from "./types";
-export { inferSemantic, sortFieldsByPriority, splitCollapsible, getInitials } from "./types";
+export { inferSemantic, sortFieldsByPriority, splitCollapsible, getInitials, filterByCapability, buildCsv } from "./types";
 
 // Sub-componentes presentacionales (Phase 2)
 export {

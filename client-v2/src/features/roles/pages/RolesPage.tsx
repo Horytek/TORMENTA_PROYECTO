@@ -1,24 +1,13 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryState, parseAsString } from "nuqs";
-import { Plus, Search, Pencil, Trash2, ShieldCheck, Lock, SlidersHorizontal } from "lucide-react";
+import { Plus, Pencil, Trash2, ShieldCheck, Lock, SlidersHorizontal } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
 import { usePermissions } from "@/hooks/usePermissions";
-import { cn } from "@/lib/utils";
-
+import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection/AdaptiveCollection";
+import type { FieldDef, RecordAction } from "@/components/shared/AdaptiveCollection/types";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { IconAction } from "@/components/shared/IconAction";
 import RoleForm from "../components/RoleForm";
 import RolePermissionsDialog from "../components/RolePermissionsDialog";
 import { getRoles, deleteRol } from "../api/roles";
@@ -43,12 +32,6 @@ export default function RolesPage() {
     queryFn: getRoles,
   });
 
-  const filtered = useMemo(() => {
-    const term = searchTerm.toLowerCase().trim();
-    if (!term) return roles;
-    return roles.filter((r) => r.nom_rol.toLowerCase().includes(term));
-  }, [roles, searchTerm]);
-
   const deleteMutation = useMutation({
     mutationFn: (r: Rol) => deleteRol(r.id_rol),
     onSuccess: () => {
@@ -66,122 +49,99 @@ export default function RolesPage() {
     setIsFormOpen(true);
   };
 
+  // ── Field definitions ────────────────────────────────────
+  const fields: FieldDef<Rol>[] = [
+    {
+      key: "nom_rol",
+      label: "Rol",
+      priority: "primary",
+      semantic: "title",
+      render: (val, item) => {
+        const reserved = RESERVED_ROLES.includes(item.id_rol);
+        return (
+          <div className="flex items-center gap-3">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-brand/10 text-brand ring-1 ring-brand/20">
+              <ShieldCheck className="h-4 w-4" />
+            </span>
+            <div className="flex items-center gap-2">
+              <span className="capitalize font-semibold text-foreground text-sm">{String(val)}</span>
+              {reserved && (
+                <Badge variant="outline" className="text-[10px] gap-1 py-0.5 px-2 font-normal text-muted-foreground bg-muted/50 border-border">
+                  <Lock className="h-2.5 w-2.5" />
+                  Sistema
+                </Badge>
+              )}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      key: "estado_rol",
+      label: "Estado",
+      priority: "secondary",
+      semantic: "badge",
+      format: (val) => (Number(val) === 1 ? "Activo" : "Inactivo"),
+    },
+    {
+      key: "id_rol",
+      label: "ID",
+      priority: "meta",
+      semantic: "code",
+    },
+  ];
+
+  // ── Record Actions ──────────────────────────────────────
+  const actions: RecordAction[] = [
+    {
+      id: "perms",
+      label: "Permisos",
+      icon: <SlidersHorizontal className="h-3.5 w-3.5" />,
+      onClick: (item) => setPermsRole(item as Rol),
+      persistent: true,
+      disabled: (item) => !canEdit || RESERVED_ROLES.includes((item as Rol).id_rol),
+    },
+    {
+      id: "edit",
+      label: "Editar",
+      icon: <Pencil className="h-3.5 w-3.5" />,
+      onClick: (item) => openEdit(item as Rol),
+      disabled: (item) => !canEdit || RESERVED_ROLES.includes((item as Rol).id_rol),
+    },
+    {
+      id: "delete",
+      label: "Eliminar",
+      icon: <Trash2 className="h-3.5 w-3.5" />,
+      onClick: (item) => setDeleting(item as Rol),
+      variant: "destructive",
+      disabled: (item) => !canDelete || RESERVED_ROLES.includes((item as Rol).id_rol),
+    },
+  ];
+
   return (
-    <div className="mx-auto max-w-4xl space-y-6 animate-fade-in">
-      {/* Encabezado */}
-      <div className="flex flex-col gap-4 border-b border-border pb-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Roles y permisos</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            <span className="num font-medium text-foreground">{roles.length}</span> roles definidos
-          </p>
-        </div>
-        <Button onClick={openCreate} disabled={!canEdit} className="gap-2 self-start md:self-auto">
-          <Plus className="h-4 w-4" />
-          Nuevo rol
-        </Button>
-      </div>
-
-      {/* Búsqueda */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder="Buscar rol…"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
-      </div>
-
-      {/* Tabla */}
-      <div className="rounded-lg border border-border bg-card">
-        {isLoading ? (
-          <div className="space-y-2 p-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-12 w-full animate-pulse rounded-md bg-muted" />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 p-12 text-center">
-            <ShieldCheck className="h-10 w-10 text-muted-foreground/40" />
-            <h3 className="text-base font-semibold text-foreground">No se encontraron roles</h3>
-            <p className="text-sm text-muted-foreground">
-              {searchTerm ? "Ajusta el término de búsqueda." : "Crea el primer rol."}
-            </p>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="pl-4">Rol</TableHead>
-                <TableHead className="text-center">Estado</TableHead>
-                <TableHead className="pr-4 text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((r) => {
-                const isActive = Number(r.estado_rol) === 1;
-                const reserved = RESERVED_ROLES.includes(r.id_rol);
-                return (
-                  <TableRow key={r.id_rol}>
-                    <TableCell className="pl-4">
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-brand/10 text-brand ring-1 ring-brand/20">
-                          <ShieldCheck className="h-4 w-4" />
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium capitalize text-foreground">{r.nom_rol}</p>
-                          {reserved && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                              <Lock className="h-2.5 w-2.5" />
-                              Sistema
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant={isActive ? "success" : "secondary"} className="gap-1.5">
-                        <span className={cn("h-1.5 w-1.5 rounded-full", isActive ? "bg-emerald-600" : "bg-muted-foreground")} />
-                        {isActive ? "Activo" : "Inactivo"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="pr-4">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 gap-1.5"
-                          onClick={() => setPermsRole(r)}
-                          disabled={!canEdit || reserved}
-                        >
-                          <SlidersHorizontal className="h-3.5 w-3.5" />
-                          Permisos
-                        </Button>
-                        <IconAction
-                          label={reserved ? "Rol del sistema" : "Editar"}
-                          onClick={() => openEdit(r)}
-                          disabled={!canEdit || reserved}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </IconAction>
-                        <IconAction
-                          label={reserved ? "Rol del sistema" : "Eliminar"}
-                          danger
-                          onClick={() => setDeleting(r)}
-                          disabled={!canDelete || reserved}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </IconAction>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </div>
+    <div className="w-full space-y-6 animate-fade-in">
+      <AdaptiveCollection<Rol>
+        title="Roles y permisos"
+        items={roles}
+        fields={fields}
+        actions={actions}
+        layout="auto"
+        isLoading={isLoading}
+        search={searchTerm}
+        searchPlaceholder="Buscar rol…"
+        onSearch={setSearchTerm}
+        empty={{
+          title: "No se encontraron roles",
+          description: searchTerm ? "Ajusta el término de búsqueda." : "Crea el primer rol.",
+        }}
+        getItemId={(r) => r.id_rol}
+        globalActions={canEdit ? [{
+          id: "create",
+          label: "Nuevo rol",
+          icon: <Plus className="h-4 w-4" />,
+          onClick: openCreate,
+        }] : undefined}
+      />
 
       {isFormOpen && (
         <RoleForm isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} initialData={editing} />

@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryState, parseAsString } from "nuqs";
-import { Plus, Search, Truck, User, Ban, ArrowRight } from "lucide-react";
+import { Plus, Truck, User, Ban, ArrowRight } from "lucide-react";
 
 import { useUserStore } from "@/store/useUserStore";
 import { usePermissions } from "@/hooks/usePermissions";
+import { SearchInput } from "@/components/shared/SearchInput";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import {
   Select,
@@ -175,15 +175,12 @@ export default function GuidesPage() {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 items-center gap-2">
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" strokeWidth={1.5} />
-            <Input
-              value={searchTerm}
-              onChange={(e) => { setSearchTerm(e.target.value); setSelectedGuide(null); }}
-              placeholder="Buscar por N° guía, destinatario, documento o vendedor…"
-              className="h-9 pl-9"
-            />
-          </div>
+          <SearchInput
+            value={searchTerm}
+            onChangeValue={(v) => { setSearchTerm(v); setSelectedGuide(null); }}
+            placeholder="Buscar por N° guía, destinatario, documento o vendedor…"
+            wrapperClassName="w-full max-w-sm"
+          />
           <Select value={sucursalFiltro || "__all__"} onValueChange={(v) => { setSucursalFiltro(v === "__all__" ? "" : v); setSelectedGuide(null); }}>
             <SelectTrigger className="h-9 w-44 shrink-0"><SelectValue placeholder="Todas las sucursales" /></SelectTrigger>
             <SelectContent>
@@ -207,7 +204,7 @@ export default function GuidesPage() {
         fields={fields}
         actions={actions}
         isLoading={isLoading}
-        layout="card"
+        layout="auto"
         getItemId={(guide) => guide.id}
         getRhythm={getRhythm}
         onRecordClick={(guide) => setSelectedGuide(guide)}

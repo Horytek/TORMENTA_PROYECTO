@@ -4,10 +4,6 @@ import { isDeveloperReq } from "../middlewares/authorize.middleware.js";
 
 const resolvePlanId = (req) => AuthZService.resolvePlanId({ tenantId: req.id_tenant });
 
-function normalizeSlug(ruta) {
-    return (ruta || "").toString().toLowerCase().replace(/^\/+/, "");
-}
-
 // GET /authz/catalog — catálogo (módulos+submódulos+metadata) filtrado por el plan del tenant actual
 const getCatalog = async (req, res) => {
     try {
@@ -90,38 +86,28 @@ const why = async (req, res) => {
             });
         }
 
-        const planId = await resolvePlanId(req);
-        const catalog = await AuthZService.getCatalog({ tenantId: req.id_tenant, isDeveloper: false, planId });
-
-        const normalized = normalizeSlug(slug);
-        const inCatalog = catalog.some((modulo) =>
-            normalized === normalizeSlug(modulo.ruta) ||
-            (modulo.submodulos || []).some((sub) => normalized === normalizeSlug(sub.ruta))
-        );
-
-        if (!inCatalog) {
-            return res.json({
-                success: true,
-                data: { allowed: false, reason: "El plan actual no incluye este módulo.", source: "PLAN_ENTITLEMENT" },
-            });
-        }
-
-        const { capabilities, sources } = await AuthZService.getEffectivePermissions({
+        // Mismo resolver que usa el middleware requireCapability (Fase 4.1):
+        // una sola fuente de verdad del motivo, no dos lógicas paralelas.
+        const { allowed, code, source } = await AuthZService.explainCapability({
             tenantId: req.id_tenant,
             roleId: Number(roleId),
-            planId,
+            slug,
+            accion: action,
             isDeveloper: false,
         });
 
-        const cap = `${normalized}.${action}`;
-        const allowed = capabilities.has(cap);
+        const REASONS = {
+            PLAN_NOT_INCLUDED: "El plan actual no incluye este módulo.",
+            ROLE_DENIED: "El rol no tiene esta acción habilitada.",
+        };
 
         res.json({
             success: true,
             data: {
                 allowed,
-                reason: allowed ? "Permitido." : "El rol no tiene esta acción habilitada.",
-                source: allowed ? sources[cap] : null,
+                code,
+                reason: allowed ? "Permitido." : (REASONS[code] || "Acceso denegado."),
+                source: source || (code === "PLAN_NOT_INCLUDED" ? "PLAN_ENTITLEMENT" : null),
             },
         });
     } catch (error) {

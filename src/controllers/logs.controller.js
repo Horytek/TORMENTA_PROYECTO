@@ -95,19 +95,21 @@ export const getLogStats = async (req, res) => {
 export const getLogs = async (req, res) => {
   try {
     const { from, to, usuario, accion, modulo, page = 1, limit = 25 } = req.query;
-    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const pageNumber = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNumber = Math.min(Math.max(parseInt(limit, 10) || 25, 1), 200);
+    const offset = (pageNumber - 1) * limitNumber;
     const id_tenant = req.id_tenant;
 
     const { rows, total } = await logsRepo.findAllWithCount({
-      from, to, usuario, accion, modulo, id_tenant, limit, offset
+      from, to, usuario, accion, modulo, id_tenant, limit: limitNumber, offset
     });
 
     res.json({
       code: 1,
       data: rows,
       total: total,
-      page: parseInt(page),
-      limit: parseInt(limit)
+      page: pageNumber,
+      limit: limitNumber
     });
   } catch (e) {
     console.error('❌ Error obteniendo logs:', e);

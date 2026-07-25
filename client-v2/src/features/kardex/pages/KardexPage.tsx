@@ -6,12 +6,11 @@ import {
   AlertTriangle,
   FileText,
   Inbox,
-  Search,
   PackageSearch,
   RefreshCw,
 } from "lucide-react";
 
-import { Input } from "@/components/ui/input";
+import { SearchInput } from "@/components/shared/SearchInput";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -104,7 +103,7 @@ export default function KardexPage() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 animate-fade-in">
+    <div className="max-w-6xl space-y-6 animate-fade-in">
       {/* Encabezado */}
       <div className="flex flex-col gap-3 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -167,15 +166,12 @@ export default function KardexPage() {
         <TabsContent value="catalogo" className="space-y-4">
           {/* Filtros */}
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por descripción, marca, código o barras…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+            <SearchInput
+              placeholder="Buscar por descripción, marca, código o barras…"
+              value={search}
+              onChangeValue={setSearch}
+              wrapperClassName="flex-1 max-w-none"
+            />
 
             <Select value={almacen || "all"} onValueChange={(v) => setAlmacen(v === "all" ? "" : v)}>
               <SelectTrigger className="w-full sm:w-[200px]">

@@ -40,6 +40,8 @@ export interface FieldDef<T> {
   initialsFrom?: keyof T;
   /** Para `semantic: "image"`/`"logo"`: indica si la URL debe ser absoluta. */
   imageSrc?: (item: T) => string | undefined | null;
+  /** Capability requerida para ver este campo (ej. "devoluciones.costos"). Sin ella, el campo se omite. */
+  capability?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -56,6 +58,10 @@ export interface RecordAction {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   hidden?: (item: any) => boolean;
   persistent?: boolean;
+  /** Capability requerida para ver esta acción. Sin ella, la acción no se renderiza. */
+  capability?: string;
+  /** Explicación mostrada como tooltip cuando la acción está deshabilitada. */
+  disabledReason?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -73,7 +79,17 @@ export interface CollectionAction {
 // Vista
 // ─────────────────────────────────────────────────────────────────
 export type ViewMode = "compact" | "comfortable" | "expanded";
-export type LayoutMode = "list" | "card";
+/** `"auto"` elige card en móvil y table (tabla real) en escritorio (hook `useIsMobile`). */
+export type LayoutMode = "list" | "card" | "table" | "auto";
+
+// ─────────────────────────────────────────────────────────────────
+// Agrupación por campo (categorías, estados, sucursales…)
+// ─────────────────────────────────────────────────────────────────
+export interface GroupByConfig<T> {
+  field: keyof T & string;
+  /** Etiqueta del encabezado de grupo. Default: el valor crudo del campo. */
+  label?: (value: unknown, items: T[]) => ReactNode;
+}
 
 // ─────────────────────────────────────────────────────────────────
 // Variant del card (Phase 2)
@@ -183,6 +199,10 @@ export interface AdaptiveCollectionProps<T extends Record<string, unknown>> {
   serverSide?: boolean;
   totalCount?: number;
   className?: string;
+  layout?: LayoutMode;
+  groupBy?: GroupByConfig<T>;
+  /** Si está presente, muestra botón "Exportar" que descarga un CSV con este nombre. */
+  exportFileName?: string;
 }
 
 /**
@@ -238,6 +258,31 @@ export function sortFieldsByPriority<T>(fields: FieldDef<T>[]): FieldDef<T>[] {
     const bo = b.order ?? order[b.priority ?? "meta"];
     return ao - bo;
   });
+}
+
+/** Filtra campos/acciones según capabilities del usuario. Puro → testeable sin DOM. */
+export function filterByCapability<I extends { capability?: string }>(
+  defs: I[],
+  can: (perm: string) => boolean
+): I[] {
+  return defs.filter((d) => !d.capability || can(d.capability));
+}
+
+/** Serializa items a CSV usando `format`/valor crudo de cada campo. Puro → testeable. */
+export function buildCsv<T>(items: T[], fields: FieldDef<T>[]): string {
+  const cols = fields.filter((f) => f.priority !== "hidden");
+  const escape = (s: string) => (/[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
+  const header = cols.map((f) => escape(f.label ?? f.key)).join(",");
+  const rows = items.map((item) =>
+    cols
+      .map((f) => {
+        const raw = item[(f.key as keyof T)];
+        const val = f.format ? f.format(raw, item) : raw == null ? "" : String(raw);
+        return escape(val);
+      })
+      .join(",")
+  );
+  return [header, ...rows].join("\n");
 }
 
 export function splitCollapsible<T>(fields: FieldDef<T>[]) {

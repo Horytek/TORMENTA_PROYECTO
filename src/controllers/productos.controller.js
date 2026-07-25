@@ -50,7 +50,7 @@ const getProductos = async (req, res) => {
 
         if (id_marca) { whereClauses.push('PR.id_marca = ?'); params.push(id_marca); }
         if (id_subcategoria) { whereClauses.push('PR.id_subcategoria = ?'); params.push(id_subcategoria); }
-        if (id_categoria) { whereClauses.push('cat.id_categoria = ?'); params.push(id_categoria); }
+        if (id_categoria) { whereClauses.push('CA.id_categoria = ?'); params.push(id_categoria); }
         if (typeof estado !== 'undefined' && estado !== '') { whereClauses.push('PR.estado_producto = ?'); params.push(estado); }
         if (descripcion) { whereClauses.push('PR.descripcion = ?'); params.push(descripcion); }
         if (id_producto) { whereClauses.push('PR.id_producto = ?'); params.push(id_producto); }
@@ -72,11 +72,9 @@ const getProductos = async (req, res) => {
 
         const [countResult] = await connection.query(
             `
-            SELECT COUNT(DISTINCT PR.id_producto) AS total
+            SELECT COUNT(*) AS total
             FROM producto PR
-            INNER JOIN marca MA ON MA.id_marca = PR.id_marca
-            INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
-            INNER JOIN categoria cat ON cat.id_categoria = CA.id_categoria
+            ${id_categoria ? 'INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria' : ''}
             ${whereSQL}
             `,
             params

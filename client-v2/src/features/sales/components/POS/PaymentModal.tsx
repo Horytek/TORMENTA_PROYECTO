@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { CheckCircle2, XCircle, Receipt, Banknote, Plus, Trash2, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -49,6 +49,10 @@ const METODOS_DISPONIBLES: { value: MetodoPago; label: string }[] = [
 
 const MAX_METODOS = 3;
 
+const crearClaveIdempotente = () =>
+  globalThis.crypto?.randomUUID?.() ??
+  `venta-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
 export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId }: PaymentModalProps) {
   const cart = useCartStore();
   const user = useUserStore((s) => s.user);
@@ -57,6 +61,15 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
   const [observaciones, setObservaciones] = useState("");
   const [status, setStatus] = useState<SaleStatus>("idle");
   const [result, setResult] = useState<{ success: boolean; message?: string; num_comprobante?: string } | null>(null);
+  const idempotencyKeyRef = useRef(crearClaveIdempotente());
+  const wasOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (open && !wasOpenRef.current) {
+      idempotencyKeyRef.current = crearClaveIdempotente();
+    }
+    wasOpenRef.current = open;
+  }, [open]);
 
   // Sistema de pago multi-método
   const [pagos, setPagos] = useState<MetodoConMonto[]>([
@@ -68,7 +81,7 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
   const total = cart.getTotal();
 
   // Para Nota de venta: solo efectivo, un solo método
-  const isNota = comprobanteTipo === "Nota";
+  const isNota = comprobanteTipo === "Nota de venta";
 
   // Métodos ya usados (para evitar duplicados)
   const metodosUsados = useMemo(
@@ -223,8 +236,9 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
             clienteFinal.razon_social;
 
       const payload: VentaPayload = {
-        id_sucursal: user?.id_sucursal ?? user?.id ?? 1,
-        id_almacen: selectedAlmacenId ?? 1,
+        idempotency_key: idempotencyKeyRef.current,
+        id_sucursal: user?.id_sucursal ?? undefined,
+        id_almacen: selectedAlmacenId ?? undefined,
         id_cliente: clienteFinal.id_cliente === 0 ? null : clienteFinal.id_cliente,
         nombre_cliente: clienteNombre,
         documento_cliente: clienteFinal.id_cliente === 0 ? "00000000" : (clienteFinal.ruc || clienteFinal.dni),
@@ -247,6 +261,8 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
           cantidad: item.cantidad,
           precio_unitario: item.precio_unitario,
           precio_total: item.precio_total,
+          id_tonalidad: item.id_tonalidad,
+          id_talla: item.id_talla,
         })),
       };
 
@@ -347,7 +363,7 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
                 <SelectContent>
                   <SelectItem value="Boleta">📄 Boleta de Venta</SelectItem>
                   <SelectItem value="Factura">📋 Factura</SelectItem>
-                  <SelectItem value="Nota">📝 Nota de Venta (solo efectivo)</SelectItem>
+                  <SelectItem value="Nota de venta">📝 Nota de Venta (solo efectivo)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

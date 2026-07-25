@@ -413,18 +413,51 @@ export const AuthZService = {
     },
 
     /**
-     * Decisión puntual "¿este rol puede hacer `accion` sobre `slug`?" para el
-     * middleware requireCapability (Fase 1). Mismo resolver y misma caché que
-     * alimenta al frontend — enforcement y UI no pueden divergir.
-     * `accion` en español (ver/crear/...) como la usan las rutas; también acepta
-     * acciones dinámicas de `actions_json` (se pasan tal cual).
+     * Decisión puntual + MOTIVO del rechazo para `slug`.`accion` (Fase 4.1).
+     * Mismo resolver y misma caché que alimenta al frontend — enforcement y UI
+     * no pueden divergir. `accion` en español (ver/crear/...) como la usan las
+     * rutas; también acepta acciones dinámicas de `actions_json`.
+     *
+     * Devuelve `code`:
+     *  - null              → permitido
+     *  - "PLAN_NOT_INCLUDED" → el plan del tenant ni siquiera incluye el módulo
+     *                          (mejora de plan, no es cuestión de rol)
+     *  - "ROLE_DENIED"     → el módulo está en el plan, pero el rol no tiene la acción
+     * (TENANT_SUSPENDED se resuelve antes, en tenantStatus.middleware.)
      */
-    async canRole({ tenantId, roleId, slug, accion, isDeveloper = false }) {
-        if (isDeveloper) return true;
+    async explainCapability({ tenantId, roleId, slug, accion, isDeveloper = false }) {
+        if (isDeveloper) return { allowed: true, code: null, source: "DEVELOPER" };
+
         const planId = await this.resolvePlanId({ tenantId });
-        const { capabilities } = await this.getEffectivePermissions({ tenantId, roleId, planId });
+        const normalized = normalizeSlug(slug);
+
+        // ¿El módulo/submódulo está incluido en el plan? (catálogo ya filtrado
+        // por entitlements del plan, cacheado). Si no, es techo de plan, no rol.
+        const catalog = await this.getCatalog({ tenantId, isDeveloper: false, planId });
+        const inPlan = catalog.some((m) =>
+            normalizeSlug(m.ruta) === normalized ||
+            (m.submodulos || []).some((s) => normalizeSlug(s.ruta) === normalized)
+        );
+        if (!inPlan) {
+            return { allowed: false, code: "PLAN_NOT_INCLUDED", source: "PLAN_ENTITLEMENT" };
+        }
+
+        const { capabilities, sources } = await this.getEffectivePermissions({ tenantId, roleId, planId });
         const action = ACTION_COLUMNS[accion] ?? accion;
-        return capabilities.has("*") || capabilities.has(`${normalizeSlug(slug)}.${action}`);
+        const cap = `${normalized}.${action}`;
+        const allowed = capabilities.has("*") || capabilities.has(cap);
+
+        return {
+            allowed,
+            code: allowed ? null : "ROLE_DENIED",
+            source: allowed ? (sources[cap] || null) : null,
+        };
+    },
+
+    /** Atajo booleano sobre `explainCapability` (para checks sin necesidad del motivo). */
+    async canRole({ tenantId, roleId, slug, accion, isDeveloper = false }) {
+        const { allowed } = await this.explainCapability({ tenantId, roleId, slug, accion, isDeveloper });
+        return allowed;
     },
 
     clearCache() {

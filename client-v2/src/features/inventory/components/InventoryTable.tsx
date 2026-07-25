@@ -82,7 +82,7 @@ export function InventoryTable({ productos, onProductClick }: Props) {
     <AdaptiveCollection<InventarioProducto>
       items={productos}
       fields={fields}
-      layout="card"
+      layout="auto"
       getItemId={(item) => item.codigo}
       onRecordClick={onProductClick}
       getRhythm={(p) => ({

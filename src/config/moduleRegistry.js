@@ -62,7 +62,9 @@ export const MODULE_REGISTRY = [
     defineModule({
         id: "ventas", domain: "comercial", name: "Ventas / POS",
         slug: "ventas", verified: true,
-        backendRoutes: ["/api/ventas"], frontendRoute: "/sales", riskLevel: "sensible",
+        // `/api/cpe` (comprobantes electrónicos) reusa la capacidad `ventas`:
+        // ver = consultar comprobantes, generar = emitir a SUNAT.
+        backendRoutes: ["/api/ventas", "/api/cpe"], frontendRoute: "/sales", riskLevel: "sensible",
     }),
     defineModule({
         id: "inventario", domain: "logistica", name: "Inventario / Kárdex",

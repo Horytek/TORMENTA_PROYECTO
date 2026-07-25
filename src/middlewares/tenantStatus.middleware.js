@@ -48,6 +48,8 @@ export const tenantStatusMiddleware = async (req, res, next) => {
             if (grace_until && new Date(grace_until) < new Date()) {
                 // Gracia expirada -> Suspender virtualmente
                 return res.status(403).json({
+                    success: false,
+                    code: "TENANT_SUSPENDED",
                     message: "Período de gracia expirado. Contacte a soporte.",
                     reason: "GRACE_EXPIRED"
                 });
@@ -60,6 +62,8 @@ export const tenantStatusMiddleware = async (req, res, next) => {
 
         if (tenant_status === 'SUSPENDED') {
             return res.status(403).json({
+                success: false,
+                code: "TENANT_SUSPENDED",
                 message: "Cuenta suspendida. Contacte al administrador.",
                 reason: "SUSPENDED"
             });
