@@ -4,7 +4,14 @@ import type { Clave, ClaveInput, Funcion, Plan, EmpresaAccount } from "../types"
 
 export type { EmpresaAccount };
 
-export const getClaves = async (): Promise<Clave[]> => unwrapList<Clave>(await api.get("/clave"));
+export const getClaves = async (): Promise<Clave[]> => {
+  try {
+    return unwrapList<Clave>(await api.get("/clave"));
+  } catch (err: any) {
+    if (err?.response?.status === 403) return [];
+    throw err;
+  }
+};
 
 /** Upsert: el backend busca por (id_empresa, tipo) y actualiza o inserta. */
 export const addClave = async (input: ClaveInput): Promise<boolean> => {
@@ -23,9 +30,23 @@ export const deleteClave = async (id: number): Promise<boolean> => {
   return res.data?.code === 1;
 };
 
-export const getFunciones = async (): Promise<Funcion[]> => unwrapList<Funcion>(await api.get("/funciones"));
+export const getFunciones = async (): Promise<Funcion[]> => {
+  try {
+    return unwrapList<Funcion>(await api.get("/funciones"));
+  } catch (err: any) {
+    if (err?.response?.status === 403) return [];
+    throw err;
+  }
+};
 
-export const getPlanes = async (): Promise<Plan[]> => unwrapList<Plan>(await api.get("/planes"));
+export const getPlanes = async (): Promise<Plan[]> => {
+  try {
+    return unwrapList<Plan>(await api.get("/planes"));
+  } catch (err: any) {
+    if (err?.response?.status === 403) return [];
+    throw err;
+  }
+};
 
 /** Empresa completa (tabla `empresa`), para precargar el formulario de Cuenta. */
 export const getEmpresaAccount = async (idEmpresa: number | string): Promise<EmpresaAccount | null> => {

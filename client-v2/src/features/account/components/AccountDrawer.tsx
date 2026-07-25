@@ -16,9 +16,13 @@ import { FormField } from "@/components/shared/FormField";
 import { useUserStore } from "@/store/useUserStore";
 
 import { getClaves, addClave, getFunciones, getPlanes, getEmpresaAccount, updateEmpresaAccount, uploadLogoBase64, fileToBase64Payload } from "../api/account";
-import type { AccountFormValues } from "../types";
+import type { AccountFormValues, Clave, Funcion, Plan } from "../types";
 
 const PLAN_LABELS: Record<string, string> = { "1": "Enterprise", "2": "Pro", "3": "Basic" };
+
+const EMPTY_CLAVES: Clave[] = [];
+const EMPTY_FUNCIONES: Funcion[] = [];
+const EMPTY_PLANES: Plan[] = [];
 
 const emptyForm: AccountFormValues = {
   ruc: "", razon_social: "", direccion: "",
@@ -43,10 +47,26 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     queryKey: ["account-empresa", user?.id_empresa],
     queryFn: () => getEmpresaAccount(user!.id_empresa!),
     enabled: isOpen && !!user?.id_empresa,
+    retry: false,
   });
-  const { data: claves = [] } = useQuery({ queryKey: ["account-claves"], queryFn: getClaves, enabled: isOpen });
-  const { data: funciones = [] } = useQuery({ queryKey: ["account-funciones"], queryFn: getFunciones, enabled: isOpen });
-  const { data: planes = [] } = useQuery({ queryKey: ["account-planes"], queryFn: getPlanes, enabled: isOpen });
+  const { data: claves = EMPTY_CLAVES } = useQuery({
+    queryKey: ["account-claves"],
+    queryFn: getClaves,
+    enabled: isOpen,
+    retry: false,
+  });
+  const { data: funciones = EMPTY_FUNCIONES } = useQuery({
+    queryKey: ["account-funciones"],
+    queryFn: getFunciones,
+    enabled: isOpen,
+    retry: false,
+  });
+  const { data: planes = EMPTY_PLANES } = useQuery({
+    queryKey: ["account-planes"],
+    queryFn: getPlanes,
+    enabled: isOpen,
+    retry: false,
+  });
 
   useEffect(() => {
     if (!isOpen) {
@@ -56,7 +76,9 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     }
     if (!empresa) return;
     const keyMap: Record<string, string> = {};
-    claves.filter((c) => c.id_empresa === empresa.id_empresa).forEach((c) => { keyMap[c.tipo] = c.valor; });
+    if (Array.isArray(claves)) {
+      claves.filter((c) => c.id_empresa === empresa.id_empresa).forEach((c) => { keyMap[c.tipo] = c.valor; });
+    }
     setForm({
       ruc: empresa.ruc || "",
       razon_social: empresa.razonSocial || empresa.nombreComercial || "",
@@ -166,17 +188,32 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                       <Building2 className="h-6 w-6" />
                     </div>
                   )}
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-foreground">{empresa?.razonSocial || empresa?.nombreComercial || "Empresa"}</p>
-                    <p className="text-xs text-muted-foreground">RUC: {empresa?.ruc || "-"}</p>
+                    <p className="text-xs text-muted-foreground truncate">RUC: {empresa?.ruc || "-"}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 border-t border-border/40 pt-3 text-xs">
-                  <div><span className="text-muted-foreground">Correo:</span> <p className="font-medium text-foreground">{empresa?.email || "-"}</p></div>
-                  <div><span className="text-muted-foreground">Teléfono:</span> <p className="font-medium text-foreground">{empresa?.telefono || "-"}</p></div>
-                  <div className="col-span-2"><span className="text-muted-foreground">Dirección:</span> <p className="font-medium text-foreground">{empresa?.direccion || "-"}</p></div>
-                  <div><span className="text-muted-foreground">Plan:</span> <p className="font-medium text-foreground">{planLabel}</p></div>
-                  <div><span className="text-muted-foreground">Estado:</span> <p className="font-medium text-foreground">{empresa?.estado || "Activo"}</p></div>
+                  <div className="min-w-0 col-span-2 sm:col-span-1">
+                    <span className="text-muted-foreground">Correo:</span>
+                    <p className="font-medium text-foreground truncate" title={empresa?.email || "-"}>{empresa?.email || "-"}</p>
+                  </div>
+                  <div className="min-w-0 col-span-2 sm:col-span-1">
+                    <span className="text-muted-foreground">Teléfono:</span>
+                    <p className="font-medium text-foreground truncate">{empresa?.telefono || "-"}</p>
+                  </div>
+                  <div className="col-span-2 min-w-0">
+                    <span className="text-muted-foreground">Dirección:</span>
+                    <p className="font-medium text-foreground break-words">{empresa?.direccion || "-"}</p>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-muted-foreground">Plan:</span>
+                    <p className="font-medium text-foreground truncate">{planLabel}</p>
+                  </div>
+                  <div className="min-w-0">
+                    <span className="text-muted-foreground">Estado:</span>
+                    <p className="font-medium text-foreground truncate">{empresa?.estado || "Activo"}</p>
+                  </div>
                 </div>
               </div>
 
