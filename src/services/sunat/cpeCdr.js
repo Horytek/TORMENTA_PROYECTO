@@ -60,7 +60,12 @@ export function parseCdrSummary(cdrXml) {
  *   4000+      → observaciones (llegan como Note, no como ResponseCode)
  */
 export function clasificarResponseCode(responseCode, notas = []) {
-  const codigo = Number(responseCode);
+  // Ojo con `Number()`: convierte null, "" y "   " en 0 — y 0 significa
+  // ACEPTADO. Sin este descarte previo, un CDR que no se pudo parsear
+  // (`parseCdrSummary` devuelve responseCode null) terminaba marcado como
+  // aceptado, que es justo el error del flujo legacy que este módulo evita.
+  const crudo = String(responseCode ?? "").trim();
+  const codigo = crudo === "" ? NaN : Number(crudo);
 
   if (!Number.isFinite(codigo)) {
     // Sin código legible no se puede afirmar nada: se trata como incierto.

@@ -109,7 +109,10 @@ export function numeroALetras(monto, moneda = "PEN") {
   }
 
   // Redondear a céntimos ANTES de partir, si no 0.999 daría "CERO CON 99/100".
-  const enCentimos = Math.round(numero * 100);
+  // El EPSILON compensa el error binario (1.005*100 da 100.49999… y redondearía
+  // a 1.00); es el mismo criterio que usa `redondear()` en cpeVentaMapper, y las
+  // dos rutas deben coincidir o la leyenda diría un monto y el XML otro.
+  const enCentimos = Math.round((numero + Number.EPSILON) * 100);
   const entero = Math.floor(enCentimos / 100);
   const centimos = enCentimos % 100;
 
