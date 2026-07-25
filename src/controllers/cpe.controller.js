@@ -110,7 +110,9 @@ const obtenerComprobante = async (req, res) => {
       return res.status(404).json({ success: false, code: "CPE_NO_ENCONTRADO", message: "Comprobante no encontrado" });
     }
 
-    const intentos = await repo.listarIntentos(connection, {
+    // `envios`, no `intentos`: la cabecera ya trae `intentos` como contador y
+    // usar el mismo nombre para la bitácora lo pisaría.
+    const envios = await repo.listarIntentos(connection, {
       id_tenant: req.id_tenant,
       id_cpe: cpe.id_cpe,
     });
@@ -122,7 +124,7 @@ const obtenerComprobante = async (req, res) => {
       data: {
         ...cabecera,
         notas: sunat_notas_json ? (typeof sunat_notas_json === "string" ? JSON.parse(sunat_notas_json) : sunat_notas_json) : [],
-        intentos,
+        envios,
       },
     });
   } catch (error) {

@@ -51,6 +51,7 @@ const DeveloperPage = lazy(() => import("@/features/developer/pages/DeveloperPag
 const ExpressHomePage = lazy(() => import("@/features/express/pages/ExpressHomePage"));
 const AccountingPage = lazy(() => import("@/features/accounting/pages/AccountingPage"));
 const SystemLogsPage = lazy(() => import("@/features/system-logs/pages/SystemLogsPage"));
+const ComprobantesPage = lazy(() => import("@/features/comprobantes/pages/ComprobantesPage"));
 const StatusPage = lazy(() => import("@/features/status/pages/StatusPage"));
 
 // Initialize Query Client for TanStack Query
@@ -111,7 +112,7 @@ export default function App() {
         } else {
           clearUser();
         }
-      } catch (error) {
+      } catch {
         // 401 means no valid session — expected, no need to surface as error
         clearUser();
       } finally {
@@ -236,6 +237,12 @@ export default function App() {
                   <Route
                     path="/reports/sales"
                     element={<RequireCapability capability="reportes.view"><ReportsPage /></RequireCapability>}
+                  />
+                  {/* Comprobantes electrónicos: gateado por `ventas` — el backend
+                      /api/cpe usa esa misma capacidad (ver/generar). */}
+                  <Route
+                    path="/sales/comprobantes"
+                    element={<RequireCapability capability="ventas.view"><ComprobantesPage /></RequireCapability>}
                   />
                   <Route
                     path="/accounting"
