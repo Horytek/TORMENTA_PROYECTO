@@ -25,6 +25,7 @@
     "db:migrate:nota-indexes": "node scripts/migrations/add_nota_performance_indexes.js",
     "db:migrate:perf-indexes": "node scripts/migrations/add_perf_indexes.js",
     "db:migrate:limpiar-indices": "node scripts/migrations/drop_indices_redundantes.js",
+    "db:migrate:cpe": "node scripts/migrations/create_cpe_tables.js",
     "db:migrate:ventas-integrity": "node scripts/migrations/add_venta_integrity.js",
     "validate:authz": "node scripts/validate-authz.js",
     "validate:registry-sync": "node scripts/validate-registry-sync.js"
