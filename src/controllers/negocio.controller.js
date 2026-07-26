@@ -1,3 +1,4 @@
+import { normalizarOrigen, esOrigenValido, vocabularioDe, requiereElegirOrigen } from "../services/costos/origenCosto.js";
 import { getConnection } from "../database/database.js";
 import path from "path";
 import fs from "fs/promises";
@@ -52,7 +53,13 @@ export const getNegocio = async (req, res) => {
                 telefono: empresa.telefono,
                 moneda: empresa.moneda,
                 pais: empresa.pais,
-                igv_incluido: Boolean(empresa.igv_incluido)
+                igv_incluido: Boolean(empresa.igv_incluido),
+                // De dónde viene la mercadería. Se manda junto con su vocabulario
+                // para que el frontend no repita las etiquetas por su cuenta y
+                // queden desincronizadas del backend.
+                origen_productos: normalizarOrigen(empresa.origen_productos),
+                origen_vocabulario: vocabularioDe(empresa.origen_productos),
+                origen_elegible_por_linea: requiereElegirOrigen(empresa.origen_productos)
             }
         });
 
@@ -83,7 +90,7 @@ export const updateNegocio = async (req, res) => {
             logotipo, // URL from ImageKit
             // New fields
             distrito, provincia, departamento, codigoPostal, email, telefono, moneda, pais,
-            igv_incluido
+            igv_incluido, origen_productos
         } = req.body;
 
         let final_logo_url = undefined;
@@ -129,6 +136,16 @@ export const updateNegocio = async (req, res) => {
         if (moneda !== undefined) { updates.push("moneda = ?"); params.push(moneda.trim()); }
         if (pais !== undefined) { updates.push("pais = ?"); params.push(pais.trim()); }
         if (igv_incluido !== undefined) { updates.push("igv_incluido = ?"); params.push(igv_incluido ? 1 : 0); }
+        // Se valida contra el catálogo en vez de confiar en el ENUM: un valor
+        // fuera de rango haría fallar el UPDATE entero y perdería el resto de
+        // los cambios del formulario.
+        if (origen_productos !== undefined) {
+            if (!esOrigenValido(origen_productos)) {
+                return res.status(400).json({ code: 0, message: "Origen de productos inválido" });
+            }
+            updates.push("origen_productos = ?");
+            params.push(normalizarOrigen(origen_productos));
+        }
 
         if (final_logo_url !== undefined) {
             updates.push("logotipo = ?");
