@@ -1,4 +1,6 @@
 import { getConnection } from "../database/database.js";
+import { aplicarIngresoAlCosto } from "../services/costos/costoRepository.js";
+import { resolverOrigenDeLinea } from "../services/costos/origenCosto.js";
 import { logInventario } from "../utils/logActions.js";
 
 // Cache para queries repetitivas
@@ -509,7 +511,9 @@ const insertNotaAndDetalle = async (req, res) => {
     usuario,
     tonalidad,
     talla,
-    estado_espera = 0
+    estado_espera = 0,
+    costos = [],          // costo unitario por línea; opcional
+    origen_costo = null   // solo se respeta si la empresa es MIXTO
   } = req.body;
   const id_tenant = req.id_tenant;
 
@@ -608,6 +612,14 @@ const insertNotaAndDetalle = async (req, res) => {
       }
     }
 
+    // Origen de la mercadería: la empresa fija el caso dominante y solo un
+    // negocio MIXTO puede elegirlo por línea (ver services/costos/origenCosto.js).
+    const [[empresaCfg]] = await connection.query(
+      "SELECT origen_productos FROM empresa WHERE id_empresa = ? AND id_tenant = ? LIMIT 1",
+      [req.id_empresa, id_tenant]
+    );
+    const origenLinea = resolverOrigenDeLinea(empresaCfg?.origen_productos, origen_costo);
+
     // Preparar datos para batch insert de detalles
     const detalleValues = [];
     const detalleParams = [];
@@ -635,13 +647,22 @@ const insertNotaAndDetalle = async (req, res) => {
       // Based on previous user session, we are assuming it exists or was added.
       // Using "id_sku" as column name.
 
-      detalleValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?)');
-      detalleParams.push(id_producto, id_nota, cantidadProducto, precio, totalProducto, id_tenant, id_ton, id_tal, id_sku_val);
+      // `precio` es el precio de VENTA del producto (así estaba y así se sigue
+      // guardando); `costo_unitario` es lo que costó de verdad. Son distintos y
+      // por eso no se reusa la columna existente.
+      const costoLinea = Number(costos[i]);
+      const costoValido = Number.isFinite(costoLinea) && costoLinea >= 0 ? costoLinea : null;
+
+      detalleValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+      detalleParams.push(
+        id_producto, id_nota, cantidadProducto, precio, totalProducto, id_tenant,
+        id_ton, id_tal, id_sku_val, costoValido, costoValido === null ? null : origenLinea
+      );
     }
 
     // Batch insert de detalles
     const [detalleResult] = await connection.query(
-      `INSERT INTO detalle_nota (id_producto, id_nota, cantidad, precio, total, id_tenant, id_tonalidad, id_talla, id_sku) VALUES ${detalleValues.join(', ')}`,
+      `INSERT INTO detalle_nota (id_producto, id_nota, cantidad, precio, total, id_tenant, id_tonalidad, id_talla, id_sku, costo_unitario, origen_costo) VALUES ${detalleValues.join(', ')}`,
       detalleParams
     );
 
