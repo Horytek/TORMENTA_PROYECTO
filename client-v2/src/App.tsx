@@ -52,6 +52,7 @@ const ExpressHomePage = lazy(() => import("@/features/express/pages/ExpressHomeP
 const AccountingPage = lazy(() => import("@/features/accounting/pages/AccountingPage"));
 const SystemLogsPage = lazy(() => import("@/features/system-logs/pages/SystemLogsPage"));
 const ComprobantesPage = lazy(() => import("@/features/comprobantes/pages/ComprobantesPage"));
+const IntegracionesPage = lazy(() => import("@/features/integraciones/pages/IntegracionesPage"));
 const StatusPage = lazy(() => import("@/features/status/pages/StatusPage"));
 
 // Initialize Query Client for TanStack Query
@@ -229,6 +230,12 @@ export default function App() {
                   <Route
                     path="/settings/system"
                     element={<RequireCapability capability="configuracion/negocio.view"><SettingsPage /></RequireCapability>}
+                  />
+                  {/* Diagnóstico de integraciones: gate por rol admin, igual que
+                      /api/integraciones en el backend y que los Logs del Sistema. */}
+                  <Route
+                    path="/settings/integrations"
+                    element={<RequireCapability adminOnly><IntegracionesPage /></RequireCapability>}
                   />
                   <Route
                     path="/settings/logs"

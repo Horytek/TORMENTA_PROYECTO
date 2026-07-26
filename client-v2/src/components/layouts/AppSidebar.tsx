@@ -21,6 +21,7 @@ import {
   ChevronsUpDown,
   ScrollText,
   FileCheck2,
+  Plug,
 } from "lucide-react";
 import { removeToken } from "@/utils/authStorage";
 import { resetVerifyTokenCache } from "@/api/auth";
@@ -80,6 +81,20 @@ export default function AppSidebar() {
       const reportes = sections.find((s) => s.label === "Reportes");
       if (reportes) reportes.items.push(cpeItem);
       else sections.push({ label: "Reportes", items: [cpeItem] });
+    }
+    // Integraciones: sin módulo/capability en BD; gate por rol admin, igual que
+    // los Logs del Sistema y que /api/integraciones en el backend.
+    if (isAdmin) {
+      const item = {
+        title: "Integraciones",
+        url: "/settings/integrations",
+        icon: Plug,
+        group: "Ajustes",
+        keywords: ["sunat", "credenciales", "certificado", "estado", "diagnóstico", "conexión"],
+      };
+      const ajustes = sections.find((s) => s.label === "Ajustes");
+      if (ajustes) ajustes.items.push(item);
+      else sections.push({ label: "Ajustes", items: [item] });
     }
     // Logs de auditoría: sin módulo/capability en BD (gate por rol admin, como en v1).
     if (isAdmin) {
