@@ -30,7 +30,8 @@
     "db:migrate:cpe": "node scripts/migrations/create_cpe_tables.js",
     "db:migrate:ventas-integrity": "node scripts/migrations/add_venta_integrity.js",
     "validate:authz": "node scripts/validate-authz.js",
-    "validate:registry-sync": "node scripts/validate-registry-sync.js"
+    "validate:registry-sync": "node scripts/validate-registry-sync.js",
+    "db:migrate:costo-sku": "node scripts/migrations/add_costo_sku.js"
   },
   "engines": {
     "node": ">=20"
