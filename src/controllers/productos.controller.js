@@ -93,7 +93,8 @@ const getProductos = async (req, res) => {
             INNER JOIN marca MA ON MA.id_marca = PR.id_marca
             INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
             INNER JOIN categoria cat ON cat.id_categoria = CA.id_categoria
-            LEFT JOIN inventario INV ON INV.id_producto = PR.id_producto AND INV.id_tenant = PR.id_tenant
+            LEFT JOIN producto_sku PSK ON PSK.id_producto = PR.id_producto AND PSK.id_tenant = PR.id_tenant
+            LEFT JOIN inventario_stock INV ON INV.id_sku = PSK.id_sku AND INV.id_tenant = PSK.id_tenant
             ${whereSQL}
             GROUP BY PR.id_producto, PR.descripcion, CA.nom_subcat, MA.nom_marca, PR.undm, PR.precio, PR.cod_barras, PR.estado_producto, PR.id_marca, PR.id_subcategoria, cat.id_categoria
             ORDER BY ${sortBy} ${sortDir}
@@ -348,7 +349,7 @@ const getProductVariants = async (req, res) => {
                 s.stock,
                 s.id_almacen,
                 a.nom_almacen
-            FROM inventario s
+            FROM inventario_stock s
             ${joinClause}
             LEFT JOIN almacen    a  ON s.id_almacen    = a.id_almacen
             LEFT JOIN tonalidad  t  ON s.id_tonalidad  = t.id_tonalidad
@@ -522,15 +523,17 @@ const registerVariants = async (req, res) => {
                     }
                 }
 
-// Initialize Stock en `inventario` (sin variantes).
-                // Para simplificar y no requerir mapeo color→tonalidad/talla,
-                // dejamos id_tonalidad e id_talla NULL (representa "producto
-                // sin variante" en este modelo simplificado).
+// Fila inicial de stock en cero, ya por SKU.
+                // Antes se insertaba en `inventario` con id_tonalidad/id_talla
+                // en NULL: como el índice único los incluye y MySQL trata cada
+                // NULL como distinto, el ON DUPLICATE KEY nunca colisionaba y
+                // cada llamada creaba una fila nueva. El de `inventario_stock`
+                // es (tenant, sku, almacén), las tres NOT NULL, así que sí.
                 await connection.query(`
-                    INSERT INTO inventario (id_producto, id_almacen, id_tonalidad, id_talla, stock, id_tenant)
-                    VALUES (?, ?, NULL, NULL, 0, ?)
+                    INSERT INTO inventario_stock (id_tenant, id_sku, id_almacen, stock, reservado)
+                    VALUES (?, ?, ?, 0, 0)
                     ON DUPLICATE KEY UPDATE stock = stock
-                `, [id_producto, id_almacen, req.id_tenant]);
+                `, [req.id_tenant, id_sku, id_almacen]);
             }
         }
 
@@ -645,12 +648,12 @@ const generateSKUs = async (req, res) => {
                 }
             }
 
-// Init Stock en `inventario` (sin variantes).
+// Fila inicial de stock en cero para el SKU recién creado.
             await connection.query(`
-                INSERT INTO inventario (id_producto, id_almacen, id_tonalidad, id_talla, stock, id_tenant)
-                VALUES (?, 1, NULL, NULL, 0, ?)
+                INSERT INTO inventario_stock (id_tenant, id_sku, id_almacen, stock, reservado)
+                VALUES (?, ?, 1, 0, 0)
                 ON DUPLICATE KEY UPDATE stock = stock
-            `, [id_producto, req.id_tenant]); // Default Almacen 1
+            `, [req.id_tenant, id_sku]); // Almacén 1 por defecto
         }
 
         await connection.commit();

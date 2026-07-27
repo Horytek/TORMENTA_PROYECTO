@@ -132,7 +132,7 @@ const clearData = async (req, res) => {
 
             if (await tableExists("inventario") && await columnExists("inventario", "id_tenant")) {
                 currentStep = "diagnostic_inventario";
-                const [invRows] = await connection.query("SELECT COUNT(*) as c FROM inventario WHERE id_tenant = ?", [id_tenant]);
+                const [invRows] = await connection.query("SELECT COUNT(*) as c FROM inventario_stock WHERE id_tenant = ?", [id_tenant]);
                 countInv = invRows[0]?.c ?? 0;
             }
 
@@ -178,7 +178,8 @@ const clearData = async (req, res) => {
 
         // 5. Resetear Stock
         console.log("Reseteando Stock de Inventario a 0...");
-        await runScopedQuery("update_inventario", "inventario", "UPDATE inventario SET stock = 0 WHERE id_tenant = ?", [id_tenant]);
+        // `inventario` ya no participa de ningún flujo: el reset del stock se
+        // hace sobre `inventario_stock`, unas líneas más abajo.
         const hasInventarioStock = await tableExists("inventario_stock");
         if (!hasInventarioStock) {
             skipped.push("update_inventario_stock: tabla 'inventario_stock' no existe");

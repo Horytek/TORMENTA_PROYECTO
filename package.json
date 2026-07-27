@@ -34,7 +34,8 @@
     "db:migrate:costo-sku": "node scripts/migrations/add_costo_sku.js",
     "db:migrate:origen-productos": "node scripts/migrations/add_origen_productos_empresa.js",
     "db:migrate:metodos-pago": "node scripts/migrations/normalizar_metodos_pago.js",
-    "db:migrate:limpiar-muertas": "node scripts/migrations/limpiar_tablas_muertas.js"
+    "db:migrate:limpiar-muertas": "node scripts/migrations/limpiar_tablas_muertas.js",
+    "db:migrate:bitacora-sku": "node scripts/migrations/add_bitacora_sku.js"
   },
   "engines": {
     "node": ">=20"
