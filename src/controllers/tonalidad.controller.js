@@ -21,10 +21,13 @@ const addTonalidad = async (req, res) => {
         if (!nombre) return res.status(400).json({ message: "Nombre es requerido" });
 
         const connection = await getConnection();
-        // Saving to both columns to ensure compatibility as per schema image
+        // `hex_code` es la única columna de color: es la que lee el resto del
+        // sistema (productos.controller.js). La duplicada `codigo_hex` se
+        // retiró — el cuerpo de la petición conserva ese nombre para no romper
+        // al frontend que ya lo envía.
         const [result] = await connection.query(
-            "INSERT INTO tonalidad (nombre, codigo_hex, hex_code, id_tenant) VALUES (?, ?, ?, ?)",
-            [nombre, codigo_hex, codigo_hex, id_tenant]
+            "INSERT INTO tonalidad (nombre, hex_code, id_tenant) VALUES (?, ?, ?)",
+            [nombre, codigo_hex, id_tenant]
         );
 
         res.json({ code: 1, message: "Tonalidad agregada", data: { id: result.insertId, nombre, codigo_hex } });
@@ -43,8 +46,8 @@ const updateTonalidad = async (req, res) => {
 
         const connection = await getConnection();
         const [result] = await connection.query(
-            "UPDATE tonalidad SET nombre = ?, codigo_hex = ?, hex_code = ? WHERE id_tonalidad = ? AND id_tenant = ?",
-            [nombre, codigo_hex, codigo_hex, id, id_tenant]
+            "UPDATE tonalidad SET nombre = ?, hex_code = ? WHERE id_tonalidad = ? AND id_tenant = ?",
+            [nombre, codigo_hex, id, id_tenant]
         );
 
         if (result.affectedRows === 0) return res.status(404).json({ message: "Tonalidad no encontrada" });

@@ -1,4 +1,6 @@
 import { getConnection } from "./../database/database.js";
+import { descontarPorProducto } from "../services/inventario/stockRepository.js";
+import { esErrorDeStock } from "../services/inventario/errores.js";
 
 // Cache para queries repetitivas (opcional, para datos que no cambian frecuentemente)
 const queryCache = new Map();
@@ -1088,32 +1090,16 @@ const insertGuiaRemisionAndDetalle = async (req, res) => {
                 const id_ton = tonalidades[i] || null;
                 const id_tal = tallas[i] || null;
 
-                // Construir WHERE dinámico para localizar la fila exacta de inventario.
-                let invWhere = `id_producto = ? AND id_almacen = ? AND id_tenant = ?`;
-                const invParams = [id_producto, id_almacen, id_tenant];
-                if (id_ton !== null) { invWhere += ` AND (id_tonalidad <=> ?)`; invParams.push(id_ton); }
-                if (id_tal !== null) { invWhere += ` AND (id_talla <=> ?)`;     invParams.push(id_tal); }
+                // El descuento se reparte entre los SKU del producto en ese
+                // almacén y falla si no alcanza, en vez de dejar stock negativo.
+                const movimientos = await descontarPorProducto(connection, {
+                    id_tenant,
+                    id_producto,
+                    id_almacen,
+                    cantidad: cantidadProducto,
+                });
 
-                // Verificar stock actual en `inventario`
-                const [stockResult] = await connection.query(
-                    `SELECT stock FROM inventario WHERE ${invWhere} LIMIT 1`,
-                    invParams
-                );
-
-                const stockActual = stockResult.length > 0 ? parseFloat(stockResult[0].stock) : 0;
-
-                // Validar stock suficiente
-                if (stockActual < cantidadProducto) {
-                    throw new Error(`Stock insuficiente para producto ID ${id_producto}. Disponible: ${stockActual}, Solicitado: ${cantidadProducto}`);
-                }
-
-                // Descontar stock en `inventario`
-                await connection.query(
-                    `UPDATE inventario SET stock = stock - ? WHERE ${invWhere} AND stock >= ?`,
-                    [cantidadProducto, ...invParams, cantidadProducto]
-                );
-
-                console.log(`[GuiaRemision] Stock descontado: Producto ${id_producto}, Cantidad ${cantidadProducto}, Almacén ${id_almacen}`);
+                console.log(`[GuiaRemision] Stock descontado: Producto ${id_producto}, Cantidad ${cantidadProducto}, Almacén ${id_almacen}, SKUs ${movimientos.map(m => m.id_sku).join("/")}`);
             }
         } else {
             console.log(`[GuiaRemision] Sucursal ${id_sucursal} no tiene almacén vinculado, no se descuenta stock.`);

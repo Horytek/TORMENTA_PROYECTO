@@ -6,6 +6,8 @@
   "main": "index.js",
   "scripts": {
     "babel-node": "babel-node --presets @babel/preset-env",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "dev": "nodemon index.js",
     "client": "cd ./client && npm run dev",
     "dev:full": "concurrently \"npm run dev\" \"npm run client\"",
@@ -28,7 +30,12 @@
     "db:migrate:cpe": "node scripts/migrations/create_cpe_tables.js",
     "db:migrate:ventas-integrity": "node scripts/migrations/add_venta_integrity.js",
     "validate:authz": "node scripts/validate-authz.js",
-    "validate:registry-sync": "node scripts/validate-registry-sync.js"
+    "validate:registry-sync": "node scripts/validate-registry-sync.js",
+    "db:migrate:costo-sku": "node scripts/migrations/add_costo_sku.js",
+    "db:migrate:origen-productos": "node scripts/migrations/add_origen_productos_empresa.js",
+    "db:migrate:metodos-pago": "node scripts/migrations/normalizar_metodos_pago.js",
+    "db:migrate:limpiar-muertas": "node scripts/migrations/limpiar_tablas_muertas.js",
+    "db:migrate:bitacora-sku": "node scripts/migrations/add_bitacora_sku.js"
   },
   "engines": {
     "node": ">=20"
@@ -82,7 +89,8 @@
     "@babel/preset-env": "^7.24.8",
     "concurrently": "^8.2.2",
     "nodemon": "^3.1.4",
-    "vite-plugin-compression": "^0.5.1"
+    "vite-plugin-compression": "^0.5.1",
+    "vitest": "^4.1.10"
   },
   "overrides": {
     "axios": "^1.7.9",

@@ -52,7 +52,11 @@ const ExpressHomePage = lazy(() => import("@/features/express/pages/ExpressHomeP
 const AccountingPage = lazy(() => import("@/features/accounting/pages/AccountingPage"));
 const SystemLogsPage = lazy(() => import("@/features/system-logs/pages/SystemLogsPage"));
 const ComprobantesPage = lazy(() => import("@/features/comprobantes/pages/ComprobantesPage"));
+const IntegracionesPage = lazy(() => import("@/features/integraciones/pages/IntegracionesPage"));
 const StatusPage = lazy(() => import("@/features/status/pages/StatusPage"));
+const PurchaseOrdersPage = lazy(() => import("@/features/purchases/pages/PurchaseOrdersPage"));
+const PurchaseInvoicesPage = lazy(() => import("@/features/purchases/pages/PurchaseInvoicesPage"));
+const AccountsPayablePage = lazy(() => import("@/features/purchases/pages/AccountsPayablePage"));
 
 // Initialize Query Client for TanStack Query
 const queryClient = new QueryClient({
@@ -207,6 +211,18 @@ export default function App() {
                     element={<RequireCapability capability="almaceng.view"><WarehousesPage /></RequireCapability>}
                   />
                   <Route
+                    path="/purchases/orders"
+                    element={<RequireCapability capability="compras/ordenes.view"><PurchaseOrdersPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/purchases/invoices"
+                    element={<RequireCapability capability="compras/facturas.view"><PurchaseInvoicesPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/purchases/accounts-payable"
+                    element={<RequireCapability capability="compras/cuentas-por-pagar.view"><AccountsPayablePage /></RequireCapability>}
+                  />
+                  <Route
                     path="/logistics/warehouse-notes"
                     element={<RequireCapability capability="nota_almacen.view"><WarehouseNotesPage /></RequireCapability>}
                   />
@@ -230,6 +246,12 @@ export default function App() {
                     path="/settings/system"
                     element={<RequireCapability capability="configuracion/negocio.view"><SettingsPage /></RequireCapability>}
                   />
+                  {/* Diagnóstico de integraciones: gate por rol admin, igual que
+                      /api/integraciones en el backend y que los Logs del Sistema. */}
+                  <Route
+                    path="/settings/integrations"
+                    element={<RequireCapability adminOnly><IntegracionesPage /></RequireCapability>}
+                  />
                   <Route
                     path="/settings/logs"
                     element={<RequireCapability adminOnly><SystemLogsPage /></RequireCapability>}
@@ -238,11 +260,9 @@ export default function App() {
                     path="/reports/sales"
                     element={<RequireCapability capability="reportes.view"><ReportsPage /></RequireCapability>}
                   />
-                  {/* Comprobantes electrónicos: gateado por `ventas` — el backend
-                      /api/cpe usa esa misma capacidad (ver/generar). */}
                   <Route
                     path="/sales/comprobantes"
-                    element={<RequireCapability capability="ventas.view"><ComprobantesPage /></RequireCapability>}
+                    element={<RequireCapability capability="comprobantes.view"><ComprobantesPage /></RequireCapability>}
                   />
                   <Route
                     path="/accounting"

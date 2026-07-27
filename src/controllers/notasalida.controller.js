@@ -1,5 +1,7 @@
 import { getConnection } from "../database/database.js";
 import { logInventario } from "../utils/logActions.js";
+import { descontarPorProducto, sumarStockSku } from "../services/inventario/stockRepository.js";
+import { esErrorDeStock } from "../services/inventario/errores.js";
 
 // Cache para queries repetitivas
 const queryCache = new Map();
@@ -241,7 +243,8 @@ const getProductos = async (req, res) => {
         p.cod_barras as cod_barras
       FROM producto p
       INNER JOIN marca m ON p.id_marca = m.id_marca
-      LEFT JOIN inventario i ON p.id_producto = i.id_producto AND i.id_almacen = ? AND i.id_tenant = ?
+      LEFT JOIN producto_sku ps ON ps.id_producto = p.id_producto AND ps.id_tenant = p.id_tenant
+      LEFT JOIN inventario_stock i ON i.id_sku = ps.id_sku AND i.id_almacen = ? AND i.id_tenant = ?
       WHERE p.id_tenant = ?
     `;
 
@@ -441,23 +444,8 @@ const insertNotaAndDetalle = async (req, res) => {
     // const [stocksResult] ...
     // const stocksMap ...
 
-    // Preparar batch operations
-    const updateInventarioPromises = [];
     const bitacoraValues = [];
     const bitacoraParams = [];
-
-    // Recalcular stocksMap para variantes requiere una estrategia diferente porque 
-    // stocksMap actual solo usa id_producto como key, y sobreescribiría variantes.
-    // En lugar de fetch global, haremos verificación dentro del loop para ser seguros, 
-    // o hacemos fetch de todo y construimos un mapa compuesto.
-    // Dado que el loop de actualización es asíncrono y usamos updates directos, 
-    // podemos consultar el stock ESPECIFICO en cada iteración.
-
-    // (Optimizacion: Si son muchos productos, el fetch individual es costoso, pero seguro).
-    // Reemplazaremos el bloque de "validation & update" con un loop async.
-
-    updateInventarioPromises = []; // Reset if defined before or just create new here:
-    // const updateInventarioPromises = []; is defined above
 
     for (let i = 0; i < producto.length; i++) {
       const id_producto = producto[i];
@@ -466,47 +454,29 @@ const insertNotaAndDetalle = async (req, res) => {
       const id_ton = tonalidades[i] || null;
       const id_tal = tallas[i] || null;
 
-      // Construir WHERE dinámico para localizar la fila exacta de inventario.
-      let invWhere = `id_producto = ? AND id_almacen = ? AND id_tenant = ?`;
-      const invParams = [id_producto, almacenO, id_tenant];
-      if (id_ton !== null) { invWhere += ` AND (id_tonalidad <=> ?)`; invParams.push(id_ton); }
-      if (id_tal !== null) { invWhere += ` AND (id_talla <=> ?)`;     invParams.push(id_tal); }
+      // El descuento se reparte entre los SKU del producto en ese almacén.
+      // `descontarPorProducto` bloquea las filas antes de decidir y lanza
+      // StockInsuficienteError si no alcanza, en vez de dejar stock negativo.
+      const movimientos = await descontarPorProducto(connection, {
+        id_tenant,
+        id_producto,
+        id_almacen: almacenO,
+        cantidad: cantidadProducto,
+      });
 
-      const [stockResult] = await connection.query(
-        `SELECT stock FROM inventario WHERE ${invWhere} LIMIT 1`,
-        invParams
-      );
-
-      const stockAnterior = stockResult.length > 0 ? parseFloat(stockResult[0].stock) : 0;
-
-      // Validar stock suficiente
-      if (stockAnterior < cantidadProducto) {
-        throw new Error(`Stock insuficiente para producto ID ${id_producto}. Disponible: ${stockAnterior}, Solicitado: ${cantidadProducto}`);
+      // Una fila de bitácora por SKU tocado: es lo que permite que la anulación
+      // devuelva las unidades a las mismas variantes.
+      for (const mov of movimientos) {
+        bitacoraValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        bitacoraParams.push(id_nota, id_producto, mov.id_sku, almacenO, id_detalle, mov.cantidad,
+          mov.stockAnterior, mov.stockActual, fecha, id_tenant, id_ton, id_tal);
       }
-
-      const totalStock = stockAnterior - cantidadProducto;
-
-      // Actualizar stock en `inventario`
-      await connection.query(
-        `UPDATE inventario SET stock = stock - ? WHERE ${invWhere} AND stock >= ?`,
-        [cantidadProducto, ...invParams, cantidadProducto]
-      );
-
-      // Preparar bitácora
-      bitacoraValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-      // id_nota, id_producto, id_almacen, id_detalle_nota, sale, stock_anterior, stock_actual, fecha, id_tenant, id_tonalidad, id_talla
-      bitacoraParams.push(id_nota, id_producto, almacenO, id_detalle, cantidadProducto, stockAnterior, totalStock, fecha, id_tenant, id_ton, id_tal);
-    }
-
-    // Ejecutar batch updates en paralelo
-    if (updateInventarioPromises.length > 0) {
-      await Promise.all(updateInventarioPromises);
     }
 
     // Batch insert de bitácora
     if (bitacoraValues.length > 0) {
       await connection.query(
-        `INSERT INTO bitacora_nota (id_nota, id_producto, id_almacen, id_detalle_nota, sale, stock_anterior, stock_actual, fecha, id_tenant, id_tonalidad, id_talla) VALUES ${bitacoraValues.join(', ')}`,
+        `INSERT INTO bitacora_nota (id_nota, id_producto, id_sku, id_almacen, id_detalle_nota, sale, stock_anterior, stock_actual, fecha, id_tenant, id_tonalidad, id_talla) VALUES ${bitacoraValues.join(', ')}`,
         bitacoraParams
       );
     }
@@ -528,6 +498,11 @@ const insertNotaAndDetalle = async (req, res) => {
   } catch (error) {
     if (connection) {
       await connection.rollback();
+    }
+    // Falta de stock no es un fallo del servidor: es una condición de negocio
+    // que el usuario puede corregir, y su mensaje sí puede mostrarse.
+    if (esErrorDeStock(error)) {
+      return res.status(409).json({ code: 0, codigo: error.codigo, message: error.message });
     }
     console.error('Error en insertNotaAndDetalle:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
@@ -569,50 +544,53 @@ const anularNota = async (req, res) => {
       [notaId, id_tenant]
     );
 
-    for (let i = 0; i < detalleResult.length; i++) {
-      const { id_producto, cantidad, id_tonalidad, id_talla, id_detalle_nota } = detalleResult[i];
-      const id_ton = id_tonalidad || null;
-      const id_tal = id_talla || null;
+    const [fechaResult] = await connection.query(
+      "SELECT fecha FROM nota WHERE id_nota = ? AND id_tenant = ?",
+      [notaId, id_tenant]
+    );
+    if (!fechaResult.length) {
+      throw new Error(`Fecha no encontrada para la nota ID ${notaId}.`);
+    }
+    const fechaNota = fechaResult[0].fecha;
 
-      // Construir WHERE dinámico para localizar la fila exacta de inventario.
-      let invWhere = `id_producto = ? AND id_almacen = ? AND id_tenant = ?`;
-      const invParams = [id_producto, id_almacenO, id_tenant];
-      if (id_ton !== null) { invWhere += ` AND (id_tonalidad <=> ?)`; invParams.push(id_ton); }
-      if (id_tal !== null) { invWhere += ` AND (id_talla <=> ?)`;     invParams.push(id_tal); }
+    // Se revierte desde la BITÁCORA, no desde el detalle: la salida pudo
+    // repartirse entre varios SKU y ahí quedó registrado cuántas unidades salió
+    // de cada uno. Reconstruirlo desde `detalle_nota` devolvería todo a una
+    // variante arbitraria.
+    const [salidas] = await connection.query(
+      `SELECT id_producto, id_sku, id_detalle_nota, id_tonalidad, id_talla, SUM(sale) AS unidades
+       FROM bitacora_nota
+       WHERE id_nota = ? AND id_tenant = ? AND sale > 0
+       GROUP BY id_producto, id_sku, id_detalle_nota, id_tonalidad, id_talla`,
+      [notaId, id_tenant]
+    );
 
-      // Verificar stock antes de actualizar (aunque al anular, es entrada, no debería haber problema "insuficiente")
-      // Pero igual leemos para la bitácora
-      const [stockResult] = await connection.query(
-        `SELECT stock FROM inventario WHERE ${invWhere} LIMIT 1`,
-        invParams
-      );
+    // Salidas anteriores a la convergencia no tienen `id_sku`: se cae al SKU
+    // declarado en el detalle.
+    const skuPorDetalle = new Map(detalleResult.map((d) => [d.id_detalle_nota, d.id_sku ?? null]));
 
-      const stockAnterior = stockResult.length > 0 ? parseFloat(stockResult[0].stock) : 0;
+    for (const s of salidas) {
+      const unidades = Number(s.unidades);
+      if (!Number.isFinite(unidades) || unidades <= 0) continue;
 
-      // Actualizar stock en `inventario` (Devolución/Anulación → Sumar)
-      await connection.query(
-        `UPDATE inventario SET stock = stock + ? WHERE ${invWhere}`,
-        [cantidad, ...invParams]
-      );
-
-      const detalleId = id_detalle_nota;
-
-      // Obtener la fecha de la nota
-      const [fechaResult] = await connection.query(
-        "SELECT fecha FROM nota WHERE id_nota = ? AND id_tenant = ?",
-        [notaId, id_tenant]
-      );
-
-      if (!fechaResult.length) {
-        throw new Error(`Fecha no encontrada para la nota ID ${notaId}.`);
+      const id_sku_mov = s.id_sku ?? skuPorDetalle.get(s.id_detalle_nota) ?? null;
+      if (!id_sku_mov) {
+        throw new Error(
+          `No se puede anular: el movimiento del producto ${s.id_producto} no tiene SKU asociado.`
+        );
       }
 
-      const fechaNota = fechaResult[0].fecha;
+      const movimiento = await sumarStockSku(connection, {
+        id_tenant,
+        id_sku: id_sku_mov,
+        id_almacen: id_almacenO,
+        cantidad: unidades,
+      });
 
-      // Insertar en bitácora
       await connection.query(
-        "INSERT INTO bitacora_nota (id_nota, id_producto, id_almacen, id_detalle_nota, entra, stock_anterior, stock_actual, fecha, id_tenant, id_tonalidad, id_talla) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [notaId, id_producto, id_almacenO, detalleId, cantidad, stockAnterior, stockAnterior + cantidad, fechaNota, id_tenant, id_ton, id_tal]
+        "INSERT INTO bitacora_nota (id_nota, id_producto, id_sku, id_almacen, id_detalle_nota, entra, stock_anterior, stock_actual, fecha, id_tenant, id_tonalidad, id_talla) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [notaId, s.id_producto, id_sku_mov, id_almacenO, s.id_detalle_nota, unidades,
+         movimiento.stockAnterior, movimiento.stockActual, fechaNota, id_tenant, s.id_tonalidad, s.id_talla]
       );
     }
 
