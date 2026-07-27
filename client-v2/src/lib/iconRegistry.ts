@@ -21,6 +21,7 @@ import {
   ShieldAlert,
   Wallet,
   Layers,
+  FileCheck2,
 } from "lucide-react";
 
 export type NavIcon = ComponentType<{ className?: string }>;
@@ -41,6 +42,7 @@ export const ICON_REGISTRY: Record<string, NavIcon> = {
   ShieldAlert,
   Wallet,
   Layers,
+  FileCheck2,
 };
 
 export const ICON_NAMES = Object.keys(ICON_REGISTRY);

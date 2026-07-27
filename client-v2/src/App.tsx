@@ -54,6 +54,9 @@ const SystemLogsPage = lazy(() => import("@/features/system-logs/pages/SystemLog
 const ComprobantesPage = lazy(() => import("@/features/comprobantes/pages/ComprobantesPage"));
 const IntegracionesPage = lazy(() => import("@/features/integraciones/pages/IntegracionesPage"));
 const StatusPage = lazy(() => import("@/features/status/pages/StatusPage"));
+const PurchaseOrdersPage = lazy(() => import("@/features/purchases/pages/PurchaseOrdersPage"));
+const PurchaseInvoicesPage = lazy(() => import("@/features/purchases/pages/PurchaseInvoicesPage"));
+const AccountsPayablePage = lazy(() => import("@/features/purchases/pages/AccountsPayablePage"));
 
 // Initialize Query Client for TanStack Query
 const queryClient = new QueryClient({
@@ -208,6 +211,18 @@ export default function App() {
                     element={<RequireCapability capability="almaceng.view"><WarehousesPage /></RequireCapability>}
                   />
                   <Route
+                    path="/purchases/orders"
+                    element={<RequireCapability capability="compras/ordenes.view"><PurchaseOrdersPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/purchases/invoices"
+                    element={<RequireCapability capability="compras/facturas.view"><PurchaseInvoicesPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/purchases/accounts-payable"
+                    element={<RequireCapability capability="compras/cuentas-por-pagar.view"><AccountsPayablePage /></RequireCapability>}
+                  />
+                  <Route
                     path="/logistics/warehouse-notes"
                     element={<RequireCapability capability="nota_almacen.view"><WarehouseNotesPage /></RequireCapability>}
                   />
@@ -245,11 +260,9 @@ export default function App() {
                     path="/reports/sales"
                     element={<RequireCapability capability="reportes.view"><ReportsPage /></RequireCapability>}
                   />
-                  {/* Comprobantes electrónicos: gateado por `ventas` — el backend
-                      /api/cpe usa esa misma capacidad (ver/generar). */}
                   <Route
                     path="/sales/comprobantes"
-                    element={<RequireCapability capability="ventas.view"><ComprobantesPage /></RequireCapability>}
+                    element={<RequireCapability capability="comprobantes.view"><ComprobantesPage /></RequireCapability>}
                   />
                   <Route
                     path="/accounting"
