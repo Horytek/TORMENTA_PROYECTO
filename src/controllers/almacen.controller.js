@@ -1,4 +1,5 @@
 import { getConnection } from "./../database/database.js";
+import { almacenTieneStock } from "../services/inventario/stockRepository.js";
 
 const getAlmacenes = async (req, res) => {
     let connection;
@@ -290,17 +291,23 @@ const deleteAlmacen = async (req, res) => {
 
         connection = await getConnection();
 
-        // Verificar si el almacén está en uso en nota o inventario
+        // Verificar si el almacén está en uso en nota o inventario.
+        //
+        // El stock se consulta en `inventario_stock`, que es donde vive de
+        // verdad. Antes se miraba `inventario`, vacía desde la migración a SKU:
+        // un almacén con existencias se consideraba "sin uso" y caía en la rama
+        // de BORRADO FÍSICO de más abajo. Se agregó además el filtro por tenant,
+        // que faltaba en las dos consultas.
         const [notaUso] = await connection.query(
-            "SELECT 1 FROM nota WHERE id_almacenO = ? OR id_almacenD = ? LIMIT 1",
-            [id, id]
+            "SELECT 1 FROM nota WHERE (id_almacenO = ? OR id_almacenD = ?) AND id_tenant = ? LIMIT 1",
+            [id, id, req.id_tenant]
         );
-        const [inventarioUso] = await connection.query(
-            "SELECT 1 FROM inventario WHERE id_almacen = ? LIMIT 1",
-            [id]
-        );
+        const tieneStock = await almacenTieneStock(connection, {
+            id_tenant: req.id_tenant,
+            id_almacen: id,
+        });
 
-        const estaEnUso = notaUso.length > 0 || inventarioUso.length > 0;
+        const estaEnUso = notaUso.length > 0 || tieneStock;
 
         if (estaEnUso) {
             // Dar de baja (actualizar estado)
