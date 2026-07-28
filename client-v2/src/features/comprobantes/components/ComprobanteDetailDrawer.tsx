@@ -283,7 +283,7 @@ export function ComprobanteDetailDrawer({
                 corregir datos y emitir de nuevo, y un INCIERTO exige consultar
                 antes — reenviarlo a ciegas duplicaría el comprobante. */}
             {puedeReintentar && (
-              <Can capability="ventas.generate">
+              <Can capability="comprobantes.generate">
                 <Button size="sm" onClick={() => onReintentar(visible)} disabled={reintentando}>
                   {reintentando ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
