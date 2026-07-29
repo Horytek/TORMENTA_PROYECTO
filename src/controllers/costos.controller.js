@@ -4,6 +4,8 @@ import {
   skusDeProductoConCosto,
   establecerCostosIniciales,
   valorizarInventario,
+  obtenerMargenPorPeriodo,
+  obtenerMargenPorProducto,
 } from "../services/costos/costoRepository.js";
 import { planificarCargaProducto, CostoInvalidoError } from "../services/costos/costoInicial.js";
 
@@ -28,6 +30,32 @@ const obtenerCobertura = async (req, res) => {
     res.json({ success: true, data: resumen });
   } catch (error) {
     console.error("Error en costos.obtenerCobertura:", error);
+    res.status(500).json({ success: false, message: "Error interno del servidor" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+/**
+ * GET /api/costos/margen — cuánto se ganó en el periodo, y por prenda.
+ *
+ * Devuelve el total y el desglose por producto en una sola llamada: la
+ * pantalla los muestra juntos y pedirlos por separado obligaría a la UI a
+ * cuadrar dos respuestas que pueden venir de momentos distintos.
+ */
+const obtenerMargen = async (req, res) => {
+  const { desde = null, hasta = null } = req.query;
+  let connection;
+  try {
+    connection = await getConnection();
+    const id_tenant = req.id_tenant;
+    const [total, porProducto] = await Promise.all([
+      obtenerMargenPorPeriodo(connection, { id_tenant, desde, hasta }),
+      obtenerMargenPorProducto(connection, { id_tenant, desde, hasta, limite: 100 }),
+    ]);
+    res.json({ success: true, data: { total, porProducto } });
+  } catch (error) {
+    console.error("Error en costos.obtenerMargen:", error);
     res.status(500).json({ success: false, message: "Error interno del servidor" });
   } finally {
     if (connection) connection.release();
@@ -125,6 +153,7 @@ const cargarCostosIniciales = async (req, res) => {
 
 export const methods = {
   obtenerCobertura,
+  obtenerMargen,
   listarPendientes,
   cargarCostosIniciales,
 };

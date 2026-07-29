@@ -1,7 +1,13 @@
 import { AxiosError } from "axios";
 import api from "@/api/axios";
 import { unwrapList, unwrapOne } from "@/api/http";
-import type { CoberturaCostos, ItemCargaCosto, ProductoSinCosto, ResultadoCarga } from "../types";
+import type {
+  CoberturaCostos,
+  ItemCargaCosto,
+  MargenResponse,
+  ProductoSinCosto,
+  ResultadoCarga,
+} from "../types";
 
 /**
  * Cliente de `/api/costos`. Responde `{ success, data }` y los errores de
@@ -12,6 +18,11 @@ import type { CoberturaCostos, ItemCargaCosto, ProductoSinCosto, ResultadoCarga 
 export const getCobertura = async (): Promise<CoberturaCostos | null> => {
   const res = await api.get("/costos/cobertura");
   return unwrapOne<CoberturaCostos>(res);
+};
+
+export const getMargen = async (desde?: string, hasta?: string): Promise<MargenResponse | null> => {
+  const res = await api.get("/costos/margen", { params: { desde, hasta } });
+  return unwrapOne<MargenResponse>(res);
 };
 
 export const getProductosSinCosto = async (limite = 200): Promise<ProductoSinCosto[]> => {

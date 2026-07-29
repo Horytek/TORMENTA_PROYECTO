@@ -267,8 +267,68 @@ export const obtenerMargenPorPeriodo = async (cx, { id_tenant, desde, hasta }) =
   };
 };
 
+/**
+ * Margen por PRODUCTO en un periodo: la respuesta a "cuánto gano por prenda".
+ *
+ * Solo entran las líneas con costo fotografiado. Las que no lo tienen se
+ * informan aparte en `lineasSinCosto` en vez de mezclarse: una prenda vendida
+ * sin costo conocido no rinde 100%, simplemente no se sabe cuánto rinde.
+ */
+export const obtenerMargenPorProducto = async (cx, { id_tenant, desde, hasta, limite = 100 }) => {
+  const params = [id_tenant];
+  let rango = "";
+  if (desde) { rango += " AND v.f_venta >= ?"; params.push(desde); }
+  if (hasta) { rango += " AND v.f_venta <= ?"; params.push(hasta); }
+  params.push(Number(limite));
+
+  const [filas] = await cx.query(
+    `SELECT
+       p.id_producto,
+       p.descripcion,
+       m.nom_marca,
+       SUM(dv.cantidad) AS unidades,
+       SUM(CASE WHEN dv.costo_unitario IS NOT NULL THEN dv.cantidad ELSE 0 END) AS unidades_con_costo,
+       COALESCE(SUM(dv.total), 0) AS ingreso,
+       COALESCE(SUM(CASE WHEN dv.costo_unitario IS NOT NULL THEN dv.total END), 0) AS ingreso_con_costo,
+       COALESCE(SUM(CASE WHEN dv.costo_unitario IS NOT NULL THEN dv.costo_unitario * dv.cantidad END), 0) AS costo
+     FROM detalle_venta dv
+     INNER JOIN venta v ON v.id_venta = dv.id_venta AND v.id_tenant = dv.id_tenant
+     INNER JOIN producto p ON p.id_producto = dv.id_producto AND p.id_tenant = dv.id_tenant
+     INNER JOIN marca m ON m.id_marca = p.id_marca
+     WHERE dv.id_tenant = ? AND v.estado_venta = 1${rango}
+     GROUP BY p.id_producto, p.descripcion, m.nom_marca
+     ORDER BY (COALESCE(SUM(CASE WHEN dv.costo_unitario IS NOT NULL THEN dv.total END), 0)
+               - COALESCE(SUM(CASE WHEN dv.costo_unitario IS NOT NULL THEN dv.costo_unitario * dv.cantidad END), 0)) DESC
+     LIMIT ?`,
+    params
+  );
+
+  return filas.map((f) => {
+    const ingresoConCosto = Number(f.ingreso_con_costo);
+    const costo = Number(f.costo);
+    const margen = Math.round((ingresoConCosto - costo) * 100) / 100;
+    const unidades = Number(f.unidades);
+    const unidadesConCosto = Number(f.unidades_con_costo);
+    return {
+      id_producto: f.id_producto,
+      descripcion: f.descripcion,
+      marca: f.nom_marca,
+      unidades,
+      unidadesConCosto,
+      ingreso: Math.round(Number(f.ingreso) * 100) / 100,
+      costo: Math.round(costo * 100) / 100,
+      margen,
+      porcentaje: ingresoConCosto > 0 ? Math.round((margen / ingresoConCosto) * 1000) / 10 : null,
+      // Lo que el dueño realmente pregunta: cuánto le queda por prenda.
+      margenPorUnidad: unidadesConCosto > 0 ? Math.round((margen / unidadesConCosto) * 100) / 100 : null,
+      completo: unidadesConCosto === unidades && unidades > 0,
+    };
+  });
+};
+
 export default {
   obtenerEstadoCosto,
+  obtenerMargenPorProducto,
   aplicarIngresoAlCosto,
   productosSinCosto,
   skusDeProductoConCosto,

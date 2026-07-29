@@ -39,3 +39,35 @@ export interface ResultadoCarga {
   detalle: DetalleCarga[];
   cobertura: CoberturaCostos;
 }
+
+/** Totales del periodo. `ingresoConCosto` es la parte sobre la que el margen es real. */
+export interface MargenTotal {
+  lineas: number;
+  lineasSinCosto: number;
+  ingresoTotal: number;
+  ingresoConCosto: number;
+  costo: number;
+  margen: number;
+  porcentaje: number | null;
+}
+
+export interface MargenProducto {
+  id_producto: number;
+  descripcion: string;
+  marca: string | null;
+  unidades: number;
+  unidadesConCosto: number;
+  ingreso: number;
+  costo: number;
+  margen: number;
+  porcentaje: number | null;
+  /** Lo que el dueño pregunta: cuánto queda por prenda. */
+  margenPorUnidad: number | null;
+  /** false = parte de las unidades se vendió sin costo conocido. */
+  completo: boolean;
+}
+
+export interface MargenResponse {
+  total: MargenTotal;
+  porProducto: MargenProducto[];
+}

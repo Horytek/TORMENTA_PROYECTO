@@ -17,6 +17,7 @@ const router = Router();
 router.use(auth);
 
 router.get("/cobertura", requireCapability("productos", "ver"), costosController.obtenerCobertura);
+router.get("/margen", requireCapability("productos", "ver"), costosController.obtenerMargen);
 router.get("/pendientes", requireCapability("productos", "ver"), costosController.listarPendientes);
 router.post("/inicial", requireCapability("productos", "editar"), costosController.cargarCostosIniciales);
 
