@@ -203,17 +203,25 @@ const annulVentaInternal = async (connection, id_venta, id_usuario, id_tenant, i
     throw new Error("No hay detalles para la venta o no pertenece a este tenant");
   }
 
-  // 2) Obtener sucursal y fecha
+  // 2) Obtener sucursal y fecha, bloqueando la venta.
+  // El `FOR UPDATE` no es decorativo: anular devuelve stock, así que hacerlo
+  // dos veces lo devuelve dos veces e infla el inventario con mercadería que
+  // no existe. Con el lock, dos anulaciones simultáneas se serializan y la
+  // segunda encuentra `estado_venta = 0` y se detiene.
   const [ventaResult] = await connection.query(
     `
-    SELECT id_sucursal, f_venta
+    SELECT id_sucursal, f_venta, estado_venta
     FROM venta
     WHERE id_venta = ? AND id_tenant = ?
+    FOR UPDATE
     `,
     [id_venta, id_tenant]
   );
   if (ventaResult.length === 0) {
     throw new Error("Venta no encontrada");
+  }
+  if (Number(ventaResult[0].estado_venta) === 0) {
+    throw new VentaValidationError("La venta ya estaba anulada; su stock ya fue devuelto.", 409);
   }
   const id_sucursal = ventaResult[0].id_sucursal;
   const f_venta = ventaResult[0].f_venta;
@@ -1313,10 +1321,16 @@ const updateVenta = async (req, res) => {
 
     res.json({ code: 1, message: "Venta estado actualizado y stock restaurado." });
   } catch (error) {
-    console.error('Error en updateVenta:', error);
     if (connection) {
       try { await connection.rollback(); } catch { }
     }
+    // "Ya estaba anulada" es una condición de negocio, no una falla: si se
+    // devuelve 500 el frontend la muestra como error del servidor y el usuario
+    // reintenta, que es justo lo que no debe hacer.
+    if (error instanceof VentaValidationError) {
+      return res.status(error.statusCode).json({ code: 0, success: false, message: error.message });
+    }
+    console.error('Error en updateVenta:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {
