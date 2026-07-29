@@ -87,7 +87,7 @@ export default function LandingSubPage({ pageId }: LandingSubPageProps) {
                 </div>
                 <h3 className="font-semibold text-foreground">Ingeniería</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Desarrolladores dedicados a pulir el rendimiento del sistema, la integridad del Kardex y la sincronización offline.
+                  Desarrolladores dedicados a pulir el rendimiento del sistema, la integridad del Kárdex y la exactitud del costo por prenda.
                 </p>
               </div>
 

@@ -64,7 +64,7 @@ export const NAV_LINKS = [
 ] as const;
 
 // Hero: una sola pieza, sin sector toggle (v2 es un solo producto).
-export const HERO_BADGES = ["Inventario", "POS", "SUNAT", "Kárdex"] as const;
+export const HERO_BADGES = ["Tallas y colores", "POS", "SUNAT", "Margen por prenda"] as const;
 
 export const HERO_STATS = [
   { label: "Tickets por turno", value: "+200" },
@@ -101,8 +101,10 @@ export const FEATURE_GROUPS = [
       },
       {
         icon: ScanLine,
-        name: "Lector de códigos integrado",
-        body: "Escaneo por cámara o lector USB. Sin hardware adicional.",
+        // La ropa de Gamarra llega sin código de barras y la mayoría de tiendas
+        // no tiene pistola: buscar por nombre no es un parche, es el flujo real.
+        name: "Vende sin pistola lectora",
+        body: "Busca por nombre, marca o código y elige talla y color en dos toques.",
       },
     ],
   },
@@ -113,7 +115,7 @@ export const FEATURE_GROUPS = [
       {
         icon: Package,
         name: "Kárdex en tiempo real",
-        body: "Stock por almacén, histórico de movimientos y solicitudes entre sucursales.",
+        body: "Stock por talla y color en cada almacén, con el histórico de cada movimiento.",
       },
       {
         icon: Truck,
@@ -133,8 +135,8 @@ export const FEATURE_GROUPS = [
     items: [
       {
         icon: BarChart3,
-        name: "Dashboard en vivo",
-        body: "Ventas, stock crítico, rotación por sucursal y rendimiento por vendedor.",
+        name: "Margen por prenda",
+        body: "Cuánto te queda por cada polo vendido, no solo cuánto facturaste.",
       },
       {
         icon: Wallet,
@@ -155,12 +157,12 @@ export const FLOW_STEPS = [
   {
     n: "01",
     title: "Cargas tu catálogo",
-    body: "Importas productos, marcas, categorías y variantes desde Excel o los creas desde el POS.",
+    body: "Tu cuenta llega con las categorías, tallas y colores de ropa listos. Agregas la prenda con su precio y el sistema arma cada variante.",
   },
   {
     n: "02",
     title: "Tu vendedor abre caja",
-    body: "Elige almacén, escanea o busca productos, cobra con pago mixto y emite boleta o factura.",
+    body: "Elige almacén, busca la prenda por nombre, marca la talla y el color, cobra con pago mixto y emite boleta o factura.",
   },
   {
     n: "03",
@@ -174,8 +176,8 @@ export const FLOW_STEPS = [
   },
   {
     n: "05",
-    title: "Cierras el día con números",
-    body: "El dashboard te dice qué vendió cada tienda, qué se acabó y cuál fue la utilidad.",
+    title: "Cierras el día sabiendo cuánto ganaste",
+    body: "No solo cuánto facturaste: cuánto te quedó por prenda, calculado contra el costo que tenía cuando la vendiste.",
   },
 ] as const;
 
@@ -237,11 +239,15 @@ export const PLANS: Plan[] = [
   },
 ];
 
-// FAQ — solo preguntas que un店主 real se haría.
+// FAQ — solo preguntas que un dueño de tienda real se haría.
 export const FAQS = [
   {
     q: "¿Necesito instalar algo?",
-    a: "No. Horytek funciona en el navegador desde cualquier computador con conexión. También tienes Pocket POS, una app ligera para celulares sin internet estable.",
+    a: "No. Horytek funciona en el navegador desde cualquier computador con conexión. También tienes Pocket POS, una versión ligera pensada para vender desde el celular.",
+  },
+  {
+    q: "¿Necesito pistola lectora de códigos?",
+    a: "No. La ropa suele llegar sin código de barras, así que el punto de venta busca por nombre, marca o código y te deja elegir talla y color en dos toques. Si más adelante consigues una lectora, también funciona.",
   },
   {
     q: "¿Emiten boletas y facturas electrónicas?",
@@ -301,7 +307,7 @@ export const FOOTER_LINKS = [
 export const FOOTER_BRAND = {
   name: "Horytek",
   description:
-    "Tecnología ERP que transforma la gestión empresarial. Diseñada para tiendas que buscan control, velocidad y crecimiento sin límites.",
+    "El ERP para tiendas de ropa del Perú. Cada prenda con su talla, su color y su margen — para que sepas qué te deja plata y qué solo ocupa espacio.",
 };
 
 export const FOOTER_SOCIALS = [
@@ -427,12 +433,12 @@ export const POCKET_HERO = {
 
 export const POCKET_BLUEPRINT_CARDS = [
   {
-    title: "Escanea y Vende",
-    body: "Convierte tu cámara en un lector de código de barras profesional. Sin hardware extra.",
+    title: "Busca y Vende",
+    body: "Encuentra la prenda por nombre o marca, eliges talla y color, y cobras. Sin equipo extra.",
   },
   {
-    title: "Control de Caja",
-    body: "Arqueos automáticos y precisos. Cierra tu turno con la seguridad de que cada centavo cuadra.",
+    title: "Boleta al toque",
+    body: "Emites el comprobante electrónico desde el mismo celular, sin pasar por la computadora.",
   },
   {
     title: "Reportes al Instante",
@@ -440,14 +446,17 @@ export const POCKET_BLUEPRINT_CARDS = [
   },
 ] as const;
 
+// Sin métricas inventadas: no hay service worker ni cola de sincronización, así
+// que no se promete funcionar sin internet; y no existe SLA firmado, así que no
+// se anuncia uno. Lo que queda es lo que el producto sí hace.
 export const POCKET_CASE_STUDY = {
   eyebrow: "Rendimiento Instantáneo",
   title: "Velocidad para tu día a día.",
   body:
-    "Tus clientes no esperan. Horytek Pocket carga al instante, funciona aunque falle tu internet y asegura que nunca pierdas una venta.",
+    "Tus clientes no esperan. Horytek Pocket carga al instante y te deja cobrar desde el celular, con el mismo inventario que ve la tienda.",
   stats: [
-    { label: "Tiempo de carga", value: "<1s", chip: "Offline-first" },
-    { label: "Pérdida de ventas", value: "0%", chip: "SLA Pocket" },
+    { label: "Tiempo de carga", value: "<1s", chip: "En el navegador" },
+    { label: "Inventario", value: "en vivo", chip: "Compartido con la tienda" },
   ],
 };
 
@@ -527,12 +536,18 @@ export const STANDARD_FAQ_CARDS = [
   },
   {
     q: "¿Migración desde Excel?",
-    a: "Contamos con plantillas de importación masiva. Sube tu inventario y clientes en segundos.",
+    a: "Sí. Nos pasas tu planilla como la tengas —por curva de tallas o una fila por prenda— y el equipo te deja el catálogo cargado antes de que empieces a vender.",
   },
 ];
 
 // ────────────────────────────────────────────────────────────────────────────
-// Standard hero — sectores (Retail / Servicios / Distribución)
+// Standard hero — formas de negocio de ropa
+//
+// Antes acá había sectores genéricos (Retail / Servicios / Distribución). El
+// producto es un ERP de ropa: el modelo de datos son tallas, colores, curvas y
+// origen de la prenda. Vender "gestión empresarial" nos ponía a competir de
+// igual a igual contra cualquier ERP, escondiendo lo único difícil de copiar.
+// Cada opción de acá es una tienda de ropa distinta, no un rubro distinto.
 // ────────────────────────────────────────────────────────────────────────────
 
 export interface Sector {
@@ -546,28 +561,28 @@ export interface Sector {
 
 export const SECTORS: Sector[] = [
   {
-    id: "retail",
-    label: "Retail",
+    id: "tienda",
+    label: "Tienda de ropa",
     textClass: "text-emerald-600",
     chip: "bg-emerald-500",
     description:
-      "Gestiona tus puntos de venta, inventario y caja en tiempo real. Todo lo que tu tienda necesita para vender más sin perder el control.",
+      "Cada prenda con su talla y su color, no un bulto llamado «polo». Vendes desde el mostrador, el stock baja de la variante exacta y sabes cuánto ganaste por prenda al cerrar el día.",
   },
   {
-    id: "services",
-    label: "Servicios",
+    id: "mayorista",
+    label: "Mayorista",
     textClass: "text-blue-600",
     chip: "bg-blue-500",
     description:
-      "Administra proyectos, cotizaciones y facturación sin complicaciones. La herramienta ideal para consultoras y agencias que buscan orden.",
+      "Compras y despachas por curva. Control de varios almacenes, notas de ingreso y salida, y guías de remisión SUNAT emitidas desde la misma venta.",
   },
   {
-    id: "distribution",
-    label: "Distribución",
+    id: "marca",
+    label: "Marca propia",
     textClass: "text-amber-600",
     chip: "bg-amber-500",
     description:
-      "Optimiza tu logística, controla múltiples almacenes y agiliza tus despachos. Potencia tu cadena de suministro con datos precisos.",
+      "Produces lo que vendes. El costo de una prenda propia se arma distinto que el de una comprada, y el sistema distingue las dos para que el margen sea el de verdad.",
   },
 ];
 
@@ -691,7 +706,7 @@ export const SERVICIOS_MODULES = [
   {
     icon: ShoppingCart,
     title: "Punto de Venta",
-    items: ["Pago mixto (efectivo, tarjeta, Yape/Plin)", "Tickets en espera y descuentos", "Lector de código por cámara o USB"],
+    items: ["Pago mixto (efectivo, tarjeta, Yape/Plin)", "Tickets en espera y descuentos", "Búsqueda por nombre, marca o código"],
   },
   {
     icon: Package,
