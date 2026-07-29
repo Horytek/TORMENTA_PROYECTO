@@ -82,6 +82,85 @@ export const aplicarIngresoAlCosto = async (cx, { id_tenant, id_sku, cantidad, c
 };
 
 /**
+ * Productos cuyo stock todavía no tiene costo, ordenados por cuánto pesan.
+ *
+ * Sirve para que la carga inicial empiece por donde mueve la aguja: con 147
+ * productos, los primeros 20 suelen cubrir la mayor parte de las unidades. El
+ * orden es por unidades sin costo, no alfabético.
+ */
+export const productosSinCosto = async (cx, { id_tenant, limite = 200 }) => {
+  const [filas] = await cx.query(
+    `SELECT
+       p.id_producto,
+       p.descripcion,
+       p.precio,
+       m.nom_marca,
+       COUNT(DISTINCT ps.id_sku) AS skus,
+       SUM(CASE WHEN ps.costo_promedio IS NULL OR ps.costo_promedio <= 0 THEN 1 ELSE 0 END) AS skus_sin_costo,
+       COALESCE(SUM(st.stock), 0) AS unidades
+     FROM producto p
+     INNER JOIN marca m ON m.id_marca = p.id_marca
+     INNER JOIN producto_sku ps ON ps.id_producto = p.id_producto AND ps.id_tenant = p.id_tenant
+     LEFT JOIN (
+       SELECT id_sku, id_tenant, SUM(stock) AS stock
+       FROM inventario_stock WHERE id_tenant = ? GROUP BY id_sku, id_tenant
+     ) st ON st.id_sku = ps.id_sku AND st.id_tenant = ps.id_tenant
+     WHERE p.id_tenant = ? AND p.estado_producto = 1
+     GROUP BY p.id_producto, p.descripcion, p.precio, m.nom_marca
+     HAVING skus_sin_costo > 0
+     ORDER BY unidades DESC, p.descripcion
+     LIMIT ?`,
+    [id_tenant, id_tenant, Number(limite)]
+  );
+
+  return filas.map((f) => ({
+    id_producto: f.id_producto,
+    descripcion: f.descripcion,
+    marca: f.nom_marca,
+    precio: f.precio === null ? null : Number(f.precio),
+    skus: Number(f.skus),
+    skusSinCosto: Number(f.skus_sin_costo),
+    unidades: Number(f.unidades),
+  }));
+};
+
+/** Estado de costo de los SKU de un producto, que es lo que planifica la carga. */
+export const skusDeProductoConCosto = async (cx, { id_tenant, id_producto }) => {
+  const [filas] = await cx.query(
+    `SELECT id_sku, costo_promedio FROM producto_sku
+     WHERE id_tenant = ? AND id_producto = ? AND estado = 1`,
+    [id_tenant, id_producto]
+  );
+  return filas.map((f) => ({
+    id_sku: f.id_sku,
+    costoActual: f.costo_promedio === null ? null : Number(f.costo_promedio),
+  }));
+};
+
+/**
+ * Escribe el costo declarado de varios SKU de una sola vez.
+ *
+ * Marca `costo_estimado = 1` a propósito: es un costo dicho por el dueño, no uno
+ * que salga de una factura de compra. Cuando entre mercadería real,
+ * `aplicarIngresoAlCosto` lo pondera y el flag se recalcula solo.
+ */
+export const establecerCostosIniciales = async (cx, { id_tenant, asignaciones }) => {
+  if (!asignaciones || asignaciones.length === 0) return 0;
+
+  let escritos = 0;
+  for (const { id_sku, costo } of asignaciones) {
+    const [r] = await cx.query(
+      `UPDATE producto_sku
+       SET costo_promedio = ?, costo_ultimo = ?, costo_estimado = 1, costo_actualizado_en = NOW()
+       WHERE id_sku = ? AND id_tenant = ?`,
+      [costo, costo, id_sku, id_tenant]
+    );
+    escritos += r.affectedRows;
+  }
+  return escritos;
+};
+
+/**
  * Costo vigente de varios SKUs, para fotografiarlo al vender.
  * Se resuelve en una consulta y no una por línea: una venta de 20 prendas no
  * debe disparar 20 viajes a la base.
@@ -191,6 +270,9 @@ export const obtenerMargenPorPeriodo = async (cx, { id_tenant, desde, hasta }) =
 export default {
   obtenerEstadoCosto,
   aplicarIngresoAlCosto,
+  productosSinCosto,
+  skusDeProductoConCosto,
+  establecerCostosIniciales,
   obtenerCostosVigentes,
   valorizarInventario,
   obtenerMargenPorPeriodo,
