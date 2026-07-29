@@ -3,6 +3,7 @@ import {
   recalcularCostoPromedio,
   calcularMargenLinea,
   valorizarStock,
+  costoDeLineaRepartida,
   MOTIVO,
 } from "./costoPromedio.js";
 
@@ -148,5 +149,57 @@ describe("valorizarStock", () => {
 
   it("un stock negativo no genera valor negativo", () => {
     expect(valorizarStock({ stock: -5, costoPromedio: 10 }).valor).toBe(0);
+  });
+});
+
+describe("costoDeLineaRepartida", () => {
+  it("promedia ponderando por unidades, no por partes iguales", () => {
+    // 8 uds a 10 + 2 uds a 20 = 12, no 15.
+    const r = costoDeLineaRepartida({
+      movimientos: [{ id_sku: 1, cantidad: 8 }, { id_sku: 2, cantidad: 2 }],
+      costoPorSku: new Map([[1, 10], [2, 20]]),
+    });
+    expect(r.costo).toBe(12);
+    expect(r.completo).toBe(true);
+  });
+
+  it("una línea de un solo SKU devuelve su costo tal cual", () => {
+    const r = costoDeLineaRepartida({
+      movimientos: [{ id_sku: 7, cantidad: 3 }],
+      costoPorSku: new Map([[7, 18.5]]),
+    });
+    expect(r.costo).toBe(18.5);
+  });
+
+  it("si UNA unidad no tiene costo, la línea entera queda sin costo", () => {
+    // Promediar solo las que sí lo tienen afirmaría saber lo que no se sabe:
+    // el número guardado se multiplica después por la cantidad completa.
+    const r = costoDeLineaRepartida({
+      movimientos: [{ id_sku: 1, cantidad: 5 }, { id_sku: 2, cantidad: 5 }],
+      costoPorSku: new Map([[1, 20], [2, null]]),
+    });
+    expect(r.costo).toBeNull();
+    expect(r.completo).toBe(false);
+  });
+
+  it("un SKU ausente del mapa no cuenta como costo cero", () => {
+    const r = costoDeLineaRepartida({
+      movimientos: [{ id_sku: 99, cantidad: 4 }],
+      costoPorSku: new Map(),
+    });
+    expect(r.costo).toBeNull();
+  });
+
+  it("un costo en cero se trata como desconocido", () => {
+    const r = costoDeLineaRepartida({
+      movimientos: [{ id_sku: 1, cantidad: 4 }],
+      costoPorSku: new Map([[1, 0]]),
+    });
+    expect(r.costo).toBeNull();
+  });
+
+  it("sin movimientos no inventa un costo", () => {
+    expect(costoDeLineaRepartida({ movimientos: [], costoPorSku: new Map() }).costo).toBeNull();
+    expect(costoDeLineaRepartida({ movimientos: undefined, costoPorSku: new Map() }).costo).toBeNull();
   });
 });

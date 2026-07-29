@@ -4,6 +4,8 @@ import { DATABASE } from "../config.js";
 import { logVentas } from "../utils/logActions.js";
 import { stockPorProducto, restarStockSku, descontarPorProducto, sumarStockSku } from "../services/inventario/stockRepository.js";
 import { esErrorDeStock } from "../services/inventario/errores.js";
+import { obtenerCostosVigentes } from "../services/costos/costoRepository.js";
+import { costoDeLineaRepartida } from "../services/costos/costoPromedio.js";
 import { resolveSku } from "../utils/skuHelper.js";
 
 // Cache para datos que no cambian frecuentemente
@@ -382,6 +384,8 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
   const detalleVentaParams = [];
   const bitacoraValues = [];
   const bitacoraParams = [];
+  // Qué SKU tocó cada línea: se necesita después para fotografiar su costo.
+  const lineas = [];
 
   for (const detalle of detallesNormalizados) {
     const { id_producto, cantidad, precio, descuento, total, id_tonalidad, id_talla, id_sku } = detalle;
@@ -405,11 +409,11 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
       throw error;
     }
 
-    // detalle_venta: una fila por línea, igual que antes. `id_sku` refleja lo
-    // que eligió el usuario; si no eligió variante, queda NULL aunque el
-    // reparto automático haya tocado uno o más SKU (igual que en notas/guías).
-    detalleVentaValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    detalleVentaParams.push(id_producto, id_venta, cantidad, precio, descuento, total, id_tenant, id_ton, id_tal, id_sku);
+    // detalle_venta se arma DESPUÉS del bucle: el costo de la línea depende de
+    // qué SKU tocó, y resolverlo acá dispararía una consulta por línea.
+    // `id_sku` refleja lo que eligió el usuario; si no eligió variante queda
+    // NULL aunque el reparto haya tocado uno o más SKU (igual que en notas).
+    lineas.push({ id_producto, cantidad, precio, descuento, total, id_ton, id_tal, id_sku, movimientos });
 
     // bitacora_nota: una fila por SKU realmente tocado, para que la anulación
     // devuelva las unidades exactas a donde salieron.
@@ -422,9 +426,26 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
     }
   }
 
+  // Foto del costo al momento de vender. Es una foto y no una referencia a
+  // propósito: si mañana sube el proveedor, el margen de la venta de hoy no
+  // puede cambiar retroactivamente. Una sola consulta para toda la venta.
+  const costoPorSku = await obtenerCostosVigentes(connection, {
+    id_tenant,
+    idsSku: lineas.flatMap((l) => l.movimientos.map((m) => m.id_sku)),
+  });
+
+  for (const l of lineas) {
+    const { costo } = costoDeLineaRepartida({ movimientos: l.movimientos, costoPorSku });
+    detalleVentaValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    detalleVentaParams.push(
+      l.id_producto, id_venta, l.cantidad, l.precio, l.descuento, l.total,
+      id_tenant, l.id_ton, l.id_tal, l.id_sku, costo
+    );
+  }
+
   if (detalleVentaValues.length > 0) {
     await connection.query(
-      `INSERT INTO detalle_venta (id_producto, id_venta, cantidad, precio, descuento, total, id_tenant, id_tonalidad, id_talla, id_sku) VALUES ${detalleVentaValues.join(', ')}`,
+      `INSERT INTO detalle_venta (id_producto, id_venta, cantidad, precio, descuento, total, id_tenant, id_tonalidad, id_talla, id_sku, costo_unitario) VALUES ${detalleVentaValues.join(', ')}`,
       detalleVentaParams
     );
   }
