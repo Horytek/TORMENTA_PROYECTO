@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useQueryState, parseAsString } from "nuqs";
 import type { Product } from "../types";
@@ -15,7 +16,7 @@ import ContentPage from "@/features/content/pages/ContentPage";
 // UI Components
 import { Button } from "@/components/ui/button";
 import {
-  Plus, Layers, Tag, Bookmark, Package, Tags,
+  Plus, Layers, Tag, Bookmark, Package, Tags, Coins,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -81,7 +82,15 @@ export default function ProductsPage() {
 
         {/* Tab: Products */}
         <TabsContent value="productos" className="space-y-4 focus-visible:outline-none">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            {/* Tarea de puesta a punto, no de uso diario: por eso vive acá y no
+                en el sidebar. Sin costos cargados, el margen sale en cero. */}
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/products/costos">
+                <Coins className="h-4 w-4" />
+                Costos iniciales
+              </Link>
+            </Button>
             <Button onClick={handleCreateOpen} className="gap-2">
               <Plus className="h-4 w-4" />
               Nuevo producto

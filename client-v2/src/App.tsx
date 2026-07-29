@@ -30,6 +30,7 @@ const PaymentResultPage = lazy(() => import("@/features/landing/pages/PaymentRes
 const RegisterPage = lazy(() => import("@/features/registration/pages/RegisterPage"));
 
 const ProductsPage = lazy(() => import("@/features/products/pages/ProductsPage"));
+const CostosInicialesPage = lazy(() => import("@/features/costos/pages/CostosInicialesPage"));
 const LandingSubPage = lazy(() => import("@/features/landing/pages/LandingSubPage"));
 const DashboardPage = lazy(() => import("@/features/dashboard/pages/DashboardPage"));
 const ClientesPage = lazy(() => import("@/features/clientes/pages/ClientesPage"));
@@ -169,6 +170,10 @@ export default function App() {
                   <Route
                     path="/products"
                     element={<RequireCapability capability="productos.view"><ProductsPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/products/costos"
+                    element={<RequireCapability capability="productos.view"><CostosInicialesPage /></RequireCapability>}
                   />
                   <Route
                     path="/sales"
