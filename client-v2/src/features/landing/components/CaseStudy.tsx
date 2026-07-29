@@ -43,9 +43,12 @@ export function CaseStudy({ mode }: Props) {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
+            {/* Sin "SLA garantizado": no hay acuerdo de nivel de servicio firmado
+                con nadie. Se anuncia lo que el producto hace, no una garantía
+                contractual que no existe. */}
             {(isPocket ? POCKET_CASE_STUDY.stats : [
               { label: "Latencia de red", value: "<100ms", chip: "Tiempo real" },
-              { label: "Disponibilidad", value: "99.9%", chip: "SLA garantizado" },
+              { label: "Estado del servicio", value: "público", chip: "Página de estado" },
             ]).map((stat) => (
               <div
                 key={stat.label}

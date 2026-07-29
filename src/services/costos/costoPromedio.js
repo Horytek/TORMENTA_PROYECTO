@@ -138,4 +138,48 @@ export function valorizarStock({ stock, costoPromedio }) {
   return { unidades, valor: redondear(unidades * Number(costoPromedio), 2), sinCosto: false };
 }
 
-export default { recalcularCostoPromedio, calcularMargenLinea, valorizarStock, MOTIVO, DECIMALES_COSTO };
+/**
+ * Costo de una línea de venta que se repartió entre varios SKU.
+ *
+ * El POS vende a nivel producto, así que una línea de 10 unidades puede salir
+ * de dos variantes con costos distintos. El costo de la línea es el promedio
+ * ponderado por unidades de esas variantes.
+ *
+ * Devuelve `null` si ALGUNA unidad no tiene costo conocido, en vez de promediar
+ * solo las que sí lo tienen. `detalle_venta.costo_unitario` es un único número
+ * que después se multiplica por la cantidad completa: guardar el promedio
+ * parcial afirmaría saber el costo de unidades cuyo costo se ignora, y la línea
+ * entraría al margen con una cifra inventada. Un null la deja fuera, que es
+ * justo lo que `obtenerMargenPorPeriodo` sabe informar.
+ *
+ * @param {{id_sku:number, cantidad:number}[]} movimientos
+ * @param {Map<number, number|null>} costoPorSku
+ */
+export function costoDeLineaRepartida({ movimientos, costoPorSku }) {
+  let unidades = 0;
+  let acumulado = 0;
+
+  for (const mov of movimientos || []) {
+    const cant = Number(mov?.cantidad);
+    if (!Number.isFinite(cant) || cant <= 0) continue;
+
+    const costo = costoPorSku?.get?.(Number(mov?.id_sku));
+    // Ojo con Number(null) === 0: un costo ausente NO es un costo de cero.
+    if (!esNumero(costo) || Number(costo) <= 0) return { costo: null, completo: false };
+
+    acumulado += Number(costo) * cant;
+    unidades += cant;
+  }
+
+  if (unidades === 0) return { costo: null, completo: false };
+  return { costo: redondear(acumulado / unidades), completo: true };
+}
+
+export default {
+  recalcularCostoPromedio,
+  calcularMargenLinea,
+  valorizarStock,
+  costoDeLineaRepartida,
+  MOTIVO,
+  DECIMALES_COSTO,
+};

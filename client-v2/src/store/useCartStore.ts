@@ -34,8 +34,8 @@ interface CartStore {
 
   // ── Acciones ─────────────────────────────────────────────────
   addItem: (product: CartItem) => void;
-  removeItem: (idProducto: number) => void;
-  updateQuantity: (idProducto: number, cantidad: number) => void;
+  removeItem: (idProducto: number, idSku?: number | null) => void;
+  updateQuantity: (idProducto: number, cantidad: number, idSku?: number | null) => void;
   clearCart: () => void;
   setCliente: (cliente: ClienteForSale | null) => void;
   setComprobanteTipo: (tipo: ComprobanteTipo) => void;
@@ -56,8 +56,12 @@ interface CartStore {
   getTotal: () => number;
   getVuelto: () => number;
   getItemCount: () => number;
-  getItem: (idProducto: number) => CartItem | undefined;
+  getItem: (idProducto: number, idSku?: number | null) => CartItem | undefined;
 }
+
+/** Clave de identidad de un item: mismo producto Y misma variante (o ninguna). */
+const mismoItem = (i: CartItem, idProducto: number, idSku?: number | null) =>
+  i.id_producto === idProducto && (i.id_sku ?? null) === (idSku ?? null);
 
 const IGV_RATE = 0.18;
 
@@ -77,11 +81,11 @@ export const useCartStore = create<CartStore>()(
       // ── Add ─────────────────────────────────────────────────────
       addItem: (product) => {
         set((state) => {
-          const existing = state.items.find((i) => i.id_producto === product.id_producto);
+          const existing = state.items.find((i) => mismoItem(i, product.id_producto, product.id_sku));
           if (existing) {
-            // Incrementar cantidad si ya existe
+            // Incrementar cantidad si ya existe la misma variante
             const updated = state.items.map((i) =>
-              i.id_producto === product.id_producto
+              mismoItem(i, product.id_producto, product.id_sku)
                 ? {
                     ...i,
                     cantidad: i.cantidad + product.cantidad,
@@ -97,19 +101,19 @@ export const useCartStore = create<CartStore>()(
       },
 
       // ── Remove ───────────────────────────────────────────────────
-      removeItem: (idProducto) => {
-        set((state) => ({ items: state.items.filter((i) => i.id_producto !== idProducto) }));
+      removeItem: (idProducto, idSku) => {
+        set((state) => ({ items: state.items.filter((i) => !mismoItem(i, idProducto, idSku)) }));
       },
 
       // ── Update quantity ─────────────────────────────────────────
-      updateQuantity: (idProducto, cantidad) => {
+      updateQuantity: (idProducto, cantidad, idSku) => {
         if (cantidad <= 0) {
-          get().removeItem(idProducto);
+          get().removeItem(idProducto, idSku);
           return;
         }
         set((state) => ({
           items: state.items.map((i) =>
-            i.id_producto === idProducto
+            mismoItem(i, idProducto, idSku)
               ? { ...i, cantidad, precio_total: cantidad * i.precio_unitario }
               : i
           ),
@@ -234,8 +238,8 @@ export const useCartStore = create<CartStore>()(
         return get().items.reduce((sum, i) => sum + i.cantidad, 0);
       },
 
-      getItem: (idProducto) => {
-        return get().items.find((i) => i.id_producto === idProducto);
+      getItem: (idProducto, idSku) => {
+        return get().items.find((i) => mismoItem(i, idProducto, idSku));
       },
     }),
     {

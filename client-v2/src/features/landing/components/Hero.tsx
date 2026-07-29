@@ -81,11 +81,13 @@ function HeroStandard() {
           ))}
         </div>
 
+        {/* El titular nombra el rubro: "control total" lo promete cualquier ERP,
+            "cuánto ganas por prenda" solo lo puede decir uno que entiende ropa. */}
         <h1 className="mt-6 text-balance text-[clamp(2.25rem,5vw,3.5rem)] font-semibold leading-[1.05] tracking-[-0.02em] text-foreground">
-          Control total que{" "}
-          <span className={current.textClass}>impulsa</span>
+          Sabe cuánto{" "}
+          <span className={current.textClass}>ganas</span>
           <br />
-          tu crecimiento.
+          por cada prenda.
         </h1>
 
         <p
@@ -199,12 +201,15 @@ function HeroPocket() {
               &lt;1s
             </dd>
           </div>
+          {/* No se anuncia "funciona offline": no hay service worker ni cola de
+              sincronización. Lo que sí es cierto es que el celular y la tienda
+              miran el mismo inventario. */}
           <div>
             <dt className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-              Funciona offline
+              Inventario
             </dt>
             <dd className="mt-1.5 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              Sí
+              En vivo
             </dd>
           </div>
           <div>
@@ -402,15 +407,15 @@ function HeroVisualPocket() {
         </div>
       </div>
 
-      {/* Floating stat — offline */}
+      {/* Floating stat — stock por variante */}
       <div className="num absolute -right-2 top-24 hidden rounded-lg border border-border bg-card px-3 py-2 shadow-[0_2px_8px_-2px_hsl(var(--foreground)/0.18)] sm:block">
         <div className="flex items-center gap-2">
           <span className="h-2 w-2 rounded-full bg-emerald-500" />
           <div className="text-left">
             <p className="text-[9px] uppercase tracking-[0.14em] text-muted-foreground">
-              Offline-first
+              Stock por talla
             </p>
-            <p className="text-[13px] font-semibold tracking-tight">Sincronizado</p>
+            <p className="text-[13px] font-semibold tracking-tight">Al día</p>
           </div>
         </div>
       </div>

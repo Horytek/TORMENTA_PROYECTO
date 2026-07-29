@@ -29,10 +29,19 @@ import { StockInsuficienteError, SinInventarioError } from "./errores.js";
  * @returns {Promise<Map<number, number>>} id_producto → unidades
  */
 export const stockPorProducto = async (cx, { id_tenant, id_almacen = null, ids_producto = null }) => {
+  // Array vacío = filtro que no puede matchear ningún almacén (ej. una
+  // sucursal sin almacén vinculado) — no tiene sentido consultar, es 0 stock.
+  if (Array.isArray(id_almacen) && id_almacen.length === 0) return new Map();
+
   const where = ["s.id_tenant = ?"];
   const params = [id_tenant];
 
-  if (id_almacen) { where.push("s.id_almacen = ?"); params.push(id_almacen); }
+  if (Array.isArray(id_almacen)) {
+    where.push(`s.id_almacen IN (${id_almacen.map(() => "?").join(",")})`);
+    params.push(...id_almacen);
+  } else if (id_almacen) {
+    where.push("s.id_almacen = ?"); params.push(id_almacen);
+  }
   if (Array.isArray(ids_producto) && ids_producto.length > 0) {
     where.push(`ps.id_producto IN (${ids_producto.map(() => "?").join(",")})`);
     params.push(...ids_producto);

@@ -3,9 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Package } from "lucide-react";
 import { SearchInput } from "@/components/shared/SearchInput";
 import { Spinner } from "@/components/ui/spinner";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { VariantPicker, type VariantResolved } from "@/components/shared/VariantPicker";
 import { useCartStore } from "@/store/useCartStore";
 import type { POSProduct, CartItem } from "@/features/sales/types";
 import { getProductosVentas } from "@/features/sales/api/ventas";
+
+const SIN_VARIANTE: VariantResolved = { id_sku: null, label: null, stock: null, ready: true };
 
 // ─────────────────────────────────────────────────────────────────
 // ProductCatalog — Grid de productos para el POS
@@ -19,6 +24,8 @@ export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
   const [search, setSearch] = useState("");
   const addItem = useCartStore((s) => s.addItem);
   const cartItems = useCartStore((s) => s.items);
+  const [variantDialogProduct, setVariantDialogProduct] = useState<POSProduct | null>(null);
+  const [pendingVariant, setPendingVariant] = useState<VariantResolved>(SIN_VARIANTE);
 
   const { data: products = [], isLoading } = useQuery<POSProduct[]>({
     queryKey: ["productos-ventas", selectedAlmacenId],
@@ -37,7 +44,7 @@ export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
     );
   }, [products, search]);
 
-  const handleAddToCart = (product: POSProduct) => {
+  const handleAddToCart = (product: POSProduct, variante: VariantResolved = SIN_VARIANTE) => {
     if (product.stock !== undefined && product.stock <= 0) return;
 
     const cartItem: CartItem = {
@@ -49,14 +56,24 @@ export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
       cantidad: 1,
       precio_unitario: Number(product.precio),
       precio_total: Number(product.precio),
-      stock: product.stock,
+      stock: variante.stock ?? product.stock,
+      id_sku: variante.id_sku,
+      sku_label: variante.label,
     };
     addItem(cartItem);
   };
 
+  const handleCardClick = (product: POSProduct) => {
+    if (product.tiene_variantes) {
+      setPendingVariant(SIN_VARIANTE);
+      setVariantDialogProduct(product);
+      return;
+    }
+    handleAddToCart(product);
+  };
+
   const getCartQty = (productoId: number) => {
-    const item = cartItems.find((i) => i.id_producto === productoId);
-    return item?.cantidad ?? 0;
+    return cartItems.filter((i) => i.id_producto === productoId).reduce((sum, i) => sum + i.cantidad, 0);
   };
 
   return (
@@ -99,7 +116,7 @@ export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
               return (
                 <button
                   key={product.codigo}
-                  onClick={() => handleAddToCart(product)}
+                  onClick={() => handleCardClick(product)}
                   disabled={outOfStock}
                   className={[
                     "relative flex flex-col rounded-xl border p-3 text-left transition-all duration-150 cursor-pointer group",
@@ -138,6 +155,36 @@ export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
           </div>
         )}
       </div>
+
+      {/* Elegir variante antes de agregar */}
+      <Dialog open={!!variantDialogProduct} onOpenChange={(open) => !open && setVariantDialogProduct(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-base font-semibold text-foreground">
+              {variantDialogProduct?.nombre}
+            </DialogTitle>
+          </DialogHeader>
+          {variantDialogProduct && (
+            <VariantPicker
+              idProducto={variantDialogProduct.codigo}
+              idAlmacen={selectedAlmacenId}
+              onResolved={setPendingVariant}
+            />
+          )}
+          <DialogFooter>
+            <Button
+              className="w-full"
+              disabled={!pendingVariant.ready || !pendingVariant.id_sku}
+              onClick={() => {
+                if (variantDialogProduct) handleAddToCart(variantDialogProduct, pendingVariant);
+                setVariantDialogProduct(null);
+              }}
+            >
+              Agregar al carrito
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

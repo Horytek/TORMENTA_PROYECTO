@@ -1,5 +1,8 @@
 import { getConnection } from "../database/database.js";
 import { logInventario } from "../utils/logActions.js";
+import { sumarStockSku } from "../services/inventario/stockRepository.js";
+import { aplicarIngresoAlCosto } from "../services/costos/costoRepository.js";
+import { resolveSku } from "../utils/skuHelper.js";
 
 const ESTADOS_CANCELABLES = ["draft", "approved"];
 const ESTADOS_RECIBIBLES = ["draft", "approved"];
@@ -229,9 +232,17 @@ async function siguienteNumComprobante(connection, id_tenant) {
   return `I${serie}-${numero.toString().padStart(8, "0")}`;
 }
 
-// Recepción: reusa el mismo esquema de inventario que `notaingreso.controller.js`
-// (nota + detalle_nota + bitacora_nota + inventario), enlazando la nota a la OC
-// vía `nota.id_orden_compra` para no duplicar esa lógica.
+// Recepción: reusa el mismo esquema que `notaingreso.controller.js`
+// (nota + detalle_nota + bitacora_nota + stock), enlazando la nota a la OC vía
+// `nota.id_orden_compra` para no duplicar esa lógica.
+//
+// El stock se mueve con `stockRepository` sobre `inventario_stock`, no sobre
+// `inventario`: esa tabla quedó vacía cuando el stock se migró a SKU y escribir
+// ahí no cambia nada de lo que el sistema muestra.
+//
+// Además el `precio_unitario` de la orden ES el costo de adquisición, así que
+// recibir una OC alimenta el costo promedio del SKU. Es el caso para el que se
+// construyó el modelo de costo.
 const recibirOrden = async (req, res) => {
   const { id } = req.params;
   const id_tenant = req.id_tenant;
@@ -253,7 +264,10 @@ const recibirOrden = async (req, res) => {
     }
 
     const [items] = await connection.query(
-      "SELECT id_producto, id_tonalidad, id_talla, cantidad, precio_unitario, total FROM detalle_orden_compra WHERE id_orden_compra = ? AND id_tenant = ?",
+      // `id_sku` va en el SELECT porque `crearOrden` ya lo guarda: sin él la
+      // recepción caería siempre en `resolveSku` y le sumaría el stock al SKU
+      // base del producto, no a la variante que realmente se compró.
+      "SELECT id_producto, id_tonalidad, id_talla, id_sku, cantidad, precio_unitario, total FROM detalle_orden_compra WHERE id_orden_compra = ? AND id_tenant = ?",
       [id, id_tenant]
     );
     if (items.length === 0) {
@@ -277,14 +291,25 @@ const recibirOrden = async (req, res) => {
     );
     const id_nota = notaResult.insertId;
 
+    // El SKU se resuelve ANTES de insertar, para que quede tanto en el detalle
+    // como en la bitácora. `resolveSku` solo se usa acá porque es un flujo de
+    // ENTRADA: crear la variante al recibir mercadería es legítimo.
+    const skusPorItem = [];
+    for (const it of items) {
+      skusPorItem.push(
+        it.id_sku || (await resolveSku(connection, it.id_producto, it.id_tonalidad, it.id_talla, id_tenant))
+      );
+    }
+
     const detalleValues = [];
     const detalleParams = [];
-    for (const it of items) {
-      detalleValues.push("(?, ?, ?, ?, ?, ?, ?, ?)");
-      detalleParams.push(it.id_producto, id_nota, it.cantidad, it.precio_unitario, it.total, id_tenant, it.id_tonalidad, it.id_talla);
-    }
+    items.forEach((it, i) => {
+      detalleValues.push("(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+      detalleParams.push(it.id_producto, id_nota, it.cantidad, it.precio_unitario, it.total,
+        id_tenant, it.id_tonalidad, it.id_talla, skusPorItem[i], it.precio_unitario, "PROVEEDOR");
+    });
     const [detalleResult] = await connection.query(
-      `INSERT INTO detalle_nota (id_producto, id_nota, cantidad, precio, total, id_tenant, id_tonalidad, id_talla)
+      `INSERT INTO detalle_nota (id_producto, id_nota, cantidad, precio, total, id_tenant, id_tonalidad, id_talla, id_sku, costo_unitario, origen_costo)
        VALUES ${detalleValues.join(", ")}`,
       detalleParams
     );
@@ -293,27 +318,32 @@ const recibirOrden = async (req, res) => {
     for (let i = 0; i < items.length; i++) {
       const it = items[i];
       const id_detalle = firstDetalleId + i;
+      const id_sku_mov = skusPorItem[i];
 
-      let where = "id_producto = ? AND id_almacen = ? AND id_tenant = ?";
-      const whereParams = [it.id_producto, orden.id_almacen, id_tenant];
-      if (it.id_tonalidad !== null) { where += " AND (id_tonalidad <=> ?)"; whereParams.push(it.id_tonalidad); }
-      if (it.id_talla !== null) { where += " AND (id_talla <=> ?)"; whereParams.push(it.id_talla); }
+      // El costo va ANTES de mover el stock: el promedio se pondera contra las
+      // existencias PREVIAS. Al revés contaría dos veces lo que entra.
+      const costo = Number(it.precio_unitario);
+      if (Number.isFinite(costo) && costo >= 0) {
+        await aplicarIngresoAlCosto(connection, {
+          id_tenant,
+          id_sku: id_sku_mov,
+          cantidad: it.cantidad,
+          costoUnitario: costo,
+        });
+      }
 
-      const [[stockRow]] = await connection.query(`SELECT stock FROM inventario WHERE ${where} LIMIT 1`, whereParams);
-      const stockAnterior = stockRow ? parseFloat(stockRow.stock) : 0;
-      const stockActual = stockAnterior + parseFloat(it.cantidad);
+      const movimiento = await sumarStockSku(connection, {
+        id_tenant,
+        id_sku: id_sku_mov,
+        id_almacen: orden.id_almacen,
+        cantidad: it.cantidad,
+      });
 
       await connection.query(
-        `INSERT INTO inventario (id_producto, id_almacen, id_tonalidad, id_talla, stock, id_tenant)
-         VALUES (?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE stock = stock + VALUES(stock)`,
-        [it.id_producto, orden.id_almacen, it.id_tonalidad, it.id_talla, it.cantidad, id_tenant]
-      );
-
-      await connection.query(
-        `INSERT INTO bitacora_nota (id_nota, id_producto, id_almacen, id_detalle_nota, entra, stock_anterior, stock_actual, fecha, id_tenant, id_tonalidad, id_talla)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id_nota, it.id_producto, orden.id_almacen, id_detalle, it.cantidad, stockAnterior, stockActual, fecha, id_tenant, it.id_tonalidad, it.id_talla]
+        `INSERT INTO bitacora_nota (id_nota, id_producto, id_sku, id_almacen, id_detalle_nota, entra, stock_anterior, stock_actual, fecha, id_tenant, id_tonalidad, id_talla)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [id_nota, it.id_producto, id_sku_mov, orden.id_almacen, id_detalle, it.cantidad,
+         movimiento.stockAnterior, movimiento.stockActual, fecha, id_tenant, it.id_tonalidad, it.id_talla]
       );
     }
 

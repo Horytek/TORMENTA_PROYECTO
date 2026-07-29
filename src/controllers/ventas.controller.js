@@ -2,6 +2,11 @@ import { getConnection } from "./../database/database.js";
 import { getTesisConnection } from "./../database/database_tesis.js";
 import { DATABASE } from "../config.js";
 import { logVentas } from "../utils/logActions.js";
+import { stockPorProducto, restarStockSku, descontarPorProducto, sumarStockSku } from "../services/inventario/stockRepository.js";
+import { esErrorDeStock } from "../services/inventario/errores.js";
+import { obtenerCostosVigentes } from "../services/costos/costoRepository.js";
+import { costoDeLineaRepartida } from "../services/costos/costoPromedio.js";
+import { resolveSku } from "../utils/skuHelper.js";
 
 // Cache para datos que no cambian frecuentemente
 const queryCache = new Map();
@@ -50,7 +55,8 @@ const normalizarDetalleVenta = (detalle) => {
     descuento,
     total,
     id_tonalidad: normalizarIdOpcional(detalle.id_tonalidad),
-    id_talla: normalizarIdOpcional(detalle.id_talla)
+    id_talla: normalizarIdOpcional(detalle.id_talla),
+    id_sku: normalizarIdOpcional(detalle.id_sku)
   };
 };
 
@@ -184,10 +190,10 @@ const generarSiguienteComprobante = async (
 };
 
 const annulVentaInternal = async (connection, id_venta, id_usuario, id_tenant, ip, comprobante, estadoSunat) => {
-  // 1) Obtener detalles del detalle_venta (sin id_sku: ya no usamos SKU en el POS)
+  // 1) Confirmar que la venta existe y pertenece al tenant
   const [detallesResult] = await connection.query(
     `
-    SELECT dv.id_producto, dv.cantidad, dv.id_tonalidad, dv.id_talla
+    SELECT dv.id_producto, dv.id_sku
     FROM detalle_venta dv
     INNER JOIN venta v ON v.id_venta = dv.id_venta
     WHERE dv.id_venta = ? AND v.id_tenant = ?
@@ -199,17 +205,25 @@ const annulVentaInternal = async (connection, id_venta, id_usuario, id_tenant, i
     throw new Error("No hay detalles para la venta o no pertenece a este tenant");
   }
 
-  // 2) Obtener sucursal y fecha
+  // 2) Obtener sucursal y fecha, bloqueando la venta.
+  // El `FOR UPDATE` no es decorativo: anular devuelve stock, así que hacerlo
+  // dos veces lo devuelve dos veces e infla el inventario con mercadería que
+  // no existe. Con el lock, dos anulaciones simultáneas se serializan y la
+  // segunda encuentra `estado_venta = 0` y se detiene.
   const [ventaResult] = await connection.query(
     `
-    SELECT id_sucursal, f_venta
+    SELECT id_sucursal, f_venta, estado_venta
     FROM venta
     WHERE id_venta = ? AND id_tenant = ?
+    FOR UPDATE
     `,
     [id_venta, id_tenant]
   );
   if (ventaResult.length === 0) {
     throw new Error("Venta no encontrada");
+  }
+  if (Number(ventaResult[0].estado_venta) === 0) {
+    throw new VentaValidationError("La venta ya estaba anulada; su stock ya fue devuelto.", 409);
   }
   const id_sucursal = ventaResult[0].id_sucursal;
   const f_venta = ventaResult[0].f_venta;
@@ -224,42 +238,43 @@ const annulVentaInternal = async (connection, id_venta, id_usuario, id_tenant, i
   }
   const id_almacen = almacenResult[0].id_almacen;
 
-  // 4) Restaurar stock en `inventario` para cada detalle.
-  //    La clave única de stock ahora es (id_producto, id_almacen, id_tenant).
-  //    id_tonalidad / id_talla se conservan para la bitácora y se usan
-  //    para identificar la fila correcta de inventario si el producto
-  //    tiene variantes físicas (PK incluye las columnas nulables).
-  for (const detalle of detallesResult) {
-    const { id_producto, cantidad, id_tonalidad, id_talla } = detalle;
-    const id_ton = id_tonalidad || null;
-    const id_tal = id_talla || null;
+  // 4) Restaurar stock desde la BITÁCORA, no desde detalle_venta: la venta pudo
+  // repartirse entre varios SKU (`descontarPorProducto`) y ahí quedó registrado
+  // cuánto salió de cada uno. Mismo patrón que notasalida.anularNota.
+  const [salidas] = await connection.query(
+    `SELECT id_producto, id_sku, id_tonalidad, id_talla, SUM(sale) AS unidades
+     FROM bitacora_nota
+     WHERE id_venta = ? AND id_tenant = ? AND sale > 0
+     GROUP BY id_producto, id_sku, id_tonalidad, id_talla`,
+    [id_venta, id_tenant]
+  );
 
-    // Construir WHERE dinámico: incluir id_tonalidad / id_talla solo si vienen definidos,
-    // para alinear con la fila exacta del inventario.
-    let where = `id_producto = ? AND id_almacen = ? AND id_tenant = ?`;
-    const whereParams = [id_producto, id_almacen, id_tenant];
-    if (id_ton !== null) { where += ` AND (id_tonalidad <=> ?)`; whereParams.push(id_ton); }
-    if (id_tal !== null) { where += ` AND (id_talla <=> ?)`;     whereParams.push(id_tal); }
+  // Ventas anteriores a esta migración no tienen bitácora con id_sku: se cae
+  // al id_sku que quedó en detalle_venta para ese producto.
+  const skuPorProducto = new Map(detallesResult.map((d) => [d.id_producto, d.id_sku ?? null]));
 
-    // Stock actual del inventario
-    const [[stockRow]] = await connection.query(
-      `SELECT stock AS stockActual FROM inventario WHERE ${where} LIMIT 1`,
-      whereParams
-    );
-    const stockActual = Number(stockRow?.stockActual ?? 0);
+  for (const s of salidas) {
+    const unidades = Number(s.unidades);
+    if (!Number.isFinite(unidades) || unidades <= 0) continue;
 
-    await connection.query(
-      `UPDATE inventario SET stock = ? WHERE ${where}`,
-      [stockActual + cantidad, ...whereParams]
-    );
+    // Ventas de antes de este cambio no dejaron id_sku en ningún lado. Resolverlo
+    // (o crear el SKU base si nunca existió) es legítimo aquí porque es una
+    // ENTRADA de stock que se devuelve, no una venta fabricando inventario.
+    let id_sku_mov = s.id_sku ?? skuPorProducto.get(s.id_producto) ?? null;
+    if (!id_sku_mov) {
+      id_sku_mov = await resolveSku(connection, s.id_producto, s.id_tonalidad, s.id_talla, id_tenant);
+    }
 
-    // Bitácora de entrada (compatible con kardex)
+    const movimiento = await sumarStockSku(connection, {
+      id_tenant, id_sku: id_sku_mov, id_almacen, cantidad: unidades,
+    });
+
     await connection.query(
       `
-      INSERT INTO bitacora_nota (id_producto, id_almacen, entra, stock_anterior, stock_actual, fecha, id_venta, id_tenant, id_tonalidad, id_talla)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO bitacora_nota (id_producto, id_sku, id_almacen, entra, stock_anterior, stock_actual, fecha, id_venta, id_tenant, id_tonalidad, id_talla)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
-      [id_producto, id_almacen, cantidad, stockActual, stockActual + cantidad, f_venta, id_venta, id_tenant, id_ton, id_tal]
+      [s.id_producto, id_sku_mov, id_almacen, unidades, movimiento.stockAnterior, movimiento.stockActual, f_venta, id_venta, id_tenant, s.id_tonalidad, s.id_talla]
     );
   }
 
@@ -337,68 +352,107 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
   );
   const id_venta = ventaResult.insertId;
 
+  // 3.5. Validar los id_sku que mandó el cliente.
+  // `restarStockSku` filtra por (id_tenant, id_sku, id_almacen) y nunca por
+  // id_producto: sin este chequeo, una línea con el id_producto de A y el
+  // id_sku de B cobra el precio de A y descuenta el stock de B, dejando
+  // además un par imposible en detalle_venta y en el kardex.
+  const skusPedidos = [...new Set(detallesNormalizados.map((d) => d.id_sku).filter(Boolean))];
+  if (skusPedidos.length > 0) {
+    const [skusValidos] = await connection.query(
+      `SELECT id_sku, id_producto FROM producto_sku
+       WHERE id_tenant = ? AND id_sku IN (${skusPedidos.map(() => "?").join(",")})`,
+      [id_tenant, ...skusPedidos]
+    );
+    const productoDelSku = new Map(skusValidos.map((s) => [s.id_sku, s.id_producto]));
+    for (const detalle of detallesNormalizados) {
+      if (!detalle.id_sku) continue;
+      const dueño = productoDelSku.get(detalle.id_sku);
+      if (dueño === undefined) {
+        throw new VentaValidationError(`La variante ${detalle.id_sku} no existe.`, 400);
+      }
+      if (dueño !== detalle.id_producto) {
+        throw new VentaValidationError(
+          `La variante ${detalle.id_sku} no pertenece al producto ${detalle.id_producto}.`, 400
+        );
+      }
+    }
+  }
+
   // 4. Insertar Detalles y Actualizar Stock
   const detalleVentaValues = [];
   const detalleVentaParams = [];
   const bitacoraValues = [];
   const bitacoraParams = [];
+  // Qué SKU tocó cada línea: se necesita después para fotografiar su costo.
+  const lineas = [];
 
   for (const detalle of detallesNormalizados) {
-    const { id_producto, cantidad, precio, descuento, total, id_tonalidad, id_talla } = detalle;
+    const { id_producto, cantidad, precio, descuento, total, id_tonalidad, id_talla, id_sku } = detalle;
     const id_ton = id_tonalidad || null;
     const id_tal = id_talla || null;
 
-    // Construir WHERE dinámico para localizar la fila exacta de inventario.
-    // La clave es (id_producto, id_almacen, id_tenant) y se estrecha con
-    // id_tonalidad / id_talla si vienen definidos.
-    let where = `id_producto = ? AND id_almacen = ? AND id_tenant = ?`;
-    const whereParams = [id_producto, id_almacen, id_tenant];
-    if (id_ton !== null) { where += ` AND (id_tonalidad <=> ?)`; whereParams.push(id_ton); }
-    if (id_tal !== null) { where += ` AND (id_talla <=> ?)`;     whereParams.push(id_tal); }
-
-    // Verificar stock en `inventario`
-    const [inventarioResult] = await connection.query(
-      `SELECT id_inventario, stock FROM inventario WHERE ${where} LIMIT 1 FOR UPDATE`,
-      whereParams
-    );
-
-    if (inventarioResult.length === 0) {
-      throw new VentaValidationError(`No existe inventario disponible para el producto ID ${id_producto}.`, 409);
+    // Si el POS mandó un id_sku (producto con variante elegida), se descuenta
+    // exactamente ese SKU. Si no, se reparte entre los SKU del producto —
+    // mismo camino que ya usan notas/guías. Ambos lanzan un error tipado
+    // (capturado más abajo) si no alcanza el stock, sin dejarlo negativo.
+    let movimientos;
+    try {
+      movimientos = id_sku
+        ? [{ ...(await restarStockSku(connection, { id_tenant, id_sku, id_almacen, cantidad })), cantidad }]
+        : await descontarPorProducto(connection, {
+            id_tenant, id_producto, id_almacen, cantidad,
+            descripcion: `producto ${id_producto}`,
+          });
+    } catch (error) {
+      if (esErrorDeStock(error)) throw new VentaValidationError(error.message, 409);
+      throw error;
     }
 
-    const { id_inventario } = inventarioResult[0];
-    const stockActual = Number(inventarioResult[0].stock);
+    // detalle_venta se arma DESPUÉS del bucle: el costo de la línea depende de
+    // qué SKU tocó, y resolverlo acá dispararía una consulta por línea.
+    // `id_sku` refleja lo que eligió el usuario; si no eligió variante queda
+    // NULL aunque el reparto haya tocado uno o más SKU (igual que en notas).
+    lineas.push({ id_producto, cantidad, precio, descuento, total, id_ton, id_tal, id_sku, movimientos });
 
-    if (stockActual < cantidad) {
-      throw new VentaValidationError(`Stock insuficiente para producto ID ${id_producto}. Disponible: ${stockActual}, Solicitado: ${cantidad}`, 409);
+    // bitacora_nota: una fila por SKU realmente tocado, para que la anulación
+    // devuelva las unidades exactas a donde salieron.
+    for (const mov of movimientos) {
+      bitacoraValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+      bitacoraParams.push(
+        id_producto, mov.id_sku, id_almacen, mov.cantidad, mov.stockAnterior, mov.stockActual,
+        fechaVenta, id_venta, id_tenant, id_ton, id_tal
+      );
     }
+  }
 
-    const stockNuevo = stockActual - cantidad;
+  // Foto del costo al momento de vender. Es una foto y no una referencia a
+  // propósito: si mañana sube el proveedor, el margen de la venta de hoy no
+  // puede cambiar retroactivamente. Una sola consulta para toda la venta.
+  const costoPorSku = await obtenerCostosVigentes(connection, {
+    id_tenant,
+    idsSku: lineas.flatMap((l) => l.movimientos.map((m) => m.id_sku)),
+  });
 
-    // Actualizar stock en `inventario`
-    await connection.query(
-      `UPDATE inventario SET stock = ? WHERE id_inventario = ? AND id_tenant = ?`,
-      [stockNuevo, id_inventario, id_tenant]
+  for (const l of lineas) {
+    const { costo } = costoDeLineaRepartida({ movimientos: l.movimientos, costoPorSku });
+    detalleVentaValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    detalleVentaParams.push(
+      l.id_producto, id_venta, l.cantidad, l.precio, l.descuento, l.total,
+      id_tenant, l.id_ton, l.id_tal, l.id_sku, costo
     );
-
-    // detalle_venta: insertar sin id_sku (la columna sigue existiendo pero queda NULL).
-    detalleVentaValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    detalleVentaParams.push(id_producto, id_venta, cantidad, precio, descuento, total, id_tenant, id_ton, id_tal, null);
-
-    bitacoraValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    bitacoraParams.push(id_producto, id_almacen, cantidad, stockActual, stockNuevo, fechaVenta, id_venta, id_tenant, id_ton, id_tal);
   }
 
   if (detalleVentaValues.length > 0) {
     await connection.query(
-      `INSERT INTO detalle_venta (id_producto, id_venta, cantidad, precio, descuento, total, id_tenant, id_tonalidad, id_talla, id_sku) VALUES ${detalleVentaValues.join(', ')}`,
+      `INSERT INTO detalle_venta (id_producto, id_venta, cantidad, precio, descuento, total, id_tenant, id_tonalidad, id_talla, id_sku, costo_unitario) VALUES ${detalleVentaValues.join(', ')}`,
       detalleVentaParams
     );
   }
 
   if (bitacoraValues.length > 0) {
     await connection.query(
-      `INSERT INTO bitacora_nota (id_producto, id_almacen, sale, stock_anterior, stock_actual, fecha, id_venta, id_tenant, id_tonalidad, id_talla) VALUES ${bitacoraValues.join(', ')}`,
+      `INSERT INTO bitacora_nota (id_producto, id_sku, id_almacen, sale, stock_anterior, stock_actual, fecha, id_venta, id_tenant, id_tonalidad, id_talla) VALUES ${bitacoraValues.join(', ')}`,
       bitacoraParams
     );
   }
@@ -662,72 +716,66 @@ const getProductosVentas = async (req, res) => {
     const id_tenant = req.id_tenant;
     connection = await getConnection();
 
-    // Catálogo POS: usa la tabla `inventario` como fuente de stock.
-    // Permite filtrar por `id_almacen` específico o por `id_sucursal`.
-    let almacenCondition = '';
-    const queryParams = [];
-
+    // Resolver a qué almacén(es) filtrar el stock. La tabla `inventario`
+    // (legacy) quedó vacía tras la migración a `inventario_stock` — el stock
+    // real hoy se consulta vía stockRepository (Única puerta a inventario_stock).
+    let almacenFiltro = null;
     if (id_almacen && !isNaN(id_almacen)) {
-      almacenCondition = ` AND i.id_almacen = ? `;
-      queryParams.push(id_almacen);
+      almacenFiltro = Number(id_almacen);
     } else if (id_sucursal && !isNaN(id_sucursal)) {
-      // id_sucursal numérico: filtrar por almacenes ligados a esa sucursal.
-      almacenCondition = `
-        AND i.id_almacen IN (
-          SELECT sa.id_almacen
-          FROM sucursal_almacen sa
-          WHERE sa.id_sucursal = ?
-        )
-      `;
-      queryParams.push(id_sucursal);
+      const [rows] = await connection.query(
+        `SELECT sa.id_almacen FROM sucursal_almacen sa WHERE sa.id_sucursal = ?`,
+        [id_sucursal]
+      );
+      almacenFiltro = rows.map((r) => r.id_almacen);
     } else if (id_sucursal) {
       // id_sucursal como string (legacy): buscar por usuario → vendedor → sucursal → almacén.
-      almacenCondition = `
-        AND i.id_almacen IN (
-          SELECT sa.id_almacen
-          FROM sucursal_almacen sa
-            INNER JOIN sucursal su   ON su.id_sucursal = sa.id_sucursal
-            INNER JOIN vendedor ven ON ven.dni        = su.dni
-            INNER JOIN usuario us   ON us.id_usuario  = ven.id_usuario
-          WHERE us.usua = ?
-        )
-      `;
-      queryParams.push(id_sucursal);
+      const [rows] = await connection.query(
+        `SELECT sa.id_almacen
+         FROM sucursal_almacen sa
+           INNER JOIN sucursal su  ON su.id_sucursal = sa.id_sucursal
+           INNER JOIN vendedor ven ON ven.dni         = su.dni
+           INNER JOIN usuario us   ON us.id_usuario   = ven.id_usuario
+         WHERE us.usua = ?`,
+        [id_sucursal]
+      );
+      almacenFiltro = rows.map((r) => r.id_almacen);
     }
 
-    // id_tenant siempre se añade al final para mantener consistencia
-    // con el orden de los placeholders en el SQL.
-    queryParams.push(id_tenant);
-
-    const [result] = await connection.query(
+    // Catálogo base (sin stock): productos activos del tenant.
+    const [productos] = await connection.query(
       `
       SELECT
         PR.id_producto        AS codigo,
         PR.descripcion        AS nombre,
         CAST(PR.precio AS DECIMAL(10, 2)) AS precio,
-        COALESCE(SUM(i.stock), 0)         AS stock,
         PR.undm,
         MA.nom_marca,
         CA.nom_subcat         AS categoria_p,
-        PR.cod_barras         AS codigo_barras
+        PR.cod_barras         AS codigo_barras,
+        EXISTS(
+          SELECT 1 FROM producto_sku sk
+          WHERE sk.id_producto = PR.id_producto AND sk.id_tenant = PR.id_tenant AND sk.estado = 1
+        ) AS tiene_variantes
       FROM producto PR
         INNER JOIN marca MA         ON MA.id_marca         = PR.id_marca
         INNER JOIN sub_categoria CA ON CA.id_subcategoria  = PR.id_subcategoria
-        LEFT  JOIN inventario i     ON i.id_producto       = PR.id_producto
-                                    AND i.id_tenant        = ?
-                                    ${almacenCondition}
       WHERE PR.estado_producto = 1
         AND PR.id_tenant       = ?
-      GROUP BY PR.id_producto, PR.descripcion, PR.precio, PR.undm,
-               MA.nom_marca, CA.nom_subcat, PR.cod_barras
-      HAVING stock > 0
       ORDER BY nombre
       `,
-      // Orden: el primer ? es i.id_tenant = ? (dentro del LEFT JOIN);
-      // luego vienen los placeholders de almacenCondition (si hay);
-      // finalmente PR.id_tenant = ?.
-      [id_tenant, ...queryParams]
+      [id_tenant]
     );
+
+    const stockMap = await stockPorProducto(connection, {
+      id_tenant,
+      id_almacen: almacenFiltro,
+      ids_producto: productos.map((p) => p.codigo),
+    });
+
+    const result = productos
+      .map((p) => ({ ...p, stock: stockMap.get(p.codigo) ?? 0, tiene_variantes: Boolean(p.tiene_variantes) }))
+      .filter((p) => p.stock > 0);
 
     res.json({ code: 1, data: result, message: "Productos listados" });
   } catch (error) {
@@ -1294,10 +1342,16 @@ const updateVenta = async (req, res) => {
 
     res.json({ code: 1, message: "Venta estado actualizado y stock restaurado." });
   } catch (error) {
-    console.error('Error en updateVenta:', error);
     if (connection) {
       try { await connection.rollback(); } catch { }
     }
+    // "Ya estaba anulada" es una condición de negocio, no una falla: si se
+    // devuelve 500 el frontend la muestra como error del servidor y el usuario
+    // reintenta, que es justo lo que no debe hacer.
+    if (error instanceof VentaValidationError) {
+      return res.status(error.statusCode).json({ code: 0, success: false, message: error.message });
+    }
+    console.error('Error en updateVenta:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) {

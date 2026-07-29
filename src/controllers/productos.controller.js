@@ -302,66 +302,45 @@ const getProductVariants = async (req, res) => {
     let connection;
     try {
         const { id } = req.params;
-        const { almacen, id_sucursal, includeZero = 'false' } = req.query; // includeZero logic
+        const { id_almacen } = req.query;
         connection = await getConnection();
 
-        // Si includeZero es 'true', mostrar incluso con stock 0 (o sin registro de stock)
-        const stockCondition = includeZero === 'true' ? '(s.stock >= 0 OR s.stock IS NULL)' : 's.stock > 0';
-
-        // Resolve correct id_almacen
-        // If id_sucursal is provided, we prioritize resolving the warehouse from it
-        let almacenId = almacen || 1; // Default to 1 if nothing provided
-
-        let warehouseResolver = '';
-        const queryParams = [];
-
-        if (id_sucursal) {
-            // Logic to find warehouse from sucursal
-            // We can use a subquery in the main query OR separate query.
-            // Subquery is cleaner.
-            // But we need to bind parameters.
-        }
-
-        // Simplest strategy: If id_sucursal is passed, use a subquery in the JOIN
-        let joinClause = '';
-        let joinParams = [];
-
-        if (id_sucursal) {
-            joinClause = `
-                LEFT JOIN sucursal_almacen sa ON sa.id_sucursal = ?
-            `;
-            joinParams = [id_sucursal];
-        }
-
-        // Stock por (id_producto, id_tonalidad, id_talla, id_almacen).
-        // Ya no se desglosa por SKU — usamos directamente `inventario`.
-        const stockWhere = id_sucursal
-            ? `(s.id_almacen = sa.id_almacen OR s.id_almacen IS NULL)`
-            : `(s.id_almacen = ? OR s.id_almacen IS NULL)`;
+        // Stock real por SKU (motor genérico atributo/producto_sku), no el legacy
+        // tonalidad/talla. Si se filtra por almacén, solo trae esa fila de stock;
+        // si no, suma el stock de todos los almacenes del SKU.
+        const filtrarAlmacen = id_almacen && !isNaN(id_almacen);
+        const almacenFilter = filtrarAlmacen ? "AND ist.id_almacen = ?" : "";
+        // Orden de los `?`: el del JOIN aparece primero en el texto del SQL.
+        const params = [...(filtrarAlmacen ? [id_almacen] : []), id, req.id_tenant];
 
         const [result] = await connection.query(`
             SELECT
-                s.id_tonalidad,
-                s.id_talla,
-                t.nombre  AS nom_tonalidad,
-                ta.nombre AS nom_talla,
-                s.precio,
-                s.stock,
-                s.id_almacen,
-                a.nom_almacen
-            FROM inventario_stock s
-            ${joinClause}
-            LEFT JOIN almacen    a  ON s.id_almacen    = a.id_almacen
-            LEFT JOIN tonalidad  t  ON s.id_tonalidad  = t.id_tonalidad
-            LEFT JOIN talla      ta ON s.id_talla      = ta.id_talla
-            WHERE s.id_producto = ?
-              AND s.id_tenant   = ?
-              AND ${stockCondition.replace('s.stock', 's.stock')}
-              AND ${stockWhere}
-            ORDER BY a.nom_almacen, t.nombre, ta.nombre
-        `, [...joinParams, id, req.id_tenant, ...(!id_sucursal ? [almacenId] : [])]);
+                sku.id_sku,
+                sku.sku,
+                sku.cod_barras,
+                sku.precio,
+                sku.attributes_json,
+                COALESCE(SUM(ist.stock), 0) AS stock
+            FROM producto_sku sku
+            LEFT JOIN inventario_stock ist ON ist.id_sku = sku.id_sku ${almacenFilter}
+            WHERE sku.id_producto = ?
+              AND sku.id_tenant   = ?
+              AND sku.estado = 1
+            GROUP BY sku.id_sku, sku.sku, sku.cod_barras, sku.precio, sku.attributes_json
+            ORDER BY sku.id_sku
+        `, params);
 
-        res.json({ code: 1, data: result });
+        const data = result.map(r => ({
+            id_sku: r.id_sku,
+            id_producto: Number(id),
+            sku: r.sku,
+            cod_barras: r.cod_barras,
+            precio: r.precio,
+            stock: Number(r.stock),
+            attrs: typeof r.attributes_json === 'string' ? JSON.parse(r.attributes_json || '{}') : (r.attributes_json || {}),
+        }));
+
+        res.json({ code: 1, data });
     } catch (error) {
         console.error('Error en getProductVariants:', error);
         res.status(500).json({ code: 0, message: "Error interno del servidor" });
@@ -401,13 +380,14 @@ const getProductAttributes = async (req, res) => {
                 a.id_atributo,
                 a.nombre as attr_name,
                 av.id_valor,
-                av.valor as val_name
+                av.valor as val_name,
+                av.metadata
             FROM producto_sku sku
             JOIN sku_atributo_valor sav ON sku.id_sku = sav.id_sku
             JOIN atributo a ON sav.id_atributo = a.id_atributo
-            JOIN atributo_valor av ON sav.id_valor = av.id_valor
-            WHERE sku.id_producto = ?
-        `, [id]);
+            JOIN atributo_valor av ON sav.id_valor = av.id_valor AND av.id_atributo = a.id_atributo
+            WHERE sku.id_producto = ? AND sku.id_tenant = ?
+        `, [id, req.id_tenant]);
 
         // Transform flat list to structured object:
         // [{ id_atributo: 1, nombre: 'Color', values: [{ id: 10, valor: 'Rojo' }] }]
@@ -423,7 +403,8 @@ const getProductAttributes = async (req, res) => {
             // Avoid duplicate values
             const attr = attributesMap.get(row.id_atributo);
             if (!attr.values.some(v => v.id === row.id_valor)) {
-                attr.values.push({ id: row.id_valor, valor: row.val_name });
+                const meta = typeof row.metadata === 'string' && row.metadata ? JSON.parse(row.metadata) : row.metadata;
+                attr.values.push({ id: row.id_valor, valor: row.val_name, hex: meta?.hex });
             }
         });
         const structuredAttributes = Array.from(attributesMap.values());
@@ -606,6 +587,18 @@ const generateSKUs = async (req, res) => {
 
         const combinations = cartesian(attributes);
 
+        // Resolver los id_valor recibidos contra atributo_valor real: no confiar en el
+        // `label` que manda el frontend para nombrar el SKU (podría venir manipulado
+        // o de otro tenant). Un solo SELECT para todos los ids involucrados.
+        const idsValores = [...new Set(combinations.flatMap(c => c.map(x => x.id_valor)))];
+        const [valoresReales] = idsValores.length
+            ? await connection.query(
+                "SELECT id_valor, id_atributo, valor FROM atributo_valor WHERE id_valor IN (?) AND id_tenant = ?",
+                [idsValores, req.id_tenant]
+            )
+            : [[]];
+        const valorPorId = new Map(valoresReales.map(v => [v.id_valor, v]));
+
         // 4. Insert SKUs
         for (const combo of combinations) {
             // combo is [{id_atributo, id_valor, valor_label}, ...]
@@ -613,16 +606,25 @@ const generateSKUs = async (req, res) => {
             // Sort by ID attribute to ensure consistent key
             combo.sort((a, b) => a.id_atributo - b.id_atributo);
 
+            // Si algún id_valor no resuelve contra atributo_valor del tenant o no coincide id_atributo,
+            // se descarta esta combinación en vez de guardar datos corruptos.
+            if (combo.some(c => {
+                const real = valorPorId.get(c.id_valor);
+                return !real || Number(real.id_atributo) !== Number(c.id_atributo);
+            })) {
+                continue;
+            }
+
             const attrs_json = {};
             const sku_parts = [product.descripcion];
             const attrLinks = [];
             const attrs_key_parts = [];
 
             combo.forEach(c => {
-                // Try to find Attribute Name? We only have ID.
-                // We can fetch attribute names once before loop.
-                attrs_json[c.id_atributo] = c.valor_label; // Ideally Name: Value, but ID: Value is safer for JSON logic
-                sku_parts.push(c.valor_label);
+                const valorObj = valorPorId.get(c.id_valor);
+                const valorReal = valorObj ? valorObj.valor : "";
+                attrs_json[c.id_atributo] = valorReal; // Ideally Name: Value, but ID: Value is safer for JSON logic
+                sku_parts.push(valorReal);
                 attrLinks.push({ id_atributo: c.id_atributo, id_valor: c.id_valor });
                 attrs_key_parts.push(`${c.id_atributo}:${c.id_valor}`);
             });
@@ -630,8 +632,8 @@ const generateSKUs = async (req, res) => {
             const sku_name = sku_parts.join(" - ").substring(0, 150); // truncated
             const attrs_key = attrs_key_parts.join("|");
 
-            // Check existence
-            const [existing] = await connection.query("SELECT id_sku FROM producto_sku WHERE id_producto = ? AND attrs_key = ?", [id_producto, attrs_key]);
+            // Check existence (filtrado también por tenant — Regla de Oro Nº1)
+            const [existing] = await connection.query("SELECT id_sku FROM producto_sku WHERE id_producto = ? AND attrs_key = ? AND id_tenant = ?", [id_producto, attrs_key, req.id_tenant]);
 
             let id_sku;
             if (existing.length) {
@@ -743,8 +745,8 @@ export const methods = {
     deleteProducto,
     getProductVariants,
     getProductAttributes,
-    getProductAttributes,
     registerVariants,
     generateSKUs,
     importExcel
 };
+

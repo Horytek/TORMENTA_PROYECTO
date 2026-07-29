@@ -186,7 +186,8 @@ async function fetchReportData(type, period, modules, id_tenant) {
           COALESCE(SUM(i.stock), 0) * p.precio as valor_inventario,
           c.nombre_categoria as categoria
         FROM producto p
-        LEFT JOIN inventario i ON p.id_producto = i.id_producto
+        LEFT JOIN producto_sku psk ON psk.id_producto = p.id_producto AND psk.id_tenant = p.id_tenant
+        LEFT JOIN inventario_stock i ON i.id_sku = psk.id_sku AND i.id_tenant = psk.id_tenant
         LEFT JOIN sub_categoria sc ON p.id_subcategoria = sc.id_subcategoria
         LEFT JOIN categoria c ON sc.id_categoria = c.id_categoria
         WHERE p.id_tenant = ?
@@ -206,7 +207,8 @@ async function fetchReportData(type, period, modules, id_tenant) {
           COALESCE(SUM(i.stock), 0) as stock,
           5 as stock_minimo
         FROM producto p
-        LEFT JOIN inventario i ON p.id_producto = i.id_producto
+        LEFT JOIN producto_sku psk ON psk.id_producto = p.id_producto AND psk.id_tenant = p.id_tenant
+        LEFT JOIN inventario_stock i ON i.id_sku = psk.id_sku AND i.id_tenant = psk.id_tenant
         WHERE p.id_tenant = ?
         GROUP BY p.id_producto, p.descripcion
         HAVING stock <= 5 AND stock > 0

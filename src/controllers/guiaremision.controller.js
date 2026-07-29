@@ -1,5 +1,5 @@
 import { getConnection } from "./../database/database.js";
-import { descontarPorProducto } from "../services/inventario/stockRepository.js";
+import { descontarPorProducto, restarStockSku } from "../services/inventario/stockRepository.js";
 import { esErrorDeStock } from "../services/inventario/errores.js";
 
 // Cache para queries repetitivas (opcional, para datos que no cambian frecuentemente)
@@ -1089,15 +1089,24 @@ const insertGuiaRemisionAndDetalle = async (req, res) => {
                 const cantidadProducto = parseFloat(cantidad[i]);
                 const id_ton = tonalidades[i] || null;
                 const id_tal = tallas[i] || null;
+                const id_sku_elegido = skus[i] || null;
 
-                // El descuento se reparte entre los SKU del producto en ese
-                // almacén y falla si no alcanza, en vez de dejar stock negativo.
-                const movimientos = await descontarPorProducto(connection, {
-                    id_tenant,
-                    id_producto,
-                    id_almacen,
-                    cantidad: cantidadProducto,
-                });
+                // Si se eligió una variante específica en el picker, se descuenta
+                // exactamente esa. Sin variante elegida, se mantiene el reparto
+                // automático entre SKU del producto, que falla si no alcanza.
+                const movimientos = id_sku_elegido
+                    ? [{
+                        ...(await restarStockSku(connection, {
+                            id_tenant, id_sku: id_sku_elegido, id_almacen, cantidad: cantidadProducto,
+                        })),
+                        cantidad: cantidadProducto,
+                    }]
+                    : await descontarPorProducto(connection, {
+                        id_tenant,
+                        id_producto,
+                        id_almacen,
+                        cantidad: cantidadProducto,
+                    });
 
                 console.log(`[GuiaRemision] Stock descontado: Producto ${id_producto}, Cantidad ${cantidadProducto}, Almacén ${id_almacen}, SKUs ${movimientos.map(m => m.id_sku).join("/")}`);
             }

@@ -2,7 +2,25 @@ import { getConnection } from "./../database/database.js";
 import { logAcceso } from "../utils/logActions.js";
 import { checkLimit } from "../services/limites.service.js";
 import { hashPassword } from "../utils/passwordUtil.js";
+import { sembrarCatalogoRopa } from "../services/onboarding/catalogoSemilla.js";
 import * as XLSX from 'xlsx';
+
+/**
+ * Deja al tenant recién creado con catálogo usable (categorías, tallas,
+ * colores). Sin esto entra y no puede registrar ni una prenda: es la razón
+ * por la que 81 de 82 tenants nunca cargaron nada.
+ *
+ * Nunca hace fallar el alta: una cuenta sin catálogo se arregla después con
+ * `npm run db:seed:catalogo-ropa`, pero un registro que revienta es un cliente
+ * perdido. Por eso se traga el error y lo deja en el log.
+ */
+const sembrarCatalogoInicial = async (connection, id_tenant) => {
+    try {
+        await sembrarCatalogoRopa(connection, { id_tenant });
+    } catch (error) {
+        console.error(`No se pudo sembrar el catálogo del tenant ${id_tenant}:`, error.message);
+    }
+};
 
 // Cache para queries repetitivas
 const queryCache = new Map();
@@ -203,6 +221,7 @@ const addUsuario = async (req, res) => {
             const newIdTenant = (lastTenant[0].lastId || 0) + 1;
             await connection.query("INSERT INTO tenant (id_tenant) VALUES (?)", [newIdTenant]);
             id_tenant = newIdTenant;
+            await sembrarCatalogoInicial(connection, id_tenant);
         } else {
             // Si no es administrador, usar el id_tenant actual de la sesión
             // Si no es administrador, usar el id_tenant actual de la sesión
@@ -496,6 +515,7 @@ const addUsuarioLanding = async (req, res) => {
             const newIdTenant = (lastTenant[0].lastId || 0) + 1;
             await connection.query("INSERT INTO tenant (id_tenant) VALUES (?)", [newIdTenant]);
             id_tenant = newIdTenant;
+            await sembrarCatalogoInicial(connection, id_tenant);
         }
 
         // Encriptar la contraseña antes de guardar

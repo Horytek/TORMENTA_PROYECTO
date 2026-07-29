@@ -76,7 +76,7 @@ function KpiCard({ icon: Icon, title, value, iconClassName, hint }: KpiCardProps
 
 export default function ComprobantesPage() {
   const queryClient = useQueryClient();
-  const puedeEmitir = useCan("ventas.generate");
+  const puedeEmitir = useCan("comprobantes.generate");
 
   const [pestania, setPestania] = useQueryState(
     "tab",
@@ -248,7 +248,7 @@ export default function ComprobantesPage() {
       id: "reintentar",
       label: "Reintentar envío",
       icon: <RefreshCw className="h-4 w-4" />,
-      capability: "ventas.generate",
+      capability: "comprobantes.generate",
       // Un RECHAZADO exige corregir y emitir de nuevo; un INCIERTO exige
       // consultar en SUNAT primero. Reenviarlos duplicaría el comprobante.
       hidden: (item: Comprobante) => !ESTADOS_REINTENTABLES.has(item.estado),
@@ -291,7 +291,7 @@ export default function ComprobantesPage() {
       icon: <Send className="h-4 w-4" />,
       variant: "primary",
       persistent: true,
-      capability: "ventas.generate",
+      capability: "comprobantes.generate",
       onClick: (item) => setPorEmitir(item as VentaSinCpe),
     },
   ];

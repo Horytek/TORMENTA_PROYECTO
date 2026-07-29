@@ -21,6 +21,7 @@ import {
   ChevronsUpDown,
   ScrollText,
   Plug,
+  Building2,
 } from "lucide-react";
 import { removeToken } from "@/utils/authStorage";
 import { resetVerifyTokenCache } from "@/api/auth";
@@ -58,7 +59,22 @@ export default function AppSidebar() {
 
   const hasAccess = (item: NavItem) => {
     if (isDeveloper) return true;
-    if (!item.capability) return true; // "Inicio" siempre visible
+    if (!item.capability) return true; // "Inicio", "Integraciones", "Logs" siempre visible
+    if (
+      item.url === "/settings/system" ||
+      item.capability === "configuracion/negocio" ||
+      item.capability === "configuracion/empresa"
+    ) {
+      if (isAdmin) return true;
+      return (
+        can("configuracion/negocio.view") ||
+        can("configuracion/negocio.ver") ||
+        can("configuracion/negocio.editar") ||
+        can("configuracion/empresa.view") ||
+        can("configuracion/empresa.ver") ||
+        can(`${item.capability}.view`)
+      );
+    }
     return can(`${item.capability}.view`);
   };
 
@@ -66,6 +82,45 @@ export default function AppSidebar() {
   // cargado al login) en vez de un array hardcodeado — ver navigationCatalog.ts.
   const navigation = useMemo(() => {
     const sections = [...buildNavSections(globalModuleConfigs)];
+
+    // Configuración de la Empresa: aseguramos que siempre esté visible en Ajustes si el usuario tiene permiso o es admin
+    const canSeeCompanySettings =
+      isAdmin ||
+      can("configuracion/negocio.view") ||
+      can("configuracion/negocio.ver") ||
+      can("configuracion/negocio.editar") ||
+      can("configuracion/empresa.view");
+
+    if (canSeeCompanySettings) {
+      const ajustesSection = sections.find((s) => s.label === "Ajustes");
+      const companyItem = ajustesSection?.items.find(
+        (i) =>
+          i.url === "/settings/system" ||
+          i.capability === "configuracion/negocio" ||
+          i.capability === "configuracion/empresa"
+      );
+
+      if (companyItem) {
+        companyItem.title = "Configuración de la Empresa";
+        companyItem.icon = Building2;
+        companyItem.url = "/settings/system";
+      } else {
+        const item: NavItem = {
+          title: "Configuración de la Empresa",
+          url: "/settings/system",
+          icon: Building2,
+          group: "Ajustes",
+          capability: "configuracion/negocio",
+          keywords: ["empresa", "ruc", "negocio", "razón social", "logo", "datos", "sistema"],
+        };
+        if (ajustesSection) {
+          ajustesSection.items.unshift(item);
+        } else {
+          sections.push({ label: "Ajustes", items: [item] });
+        }
+      }
+    }
+
     // Integraciones: sin módulo/capability en BD; gate por rol admin, igual que
     // los Logs del Sistema y que /api/integraciones en el backend.
     if (isAdmin) {

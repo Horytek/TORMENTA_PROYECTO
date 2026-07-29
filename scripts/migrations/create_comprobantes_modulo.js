@@ -36,7 +36,7 @@ const registrarModulo = async (connection) => {
   }
   const [result] = await connection.query(
     `INSERT INTO modulo (nombre_modulo, ruta, icon, group_name, sort_order, frontend_route, is_visible, active_actions)
-     VALUES ('Comprobantes Electrónicos', '/comprobantes', 'FileCheck2', 'Reportes', 60, '/sales/comprobantes', 1, ?)`,
+     VALUES ('Comprobantes Electrónicos', '/comprobantes', 'FileCheck2', 'General', 3, '/sales/comprobantes', 1, ?)`,
     [ACTIONS_JSON]
   );
   console.log(`[creado] modulo 'Comprobantes Electrónicos' (id=${result.insertId}).`);
@@ -80,6 +80,17 @@ const copiarEntitlements = async (connection, idModuloNuevo) => {
   console.log(`[copiado] ${result.affectedRows} entitlement(s) de plan desde Ventas hacia Comprobantes.`);
 };
 
+/**
+ * El resolver de capacidades cachea por `empresa.perm_version` (authz.service.js).
+ * Como acá se escribe en `permisos` por SQL directo, sin pasar por los escritores
+ * que lo incrementan, hay que subirlo a mano: si no, hasta 60 s de sesiones vivas
+ * seguirían sin ver la capacidad nueva. Subirlo de más es inofensivo.
+ */
+const invalidarCachePermisos = async (connection) => {
+  const [result] = await connection.query("UPDATE empresa SET perm_version = perm_version + 1");
+  console.log(`[caché] perm_version incrementada en ${result.affectedRows} empresa(s).`);
+};
+
 const ejecutar = async () => {
   if (!HOST || !DATABASE || !USER) {
     throw new Error("Falta configurar la conexión MySQL local en el archivo .env.");
@@ -96,6 +107,7 @@ const ejecutar = async () => {
     const idModulo = await registrarModulo(connection);
     await copiarPermisosDeVentas(connection, idModulo);
     await copiarEntitlements(connection, idModulo);
+    await invalidarCachePermisos(connection);
   } finally {
     await connection.end();
   }

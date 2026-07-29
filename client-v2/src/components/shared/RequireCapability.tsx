@@ -22,12 +22,21 @@ interface RequireCapabilityProps {
 export function RequireCapability({ capability, developerOnly, adminOnly, children }: RequireCapabilityProps) {
   const { can, isDeveloper, isAdmin } = usePermissions();
 
+  const isCompanySetting = capability?.startsWith("configuracion/negocio") || capability?.startsWith("configuracion/empresa");
+
   const allowed = developerOnly
     ? isDeveloper
     : adminOnly
       ? isAdmin
       : capability
-        ? can(capability)
+        ? isDeveloper ||
+          (isCompanySetting && isAdmin) ||
+          can(capability) ||
+          (isCompanySetting &&
+            (can("configuracion/negocio.ver") ||
+              can("configuracion/negocio.editar") ||
+              can("configuracion/empresa.ver") ||
+              can("configuracion/empresa.view")))
         : true;
 
   if (!allowed) {

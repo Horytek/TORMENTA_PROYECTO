@@ -8,9 +8,9 @@ export type MetodoPago = "EFECTIVO" | "TARJETA" | "TRANSFERENCIA" | "YAPE" | "PL
 export type VentaEstado = 1 | 0;
 
 // ── Item en carrito ─────────────────────────────────────────────
-// Clave única del item: `id_producto`. Sin variantes ni SKU.
-// Si en el futuro se vuelven a manejar tallas/colores, la clave pasará
-// a ser (id_producto, id_tonalidad?, id_talla?).
+// Clave única del item: (id_producto, id_sku ?? null). Un producto sin
+// variantes generadas siempre tiene id_sku=null, así que su clave sigue
+// siendo estable y el flujo de hoy no cambia.
 export interface CartItem {
   id_producto: number;
   codigo_barra?: string;
@@ -23,6 +23,9 @@ export interface CartItem {
   stock?: number;
   id_tonalidad?: number;
   id_talla?: number;
+  /** Variante elegida (motor genérico atributo/producto_sku); null = sin variante. */
+  id_sku?: number | null;
+  sku_label?: string | null;
 }
 
 // ── Detalle de venta (respuesta API / backend) ─────────────────
@@ -138,6 +141,7 @@ export interface VentaDetallePayload {
   precio_total: number;
   id_tonalidad?: number;
   id_talla?: number;
+  id_sku?: number | null;
 }
 
 // ── Libro de ventas (reporte) ──────────────────────────────────
@@ -166,6 +170,8 @@ export interface POSProduct {
   nom_marca?: string;
   categoria_p?: string;
   codigo_barras?: string;
+  /** true = tiene variantes generadas; el POS debe pedir cuál antes de agregar. */
+  tiene_variantes?: boolean;
 }
 
 // ── Carrito completo ────────────────────────────────────────────

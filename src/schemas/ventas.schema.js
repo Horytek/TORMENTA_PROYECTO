@@ -25,7 +25,10 @@ const detalleVentaSchema = z
     total: numeroNoNegativo.optional(),
     precio_total: numeroNoNegativo.optional(),
     id_tonalidad: identificador.nullable().optional(),
-    id_talla: identificador.nullable().optional()
+    id_talla: identificador.nullable().optional(),
+    // Variante elegida en el POS. Que pertenezca al id_producto se valida en
+    // el controlador, que es donde hay conexión para consultarlo.
+    id_sku: identificador.nullable().optional()
   })
   .superRefine((detalle, ctx) => {
     if (detalle.precio === undefined && detalle.precio_unitario === undefined) {

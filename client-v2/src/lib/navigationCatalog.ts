@@ -14,11 +14,11 @@ import {
   Warehouse,
   Package,
   FileSpreadsheet,
-  Settings,
   ShoppingCart,
   ClipboardList,
   Truck,
   Building,
+  Building2,
   User,
   Users,
   ShieldAlert,
@@ -81,7 +81,10 @@ const MODULE_META: Record<string, ModuleMeta> = {
   "comprobantes": { url: "/sales/comprobantes", icon: getIcon("FileCheck2"), group: "Reportes", title: "Comprobantes Electrónicos", keywords: ["sunat", "factura", "boleta", "cdr", "cpe"] },
   "configuracion/usuarios": { url: "/settings/users", icon: Users, group: "Ajustes", title: "Usuarios" },
   "configuracion/roles": { url: "/settings/roles", icon: ShieldAlert, group: "Ajustes", title: "Roles y Permisos" },
-  "configuracion/negocio": { url: "/settings/system", icon: Settings, group: "Ajustes", title: "Configuración" },
+  "configuracion/negocio": { url: "/settings/system", icon: Building2, group: "Ajustes", title: "Configuración de la Empresa", keywords: ["empresa", "ruc", "negocio", "razón social", "logo", "datos", "sistema"] },
+  "configuracion/empresa": { url: "/settings/system", icon: Building2, group: "Ajustes", title: "Configuración de la Empresa", keywords: ["empresa", "ruc", "negocio", "razón social", "logo", "datos", "sistema"] },
+  "empresa": { url: "/settings/system", icon: Building2, group: "Ajustes", title: "Configuración de la Empresa", keywords: ["empresa", "ruc", "negocio", "razón social", "logo", "datos", "sistema"] },
+  "negocio": { url: "/settings/system", icon: Building2, group: "Ajustes", title: "Configuración de la Empresa", keywords: ["empresa", "ruc", "negocio", "razón social", "logo", "datos", "sistema"] },
 };
 
 export const SECTION_ORDER = ["General", "Logística", "Personas", "Reportes", "Ajustes"];

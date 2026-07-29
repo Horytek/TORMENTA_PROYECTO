@@ -1,5 +1,5 @@
 import api from "@/api/axios";
-import type { Product, Brand, Category, Subcategory, UnitOfMeasure } from "../types";
+import type { Product, Brand, Category, Subcategory, UnitOfMeasure, ProductAttribute, ProductVariant } from "../types";
 
 // 1. Productos CRUD
 export const getProducts = async (params?: { page?: number; limit?: number; q?: string }): Promise<{ data: Product[]; total: number; totalPages: number }> => {
@@ -15,7 +15,7 @@ export const getProducts = async (params?: { page?: number; limit?: number; q?: 
 export const getProduct = async (id: number): Promise<Product> => {
   const response = await api.get(`/productos/${id}`);
   const data = response.data;
-  return data?.data || data;
+  return Array.isArray(data?.data) ? data.data[0] : (data?.data || data);
 };
 
 export const getLastIdProducto = async (): Promise<number> => {
@@ -101,7 +101,41 @@ export const getUnits = async (): Promise<UnitOfMeasure[]> => {
     }));
 };
 
-// 4. Importación masiva
+// 4. Atributos dinámicos y variantes (reusa endpoints de /attributes, ya expuestos
+// para el Gestor de Contenidos, más los específicos de producto).
+export const getCategoryAttributes = async (catId: number | string): Promise<ProductAttribute[]> => {
+  const response = await api.get(`/attributes/category/${catId}`);
+  const data = response.data;
+  return data?.data || (Array.isArray(data) ? data : []);
+};
+
+export const getAttributeValues = async (attrId: number | string): Promise<{ id_valor: number; valor: string }[]> => {
+  const response = await api.get(`/attributes/${attrId}/values`);
+  const data = response.data;
+  return data?.data || (Array.isArray(data) ? data : []);
+};
+
+export const getProductAttributes = async (productId: number): Promise<{ attributes: { id_atributo: number; nombre: string; values: { id: number; valor: string; hex?: string }[] }[] }> => {
+  const response = await api.get(`/productos/${productId}/attributes`);
+  const data = response.data;
+  return data?.data || data;
+};
+
+export const getProductVariants = async (productId: number, idAlmacen?: number): Promise<ProductVariant[]> => {
+  const response = await api.get(`/productos/${productId}/variants`, { params: idAlmacen ? { id_almacen: idAlmacen } : undefined });
+  const data = response.data;
+  return data?.data || (Array.isArray(data) ? data : []);
+};
+
+export const generateSKUs = async (productId: number, data: { id_atributo: number; values: { id: string | number; label: string }[] }[]): Promise<boolean> => {
+  const response = await api.post("/productos/skus/generate", {
+    id_producto: productId,
+    attributes: data
+  });
+  return response.data?.code === 1;
+};
+
+// 5. Importación masiva
 export const importExcelProducts = async (data: any[]): Promise<any> => {
   const response = await api.post("/productos/import/excel", { data });
   return response.data;
