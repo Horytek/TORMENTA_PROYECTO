@@ -28,14 +28,17 @@ const getProductos = async (req, res) => {
         const whereClauses = ['p.id_tenant = ?'];
         const params = [id_tenant];
 
-        // Stock viene de la tabla `inventario`, agregada por id_producto
-        // (sin variantes/SKU).
-        let invJoin = `LEFT JOIN inventario i ON p.id_producto = i.id_producto AND i.id_tenant = p.id_tenant`;
+        // Stock por SKU (`inventario_stock`), sumado por producto. La tabla
+        // `inventario` quedó vacía en la migración a SKU y ya no se consulta.
+        const SKU_JOIN = `LEFT JOIN producto_sku psk ON psk.id_producto = p.id_producto AND psk.id_tenant = p.id_tenant`;
+        let invJoin = `${SKU_JOIN}
+            LEFT JOIN inventario_stock i ON i.id_sku = psk.id_sku AND i.id_tenant = psk.id_tenant`;
 
         if (almacen) {
             // Filtrar por almacén directamente en el ON del JOIN para no
             // inflar el resultado con filas de otros almacenes.
-            invJoin = `LEFT JOIN inventario i ON p.id_producto = i.id_producto AND i.id_almacen = ? AND i.id_tenant = p.id_tenant`;
+            invJoin = `${SKU_JOIN}
+            LEFT JOIN inventario_stock i ON i.id_sku = psk.id_sku AND i.id_tenant = psk.id_tenant AND i.id_almacen = ?`;
             params.unshift(almacen);
         }
 
@@ -120,11 +123,12 @@ const getProductosMenorStock = async (req, res) => {
         const whereClauses = ['p.id_tenant = ?'];
         const params = [id_tenant];
 
-        let invJoin = `LEFT JOIN inventario i ON p.id_producto = i.id_producto AND i.id_tenant = p.id_tenant`;
+        let invJoin = `LEFT JOIN producto_sku psk ON psk.id_producto = p.id_producto AND psk.id_tenant = p.id_tenant
+            LEFT JOIN inventario_stock i ON i.id_sku = psk.id_sku AND i.id_tenant = psk.id_tenant`;
 
         if (sucursal) {
             // Need to join through warehouse-branch map
-            invJoin += ` LEFT JOIN sucursal_almacen sa ON i.id_almacen = sa.id_almacen`;
+            invJoin += ` LEFT JOIN sucursal_almacen sa ON i.id_almacen = sa.id_almacen AND sa.id_tenant = p.id_tenant`;
             whereClauses.push('sa.id_sucursal = ?');
             params.push(sucursal);
         }
@@ -660,7 +664,8 @@ const getInfProducto = async (req, res) => {
                 COALESCE(SUM(i.stock), 0) AS stock
             FROM producto p
             INNER JOIN marca m ON p.id_marca = m.id_marca
-            LEFT JOIN inventario i ON p.id_producto = i.id_producto AND i.id_tenant = p.id_tenant
+            LEFT JOIN producto_sku psk ON psk.id_producto = p.id_producto AND psk.id_tenant = p.id_tenant
+            LEFT JOIN inventario_stock i ON i.id_sku = psk.id_sku AND i.id_tenant = psk.id_tenant
                 ${idAlmacen && idAlmacen !== '%' ? 'AND i.id_almacen = ?' : ''}
             WHERE p.id_producto = ?
                 AND p.id_tenant = ?
@@ -702,38 +707,41 @@ const getProductoStockDetails = async (req, res) => {
         // Normalmente el kardex se ve por almacén. Si es '%', mostramos desglose por almacén O totalizado?
         // El usuario probablemente quiera ver el stock de *ese* almacen seleccionado en el filtro principal.
 
+        // Stock desglosado por SKU y almacén. La variante ya no son las columnas
+        // `id_tonalidad`/`id_talla` de la vieja `inventario`, sino el motor
+        // genérico de atributos (sku_atributo_valor → atributo/atributo_valor).
+        // Color y Talla existen una vez por tenant con ids distintos, así que se
+        // los ubica por nombre y no por id.
+        //
+        // `MAX(i.stock)` y no `SUM`: el join con los atributos duplica la fila de
+        // stock una vez por atributo del SKU, y el valor es el mismo en todas.
+        const params = [idProducto, id_tenant];
         let almacenCondition = '';
-        let params = [];
-
-        // Param order must match query placeholders: JOIN (almacen) -> WHERE (product, tenant)
         if (idAlmacen && idAlmacen !== '%') {
             almacenCondition = 'AND i.id_almacen = ?';
             params.push(idAlmacen);
         }
 
-        params.push(idProducto, id_tenant);
-
-        // Stock desglosado por (id_producto, id_tonalidad, id_talla, id_almacen).
-        // Ya no hay SKUs: las "variantes" se identifican por (id_tonalidad, id_talla).
         const [result] = await connection.query(
             `SELECT
-                i.id_tonalidad,
-                i.id_talla,
-                t.nombre  AS nom_tonalidad,
-                ta.nombre AS nom_talla,
-                COALESCE(SUM(i.stock), 0) AS stock,
+                psk.id_sku,
+                psk.sku,
+                MAX(CASE WHEN at.nombre = 'Color' THEN av.valor END) AS nom_tonalidad,
+                MAX(CASE WHEN at.nombre = 'Talla' THEN av.valor END) AS nom_talla,
+                COALESCE(MAX(i.stock), 0) AS stock,
                 a.nom_almacen,
                 a.id_almacen
-            FROM inventario i
-            LEFT JOIN almacen    a  ON i.id_almacen    = a.id_almacen
-            LEFT JOIN tonalidad  t  ON i.id_tonalidad  = t.id_tonalidad
-            LEFT JOIN talla      ta ON i.id_talla      = ta.id_talla
-            WHERE i.id_producto = ?
-              AND i.id_tenant   = ?
-              ${almacenCondition.replace(/i\./g, 'i.')}
-            GROUP BY i.id_tonalidad, i.id_talla, t.nombre, ta.nombre,
-                     a.nom_almacen, a.id_almacen
-            ORDER BY a.nom_almacen, t.nombre, ta.nombre`,
+            FROM inventario_stock i
+            INNER JOIN producto_sku psk ON psk.id_sku = i.id_sku AND psk.id_tenant = i.id_tenant
+            LEFT JOIN almacen a ON a.id_almacen = i.id_almacen
+            LEFT JOIN sku_atributo_valor sav ON sav.id_sku = psk.id_sku AND sav.id_tenant = psk.id_tenant
+            LEFT JOIN atributo at ON at.id_atributo = sav.id_atributo AND at.id_tenant = sav.id_tenant
+            LEFT JOIN atributo_valor av ON av.id_valor = sav.id_valor AND av.id_tenant = sav.id_tenant
+            WHERE psk.id_producto = ?
+              AND i.id_tenant     = ?
+              ${almacenCondition}
+            GROUP BY psk.id_sku, psk.sku, a.nom_almacen, a.id_almacen
+            ORDER BY a.nom_almacen, nom_tonalidad, nom_talla`,
             params
         );
 

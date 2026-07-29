@@ -1,17 +1,19 @@
 import { getConnection } from "./../database/database.js";
 
 /**
- * Kardex "simple" — lee directo de la tabla `inventario` (no usa variantes).
+ * Kardex "simple" — vista por PRODUCTO, sin desglosar variantes.
  *
- * Justificación:
- *  - `inventario_stock` + `producto_sku` + `tonalidad` + `talla` siguen existiendo y son
- *    la fuente "nueva" de stock; el controller de Kardex viejo (kardex.controller.js) los usa.
- *  - `inventario` es la fuente "vieja": una fila por (producto, almacén). NO usa variantes
- *    y está vigente para los tenants que nunca migraron a SKU.
- *  - Este controller expone SOLO lectura sobre `inventario`. NO escribe — las altas/
- *    bajas siguen pasando por notas de almacén / ventas / lotes.
+ * Lee de `inventario_stock` (una fila por SKU y almacén) y suma los SKU de cada
+ * producto. Hasta hace poco leía la tabla `inventario`, que quedó vacía en la
+ * migración a SKU: por eso este módulo mostraba todo en cero. `inventario` ya no
+ * se consulta desde ningún lado.
  *
- * Multi-tenant: todo filtro se hace con `id_tenant` desde `req.id_tenant`.
+ * Sigue siendo SOLO lectura: las altas y bajas pasan por notas de almacén,
+ * ventas y guías, que escriben vía `services/inventario/stockRepository.js`.
+ *
+ * Multi-tenant: `id_tenant` sale siempre de `req.id_tenant` y viaja en cada
+ * JOIN — `producto_sku` e `inventario_stock` guardan su propio `id_tenant`, así
+ * que omitirlo en el JOIN mezcla stock entre clientes.
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -32,9 +34,14 @@ const getProductos = async (req, res) => {
         const params = [id_tenant];
 
         // Si hay almacén filtramos directo en la join (evita producto cartesiano).
-        let invJoin = `LEFT JOIN inventario i ON p.id_producto = i.id_producto`;
+        // El almacén va ANTES que el id_tenant en `params` porque en el SQL la
+        // join precede al WHERE.
+        const SKU_JOIN = `LEFT JOIN producto_sku psk ON psk.id_producto = p.id_producto AND psk.id_tenant = p.id_tenant`;
+        let invJoin = `${SKU_JOIN}
+            LEFT JOIN inventario_stock i ON i.id_sku = psk.id_sku AND i.id_tenant = psk.id_tenant`;
         if (almacen) {
-            invJoin = `LEFT JOIN inventario i ON p.id_producto = i.id_producto AND i.id_almacen = ?`;
+            invJoin = `${SKU_JOIN}
+            LEFT JOIN inventario_stock i ON i.id_sku = psk.id_sku AND i.id_tenant = psk.id_tenant AND i.id_almacen = ?`;
             params.unshift(almacen);
         }
 
@@ -111,7 +118,8 @@ const getInfProducto = async (req, res) => {
                 COALESCE(SUM(i.stock), 0) AS stock
             FROM producto p
             INNER JOIN marca m ON p.id_marca = m.id_marca
-            LEFT JOIN inventario i ON p.id_producto = i.id_producto
+            LEFT JOIN producto_sku psk ON psk.id_producto = p.id_producto AND psk.id_tenant = p.id_tenant
+            LEFT JOIN inventario_stock i ON i.id_sku = psk.id_sku AND i.id_tenant = psk.id_tenant
                 ${idAlmacen && idAlmacen !== '%' ? 'AND i.id_almacen = ?' : ''}
             WHERE p.id_producto = ?
               AND p.id_tenant = ?
@@ -147,10 +155,11 @@ const getProductosMenorStock = async (req, res) => {
 
         const whereClauses = ['p.id_tenant = ?'];
         const params = [id_tenant];
-        let invJoin = `LEFT JOIN inventario i ON p.id_producto = i.id_producto`;
+        let invJoin = `LEFT JOIN producto_sku psk ON psk.id_producto = p.id_producto AND psk.id_tenant = p.id_tenant
+            LEFT JOIN inventario_stock i ON i.id_sku = psk.id_sku AND i.id_tenant = psk.id_tenant`;
 
         if (sucursal) {
-            invJoin += ' LEFT JOIN sucursal_almacen sa ON i.id_almacen = sa.id_almacen';
+            invJoin += ' LEFT JOIN sucursal_almacen sa ON i.id_almacen = sa.id_almacen AND sa.id_tenant = p.id_tenant';
             whereClauses.push('sa.id_sucursal = ?');
             params.push(sucursal);
         }
@@ -195,7 +204,7 @@ const getStockMinimo = async (req, res) => {
     try {
         connection = await getConnection();
 
-        // Tomamos sólo los productos que tienen fila en `inventario` con stock <= 0.
+        // Tomamos sólo los productos que tienen stock registrado y suman <= 0.
         // (Más conservador que el "<10" genérico; refleja literalmente "sin stock".)
         const [rows] = await connection.query(
             `SELECT
@@ -205,7 +214,8 @@ const getStockMinimo = async (req, res) => {
                 COALESCE(SUM(i.stock), 0) AS stock
             FROM producto p
             INNER JOIN marca m   ON p.id_marca        = m.id_marca
-            LEFT JOIN inventario i ON p.id_producto  = i.id_producto
+            LEFT JOIN producto_sku psk ON psk.id_producto = p.id_producto AND psk.id_tenant = p.id_tenant
+            LEFT JOIN inventario_stock i ON i.id_sku = psk.id_sku AND i.id_tenant = psk.id_tenant
             WHERE p.id_tenant = ?
             GROUP BY p.id_producto
             HAVING SUM(i.stock) <= 0

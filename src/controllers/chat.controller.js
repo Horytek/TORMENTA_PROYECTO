@@ -236,9 +236,11 @@ function detectTables(text = "") {
     // Clientes
     "cliente": ["cliente", "venta"],
     // Productos
-    "producto": ["producto", "inventario", "marca", "sub_categoria"],
-    "inventario": ["inventario", "producto", "kardex"],
-    "stock": ["inventario", "producto", "kardex"],
+    // El stock vive en `inventario_stock` (por SKU); `inventario` quedó vacía
+    // tras la migración y ya no se ofrece al generador de SQL.
+    "producto": ["producto", "producto_sku", "inventario_stock", "marca", "sub_categoria"],
+    "inventario": ["inventario_stock", "producto_sku", "producto", "kardex"],
+    "stock": ["inventario_stock", "producto_sku", "producto", "kardex"],
     // Almacén
     "almacen": ["almacen", "sucursal_almacen", "kardex"],
     "kardex": ["kardex", "detalle_kardex", "producto"],
@@ -263,7 +265,7 @@ function detectTables(text = "") {
     const allTables = [
       "usuario","rol","permisos","modulo","submodulos",
       "cliente","venta","detalle_venta","comprobante",
-      "producto","marca","sub_categoria","inventario","categoria",
+      "producto","marca","sub_categoria","producto_sku","inventario_stock","categoria",
       "almacen","sucursal","nota","detalle_nota",
       "guia_remision","destinatario","kardex","detalle_kardex"
     ];
