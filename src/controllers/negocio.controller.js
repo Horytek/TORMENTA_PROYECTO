@@ -10,6 +10,18 @@ const __dirname = path.dirname(__filename);
 // Let's put it in root/uploads (server/uploads) to easier serving.
 const UPLOADS_DIR = path.resolve(__dirname, "../../uploads");
 
+// Secciones del dashboard que el tenant puede mostrar/ocultar desde Configuración.
+const DASHBOARD_WIDGETS = new Set([
+    "kpis", "grafico", "transacciones", "accionesRapidas", "stockBajo", "desempeno",
+]);
+
+/** Filtra a solo claves de widget conocidas; null/undefined se deja pasar (= mostrar todo). */
+function normalizarDashboardWidgets(valor) {
+    if (valor === null || valor === undefined) return null;
+    if (!Array.isArray(valor)) return null;
+    return valor.filter((k) => DASHBOARD_WIDGETS.has(k));
+}
+
 // Ensure directory exists
 (async () => {
     try {
@@ -59,7 +71,8 @@ export const getNegocio = async (req, res) => {
                 // queden desincronizadas del backend.
                 origen_productos: normalizarOrigen(empresa.origen_productos),
                 origen_vocabulario: vocabularioDe(empresa.origen_productos),
-                origen_elegible_por_linea: requiereElegirOrigen(empresa.origen_productos)
+                origen_elegible_por_linea: requiereElegirOrigen(empresa.origen_productos),
+                dashboard_widgets: normalizarDashboardWidgets(empresa.dashboard_widgets)
             }
         });
 
@@ -90,7 +103,7 @@ export const updateNegocio = async (req, res) => {
             logotipo, // URL from ImageKit
             // New fields
             distrito, provincia, departamento, codigoPostal, email, telefono, moneda, pais,
-            igv_incluido, origen_productos
+            igv_incluido, origen_productos, dashboard_widgets
         } = req.body;
 
         let final_logo_url = undefined;
@@ -146,6 +159,10 @@ export const updateNegocio = async (req, res) => {
             updates.push("origen_productos = ?");
             params.push(normalizarOrigen(origen_productos));
         }
+        if (dashboard_widgets !== undefined) {
+            updates.push("dashboard_widgets = ?");
+            params.push(JSON.stringify(normalizarDashboardWidgets(dashboard_widgets)));
+        }
 
         if (final_logo_url !== undefined) {
             updates.push("logotipo = ?");
@@ -177,7 +194,8 @@ export const updateNegocio = async (req, res) => {
                 telefono: empresa.telefono,
                 moneda: empresa.moneda,
                 pais: empresa.pais,
-                igv_incluido: Boolean(empresa.igv_incluido)
+                igv_incluido: Boolean(empresa.igv_incluido),
+                dashboard_widgets: normalizarDashboardWidgets(empresa.dashboard_widgets)
             },
             message: "Configuración guardada correctamente"
         });

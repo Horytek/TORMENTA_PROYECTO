@@ -263,6 +263,7 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
           precio_total: item.precio_total,
           id_tonalidad: item.id_tonalidad,
           id_talla: item.id_talla,
+          id_sku: item.id_sku,
         })),
       };
 

@@ -9,11 +9,13 @@ import ProductForm from "../components/ProductForm";
 import BrandsPanel from "../components/BrandsPanel";
 import CategoriesPanel from "../components/CategoriesPanel";
 import SubcategoriesPanel from "../components/SubcategoriesPanel";
+import ViewVariantsModal from "../components/ViewVariantsModal";
+import ContentPage from "@/features/content/pages/ContentPage";
 
 // UI Components
 import { Button } from "@/components/ui/button";
 import {
-  Plus, Layers, Tag, Bookmark, Package,
+  Plus, Layers, Tag, Bookmark, Package, Tags,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -26,6 +28,7 @@ export default function ProductsPage() {
   // Modals state
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [variantsProduct, setVariantsProduct] = useState<Product | null>(null);
 
   const handleCreateOpen = () => {
     setEditingProduct(null);
@@ -52,7 +55,7 @@ export default function ProductsPage() {
             </p>
           </div>
 
-          <TabsList className="bg-muted p-1 rounded-lg h-11 w-full md:w-auto grid grid-cols-4 gap-1">
+          <TabsList className="bg-muted p-1 rounded-lg h-11 w-full md:w-auto grid grid-cols-5 gap-1">
             <TabsTrigger value="productos" className="rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold">
               <Package className="h-3.5 w-3.5" />
               <span>Productos</span>
@@ -69,6 +72,10 @@ export default function ProductsPage() {
               <Layers className="h-3.5 w-3.5" />
               <span>Subcategorías</span>
             </TabsTrigger>
+            <TabsTrigger value="atributos" className="rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold">
+              <Tags className="h-3.5 w-3.5" />
+              <span>Atributos</span>
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -80,7 +87,7 @@ export default function ProductsPage() {
               Nuevo producto
             </Button>
           </div>
-          <ProductsPanel onEdit={handleEditOpen} />
+          <ProductsPanel onEdit={handleEditOpen} onViewVariants={setVariantsProduct} />
         </TabsContent>
 
         {/* Tab: Brands */}
@@ -98,6 +105,11 @@ export default function ProductsPage() {
           <SubcategoriesPanel />
         </TabsContent>
 
+        {/* Tab: Atributos (Gestor de Contenidos) */}
+        <TabsContent value="atributos" className="focus-visible:outline-none">
+          <ContentPage />
+        </TabsContent>
+
       </Tabs>
 
       {/* Modal Form */}
@@ -109,6 +121,14 @@ export default function ProductsPage() {
           initialData={editingProduct}
         />
       )}
+
+      {/* Modal Ver Variantes */}
+      <ViewVariantsModal
+        isOpen={!!variantsProduct}
+        onClose={() => setVariantsProduct(null)}
+        productId={variantsProduct?.id_producto ?? null}
+        productName={variantsProduct?.descripcion ?? ""}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { getConnection } from "../database/database.js";
 import { logInventario } from "../utils/logActions.js";
-import { descontarPorProducto, sumarStockSku } from "../services/inventario/stockRepository.js";
+import { descontarPorProducto, restarStockSku, sumarStockSku } from "../services/inventario/stockRepository.js";
 import { esErrorDeStock } from "../services/inventario/errores.js";
 
 // Cache para queries repetitivas
@@ -453,16 +453,24 @@ const insertNotaAndDetalle = async (req, res) => {
       const id_detalle = firstDetalleId + i;
       const id_ton = tonalidades[i] || null;
       const id_tal = tallas[i] || null;
+      const id_sku_elegido = skus[i] || null;
 
-      // El descuento se reparte entre los SKU del producto en ese almacén.
-      // `descontarPorProducto` bloquea las filas antes de decidir y lanza
-      // StockInsuficienteError si no alcanza, en vez de dejar stock negativo.
-      const movimientos = await descontarPorProducto(connection, {
-        id_tenant,
-        id_producto,
-        id_almacen: almacenO,
-        cantidad: cantidadProducto,
-      });
+      // Si el usuario eligió una variante específica en el picker, se descuenta
+      // exactamente esa — repartir automáticamente ignoraría su elección.
+      // Sin variante elegida, se mantiene el reparto de siempre.
+      const movimientos = id_sku_elegido
+        ? [{
+            ...(await restarStockSku(connection, {
+              id_tenant, id_sku: id_sku_elegido, id_almacen: almacenO, cantidad: cantidadProducto,
+            })),
+            cantidad: cantidadProducto,
+          }]
+        : await descontarPorProducto(connection, {
+            id_tenant,
+            id_producto,
+            id_almacen: almacenO,
+            cantidad: cantidadProducto,
+          });
 
       // Una fila de bitácora por SKU tocado: es lo que permite que la anulación
       // devuelva las unidades a las mismas variantes.

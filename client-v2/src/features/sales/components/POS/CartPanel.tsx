@@ -85,10 +85,10 @@ export function CartPanel({ onCheckout, disabled }: CartPanelProps) {
             <div className="p-2 space-y-1.5">
               {items.map((item) => (
                 <CartItemRow
-                  key={item.id_producto}
+                  key={`${item.id_producto}-${item.id_sku ?? "base"}`}
                   item={item}
-                  onQuantityChange={(qty) => updateQuantity(item.id_producto, qty)}
-                  onRemove={() => removeItem(item.id_producto)}
+                  onQuantityChange={(qty) => updateQuantity(item.id_producto, qty, item.id_sku)}
+                  onRemove={() => removeItem(item.id_producto, item.id_sku)}
                 />
               ))}
             </div>
@@ -139,6 +139,7 @@ interface CartItemRowProps {
     cantidad: number;
     precio_unitario: number;
     precio_total: number;
+    sku_label?: string | null;
   };
   onQuantityChange: (qty: number) => void;
   onRemove: () => void;
@@ -152,6 +153,9 @@ function CartItemRow({ item, onQuantityChange, onRemove }: CartItemRowProps) {
         <p className="text-xs font-medium text-foreground leading-tight line-clamp-1">
           {item.descripcion}
         </p>
+        {item.sku_label && (
+          <p className="text-[10px] font-medium text-brand">{item.sku_label}</p>
+        )}
         {item.nom_marca && (
           <p className="text-[10px] text-muted-foreground">{item.nom_marca}</p>
         )}

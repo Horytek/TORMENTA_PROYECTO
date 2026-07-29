@@ -24,6 +24,7 @@ import {
   getVentasPorSucursal,
 } from "../api/dashboard";
 import { getPL } from "@/features/accounting/api/accounting";
+import { getNegocio } from "@/features/settings/api/settings";
 
 // Components
 import { QuickActionsCard } from "../components/QuickActionsCard";
@@ -86,6 +87,11 @@ const TAB_PERIODS = [
 
 export default function DashboardPage() {
   const username = useUserStore((s) => s.nombre || s.usuario || "tormenta");
+
+  // null (sin configurar) = mostrar todas las secciones.
+  const { data: negocio } = useQuery({ queryKey: ["negocio"], queryFn: getNegocio });
+  const widgets = negocio?.dashboard_widgets ?? null;
+  const showWidget = (key: string) => widgets === null || widgets.includes(key);
 
   const [selectedTab, setSelectedTab] = useState("24h");
   const [selectedSucursal, setSelectedSucursal] = useState<string>("all");
@@ -230,6 +236,7 @@ export default function DashboardPage() {
       </header>
 
       {/* KPI Cards Grid — AdaptiveCard variant="stat-tile" (Fase 5) */}
+      {showWidget("kpis") && (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {(() => {
           const deltaLabel = formatPeriodDeltaLabel();
@@ -279,26 +286,31 @@ export default function DashboardPage() {
           ));
         })()}
       </div>
+      )}
 
       {/* Main Charts & Table Layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left Side: LineChart & Transactions */}
         <div className="lg:col-span-2 space-y-6">
+          {showWidget("grafico") && (
           <Suspense fallback={<div className="h-[340px] w-full animate-pulse rounded-xl border border-border/60 bg-muted/40" />}>
             <DashboardLineChart sucursal={selectedSucursal === "all" ? "" : selectedSucursal} usuario={username} />
           </Suspense>
-          <RecentTransactionsTable className="flex-1" />
+          )}
+          {showWidget("transacciones") && <RecentTransactionsTable className="flex-1" />}
         </div>
 
         {/* Right Side: Quick Actions & Side Stats */}
         <div className="space-y-6">
-          <QuickActionsCard />
-          <StockCard productos={bajoStock} loading={isLoadingStock} />
+          {showWidget("accionesRapidas") && <QuickActionsCard />}
+          {showWidget("stockBajo") && <StockCard productos={bajoStock} loading={isLoadingStock} />}
+          {showWidget("desempeno") && (
           <PerformanceCard
             sucursales={desempenoData?.sucursales || []}
             promedioGeneral={desempenoData?.promedioGeneral || 0}
             loading={isLoadingDesempeno}
           />
+          )}
         </div>
       </div>
 

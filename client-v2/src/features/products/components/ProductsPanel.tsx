@@ -10,13 +10,14 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
-import { ShieldAlert, Loader2, Edit, Trash2, Download } from "lucide-react";
+import { ShieldAlert, Loader2, Eye, Edit, Trash2, Download } from "lucide-react";
 
 interface ProductsPanelProps {
   onEdit: (product: Product) => void;
+  onViewVariants: (product: Product) => void;
 }
 
-export default function ProductsPanel({ onEdit }: ProductsPanelProps) {
+export default function ProductsPanel({ onEdit, onViewVariants }: ProductsPanelProps) {
   const queryClient = useQueryClient();
 
   const [activeTab] = useQueryState("tab", parseAsString.withDefault("productos"));
@@ -98,6 +99,12 @@ export default function ProductsPanel({ onEdit }: ProductsPanelProps) {
 
   // ── Actions ────────────────────────────────────────────────────
   const actions: RecordAction[] = [
+    {
+      id: "variants", label: "Ver variantes",
+      icon: <Eye className="h-3.5 w-3.5" />,
+      onClick: (item) => onViewVariants(item as Product),
+      variant: "secondary", persistent: false,
+    },
     {
       id: "edit", label: "Editar",
       icon: <Edit className="h-3.5 w-3.5" />,

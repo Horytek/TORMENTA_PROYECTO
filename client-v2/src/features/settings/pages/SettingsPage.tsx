@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useForm } from "react-hook-form";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Check, Building2, MapPin, Phone, ImageIcon, Upload, X, Percent } from "lucide-react";
+import { Loader2, Check, Building2, MapPin, Phone, ImageIcon, Upload, X, Percent, LayoutDashboard } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,9 @@ import { FormField } from "@/components/shared/FormField";
 
 import { getNegocio, updateNegocio } from "../api/settings";
 import type { Negocio } from "../types";
+import { DASHBOARD_WIDGET_OPTIONS } from "../types";
+
+const ALL_WIDGET_KEYS = DASHBOARD_WIDGET_OPTIONS.map((w) => w.key);
 
 interface FormValues {
   nombre_negocio: string;
@@ -24,6 +27,7 @@ interface FormValues {
   igv_incluido: boolean;
   moneda: string;
   pais: string;
+  dashboard_widgets: string[];
 }
 
 const empty: FormValues = {
@@ -38,6 +42,7 @@ const empty: FormValues = {
   igv_incluido: true,
   moneda: "",
   pais: "",
+  dashboard_widgets: ALL_WIDGET_KEYS,
 };
 
 const toForm = (n: Negocio | null): FormValues => ({
@@ -52,6 +57,7 @@ const toForm = (n: Negocio | null): FormValues => ({
   igv_incluido: n?.igv_incluido ?? true,
   moneda: n?.moneda ?? "",
   pais: n?.pais ?? "",
+  dashboard_widgets: n?.dashboard_widgets ?? ALL_WIDGET_KEYS,
 });
 
 export default function SettingsPage() {
@@ -267,6 +273,40 @@ export default function SettingsPage() {
               {...register("email", { pattern: { value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: "Email inválido" } })}
             />
           </FormField>
+        </CardContent>
+      </Card>
+
+      {/* Panel principal */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <LayoutDashboard className="h-4 w-4 text-brand" />
+            Panel principal
+          </CardTitle>
+          <CardDescription>Elige qué secciones ver en tu dashboard.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2">
+          {DASHBOARD_WIDGET_OPTIONS.map((widget) => {
+            const activos = watch("dashboard_widgets");
+            const activo = activos.includes(widget.key);
+            return (
+              <div
+                key={widget.key}
+                className="flex items-center justify-between gap-4 rounded-lg border border-border/60 bg-zinc-50 px-4 py-3 dark:bg-zinc-900/50"
+              >
+                <p className="text-sm font-medium">{widget.label}</p>
+                <Switch
+                  checked={activo}
+                  onCheckedChange={(v) => {
+                    const next = v
+                      ? [...activos, widget.key]
+                      : activos.filter((k) => k !== widget.key);
+                    setValue("dashboard_widgets", next, { shouldDirty: true });
+                  }}
+                />
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
     </form>
