@@ -342,6 +342,33 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
   );
   const id_venta = ventaResult.insertId;
 
+  // 3.5. Validar los id_sku que mandó el cliente.
+  // `restarStockSku` filtra por (id_tenant, id_sku, id_almacen) y nunca por
+  // id_producto: sin este chequeo, una línea con el id_producto de A y el
+  // id_sku de B cobra el precio de A y descuenta el stock de B, dejando
+  // además un par imposible en detalle_venta y en el kardex.
+  const skusPedidos = [...new Set(detallesNormalizados.map((d) => d.id_sku).filter(Boolean))];
+  if (skusPedidos.length > 0) {
+    const [skusValidos] = await connection.query(
+      `SELECT id_sku, id_producto FROM producto_sku
+       WHERE id_tenant = ? AND id_sku IN (${skusPedidos.map(() => "?").join(",")})`,
+      [id_tenant, ...skusPedidos]
+    );
+    const productoDelSku = new Map(skusValidos.map((s) => [s.id_sku, s.id_producto]));
+    for (const detalle of detallesNormalizados) {
+      if (!detalle.id_sku) continue;
+      const dueño = productoDelSku.get(detalle.id_sku);
+      if (dueño === undefined) {
+        throw new VentaValidationError(`La variante ${detalle.id_sku} no existe.`, 400);
+      }
+      if (dueño !== detalle.id_producto) {
+        throw new VentaValidationError(
+          `La variante ${detalle.id_sku} no pertenece al producto ${detalle.id_producto}.`, 400
+        );
+      }
+    }
+  }
+
   // 4. Insertar Detalles y Actualizar Stock
   const detalleVentaValues = [];
   const detalleVentaParams = [];

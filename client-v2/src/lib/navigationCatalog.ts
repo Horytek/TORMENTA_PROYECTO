@@ -14,7 +14,6 @@ import {
   Warehouse,
   Package,
   FileSpreadsheet,
-  Settings,
   ShoppingCart,
   ClipboardList,
   Truck,
