@@ -38,6 +38,10 @@ export interface Product {
   estado_producto: number;
   estado?: number;
   id_categoria?: number;
+  /** Costo promedio ponderado (agregado entre SKUs); null si aún no se ha registrado ningún ingreso con costo. */
+  costo_promedio?: number | string | null;
+  /** Punto de reorden configurable; null = la alerta de stock usa <=0 (comportamiento por defecto). */
+  stock_min?: number | null;
 }
 
 /** Una variante generada de un producto (tabla `producto_sku`). */

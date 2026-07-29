@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Phone, Mail } from "lucide-react";
+import { Plus, Pencil, Trash2, Phone, Mail, Receipt } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 
 import { cn } from "@/lib/utils";
@@ -8,6 +8,7 @@ import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection/Adapt
 import type { FieldDef, RecordAction } from "@/components/shared/AdaptiveCollection/types";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import SupplierForm from "../components/SupplierForm";
+import { SupplierAccountsDrawer } from "../components/SupplierAccountsDrawer";
 import { getProveedores, deleteProveedor } from "../api/suppliers";
 import type { Proveedor } from "../types";
 import { proveedorNombre, proveedorDocumento, proveedorTipo } from "../types";
@@ -19,6 +20,7 @@ export default function SuppliersPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Proveedor | null>(null);
   const [deleting, setDeleting] = useState<Proveedor | null>(null);
+  const [viewingAccounts, setViewingAccounts] = useState<Proveedor | null>(null);
 
   const { can } = usePermissions();
   const canEdit = can("proveedores.edit");
@@ -43,7 +45,10 @@ export default function SuppliersPage() {
   // ── Fields para AdaptiveCard ──────────────────────────────
   const fields: FieldDef<Proveedor>[] = [
     {
-      key: "nombre",
+      // "destinatario" es el campo real que devuelve el backend (nombre
+      // compuesto ya armado); "nombre" no existe en el objeto y dejaba la
+      // búsqueda por nombre siempre sin resultados.
+      key: "destinatario",
       label: "Nombre",
       priority: "primary",
       semantic: "title",
@@ -57,7 +62,10 @@ export default function SuppliersPage() {
       format: (v) => (v as string) || "—",
     },
     {
-      key: "contacto",
+      // Mismo motivo que arriba: "contacto" no existe en el objeto real
+      // (son "telefono"/"email" por separado) — se usa "telefono" para que
+      // al menos ese dato sea buscable; el render sigue mostrando ambos.
+      key: "telefono",
       label: "Teléfono / Email",
       priority: "secondary",
       semantic: "chip",
@@ -133,6 +141,12 @@ export default function SuppliersPage() {
   // ── Acciones de registro ─────────────────────────────────
   const actions: RecordAction[] = [
     {
+      id: "cuentas",
+      label: "Cuentas por pagar",
+      icon: <Receipt className="h-3.5 w-3.5" />,
+      onClick: (item) => setViewingAccounts(item as Proveedor),
+    },
+    {
       id: "edit",
       label: "Editar",
       icon: <Pencil className="h-3.5 w-3.5" />,
@@ -202,6 +216,12 @@ export default function SuppliersPage() {
         confirmLabel="Eliminar"
         variant="danger"
         isPending={deleteMutation.isPending}
+      />
+
+      <SupplierAccountsDrawer
+        proveedor={viewingAccounts}
+        isOpen={!!viewingAccounts}
+        onClose={() => setViewingAccounts(null)}
       />
     </>
   );

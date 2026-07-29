@@ -127,6 +127,18 @@ export const getProductVariants = async (productId: number, idAlmacen?: number):
   return data?.data || (Array.isArray(data) ? data : []);
 };
 
+export interface HistorialPrecioItem {
+  id_log: number;
+  fecha: string;
+  descripcion: string;
+  usuario?: string;
+}
+
+export const getHistorialPrecioProducto = async (productId: number): Promise<HistorialPrecioItem[]> => {
+  const response = await api.get(`/productos/${productId}/historial-precio`);
+  return response.data?.data || [];
+};
+
 export const generateSKUs = async (productId: number, data: { id_atributo: number; values: { id: string | number; label: string }[] }[]): Promise<boolean> => {
   const response = await api.post("/productos/skus/generate", {
     id_producto: productId,
@@ -136,9 +148,14 @@ export const generateSKUs = async (productId: number, data: { id_atributo: numbe
 };
 
 // 5. Importación masiva
-export const importExcelProducts = async (data: any[]): Promise<any> => {
+export interface ImportExcelResult {
+  inserted: number;
+  errors: string[] | null;
+}
+
+export const importExcelProducts = async (data: Record<string, unknown>[]): Promise<ImportExcelResult> => {
   const response = await api.post("/productos/import/excel", { data });
-  return response.data;
+  return { inserted: response.data?.inserted ?? 0, errors: response.data?.errors ?? null };
 };
 
 // 5. CRUD de Marcas

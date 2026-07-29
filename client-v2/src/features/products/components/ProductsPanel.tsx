@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryState, parseAsString } from "nuqs";
 import type { Product } from "../types";
-import { getProducts, deleteProduct } from "../api/products";
+import { getProducts, deleteProduct, createProduct } from "../api/products";
 import { useUserStore } from "@/store/useUserStore";
 import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection";
 import type { FieldDef, RecordAction, RhythmConfig } from "@/components/shared/AdaptiveCollection";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
-import { ShieldAlert, Loader2, Eye, Edit, Trash2, Download } from "lucide-react";
+import { ShieldAlert, Loader2, Eye, Edit, Trash2, Download, Copy } from "lucide-react";
 
 interface ProductsPanelProps {
   onEdit: (product: Product) => void;
@@ -48,7 +48,20 @@ export default function ProductsPanel({ onEdit, onViewVariants }: ProductsPanelP
 
   const capabilities = useUserStore((s) => s.capabilities);
   const user = useUserStore((s) => s.user);
-  void capabilities; void user; // permissions handled in actions
+  void capabilities; // permissions handled in actions
+
+  const duplicateMutation = useMutation({
+    mutationFn: (product: Product) => {
+      const { id_producto, nom_marca, nom_subcat, costo_promedio, ...rest } = product;
+      void id_producto; void nom_marca; void nom_subcat; void costo_promedio;
+      return createProduct({
+        ...rest,
+        descripcion: `${product.descripcion} (copia)`,
+        cod_barras: `T${user?.id_tenant ?? 0}-DUP${Date.now()}`,
+      });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["products"] }),
+  });
 
   // ── Fields ─────────────────────────────────────────────────────
   const fields: FieldDef<Product>[] = [
@@ -70,6 +83,23 @@ export default function ProductsPanel({ onEdit, onViewVariants }: ProductsPanelP
     {
       key: "precio", priority: "secondary", semantic: "number",
       label: "Precio",
+    },
+    {
+      key: "margen", priority: "secondary", label: "Margen",
+      render: (_v, item) => {
+        const costo = item.costo_promedio != null ? Number(item.costo_promedio) : null;
+        const precio = Number(item.precio);
+        if (costo == null || !Number.isFinite(costo) || costo <= 0) {
+          return <span className="text-xs text-muted-foreground">Sin costo</span>;
+        }
+        const margenPct = ((precio - costo) / precio) * 100;
+        const bajo = margenPct < 15;
+        return (
+          <span className={bajo ? "text-xs font-semibold text-destructive" : "text-xs font-semibold text-emerald-600 dark:text-emerald-400"}>
+            {margenPct.toFixed(0)}%
+          </span>
+        );
+      },
     },
     {
       key: "undm", priority: "meta", semantic: "code",
@@ -109,6 +139,12 @@ export default function ProductsPanel({ onEdit, onViewVariants }: ProductsPanelP
       id: "edit", label: "Editar",
       icon: <Edit className="h-3.5 w-3.5" />,
       onClick: (item) => onEdit(item as Product),
+      variant: "secondary", persistent: false,
+    },
+    {
+      id: "duplicate", label: "Duplicar",
+      icon: <Copy className="h-3.5 w-3.5" />,
+      onClick: (item) => duplicateMutation.mutate(item as Product),
       variant: "secondary", persistent: false,
     },
     {

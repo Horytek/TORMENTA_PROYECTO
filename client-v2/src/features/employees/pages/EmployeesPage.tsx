@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { UserPlus, Pencil, Trash2, Ban, RotateCcw } from "lucide-react";
+import { UserPlus, Pencil, Trash2, Ban, RotateCcw, Users, Percent } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection";
 import type { FieldDef, RecordAction } from "@/components/shared/AdaptiveCollection";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import {
   getVendedores, createVendedor, updateVendedor,
-  deactivateVendedor, deleteVendedor,
+  deactivateVendedor, reactivateVendedor, deleteVendedor,
 } from "../api/vendedores";
 import type { Vendedor, VendedorInput, VendedorUpdate } from "../types";
+import { ComisionesPanel } from "../components/ComisionesPanel";
 
 interface FormState {
   dni: string;
@@ -18,9 +21,11 @@ interface FormState {
   nombres: string;
   apellidos: string;
   telefono: string;
+  porcentaje_comision: string;
+  meta_mensual: string;
 }
 
-const emptyForm: FormState = { dni: "", id_usuario: "", nombres: "", apellidos: "", telefono: "" };
+const emptyForm: FormState = { dni: "", id_usuario: "", nombres: "", apellidos: "", telefono: "", porcentaje_comision: "", meta_mensual: "" };
 
 export default function EmployeesPage() {
   const qc = useQueryClient();
@@ -29,6 +34,7 @@ export default function EmployeesPage() {
   const [editing, setEditing] = useState<Vendedor | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirmDeactivate, setConfirmDeactivate] = useState<Vendedor | null>(null);
 
   const { data: vendedores = [], isLoading } = useQuery({
     queryKey: ["empleados"],
@@ -37,7 +43,14 @@ export default function EmployeesPage() {
 
   const createMut = useMutation({ mutationFn: (v: VendedorInput) => createVendedor(v) });
   const updateMut = useMutation({ mutationFn: ({ dni, v }: { dni: string; v: VendedorUpdate }) => updateVendedor(dni, v) });
-  const deactivateMut = useMutation({ mutationFn: (dni: string) => deactivateVendedor(dni) });
+  const deactivateMut = useMutation({
+    mutationFn: (dni: string) => deactivateVendedor(dni),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["empleados"] }); setConfirmDeactivate(null); },
+  });
+  const reactivateMut = useMutation({
+    mutationFn: (dni: string) => reactivateVendedor(dni),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["empleados"] }),
+  });
   const deleteMut = useMutation({ mutationFn: (dni: string) => deleteVendedor(dni) });
 
   const filtered = vendedores.filter(v => {
@@ -49,24 +62,25 @@ export default function EmployeesPage() {
   const openCreate = () => { setEditing(null); setForm(emptyForm); setIsFormOpen(true); };
   const openEdit = (v: Vendedor) => {
     setEditing(v);
-    setForm({ dni: v.dni, id_usuario: String(v.id_usuario), nombres: v.nombres, apellidos: v.apellidos, telefono: v.telefono ?? "" });
+    setForm({
+      dni: v.dni, id_usuario: String(v.id_usuario), nombres: v.nombres, apellidos: v.apellidos, telefono: v.telefono ?? "",
+      porcentaje_comision: v.porcentaje_comision != null ? String(v.porcentaje_comision) : "",
+      meta_mensual: v.meta_mensual != null ? String(v.meta_mensual) : "",
+    });
     setIsFormOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const porcentaje_comision = form.porcentaje_comision.trim() ? Number(form.porcentaje_comision) : null;
+    const meta_mensual = form.meta_mensual.trim() ? Number(form.meta_mensual) : null;
     if (editing) {
-      await updateMut.mutateAsync({ dni: editing.dni, v: { ...form, id_usuario: Number(form.id_usuario), dni: form.dni } });
+      await updateMut.mutateAsync({ dni: editing.dni, v: { ...form, id_usuario: Number(form.id_usuario), dni: form.dni, porcentaje_comision, meta_mensual } });
     } else {
-      await createMut.mutateAsync({ ...form, id_usuario: Number(form.id_usuario) });
+      await createMut.mutateAsync({ ...form, id_usuario: Number(form.id_usuario), porcentaje_comision, meta_mensual });
     }
     qc.invalidateQueries({ queryKey: ["empleados"] });
     setIsFormOpen(false);
-  };
-
-  const handleDeactivate = async (dni: string) => {
-    await deactivateMut.mutateAsync(dni);
-    qc.invalidateQueries({ queryKey: ["empleados"] });
   };
 
   const handleDelete = async () => {
@@ -126,7 +140,7 @@ export default function EmployeesPage() {
       id: "deactivate",
       label: "Dar de baja",
       icon: <Ban className="h-3.5 w-3.5" />,
-      onClick: (item) => handleDeactivate((item as Vendedor).dni),
+      onClick: (item) => setConfirmDeactivate(item as Vendedor),
       hidden: (item) => (item as Vendedor).estado_vendedor !== 1,
       variant: "secondary",
     },
@@ -134,7 +148,7 @@ export default function EmployeesPage() {
       id: "reactivate",
       label: "Reactivar",
       icon: <RotateCcw className="h-3.5 w-3.5" />,
-      onClick: (item) => openEdit(item as Vendedor),
+      onClick: (item) => reactivateMut.mutate((item as Vendedor).dni),
       hidden: (item) => (item as Vendedor).estado_vendedor === 1,
       variant: "secondary",
     },
@@ -162,37 +176,52 @@ export default function EmployeesPage() {
         </Button>
       </div>
 
+      <Tabs defaultValue="empleados" className="space-y-4">
+        <TabsList className="h-10 w-fit rounded-lg bg-muted p-1">
+          <TabsTrigger value="empleados" className="gap-1.5 rounded-md text-xs font-semibold">
+            <Users className="h-3.5 w-3.5" /> Empleados
+          </TabsTrigger>
+          <TabsTrigger value="comisiones" className="gap-1.5 rounded-md text-xs font-semibold">
+            <Percent className="h-3.5 w-3.5" /> Comisiones
+          </TabsTrigger>
+        </TabsList>
 
+        <TabsContent value="empleados" className="space-y-4 focus-visible:outline-none">
+          {/* Search */}
+          <div className="relative max-w-md">
+            <Input
+              placeholder="Buscar por nombre, DNI o usuario…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="h-9"
+            />
+          </div>
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Input
-          placeholder="Buscar por nombre, DNI o usuario…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="h-9"
-        />
-      </div>
+          {/* Grid of AdaptiveCards via AdaptiveCollection */}
+          <AdaptiveCollection<Vendedor>
+            items={filtered}
+            fields={fields}
+            actions={actions}
+            layout="auto"
+            isLoading={isLoading}
+            getItemId={(item) => item.dni}
+            getRhythm={(v) => ({
+              type: "dot",
+              color: v.estado_vendedor === 0 ? "rose" : "emerald",
+            })}
+            empty={{
+              title: "No se encontraron empleados",
+              description: search
+                ? `Ningún empleado coincide con "${search}"`
+                : "No hay empleados registrados.",
+            }}
+          />
+        </TabsContent>
 
-      {/* Grid of AdaptiveCards via AdaptiveCollection */}
-      <AdaptiveCollection<Vendedor>
-        items={filtered}
-        fields={fields}
-        actions={actions}
-        layout="auto"
-        isLoading={isLoading}
-        getItemId={(item) => item.dni}
-        getRhythm={(v) => ({
-          type: "dot",
-          color: v.estado_vendedor === 0 ? "rose" : "emerald",
-        })}
-        empty={{
-          title: "No se encontraron empleados",
-          description: search
-            ? `Ningún empleado coincide con "${search}"`
-            : "No hay empleados registrados.",
-        }}
-      />
+        <TabsContent value="comisiones" className="focus-visible:outline-none">
+          <ComisionesPanel />
+        </TabsContent>
+      </Tabs>
 
       {/* Form modal */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
@@ -250,6 +279,29 @@ export default function EmployeesPage() {
                 placeholder="999123456"
               />
             </div>
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground font-medium">Comisión (%)</label>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                step="0.1"
+                value={form.porcentaje_comision}
+                onChange={e => setForm(f => ({ ...f, porcentaje_comision: e.target.value }))}
+                placeholder="Sin comisión configurada"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground font-medium">Meta mensual (S/)</label>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                value={form.meta_mensual}
+                onChange={e => setForm(f => ({ ...f, meta_mensual: e.target.value }))}
+                placeholder="Sin meta configurada"
+              />
+            </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="ghost" onClick={() => setIsFormOpen(false)}>Cancelar</Button>
               <Button type="submit" disabled={createMut.isPending || updateMut.isPending}>
@@ -259,6 +311,25 @@ export default function EmployeesPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Confirm dar de baja */}
+      <ConfirmDialog
+        open={!!confirmDeactivate}
+        onClose={() => setConfirmDeactivate(null)}
+        onConfirm={() => confirmDeactivate && deactivateMut.mutate(confirmDeactivate.dni)}
+        title="¿Dar de baja al empleado?"
+        description={
+          <>
+            El empleado quedará inactivo, pero podrás reactivarlo después.
+            <br />
+            <span className="mt-1 inline-block font-medium text-foreground">
+              {confirmDeactivate?.nombre}
+            </span>
+          </>
+        }
+        confirmLabel="Dar de baja"
+        isPending={deactivateMut.isPending}
+      />
 
       {/* Confirm delete */}
       <Dialog open={!!confirmDelete} onOpenChange={v => !v && setConfirmDelete(null)}>

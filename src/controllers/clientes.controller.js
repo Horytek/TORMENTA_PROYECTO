@@ -49,12 +49,19 @@ const getClientes = async (req, res) => {
                 whereClauses.push("ruc IS NOT NULL AND ruc <> ''");
             }
         } else if (searchTerm) {
+            // También busca por documento: un cliente jurídico no tiene `nombres` y uno
+            // natural no tiene `razon_social`, así que el buscador debe cubrir ambos casos
+            // y el documento a la vez (antes solo miraba nombre/razón social).
             whereClauses.push(`(
-                nombres LIKE ? OR 
-                apellidos LIKE ? OR 
-                razon_social LIKE ?
+                nombres LIKE ? OR
+                apellidos LIKE ? OR
+                razon_social LIKE ? OR
+                dni LIKE ? OR
+                ruc LIKE ?
             )`);
             filterValues.push(
+                `%${searchTerm}%`,
+                `%${searchTerm}%`,
                 `%${searchTerm}%`,
                 `%${searchTerm}%`,
                 `%${searchTerm}%`
@@ -83,19 +90,21 @@ const getClientes = async (req, res) => {
 
         // Query principal optimizada
         const [result] = await connection.query(
-            `SELECT 
-                id_cliente, 
+            `SELECT
+                id_cliente,
+                id_cliente AS id,
                 COALESCE(dni, ruc) AS dniRuc,
                 COALESCE(dni, '') AS dni,
                 COALESCE(ruc, '') AS ruc,
-                nombres, 
-                apellidos, 
-                COALESCE(razon_social, '') AS razon_social, 
-                direccion, 
+                nombres,
+                apellidos,
+                COALESCE(razon_social, '') AS razon_social,
+                direccion,
                 estado_cliente AS estado,
+                limite_credito,
                 DATE_FORMAT(f_creacion, '%Y-%m-%d') AS f_creacion,
                 'local' as origen
-            FROM cliente 
+            FROM cliente
             ${filterCondition}
             ORDER BY f_creacion DESC, id_cliente DESC
             LIMIT ? OFFSET ?`,
@@ -459,7 +468,8 @@ const updateCliente = async (req, res) => {
             apellidos,
             razon_social,
             direccion,
-            estado
+            estado,
+            limite_credito
         } = req.body;
 
         const id_tenant = req.id_tenant;
@@ -475,9 +485,9 @@ const updateCliente = async (req, res) => {
 
         // Verificar si el cliente existe y obtener datos actuales en una sola query
         const [existingClient] = await connection.query(
-            `SELECT id_cliente, dni, ruc, nombres, apellidos, razon_social, 
-                    direccion, estado_cliente 
-             FROM cliente 
+            `SELECT id_cliente, dni, ruc, nombres, apellidos, razon_social,
+                    direccion, estado_cliente, limite_credito
+             FROM cliente
              WHERE id_cliente = ? AND id_tenant = ?
              LIMIT 1`,
             [id_cliente, id_tenant]
@@ -524,7 +534,8 @@ const updateCliente = async (req, res) => {
                 apellidos = ?,
                 razon_social = ?,
                 direccion = ?,
-                estado_cliente = ?
+                estado_cliente = ?,
+                limite_credito = ?
             WHERE id_cliente = ? AND id_tenant = ?
         `;
 
@@ -536,6 +547,7 @@ const updateCliente = async (req, res) => {
             razon_social ? razon_social.trim() : null,
             direccion || null,
             estado !== undefined ? estado : clienteAnterior.estado_cliente,
+            limite_credito !== undefined ? limite_credito : clienteAnterior.limite_credito,
             id_cliente,
             id_tenant
         ];

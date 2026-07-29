@@ -21,6 +21,7 @@ export interface KardexInventarioProducto {
   precio: number;
   cod_barras: string | null;
   estado: number;
+  costo_promedio?: number | string | null;
 }
 
 export interface KardexInventarioAlmacen {

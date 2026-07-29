@@ -19,16 +19,18 @@ import { LotesTable } from "../components/LotesTable";
 import { LoteRequestDialog } from "../components/LoteRequestDialog";
 import { LoteDetailDialog } from "../components/LoteDetailDialog";
 import { VerificationConfigDialog } from "../components/VerificationConfigDialog";
+import ViewVariantsModal from "@/features/products/components/ViewVariantsModal";
 import {
   getProductos, getMarcas, getCategorias, getSubcategorias,
   getAlmacenes, getStockMinimo, getDetalleKardex, getDetalleKardexAnteriores, getInfProducto,
 } from "../api/kardex";
 import { verifyLote, approveLote } from "../api/lotes";
-import type { InventarioFiltros, Lote } from "../types";
+import type { InventarioFiltros, InventarioProducto, Lote } from "../types";
 
 export default function InventoryPage() {
   const [filtros, setFiltros] = useState<InventarioFiltros>({ stock: "con_stock" });
   const [activeTab, setActiveTab] = useState("catalogo");
+  const [variantsProduct, setVariantsProduct] = useState<InventarioProducto | null>(null);
 
   // Solicitudes de inventario (lotes)
   const queryClient = useQueryClient();
@@ -221,7 +223,11 @@ export default function InventoryPage() {
           {loadingProductos ? (
             <div className="flex justify-center py-12"><Spinner /></div>
           ) : (
-            <InventoryTable productos={productos} onProductClick={(p) => handleSelectProductForKardex(p.codigo)} />
+            <InventoryTable
+              productos={productos}
+              onSelectKardex={(p) => handleSelectProductForKardex(p.codigo)}
+              onSelectVariants={(p) => setVariantsProduct(p)}
+            />
           )}
         </TabsContent>
 
@@ -333,6 +339,12 @@ export default function InventoryPage() {
         isPending={verifyMutation.isPending || approveMutation.isPending}
       />
       <VerificationConfigDialog isOpen={isConfigOpen} onClose={() => setIsConfigOpen(false)} />
+      <ViewVariantsModal
+        isOpen={!!variantsProduct}
+        onClose={() => setVariantsProduct(null)}
+        productId={variantsProduct?.codigo ?? null}
+        productName={variantsProduct?.descripcion ?? ""}
+      />
     </div>
   );
 }

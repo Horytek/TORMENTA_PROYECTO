@@ -77,7 +77,10 @@ const getProductos = async (req, res) => {
                 p.undm               AS um,
                 CAST(p.precio AS DECIMAL(10, 2)) AS precio,
                 p.cod_barras         AS cod_barras,
-                p.estado_producto    AS estado
+                p.estado_producto    AS estado,
+                (SELECT AVG(sub.costo_promedio) FROM producto_sku sub
+                 WHERE sub.id_producto = p.id_producto AND sub.id_tenant = p.id_tenant
+                   AND sub.costo_promedio IS NOT NULL) AS costo_promedio
             FROM producto p
             INNER JOIN marca m         ON p.id_marca        = m.id_marca
             INNER JOIN sub_categoria CA ON CA.id_subcategoria = p.id_subcategoria
@@ -204,21 +207,22 @@ const getStockMinimo = async (req, res) => {
     try {
         connection = await getConnection();
 
-        // Tomamos sólo los productos que tienen stock registrado y suman <= 0.
-        // (Más conservador que el "<10" genérico; refleja literalmente "sin stock".)
+        // Alerta contra `producto.stock_min` cuando el usuario lo configuró; si
+        // no (NULL), cae al comportamiento anterior: "stock <= 0" literal.
         const [rows] = await connection.query(
             `SELECT
                 p.id_producto AS codigo,
                 p.descripcion AS nombre,
                 m.nom_marca   AS marca,
-                COALESCE(SUM(i.stock), 0) AS stock
+                COALESCE(SUM(i.stock), 0) AS stock,
+                p.stock_min
             FROM producto p
             INNER JOIN marca m   ON p.id_marca        = m.id_marca
             LEFT JOIN producto_sku psk ON psk.id_producto = p.id_producto AND psk.id_tenant = p.id_tenant
             LEFT JOIN inventario_stock i ON i.id_sku = psk.id_sku AND i.id_tenant = psk.id_tenant
             WHERE p.id_tenant = ?
-            GROUP BY p.id_producto
-            HAVING SUM(i.stock) <= 0
+            GROUP BY p.id_producto, p.stock_min
+            HAVING stock <= COALESCE(p.stock_min, 0)
             ORDER BY stock ASC, p.descripcion ASC
             LIMIT 200`,
             [id_tenant]

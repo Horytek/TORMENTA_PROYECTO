@@ -13,7 +13,8 @@ import type { GuideFormItem, GuideProducto } from "../types";
 const SIN_VARIANTE: VariantResolved = { id_sku: null, label: null, stock: null, ready: true };
 
 interface GuideProductPickerProps {
-  almacen: string;
+  /** Almacén vinculado a la sucursal elegida (no el id de la sucursal misma). */
+  idAlmacen: number | null;
   items: GuideFormItem[];
   onAdd: (item: GuideFormItem) => void;
 }
@@ -27,23 +28,22 @@ function useDebouncedValue<T>(value: T, delay = 350): T {
   return debounced;
 }
 
-export function GuideProductPicker({ almacen, items, onAdd }: GuideProductPickerProps) {
+export function GuideProductPicker({ idAlmacen, items, onAdd }: GuideProductPickerProps) {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search);
   const [qtyByProduct, setQtyByProduct] = useState<Record<number, string>>({});
   const [variantByProduct, setVariantByProduct] = useState<Record<number, VariantResolved>>({});
-  const idAlmacen = Number(almacen) || undefined;
 
   const { data: productos = [], isFetching } = useQuery<GuideProducto[]>({
-    queryKey: ["guia-productos", debouncedSearch],
-    queryFn: () => getProductosGuia({ descripcion: debouncedSearch, codbarras: debouncedSearch }),
+    queryKey: ["guia-productos", debouncedSearch, idAlmacen],
+    queryFn: () => getProductosGuia({ descripcion: debouncedSearch, codbarras: debouncedSearch, almacen: idAlmacen ?? undefined }),
   });
 
   const qtyAlreadyInCart = (uniqueKey: string) =>
     items.filter((i) => i.uniqueKey === uniqueKey).reduce((sum, i) => sum + i.cantidad, 0);
 
   const isOverStock = (producto: GuideProducto, cantidad: number) => {
-    if (!almacen) return false;
+    if (!idAlmacen) return false;
     const stockDisponible = producto.stock ?? 0;
     const yaEnCarrito = qtyAlreadyInCart(`PROD-${producto.codigo}`);
     return yaEnCarrito + cantidad > stockDisponible;
@@ -139,7 +139,7 @@ export function GuideProductPicker({ almacen, items, onAdd }: GuideProductPicker
                   </div>
                   <VariantPicker
                     idProducto={producto.codigo}
-                    idAlmacen={idAlmacen}
+                    idAlmacen={idAlmacen ?? undefined}
                     onResolved={(r) => setVariantByProduct((prev) => ({ ...prev, [producto.codigo]: r }))}
                   />
                 </div>

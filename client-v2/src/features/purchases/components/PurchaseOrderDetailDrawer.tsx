@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, PackageCheck, Ban, FileText, Loader2, Calendar, Building2, Warehouse } from "lucide-react";
 
@@ -27,6 +28,7 @@ function formatFecha(fecha: string) {
 const ESTADO_LABEL: Record<EstadoOrdenCompra, string> = {
   draft: "Borrador",
   approved: "Aprobada",
+  partially_received: "Recepción parcial",
   received: "Recibida",
   cancelled: "Cancelada",
 };
@@ -34,6 +36,7 @@ const ESTADO_LABEL: Record<EstadoOrdenCompra, string> = {
 const ESTADO_BADGE: Record<EstadoOrdenCompra, "secondary" | "success" | "destructive"> = {
   draft: "secondary",
   approved: "secondary",
+  partially_received: "secondary",
   received: "success",
   cancelled: "destructive",
 };
@@ -51,7 +54,7 @@ interface PurchaseOrderDetailDrawerProps {
   canReceive: boolean;
   canCancel: boolean;
   onApprove: (id: number) => void;
-  onReceive: (id: number) => void;
+  onReceive: (id: number, items?: { id_detalle_orden_compra: number; cantidad: number }[]) => void;
   onCancel: (id: number) => void;
   isMutating: boolean;
 }
@@ -73,9 +76,34 @@ export function PurchaseOrderDetailDrawer({
     enabled: orderId != null,
   });
 
+  const [qtyById, setQtyById] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    if (!orden) return;
+    const initial: Record<number, string> = {};
+    for (const it of orden.items) {
+      const pendiente = Number(it.cantidad) - Number(it.cantidad_recibida);
+      if (pendiente > 0) initial[it.id_detalle_orden_compra] = String(pendiente);
+    }
+    setQtyById(initial);
+  }, [orden]);
+
   const isOpen = orderId != null;
   const isCancelled = orden?.estado === "cancelled";
-  const pasoActualIndex = orden ? PASOS.findIndex((p) => p.key === orden.estado) : -1;
+  // `partially_received` no es un paso propio del timeline: se muestra a medio camino de "Recepcionada".
+  const pasoActualIndex = orden
+    ? orden.estado === "partially_received"
+      ? PASOS.findIndex((p) => p.key === "approved")
+      : PASOS.findIndex((p) => p.key === orden.estado)
+    : -1;
+
+  const buildReceiveItems = () => {
+    if (!orden) return undefined;
+    const items = orden.items
+      .map((it) => ({ id_detalle_orden_compra: it.id_detalle_orden_compra, cantidad: Number(qtyById[it.id_detalle_orden_compra] ?? 0) }))
+      .filter((it) => it.cantidad > 0);
+    return items.length > 0 ? items : undefined;
+  };
 
   return (
     <Sheet open={isOpen} onOpenChange={(o) => !o && onClose()}>
@@ -166,14 +194,40 @@ export function PurchaseOrderDetailDrawer({
                   Productos ({orden.items.length})
                 </h3>
                 <div className="rounded-xl border border-border/40 divide-y divide-border/40">
-                  {orden.items.map((item) => (
-                    <div key={item.id_detalle_orden_compra} className="p-3">
-                      <p className="text-sm font-medium text-foreground">{item.descripcion}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {item.marca} · {item.cantidad} × S/ {Number(item.precio_unitario).toFixed(2)} = S/ {Number(item.total).toFixed(2)}
-                      </p>
-                    </div>
-                  ))}
+                  {orden.items.map((item) => {
+                    const pendiente = Number(item.cantidad) - Number(item.cantidad_recibida);
+                    const puedeRecibir = canReceive && pendiente > 0 && !isCancelled && orden.estado !== "received";
+                    return (
+                      <div key={item.id_detalle_orden_compra} className="p-3">
+                        <p className="text-sm font-medium text-foreground">{item.descripcion}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.marca} · {item.cantidad} × S/ {Number(item.precio_unitario).toFixed(2)} = S/ {Number(item.total).toFixed(2)}
+                        </p>
+                        {Number(item.cantidad_recibida) > 0 && (
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            Recibido: {item.cantidad_recibida} / {item.cantidad}
+                          </p>
+                        )}
+                        {puedeRecibir && (
+                          <div className="mt-1.5 flex items-center gap-1.5">
+                            <span className="text-[10px] text-muted-foreground">Recibir ahora:</span>
+                            <input
+                              type="number"
+                              min={0}
+                              max={pendiente}
+                              step="1"
+                              value={qtyById[item.id_detalle_orden_compra] ?? ""}
+                              onChange={(e) =>
+                                setQtyById((prev) => ({ ...prev, [item.id_detalle_orden_compra]: e.target.value }))
+                              }
+                              className="h-6 w-16 rounded-md border border-border bg-card px-1.5 text-[11px] tabular-nums"
+                            />
+                            <span className="text-[10px] text-muted-foreground">/ {pendiente} pendiente</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
                 <div className="flex justify-end text-sm font-semibold text-foreground">
                   Total: S/ {orden.items.reduce((sum, i) => sum + Number(i.total), 0).toFixed(2)}
@@ -200,8 +254,14 @@ export function PurchaseOrderDetailDrawer({
               </Button>
             )}
             {canReceive && (
-              <Button variant="secondary" className="w-full gap-1.5" disabled={isMutating} onClick={() => onReceive(orden.id)}>
-                <PackageCheck className="h-4 w-4" /> Recibir mercadería
+              <Button
+                variant="secondary"
+                className="w-full gap-1.5"
+                disabled={isMutating}
+                onClick={() => onReceive(orden.id, buildReceiveItems())}
+              >
+                <PackageCheck className="h-4 w-4" />
+                {orden.estado === "partially_received" ? "Continuar recepción" : "Recibir mercadería"}
               </Button>
             )}
             {canCancel && (

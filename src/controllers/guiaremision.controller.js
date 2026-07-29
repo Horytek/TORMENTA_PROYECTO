@@ -1,5 +1,5 @@
 import { getConnection } from "./../database/database.js";
-import { descontarPorProducto, restarStockSku } from "../services/inventario/stockRepository.js";
+import { descontarPorProducto, restarStockSku, sumarStockSku } from "../services/inventario/stockRepository.js";
 import { esErrorDeStock } from "../services/inventario/errores.js";
 
 // Cache para queries repetitivas (opcional, para datos que no cambian frecuentemente)
@@ -214,11 +214,15 @@ const getSucursal = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
+        // id_almacen viaja acá para que el picker de productos consulte el
+        // stock del almacén realmente vinculado a la sucursal, no de la
+        // sucursal misma (son tablas distintas: sucursal_almacen las une).
         const [result] = await connection.query(
-            `SELECT id_sucursal AS id, nombre_sucursal AS nombre, ubicacion AS direccion 
-             FROM sucursal 
-             WHERE id_tenant = ? 
-             ORDER BY nombre_sucursal`,
+            `SELECT s.id_sucursal AS id, s.nombre_sucursal AS nombre, s.ubicacion AS direccion, sa.id_almacen
+             FROM sucursal s
+             LEFT JOIN sucursal_almacen sa ON sa.id_sucursal = s.id_sucursal
+             WHERE s.id_tenant = ?
+             ORDER BY s.nombre_sucursal`,
             [req.id_tenant]
         );
 
@@ -687,19 +691,20 @@ const addVehiculo = async (req, res) => {
 //OBTENER PRODUCTOS - OPTIMIZADO
 const getProductos = async (req, res) => {
     let connection;
-    const { descripcion = '', codbarras = '' } = req.query;
+    const { descripcion = '', codbarras = '', almacen = '' } = req.query;
     const id_tenant = req.id_tenant;
 
     try {
         connection = await getConnection();
 
-        // Query optimizada con condiciones más eficientes
-        // Query optimizada con condiciones más eficientes
+        // `inventario` quedó vacía tras la migración a SKU (ver stockRepository.js);
+        // el stock real vive en inventario_stock, vía producto_sku. Mismo fix ya
+        // aplicado en notaingreso/notasalida — acá faltaba.
         let query = `
-            SELECT 
+            SELECT
                 p.id_producto,
-                p.id_producto AS codigo, 
-                p.descripcion AS descripcion, 
+                p.id_producto AS codigo,
+                p.descripcion AS descripcion,
                 m.nom_marca AS marca,
                 p.cod_barras AS codbarras,
                 COALESCE(SUM(i.stock), 0) as stock
@@ -708,10 +713,15 @@ const getProductos = async (req, res) => {
             INNER JOIN
                 marca m ON p.id_marca = m.id_marca
             LEFT JOIN
-                inventario i ON p.id_producto = i.id_producto AND i.id_tenant = ?
+                producto_sku ps ON ps.id_producto = p.id_producto AND ps.id_tenant = p.id_tenant
+            LEFT JOIN
+                inventario_stock i ON i.id_sku = ps.id_sku AND i.id_tenant = p.id_tenant
+                ${almacen ? "AND i.id_almacen = ?" : ""}
             WHERE p.id_tenant = ?`;
 
-        const params = [id_tenant, id_tenant];
+        const params = [];
+        if (almacen) params.push(almacen);
+        params.push(id_tenant);
 
         // Solo agregar condiciones si hay valores de búsqueda
         if (descripcion) {
@@ -857,25 +867,57 @@ const anularGuia = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
+        await connection.beginTransaction();
 
-        // Verificar y anular en una sola query con UPDATE condicional
+        // FOR UPDATE: dos anulaciones simultáneas de la misma guía no deben
+        // revertir el stock dos veces (mismo criterio que annulVentaInternal).
         const [updateResult] = await connection.query(
-            `UPDATE guia_remision 
-             SET estado_guia = 0, 
+            `UPDATE guia_remision
+             SET estado_guia = 0,
                  u_modifica = ?,
                  f_anulacion = CURRENT_DATE()
-             WHERE id_guiaremision = ? 
-               AND estado_guia = 1 
+             WHERE id_guiaremision = ?
+               AND estado_guia = 1
                AND id_tenant = ?`,
             [usuario, guiaId, id_tenant]
         );
 
         if (updateResult.affectedRows === 0) {
+            await connection.rollback();
             return res.status(404).json({
                 code: 0,
                 message: "Guía de remisión no encontrada o ya anulada."
             });
         }
+
+        // Revertir el stock leyendo la BITÁCORA (no detalle_envio): si el
+        // reparto fue automático entre varios SKU, es la única fuente que sabe
+        // exactamente qué se descontó de dónde (mismo patrón que anular ventas).
+        const [salidas] = await connection.query(
+            `SELECT id_producto, id_sku, id_almacen, id_tonalidad, id_talla, SUM(sale) AS unidades
+             FROM bitacora_nota
+             WHERE id_guiaremision = ? AND id_tenant = ? AND sale > 0
+             GROUP BY id_producto, id_sku, id_almacen, id_tonalidad, id_talla`,
+            [guiaId, id_tenant]
+        );
+
+        const fecha = new Date().toISOString().slice(0, 10);
+        for (const s of salidas) {
+            const unidades = Number(s.unidades);
+            if (!Number.isFinite(unidades) || unidades <= 0 || !s.id_sku) continue;
+
+            const movimiento = await sumarStockSku(connection, {
+                id_tenant, id_sku: s.id_sku, id_almacen: s.id_almacen, cantidad: unidades,
+            });
+
+            await connection.query(
+                `INSERT INTO bitacora_nota (id_producto, id_sku, id_almacen, entra, stock_anterior, stock_actual, fecha, id_guiaremision, id_tenant, id_tonalidad, id_talla)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [s.id_producto, s.id_sku, s.id_almacen, unidades, movimiento.stockAnterior, movimiento.stockActual, fecha, guiaId, id_tenant, s.id_tonalidad, s.id_talla]
+            );
+        }
+
+        await connection.commit();
 
         // Limpiar caché
         queryCache.clear();
@@ -885,6 +927,7 @@ const anularGuia = async (req, res) => {
             message: 'Guía de remisión anulada correctamente'
         });
     } catch (error) {
+        if (connection) await connection.rollback();
         console.error('Error en anularGuia:', error);
         res.status(500).json({
             code: 0,
@@ -1109,6 +1152,17 @@ const insertGuiaRemisionAndDetalle = async (req, res) => {
                     });
 
                 console.log(`[GuiaRemision] Stock descontado: Producto ${id_producto}, Cantidad ${cantidadProducto}, Almacén ${id_almacen}, SKUs ${movimientos.map(m => m.id_sku).join("/")}`);
+
+                // Bitácora: sin esto el movimiento es invisible en el Kardex y,
+                // si `descontarPorProducto` repartió entre varios SKU, anular la
+                // guía no tendría cómo saber qué revertir exactamente.
+                for (const mov of movimientos) {
+                    await connection.query(
+                        `INSERT INTO bitacora_nota (id_producto, id_sku, id_almacen, sale, stock_anterior, stock_actual, fecha, id_guiaremision, id_tenant, id_tonalidad, id_talla)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                        [id_producto, mov.id_sku, id_almacen, mov.cantidad, mov.stockAnterior, mov.stockActual, f_generacion, id_guiaremision, id_tenant, id_ton, id_tal]
+                    );
+                }
             }
         } else {
             console.log(`[GuiaRemision] Sucursal ${id_sucursal} no tiene almacén vinculado, no se descuenta stock.`);

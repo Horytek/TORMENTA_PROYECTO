@@ -35,6 +35,7 @@ import {
   getDocumentosSalida,
   insertNotaIngreso,
   insertNotaSalida,
+  insertTransferenciaAlmacen,
 } from "../api/warehouseNotes";
 import type { NoteKind, NoteFormItem, NotaInsertPayload } from "../types";
 
@@ -189,26 +190,17 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
       };
 
       if (tipoNota === "conjunto") {
-        const salidaResult = await insertNotaSalida({
+        // Una sola transacción en el backend (transferenciaAlmacen.controller.js):
+        // si el ingreso falla, la salida también se revierte — antes eran dos
+        // POST independientes y un fallo a mitad de camino perdía el stock.
+        return insertTransferenciaAlmacen({
           ...common,
           almacenO: values.almacenOrigen,
-          numComprobante: numeroDocumentoSalida,
-          nom_usuario: user?.username,
-        });
-        if (!salidaResult.success) return salidaResult;
-
-        const ingresoResult = await insertNotaIngreso({
-          ...common,
           almacenD: values.almacenDestino,
-          numComprobante: numeroDocumentoIngreso,
-          usuario: user?.username,
+          numComprobanteSalida: numeroDocumentoSalida,
+          numComprobanteIngreso: numeroDocumentoIngreso,
+          usuario: user?.username ?? "",
         });
-        // ponytail: sin transacción entre los dos endpoints legacy; si el ingreso falla acá,
-        // la salida ya quedó registrada. Aceptable (no es ruta de facturación/pagos); se avisa.
-        if (!ingresoResult.success) {
-          return { success: false, message: `Salida registrada, pero el ingreso falló: ${ingresoResult.message || "error desconocido"}` };
-        }
-        return ingresoResult;
       }
 
       const payload: NotaInsertPayload = {

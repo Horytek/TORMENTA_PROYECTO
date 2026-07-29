@@ -1,4 +1,4 @@
-export type EstadoOrdenCompra = "draft" | "approved" | "received" | "cancelled";
+export type EstadoOrdenCompra = "draft" | "approved" | "partially_received" | "received" | "cancelled";
 export type EstadoFactura = "pendiente" | "pagada" | "anulada";
 export type EstadoCuentaPorPagar = "pendiente" | "pagada_parcial" | "pagada" | "vencida";
 
@@ -21,6 +21,7 @@ export interface PurchaseOrderItem {
   descripcion: string;
   marca: string;
   cantidad: number;
+  cantidad_recibida: number;
   precio_unitario: number;
   total: number;
   nombre_tonalidad: string | null;

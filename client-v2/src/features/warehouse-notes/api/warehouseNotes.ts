@@ -10,6 +10,7 @@ import type {
   NotaProducto,
   NotaInsertPayload,
   NotaInsertResult,
+  TransferenciaInsertPayload,
 } from "../types";
 
 /** Quita claves vacías/indefinidas antes de mandarlas como querystring. */
@@ -100,3 +101,16 @@ export const getProductosSalida = async (filtros: {
   cod_barras?: string;
 }): Promise<NotaProducto[]> =>
   unwrapList<NotaProducto>(await api.get("/nota_salida/productos", { params: cleanParams(filtros) }));
+
+// ─────────────────────────────────────────────────────────────────
+// Transferencia entre almacenes (salida + ingreso atómicos)
+// ─────────────────────────────────────────────────────────────────
+
+export const insertTransferenciaAlmacen = async (data: TransferenciaInsertPayload): Promise<NotaInsertResult> => {
+  try {
+    const res = await api.post("/transferencia_almacen", data);
+    return { success: res.data?.code === 1, message: res.data?.message };
+  } catch (err) {
+    return { success: false, message: extractErrorMessage(err) };
+  }
+};

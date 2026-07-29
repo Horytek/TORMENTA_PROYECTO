@@ -100,17 +100,25 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
   const isCompleto = totalPagado >= total;
   const isExcedente = totalPagado > total;
 
+  // Crédito es excluyente: no se puede mezclar con otro método (todo el total
+  // pasa a cuenta por cobrar, no hay monto en efectivo/tarjeta que reconciliar).
+  const isCredito = pagos.length === 1 && pagos[0].metodo === "CREDITO";
+
   // Abrir segundo método cuando el primero no cubre todo (solo para Boleta/Factura)
-  const puedeAgregarMetodo = !isNota && pagos.length < MAX_METODOS;
+  const puedeAgregarMetodo = !isNota && !isCredito && pagos.length < MAX_METODOS;
 
   // Actualizar método de un slot
   const updateMetodo = useCallback((index: number, metodo: MetodoPago) => {
+    if (metodo === "CREDITO") {
+      setPagos([{ metodo: "CREDITO", monto: total }]);
+      return;
+    }
     setPagos((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], metodo };
       return next;
     });
-  }, []);
+  }, [total]);
 
   // Actualizar monto de un slot — auto-reparte el restante en los slots siguientes
   const updateMonto = useCallback((index: number, monto: number) => {
@@ -187,15 +195,16 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
 
   // Construir metodo_pago para el backend (formato "EFECTIVO:50,YAPE:30")
   const metodoPagoBackend = useMemo(() => {
+    if (isCredito) return "CREDITO";
     if (isNota) return "EFECTIVO";
     return pagos
       .filter((p) => p.monto > 0)
       .map((p) => `${p.metodo}:${p.monto.toFixed(2)}`)
       .join(",");
-  }, [pagos, isNota]);
+  }, [pagos, isNota, isCredito]);
 
-  // Construct received total
-  const montoRecibidoBackend = totalPagado;
+  // Construct received total — en crédito no se cobra nada ahora.
+  const montoRecibidoBackend = isCredito ? 0 : totalPagado;
 
   // Validación antes de enviar
   const validationError = useMemo(() => {
@@ -204,6 +213,9 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
       return "Debes seleccionar un cliente con RUC para emitir una Factura.";
     }
     if (cart.items.length === 0) return "El carrito está vacío.";
+    if (isCredito && clienteFinal.id_cliente === 0) {
+      return "Debes seleccionar un cliente para una venta a crédito.";
+    }
     if (isNota) {
       if (pagos[0].monto <= 0) return "El monto recibido debe ser mayor a S/ 0.00.";
       if (pagos[0].monto < total) return `El monto recibido (S/ ${pagos[0].monto.toFixed(2)}) es menor al total (S/ ${total.toFixed(2)}).`;
@@ -222,7 +234,7 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
       if (unique.size !== metodos.length) return "No puedes usar el mismo método de pago más de una vez.";
     }
     return null;
-  }, [cart.cliente, cart.items, isNota, pagos, total, totalPagado, resta, isExcedente, comprobanteTipo]);
+  }, [cart.cliente, cart.items, isNota, isCredito, pagos, total, totalPagado, resta, isExcedente, comprobanteTipo]);
 
   // Mutación de venta
   const mutation = useMutation({
@@ -252,7 +264,7 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
         total_t: total,
         totalImporte_venta: total,
         descuento_venta: cart.descuento,
-        vuelto: Math.max(0, totalPagado - total),
+        vuelto: isCredito ? 0 : Math.max(0, totalPagado - total),
         recibido: montoRecibidoBackend,
         observacion: observaciones || undefined,
         comprobante_pago: metodoPagoBackend,
@@ -264,6 +276,7 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
           id_tonalidad: item.id_tonalidad,
           id_talla: item.id_talla,
           id_sku: item.id_sku,
+          descuento: item.descuento,
         })),
       };
 
@@ -393,6 +406,11 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
                             </SelectItem>
                           );
                         })}
+                        {index === 0 && (
+                          <SelectItem value="CREDITO" disabled={pagos.length > 1}>
+                            🧾 Crédito (cuenta por cobrar)
+                          </SelectItem>
+                        )}
                       </SelectContent>
                     </Select>
 
@@ -405,7 +423,7 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
                         step={0.01}
                         value={pago.monto || ""}
                         onChange={(e) => updateMonto(index, Number(e.target.value) || 0)}
-                        disabled={isNota}
+                        disabled={isNota || isCredito}
                         placeholder="0.00"
                         className="pl-8 font-mono text-sm text-right"
                       />
@@ -423,6 +441,12 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
                   </div>
                 ))}
               </div>
+
+              {isCredito && (
+                <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
+                  No se cobra nada ahora. El total queda como cuenta por cobrar del cliente.
+                </p>
+              )}
 
               {/* Agregar método extra */}
               {!isNota && puedeAgregarMetodo && metodosUsados.size < METODOS_DISPONIBLES.length && (

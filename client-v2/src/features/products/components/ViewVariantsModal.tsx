@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { getProductAttributes } from "../api/products";
-import { Loader2, Palette, Ruler, Boxes, Info } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getProductAttributes, getHistorialPrecioProducto, getProductVariants } from "../api/products";
+import { Loader2, Palette, Ruler, Boxes, Info, History, Package } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -73,6 +74,18 @@ export default function ViewVariantsModal({
       fetchAttributes();
     }
   }, [isOpen, productId]);
+
+  const { data: historialPrecio = [] } = useQuery({
+    queryKey: ["historial-precio", productId],
+    queryFn: () => getHistorialPrecioProducto(productId!),
+    enabled: isOpen && !!productId,
+  });
+
+  const { data: skus = [] } = useQuery({
+    queryKey: ["product-variants-skus", productId],
+    queryFn: () => getProductVariants(productId!),
+    enabled: isOpen && !!productId,
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -172,6 +185,77 @@ export default function ViewVariantsModal({
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {skus.length > 0 && (
+            <div className="mt-4 border-t border-border pt-3">
+              <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Package className="h-3.5 w-3.5 text-brand" /> Stock por variante ({skus.length} {skus.length === 1 ? "variante" : "variantes"})
+              </p>
+              <div className="max-h-48 overflow-y-auto rounded-lg border border-border bg-card shadow-inner">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="sticky top-0 bg-muted text-[10px] uppercase font-semibold text-muted-foreground backdrop-blur border-b border-border">
+                    <tr>
+                      <th className="px-3 py-2">Variante</th>
+                      <th className="px-3 py-2">Código / SKU</th>
+                      <th className="px-3 py-2 text-right">Precio</th>
+                      <th className="px-3 py-2 text-right">Stock</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/40">
+                    {skus.map((sku) => {
+                      const attrLabel =
+                        Object.values(sku.attrs || {}).filter(Boolean).join(" / ") ||
+                        sku.sku ||
+                        `SKU #${sku.id_sku}`;
+                      const stockNum = Number(sku.stock);
+                      return (
+                        <tr key={sku.id_sku} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-3 py-2 font-medium text-foreground">{attrLabel}</td>
+                          <td className="px-3 py-2 text-muted-foreground font-mono text-[11px]">
+                            {sku.cod_barras || sku.sku || "-"}
+                          </td>
+                          <td className="px-3 py-2 text-right text-muted-foreground font-medium">
+                            {sku.precio != null ? `S/ ${Number(sku.precio).toFixed(2)}` : "-"}
+                          </td>
+                          <td className="px-3 py-2 text-right font-semibold">
+                            <span
+                              className={
+                                stockNum === 0
+                                  ? "text-destructive"
+                                  : stockNum < 5
+                                  ? "text-orange-600 dark:text-orange-400"
+                                  : "text-emerald-600 dark:text-emerald-400"
+                              }
+                            >
+                              {stockNum.toLocaleString()} disp.
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {historialPrecio.length > 0 && (
+            <div className="mt-4 border-t border-border pt-3">
+              <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <History className="h-3.5 w-3.5" /> Historial de precio
+              </p>
+              <ul className="space-y-1.5">
+                {historialPrecio.map((h) => (
+                  <li key={h.id_log} className="text-xs text-muted-foreground">
+                    <span className="text-foreground">{h.descripcion}</span>
+                    {" — "}
+                    {new Date(h.fecha).toLocaleDateString("es-PE")}
+                    {h.usuario ? ` · ${h.usuario}` : ""}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>

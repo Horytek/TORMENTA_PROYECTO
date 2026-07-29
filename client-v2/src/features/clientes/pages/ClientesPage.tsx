@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryState, parseAsString } from "nuqs";
-import { Plus, Pencil, Trash2, Ban, RotateCcw } from "lucide-react";
+import { Plus, Pencil, Trash2, Ban, RotateCcw, History } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection";
@@ -10,6 +10,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import ClientForm from "../components/ClientForm";
+import { ClientHistoryDrawer } from "../components/ClientHistoryDrawer";
 import { getClientes, deleteCliente, deactivateCliente, updateCliente } from "../api/clientes";
 import type { Cliente } from "../types";
 import { clienteNombre, clienteDocumento, clienteTipo } from "../types";
@@ -42,14 +43,25 @@ export default function ClientesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Cliente | null>(null);
   const [confirm, setConfirm] = useState<{ action: ConfirmAction; cliente: Cliente } | null>(null);
+  const [viewingHistory, setViewingHistory] = useState<Cliente | null>(null);
 
   const { can } = usePermissions();
   const canEdit = can("clientes.edit");
   const canDelete = can("clientes.delete");
 
+  // Debounce: el backend limita el listado a 100 clientes por página (Regla de
+  // Oro: nunca traer TODO sin paginar), así que la búsqueda tiene que resolverse
+  // en el servidor — filtrar en el cliente sobre esos 100 dejaba invisible a
+  // cualquier cliente fuera de la primera página.
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
   const { data: clientes = [], isLoading } = useQuery<Cliente[]>({
-    queryKey: ["clientes"],
-    queryFn: getClientes,
+    queryKey: ["clientes", debouncedSearch],
+    queryFn: () => getClientes({ searchTerm: debouncedSearch || undefined, limit: 100 }),
   });
 
   const fields: FieldDef<Cliente>[] = [
@@ -102,6 +114,12 @@ export default function ClientesPage() {
   ];
 
   const actions: RecordAction[] = [
+    {
+      id: "history",
+      label: "Ver historial",
+      icon: <History className="h-4 w-4" />,
+      onClick: (item) => setViewingHistory(item as Cliente),
+    },
     {
       id: "edit",
       label: "Editar",
@@ -179,6 +197,7 @@ export default function ClientesPage() {
         search={searchTerm}
         searchPlaceholder="Buscar por nombre o documento…"
         onSearch={setSearchTerm}
+        serverSide
         empty={{
           title: "No se encontraron clientes",
           description: searchTerm
@@ -219,6 +238,12 @@ export default function ClientesPage() {
         confirmLabel={copy?.cta}
         variant={copy?.danger ? "danger" : "default"}
         isPending={confirmMutation.isPending}
+      />
+
+      <ClientHistoryDrawer
+        cliente={viewingHistory}
+        isOpen={!!viewingHistory}
+        onClose={() => setViewingHistory(null)}
       />
     </div>
   );

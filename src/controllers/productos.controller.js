@@ -87,8 +87,11 @@ const getProductos = async (req, res) => {
                    CA.nom_subcat, MA.nom_marca, PR.undm,
                    CAST(PR.precio AS DECIMAL(10, 2)) AS precio, PR.cod_barras,
                    PR.estado_producto AS estado, PR.id_marca, PR.id_subcategoria,
-                   cat.id_categoria,
-                   SUM(COALESCE(INV.stock, 0)) AS stock_total
+                   cat.id_categoria, PR.stock_min,
+                   SUM(COALESCE(INV.stock, 0)) AS stock_total,
+                   (SELECT AVG(sub.costo_promedio) FROM producto_sku sub
+                    WHERE sub.id_producto = PR.id_producto AND sub.id_tenant = PR.id_tenant
+                      AND sub.costo_promedio IS NOT NULL) AS costo_promedio
             FROM producto PR
             INNER JOIN marca MA ON MA.id_marca = PR.id_marca
             INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
@@ -96,7 +99,7 @@ const getProductos = async (req, res) => {
             LEFT JOIN producto_sku PSK ON PSK.id_producto = PR.id_producto AND PSK.id_tenant = PR.id_tenant
             LEFT JOIN inventario_stock INV ON INV.id_sku = PSK.id_sku AND INV.id_tenant = PSK.id_tenant
             ${whereSQL}
-            GROUP BY PR.id_producto, PR.descripcion, CA.nom_subcat, MA.nom_marca, PR.undm, PR.precio, PR.cod_barras, PR.estado_producto, PR.id_marca, PR.id_subcategoria, cat.id_categoria
+            GROUP BY PR.id_producto, PR.descripcion, CA.nom_subcat, MA.nom_marca, PR.undm, PR.precio, PR.cod_barras, PR.estado_producto, PR.id_marca, PR.id_subcategoria, cat.id_categoria, PR.stock_min
             ORDER BY ${sortBy} ${sortDir}
             LIMIT ? OFFSET ?
             `,
@@ -148,7 +151,7 @@ const getProducto = async (req, res) => {
         const { id } = req.params;
         connection = await getConnection();
         const [result] = await connection.query(`
-                SELECT id_producto, id_marca, SC.id_categoria, PR.id_subcategoria, descripcion, precio, cod_barras, undm, estado_producto
+                SELECT id_producto, id_marca, SC.id_categoria, PR.id_subcategoria, descripcion, precio, cod_barras, undm, estado_producto, PR.stock_min
                 FROM producto PR
                 INNER JOIN sub_categoria SC ON PR.id_subcategoria = SC.id_subcategoria
                 WHERE PR.id_producto = ? AND PR.id_tenant = ?
@@ -172,13 +175,13 @@ const getProducto = async (req, res) => {
 const addProducto = async (req, res) => {
     let connection;
     try {
-        const { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto } = req.body;
+        const { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto, stock_min } = req.body;
 
         if (id_marca === undefined || id_subcategoria === undefined || descripcion === undefined || undm === undefined || id_subcategoria === undefined || estado_producto === undefined || precio === undefined) {
             res.status(400).json({ message: "Bad Request. Please fill all field." });
         }
 
-        const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto, id_tenant: req.id_tenant };
+        const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto, id_tenant: req.id_tenant, stock_min: stock_min ?? null };
         connection = await getConnection();
         const [result] = await connection.query("INSERT INTO producto SET ? ", producto);
 
@@ -200,7 +203,7 @@ const updateProducto = async (req, res) => {
     let connection;
     try {
         const { id } = req.params;
-        const { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto } = req.body;
+        const { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto, stock_min } = req.body;
 
         if (id_marca === undefined || id_subcategoria === undefined || descripcion === undefined || undm === undefined || id_subcategoria === undefined || estado_producto === undefined || precio === undefined) {
             res.status(400).json({ message: "Bad Request. Please fill all field." });
@@ -218,7 +221,7 @@ const updateProducto = async (req, res) => {
             return res.status(404).json({ code: 0, message: "Producto no encontrado" });
         }
 
-        const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto };
+        const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto, stock_min: stock_min ?? null };
         const [result] = await connection.query("UPDATE producto SET ? WHERE id_producto = ? AND id_tenant = ?", [producto, id, req.id_tenant]);
 
         if (result.affectedRows === 0) {
@@ -736,6 +739,33 @@ const importExcel = async (req, res) => {
     }
 };
 
+// Historial de cambios de precio — mismo patrón que clientes.getHistorialCliente
+// (recurso = "producto_id:X"), filtrado a la acción de cambio de precio.
+const getHistorialPrecioProducto = async (req, res) => {
+    let connection;
+    try {
+        const { id } = req.params;
+        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 15, 1), 50);
+        connection = await getConnection();
+
+        const [rows] = await connection.query(`
+            SELECT l.id_log, l.fecha, l.descripcion, u.usua AS usuario
+            FROM log_sistema l
+            LEFT JOIN usuario u ON l.id_usuario = u.id_usuario
+            WHERE l.id_tenant = ? AND l.recurso = ? AND l.accion = 'PRODUCTO_CAMBIO_PRECIO'
+            ORDER BY l.fecha DESC
+            LIMIT ?
+        `, [req.id_tenant, `producto_id:${id}`, limit]);
+
+        res.json({ code: 1, data: rows });
+    } catch (error) {
+        console.error('Error en getHistorialPrecioProducto:', error);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
 export const methods = {
     getProductos,
     getUltimoIdProducto,
@@ -747,6 +777,7 @@ export const methods = {
     getProductAttributes,
     registerVariants,
     generateSKUs,
-    importExcel
+    importExcel,
+    getHistorialPrecioProducto
 };
 

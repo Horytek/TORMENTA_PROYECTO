@@ -7,6 +7,7 @@ import { esErrorDeStock } from "../services/inventario/errores.js";
 import { obtenerCostosVigentes } from "../services/costos/costoRepository.js";
 import { costoDeLineaRepartida } from "../services/costos/costoPromedio.js";
 import { resolveSku } from "../utils/skuHelper.js";
+import { saldoPendienteCliente } from "./cuentaPorCobrar.controller.js";
 
 // Cache para datos que no cambian frecuentemente
 const queryCache = new Map();
@@ -297,7 +298,8 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
   const {
     id_sucursal, id_almacen, id_comprobante, id_cliente, estado_venta,
     f_venta, igv, detalles, fecha_iso, metodo_pago, fecha,
-    descuento_venta, vuelto, recibido, observacion, estado_sunat, idempotency_key
+    descuento_venta, vuelto, recibido, observacion, estado_sunat, idempotency_key,
+    id_usuario
   } = saleData;
 
   const fechaVenta = f_venta || fecha;
@@ -318,6 +320,28 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
     ));
   const totalVenta = detallesNormalizados.reduce((suma, detalle) => suma + detalle.total, 0);
   const idempotencyKey = normalizarIdempotencyKey(idempotency_key);
+  const esVentaACredito = String(metodo_pago).toUpperCase() === "CREDITO";
+
+  // 0. Venta a crédito: requiere cliente y respeta su límite (si tiene uno configurado).
+  if (esVentaACredito) {
+    if (!id_cliente) {
+      throw new VentaValidationError("Una venta a crédito requiere seleccionar un cliente.");
+    }
+    const [[cliente]] = await connection.query(
+      "SELECT limite_credito FROM cliente WHERE id_cliente = ? AND id_tenant = ?",
+      [id_cliente, id_tenant]
+    );
+    if (!cliente) throw new VentaValidationError("Cliente no encontrado.", 404);
+    if (cliente.limite_credito != null) {
+      const saldoActual = await saldoPendienteCliente(connection, { id_cliente, id_tenant });
+      if (saldoActual + totalVenta > Number(cliente.limite_credito)) {
+        throw new VentaValidationError(
+          `Esta venta supera el límite de crédito del cliente (disponible: S/ ${(Number(cliente.limite_credito) - saldoActual).toFixed(2)}).`,
+          409
+        );
+      }
+    }
+  }
 
   // 1. Generar Correlativo
   const [comprobanteResult] = await connection.query(
@@ -344,13 +368,32 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
   );
   const id_comprobante_final = nuevoComprobanteResult.insertId;
 
+  // 2.5. Resolver quién atendió (para comisión) — por id_usuario, no por sucursal.
+  let dniVendedor = null;
+  if (id_usuario) {
+    const [[vendedorRow]] = await connection.query(
+      "SELECT dni FROM vendedor WHERE id_usuario = ? AND id_tenant = ?",
+      [id_usuario, id_tenant]
+    );
+    dniVendedor = vendedorRow?.dni ?? null;
+  }
+
   // 3. Insertar Venta
   // id_anular / id_anular_b removed/ignored.
   const [ventaResult] = await connection.query(
-    "INSERT INTO venta (id_comprobante, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, observacion, estado_sunat, id_tenant, idempotency_key, recibido, vuelto, descuento_global) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [id_comprobante_final, id_cliente, id_sucursal, estadoVenta, fechaVenta, igvVenta, fechaIsoVenta, metodo_pago, observacionVenta, estadoSunat, id_tenant, idempotencyKey, recibidoVenta, vueltoVenta, descuentoVenta]
+    "INSERT INTO venta (id_comprobante, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, observacion, estado_sunat, id_tenant, idempotency_key, recibido, vuelto, descuento_global, dni_vendedor) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [id_comprobante_final, id_cliente, id_sucursal, estadoVenta, fechaVenta, igvVenta, fechaIsoVenta, metodo_pago, observacionVenta, estadoSunat, id_tenant, idempotencyKey, recibidoVenta, vueltoVenta, descuentoVenta, dniVendedor]
   );
   const id_venta = ventaResult.insertId;
+
+  // 3.1. Venta a crédito: registrar la cuenta por cobrar (vencimiento a 30 días).
+  if (esVentaACredito) {
+    await connection.query(
+      `INSERT INTO cuenta_por_cobrar (id_venta, id_cliente, id_tenant, monto_total, saldo, fecha_vencimiento, estado)
+       VALUES (?, ?, ?, ?, ?, DATE_ADD(?, INTERVAL 30 DAY), 'pendiente')`,
+      [id_venta, id_cliente, id_tenant, totalVenta, totalVenta, fechaVenta]
+    );
+  }
 
   // 3.5. Validar los id_sku que mandó el cliente.
   // `restarStockSku` filtra por (id_tenant, id_sku, id_almacen) y nunca por
@@ -591,6 +634,45 @@ const getVentas = async (req, res) => {
     res.json({ code: 1, data: ventas });
   } catch (error) {
     console.error('Error en getVentas:', error);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+// Búsqueda liviana por comprobante/cliente — para el buscador global (⌘K).
+// No usa los joins pesados de getVentas: solo lo mínimo para mostrar un resultado.
+const buscarVentas = async (req, res) => {
+  let connection;
+  try {
+    const id_tenant = req.id_tenant;
+    const q = String(req.query.q ?? "").trim();
+    if (q.length < 2) return res.json({ code: 1, data: [] });
+
+    connection = await getConnection();
+    const like = `%${q}%`;
+
+    const [rows] = await connection.query(
+      `SELECT
+         v.id_venta,
+         com.num_comprobante,
+         COALESCE(cl.razon_social, CONCAT(cl.nombres, ' ', cl.apellidos)) AS cliente,
+         DATE_FORMAT(v.f_venta, '%Y-%m-%d') AS fecha,
+         (SELECT COALESCE(SUM(dv.total), 0) FROM detalle_venta dv WHERE dv.id_venta = v.id_venta) AS total
+       FROM venta v
+       INNER JOIN comprobante com ON com.id_comprobante = v.id_comprobante AND com.id_tenant = v.id_tenant
+       LEFT JOIN cliente cl ON cl.id_cliente = v.id_cliente
+       WHERE v.id_tenant = ?
+         AND v.estado_venta != 0
+         AND (com.num_comprobante LIKE ? OR cl.nombres LIKE ? OR cl.apellidos LIKE ? OR cl.razon_social LIKE ?)
+       ORDER BY v.f_venta DESC
+       LIMIT 5`,
+      [id_tenant, like, like, like, like]
+    );
+
+    res.json({ code: 1, data: rows });
+  } catch (error) {
+    console.error('Error en buscarVentas:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) connection.release();
@@ -1833,6 +1915,7 @@ const getVentasOnline = async (req, res) => {
 
 export const methods = {
   getVentas,
+  buscarVentas,
   getProductosVentas,
   addVenta,
   getClienteVentas,

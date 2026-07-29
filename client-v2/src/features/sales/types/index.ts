@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────
 
 export type ComprobanteTipo = "Boleta" | "Factura" | "Nota de venta";
-export type MetodoPago = "EFECTIVO" | "TARJETA" | "TRANSFERENCIA" | "YAPE" | "PLIN" | "MIXTO";
+export type MetodoPago = "EFECTIVO" | "TARJETA" | "TRANSFERENCIA" | "YAPE" | "PLIN" | "MIXTO" | "CREDITO";
 export type VentaEstado = 1 | 0;
 
 // ── Item en carrito ─────────────────────────────────────────────
@@ -26,6 +26,8 @@ export interface CartItem {
   /** Variante elegida (motor genérico atributo/producto_sku); null = sin variante. */
   id_sku?: number | null;
   sku_label?: string | null;
+  /** Descuento en monto (no %) aplicado a esta línea; se descuenta de precio_total. */
+  descuento?: number;
 }
 
 // ── Detalle de venta (respuesta API / backend) ─────────────────
@@ -142,6 +144,7 @@ export interface VentaDetallePayload {
   id_tonalidad?: number;
   id_talla?: number;
   id_sku?: number | null;
+  descuento?: number;
 }
 
 // ── Libro de ventas (reporte) ──────────────────────────────────

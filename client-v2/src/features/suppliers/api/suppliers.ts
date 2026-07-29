@@ -78,3 +78,6 @@ export const deleteProveedor = async (id: number): Promise<boolean> => {
   const res = await api.delete(`/destinatario/${id}`);
   return ok(res);
 };
+
+// Cuentas por pagar: ver `@/features/purchases/api/purchases` (getAccountsPayable,
+// getAccountPayablePayments, registerAccountPayablePayment).

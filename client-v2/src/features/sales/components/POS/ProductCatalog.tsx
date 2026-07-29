@@ -22,6 +22,7 @@ interface ProductCatalogProps {
 
 export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
   const [search, setSearch] = useState("");
+  const [categoria, setCategoria] = useState<string | null>(null);
   const addItem = useCartStore((s) => s.addItem);
   const cartItems = useCartStore((s) => s.items);
   const [variantDialogProduct, setVariantDialogProduct] = useState<POSProduct | null>(null);
@@ -32,17 +33,24 @@ export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
     queryFn: () => getProductosVentas(selectedAlmacenId ? { id_almacen: selectedAlmacenId } : undefined),
   });
 
+  const categorias = useMemo(
+    () => Array.from(new Set(products.map((p) => p.categoria_p).filter((c): c is string => Boolean(c)))).sort(),
+    [products]
+  );
+
   const filtered = useMemo(() => {
-    if (!search.trim()) return products;
+    let list = products;
+    if (categoria) list = list.filter((p) => p.categoria_p === categoria);
+    if (!search.trim()) return list;
     const q = search.toLowerCase();
-    return products.filter(
+    return list.filter(
       (p) =>
         p.nombre.toLowerCase().includes(q) ||
         p.codigo_barras?.toLowerCase().includes(q) ||
         String(p.codigo).includes(q) ||
         p.nom_marca?.toLowerCase().includes(q)
     );
-  }, [products, search]);
+  }, [products, search, categoria]);
 
   const handleAddToCart = (product: POSProduct, variante: VariantResolved = SIN_VARIANTE) => {
     if (product.stock !== undefined && product.stock <= 0) return;
@@ -86,6 +94,35 @@ export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
           placeholder="Buscar por nombre, código o barras…"
           wrapperClassName="w-full max-w-none"
         />
+        {categorias.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              onClick={() => setCategoria(null)}
+              className={[
+                "px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors cursor-pointer",
+                categoria === null
+                  ? "bg-primary text-white border-primary"
+                  : "bg-card text-muted-foreground border-border hover:bg-zinc-50 dark:hover:bg-zinc-900",
+              ].join(" ")}
+            >
+              Todas
+            </button>
+            {categorias.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCategoria((prev) => (prev === c ? null : c))}
+                className={[
+                  "px-2 py-0.5 rounded-full text-[10px] font-medium border transition-colors cursor-pointer",
+                  categoria === c
+                    ? "bg-primary text-white border-primary"
+                    : "bg-card text-muted-foreground border-border hover:bg-zinc-50 dark:hover:bg-zinc-900",
+                ].join(" ")}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Package className="h-3 w-3" />

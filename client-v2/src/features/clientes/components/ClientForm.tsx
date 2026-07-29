@@ -26,6 +26,7 @@ interface FormValues {
   apellidos: string;
   razon_social: string;
   direccion: string;
+  limite_credito: string;
 }
 
 const empty: FormValues = {
@@ -36,6 +37,7 @@ const empty: FormValues = {
   apellidos: "",
   razon_social: "",
   direccion: "",
+  limite_credito: "",
 };
 
 export default function ClientForm({ isOpen, onClose, initialData }: ClientFormProps) {
@@ -63,6 +65,7 @@ export default function ClientForm({ isOpen, onClose, initialData }: ClientFormP
         apellidos: initialData.apellidos ?? "",
         razon_social: initialData.razon_social ?? "",
         direccion: initialData.direccion ?? "",
+        limite_credito: initialData.limite_credito != null ? String(initialData.limite_credito) : "",
       });
     } else {
       reset(empty);
@@ -74,6 +77,7 @@ export default function ClientForm({ isOpen, onClose, initialData }: ClientFormP
       const payload: ClienteInput = {
         direccion: values.direccion.trim() || undefined,
         estado: initialData?.estado ?? 1,
+        limite_credito: values.limite_credito.trim() ? Number(values.limite_credito) : null,
         ...(isEdit ? { id_cliente: initialData!.id } : {}),
         ...(values.tipo === "natural"
           ? { dni: values.dni.trim(), nombres: values.nombres.trim(), apellidos: values.apellidos.trim() }
@@ -172,6 +176,17 @@ export default function ClientForm({ isOpen, onClose, initialData }: ClientFormP
 
       <FormField label="Dirección" htmlFor="direccion" optional>
         <Input id="direccion" placeholder="Av. Siempre Viva 123" {...register("direccion")} />
+      </FormField>
+
+      <FormField label="Límite de crédito (S/.)" htmlFor="limite_credito" optional>
+        <Input
+          id="limite_credito"
+          type="number"
+          min={0}
+          step="0.01"
+          placeholder="Sin límite"
+          {...register("limite_credito")}
+        />
       </FormField>
     </FormDialog>
   );

@@ -39,9 +39,11 @@ const MEDIOS_PAGO = ["Efectivo", "Transferencia", "Depósito", "Cheque", "Tarjet
 interface RegisterPaymentDialogProps {
   cuenta: AccountPayable | null;
   onClose: () => void;
+  /** Query keys a invalidar al registrar el pago con éxito. Default: solo la lista general. */
+  invalidateKeys?: (string | number | undefined)[][];
 }
 
-export default function RegisterPaymentDialog({ cuenta, onClose }: RegisterPaymentDialogProps) {
+export default function RegisterPaymentDialog({ cuenta, onClose, invalidateKeys }: RegisterPaymentDialogProps) {
   const queryClient = useQueryClient();
   const isOpen = !!cuenta;
 
@@ -64,6 +66,9 @@ export default function RegisterPaymentDialog({ cuenta, onClose }: RegisterPayme
     onSuccess: (result) => {
       if (!result.success) return;
       queryClient.invalidateQueries({ queryKey: ["accounts-payable"] });
+      for (const key of invalidateKeys ?? []) {
+        queryClient.invalidateQueries({ queryKey: key });
+      }
       onClose();
     },
   });

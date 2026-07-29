@@ -41,6 +41,7 @@ const productSchema = z.object({
     "El precio debe ser un número positivo"
   ),
   cod_barras: z.string().optional().or(z.literal("")),
+  stock_min: z.string().optional().or(z.literal("")),
   undm: z.string().min(1, "Debe seleccionar una unidad de medida"),
   id_marca: z.string().min(1, "Debe seleccionar una marca"),
   id_categoria: z.string().min(1, "Debe seleccionar una categoría"),
@@ -90,6 +91,7 @@ export default function ProductForm({
       descripcion: "",
       precio: "",
       cod_barras: "",
+      stock_min: "",
       undm: "",
       id_marca: "",
       id_categoria: "",
@@ -183,6 +185,7 @@ export default function ProductForm({
           descripcion: prod.descripcion || "",
           precio: String(prod.precio ?? ""),
           cod_barras: prod.cod_barras || "",
+          stock_min: prod.stock_min != null ? String(prod.stock_min) : "",
           undm: prod.undm || "",
           id_marca: String(prod.id_marca ?? ""),
           id_categoria: String(idCat ?? ""),
@@ -217,6 +220,7 @@ export default function ProductForm({
         descripcion: "",
         precio: "",
         cod_barras: "",
+        stock_min: "",
         undm: "",
         id_marca: "",
         id_categoria: "",
@@ -268,6 +272,7 @@ export default function ProductForm({
         id_subcategoria: Number(values.id_subcategoria),
         precio: Number(values.precio).toFixed(2),
         cod_barras: values.cod_barras || "",
+        stock_min: values.stock_min ? Number(values.stock_min) : null,
         undm: values.undm,
         estado_producto: Number(values.estado_producto),
       };
@@ -495,6 +500,25 @@ export default function ProductForm({
                       {...field}
                       id="cod_barras"
                       placeholder="Generado automáticamente"
+                      className=""
+                    />
+                  )}
+                />
+              </div>
+
+              {/* Stock mínimo */}
+              <div className="space-y-2">
+                <Label htmlFor="stock_min">Stock mínimo (opcional)</Label>
+                <Controller
+                  name="stock_min"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      id="stock_min"
+                      type="number"
+                      min={0}
+                      placeholder="Alerta si el stock baja de este número"
                       className=""
                     />
                   )}

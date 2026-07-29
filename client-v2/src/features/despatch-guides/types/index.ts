@@ -64,6 +64,8 @@ export interface GuideSucursal {
   id: number;
   nombre: string;
   direccion: string;
+  /** Almacén vinculado a esta sucursal (vía sucursal_almacen); null si no tiene ninguno. */
+  id_almacen: number | null;
 }
 
 /** Ubigeo (departamento/provincia/distrito) — GET /guia_remision/ubigeo. */

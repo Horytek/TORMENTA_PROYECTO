@@ -50,7 +50,14 @@ const EmployeesPage = lazy(() => import("@/features/employees/pages/EmployeesPag
 const WarehouseNotesPage = lazy(() => import("@/features/warehouse-notes/pages/WarehouseNotesPage"));
 const GuidesPage = lazy(() => import("@/features/despatch-guides/pages/GuidesPage"));
 const DeveloperPage = lazy(() => import("@/features/developer/pages/DeveloperPage"));
-const ExpressHomePage = lazy(() => import("@/features/express/pages/ExpressHomePage"));
+const ExpressLayout = lazy(() => import("@/features/express/components/ExpressLayout").then((m) => ({ default: m.ExpressLayout })));
+const ExpressDashboardPage = lazy(() => import("@/features/express/pages/ExpressDashboardPage"));
+const ExpressPOSPage = lazy(() => import("@/features/express/pages/ExpressPOSPage"));
+const ExpressInventoryPage = lazy(() => import("@/features/express/pages/ExpressInventoryPage"));
+const ExpressUsersPage = lazy(() => import("@/features/express/pages/ExpressUsersPage"));
+const ExpressSettingsPage = lazy(() => import("@/features/express/pages/ExpressSettingsPage"));
+const ExpressSubscriptionPage = lazy(() => import("@/features/express/pages/ExpressSubscriptionPage"));
+const ExpressSalesHistoryPage = lazy(() => import("@/features/express/pages/ExpressSalesHistoryPage"));
 const AccountingPage = lazy(() => import("@/features/accounting/pages/AccountingPage"));
 const SystemLogsPage = lazy(() => import("@/features/system-logs/pages/SystemLogsPage"));
 const ComprobantesPage = lazy(() => import("@/features/comprobantes/pages/ComprobantesPage"));
@@ -153,7 +160,18 @@ export default function App() {
               <Route path="/failure" element={<PaymentResultPage />} />
               <Route path="/pending" element={<PaymentResultPage />} />
               {/* Pocket POS (Express) tiene su propio sistema de auth, independiente del ERP */}
-              <Route path="/express-pos" element={<ExpressHomePage />} />
+              <Route path="/express-pos">
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route element={<ExpressLayout />}>
+                  <Route path="dashboard" element={<ExpressDashboardPage />} />
+                  <Route path="pos" element={<ExpressPOSPage />} />
+                  <Route path="inventory" element={<ExpressInventoryPage />} />
+                  <Route path="users" element={<ExpressUsersPage />} />
+                  <Route path="settings" element={<ExpressSettingsPage />} />
+                  <Route path="subscription" element={<ExpressSubscriptionPage />} />
+                  <Route path="history" element={<ExpressSalesHistoryPage />} />
+                </Route>
+              </Route>
 
               <Route path="/sobre-nosotros" element={<LandingSubPage pageId="sobre-nosotros" />} />
               <Route path="/equipo" element={<LandingSubPage pageId="equipo" />} />

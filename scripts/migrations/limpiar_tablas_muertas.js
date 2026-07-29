@@ -120,8 +120,8 @@ const quitarColumnaDuplicada = async (cx) => {
 };
 
 const main = async () => {
-  if (!esHostLocal(HOST)) {
-    console.error(`Abortado: HOST="${HOST}" no es local.`);
+  if (!esHostLocal(HOST) && !process.env.ALLOW_REMOTE_MIGRATE) {
+    console.error(`Abortado: HOST="${HOST}" no es local. Usa ALLOW_REMOTE_MIGRATE=1 para permitir ejecuciones remotas.`);
     process.exit(1);
   }
   const cx = await mysql.createConnection({

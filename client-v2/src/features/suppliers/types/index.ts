@@ -54,3 +54,6 @@ export const proveedorDocumento = (p: Proveedor): string =>
 
 export const proveedorLabel = (p: Proveedor): string =>
   `${proveedorNombre(p)} — ${proveedorDocumento(p)}`;
+
+// Cuentas por pagar: ver `@/features/purchases/types` (AccountPayable, AccountPayablePayment,
+// RegisterPaymentPayload) — se consolidó ahí para no duplicar con la página de Compras.

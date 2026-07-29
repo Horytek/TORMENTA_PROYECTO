@@ -11,12 +11,13 @@ import BrandsPanel from "../components/BrandsPanel";
 import CategoriesPanel from "../components/CategoriesPanel";
 import SubcategoriesPanel from "../components/SubcategoriesPanel";
 import ViewVariantsModal from "../components/ViewVariantsModal";
+import ImportProductsDialog from "../components/ImportProductsDialog";
 import ContentPage from "@/features/content/pages/ContentPage";
 
 // UI Components
 import { Button } from "@/components/ui/button";
 import {
-  Plus, Layers, Tag, Bookmark, Package, Tags, Coins,
+  Plus, Layers, Tag, Bookmark, Package, Tags, Coins, Upload,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -30,6 +31,7 @@ export default function ProductsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [variantsProduct, setVariantsProduct] = useState<Product | null>(null);
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   const handleCreateOpen = () => {
     setEditingProduct(null);
@@ -91,6 +93,10 @@ export default function ProductsPage() {
                 Costos iniciales
               </Link>
             </Button>
+            <Button variant="outline" onClick={() => setIsImportOpen(true)} className="gap-2">
+              <Upload className="h-4 w-4" />
+              Importar Excel
+            </Button>
             <Button onClick={handleCreateOpen} className="gap-2">
               <Plus className="h-4 w-4" />
               Nuevo producto
@@ -138,6 +144,9 @@ export default function ProductsPage() {
         productId={variantsProduct?.id_producto ?? null}
         productName={variantsProduct?.descripcion ?? ""}
       />
+
+      {/* Modal Importar Excel */}
+      <ImportProductsDialog isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} />
     </div>
   );
 }

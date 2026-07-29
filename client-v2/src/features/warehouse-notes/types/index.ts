@@ -125,3 +125,22 @@ export interface NotaInsertResult {
   success: boolean;
   message?: string;
 }
+
+/** Payload de POST /transferencia_almacen — salida + ingreso en una sola transacción. */
+export interface TransferenciaInsertPayload {
+  almacenO: number | string;
+  almacenD: number | string;
+  destinatario: number | string;
+  glosa: string;
+  nota: string;
+  fecha: string;
+  observacion?: string;
+  producto: number[];
+  cantidad: number[];
+  tonalidad: (number | null)[];
+  talla: (number | null)[];
+  sku: (number | null)[];
+  numComprobanteSalida: string;
+  numComprobanteIngreso: string;
+  usuario: string;
+}

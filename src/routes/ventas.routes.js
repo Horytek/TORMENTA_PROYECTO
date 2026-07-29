@@ -13,6 +13,7 @@ router.use(auth);
 router.use(logMiddleware);
 
 router.get("/", ventasController.getVentas);
+router.get("/buscar", ventasController.buscarVentas);
 router.get("/producto_venta", ventasController.getProductosVentas);
 router.post("/agregar_venta", requireCapability("ventas", "crear"), validateSchema(crearVentaSchema), ventasController.addVenta);
 router.get("/cliente_venta", ventasController.getClienteVentas);

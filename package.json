@@ -37,6 +37,13 @@
     "db:migrate:limpiar-muertas": "node scripts/migrations/limpiar_tablas_muertas.js",
     "db:migrate:bitacora-sku": "node scripts/migrations/add_bitacora_sku.js",
     "db:migrate:dashboard-widgets": "node scripts/migrations/add_dashboard_widgets_empresa.js",
+    "db:migrate:stock-min": "node scripts/migrations/add_stock_min_producto.js",
+    "db:migrate:cuentas-por-cobrar": "node scripts/migrations/add_cuentas_por_cobrar.js",
+    "db:migrate:comision-vendedor": "node scripts/migrations/add_comision_vendedor.js",
+    "db:migrate:meta-mensual": "node scripts/migrations/add_meta_mensual_vendedor.js",
+    "db:migrate:recepcion-parcial": "node scripts/migrations/add_recepcion_parcial_oc.js",
+    "db:migrate:devoluciones": "node scripts/migrations/create_devoluciones_tables.js",
+    "db:migrate:bitacora-guia": "node scripts/migrations/add_bitacora_guiaremision.js",
     "db:migrate:comprobantes": "node scripts/migrations/create_comprobantes_modulo.js",
     "db:migrate:unicos-tenant": "node scripts/migrations/unicos_por_tenant.js",
     "db:seed:catalogo-ropa": "node scripts/migrations/sembrar_catalogo_ropa.js"

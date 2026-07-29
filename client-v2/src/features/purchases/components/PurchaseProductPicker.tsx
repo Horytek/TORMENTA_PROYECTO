@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Package, Plus } from "lucide-react";
+import { Search, Package, Plus, Scale } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { VariantPicker, type VariantResolved } from "@/components/shared/Variant
 import { getProductosIngreso } from "@/features/warehouse-notes/api/warehouseNotes";
 import type { NotaProducto } from "@/features/warehouse-notes/types";
 import type { PurchaseOrderFormItem } from "../types";
+import { getPriceComparison } from "../api/purchases";
 
 const SIN_VARIANTE: VariantResolved = { id_sku: null, label: null, stock: null, ready: true };
 
@@ -31,6 +32,13 @@ export function PurchaseProductPicker({ onAdd }: PurchaseProductPickerProps) {
   const [qtyByProduct, setQtyByProduct] = useState<Record<number, string>>({});
   const [costByProduct, setCostByProduct] = useState<Record<number, string>>({});
   const [variantByProduct, setVariantByProduct] = useState<Record<number, VariantResolved>>({});
+  const [comparandoId, setComparandoId] = useState<number | null>(null);
+
+  const { data: comparacion = [], isFetching: comparando } = useQuery({
+    queryKey: ["comparacion-precios", comparandoId],
+    queryFn: () => getPriceComparison(comparandoId as number),
+    enabled: comparandoId != null,
+  });
 
   // "0" le pide al backend el catálogo completo sin filtrar por stock de un almacén.
   const { data: productos = [], isFetching } = useQuery<NotaProducto[]>({
@@ -116,6 +124,16 @@ export function PurchaseProductPicker({ onAdd }: PurchaseProductPickerProps) {
                       />
                       <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        title="Comparar precios entre proveedores"
+                        onClick={() => setComparandoId((prev) => (prev === producto.codigo ? null : producto.codigo))}
+                      >
+                        <Scale className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        type="button"
                         size="sm"
                         className="h-8 gap-1"
                         disabled={!cantidad || !costo || !variante.ready}
@@ -129,6 +147,36 @@ export function PurchaseProductPicker({ onAdd }: PurchaseProductPickerProps) {
                     idProducto={producto.codigo}
                     onResolved={(r) => setVariantByProduct((prev) => ({ ...prev, [producto.codigo]: r }))}
                   />
+                  {comparandoId === producto.codigo && (
+                    <div className="rounded-lg border border-border/60 bg-muted/30 p-2 text-xs">
+                      {comparando ? (
+                        <Spinner size="xs" />
+                      ) : comparacion.length === 0 ? (
+                        <p className="text-muted-foreground">Sin historial de compras a proveedores para este producto.</p>
+                      ) : (
+                        <table className="w-full">
+                          <thead>
+                            <tr className="text-left text-muted-foreground">
+                              <th className="pb-1 font-normal">Proveedor</th>
+                              <th className="pb-1 font-normal">Último</th>
+                              <th className="pb-1 font-normal">Mínimo</th>
+                              <th className="pb-1 font-normal">Promedio</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {comparacion.map((c) => (
+                              <tr key={c.id_destinatario}>
+                                <td className="py-0.5 pr-2 truncate">{c.proveedor}</td>
+                                <td className="py-0.5 pr-2">S/ {Number(c.ultimo_precio).toFixed(2)}</td>
+                                <td className="py-0.5 pr-2">S/ {Number(c.precio_min).toFixed(2)}</td>
+                                <td className="py-0.5">S/ {Number(c.precio_prom).toFixed(2)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

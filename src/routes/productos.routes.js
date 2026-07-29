@@ -14,6 +14,7 @@ router.get("/", productosController.getProductos);
 router.get("/lastid", productosController.getUltimoIdProducto);
 router.get("/:id/variants", productosController.getProductVariants);
 router.get("/:id/attributes", productosController.getProductAttributes);
+router.get("/:id/historial-precio", productosController.getHistorialPrecioProducto);
 router.post("/variants", requireCapability("productos", "crear"), productosController.registerVariants);
 router.get("/:id", productosController.getProducto);
 router.post("/", requireCapability("productos", "crear"), productosController.addProducto);

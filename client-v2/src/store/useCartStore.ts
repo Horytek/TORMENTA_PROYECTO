@@ -36,6 +36,7 @@ interface CartStore {
   addItem: (product: CartItem) => void;
   removeItem: (idProducto: number, idSku?: number | null) => void;
   updateQuantity: (idProducto: number, cantidad: number, idSku?: number | null) => void;
+  setLineDiscount: (idProducto: number, monto: number, idSku?: number | null) => void;
   clearCart: () => void;
   setCliente: (cliente: ClienteForSale | null) => void;
   setComprobanteTipo: (tipo: ComprobanteTipo) => void;
@@ -89,7 +90,7 @@ export const useCartStore = create<CartStore>()(
                 ? {
                     ...i,
                     cantidad: i.cantidad + product.cantidad,
-                    precio_total: (i.cantidad + product.cantidad) * i.precio_unitario,
+                    precio_total: Math.max(0, (i.cantidad + product.cantidad) * i.precio_unitario - (i.descuento ?? 0)),
                   }
                 : i
             );
@@ -114,9 +115,21 @@ export const useCartStore = create<CartStore>()(
         set((state) => ({
           items: state.items.map((i) =>
             mismoItem(i, idProducto, idSku)
-              ? { ...i, cantidad, precio_total: cantidad * i.precio_unitario }
+              ? { ...i, cantidad, precio_total: Math.max(0, cantidad * i.precio_unitario - (i.descuento ?? 0)) }
               : i
           ),
+        }));
+      },
+
+      // ── Descuento por línea (monto, no %) ──────────────────────────
+      setLineDiscount: (idProducto, monto, idSku) => {
+        set((state) => ({
+          items: state.items.map((i) => {
+            if (!mismoItem(i, idProducto, idSku)) return i;
+            const bruto = i.cantidad * i.precio_unitario;
+            const descuento = Math.min(Math.max(0, monto), bruto);
+            return { ...i, descuento, precio_total: bruto - descuento };
+          }),
         }));
       },
 
