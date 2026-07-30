@@ -20,6 +20,8 @@ interface ViewVariantsModalProps {
   onClose: () => void;
   productId: number | null;
   productName: string;
+  /** Punto de reorden configurado del producto; null/undefined = usa el umbral genérico (5). */
+  stockMin?: number | null;
 }
 
 interface AttributeValue {
@@ -40,7 +42,9 @@ export default function ViewVariantsModal({
   onClose,
   productId,
   productName,
+  stockMin,
 }: ViewVariantsModalProps) {
+  const umbralBajo = stockMin != null ? Number(stockMin) : 5;
   const [loading, setLoading] = useState(false);
   const [attributes, setAttributes] = useState<AttributeData[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -224,7 +228,7 @@ export default function ViewVariantsModal({
                               className={
                                 stockNum === 0
                                   ? "text-destructive"
-                                  : stockNum < 5
+                                  : stockNum <= umbralBajo
                                   ? "text-orange-600 dark:text-orange-400"
                                   : "text-emerald-600 dark:text-emerald-400"
                               }

@@ -87,6 +87,14 @@ export default function ClientesPage() {
       format: (v) => Number(v) === 1 ? "Activo" : "Inactivo",
     },
     {
+      key: "f_creacion",
+      priority: "meta",
+      semantic: "date",
+      label: "Fecha de alta",
+      format: (v) => (v as string) || "—",
+      collapsible: true,
+    },
+    {
       key: "ruc",
       priority: "meta",
       semantic: "code",
@@ -198,6 +206,7 @@ export default function ClientesPage() {
         searchPlaceholder="Buscar por nombre o documento…"
         onSearch={setSearchTerm}
         serverSide
+        exportFileName="clientes"
         empty={{
           title: "No se encontraron clientes",
           description: searchTerm

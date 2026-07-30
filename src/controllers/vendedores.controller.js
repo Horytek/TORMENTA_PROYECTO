@@ -47,9 +47,11 @@ const getVendedores = async (req, res) => {
                 ve.estado_vendedor,
                 ve.id_usuario,
                 ve.porcentaje_comision,
-                ve.meta_mensual
+                ve.meta_mensual,
+                suc.nombre_sucursal
             FROM vendedor ve
             INNER JOIN usuario usu ON usu.id_usuario = ve.id_usuario
+            LEFT JOIN sucursal suc ON suc.dni = ve.dni AND suc.id_tenant = ve.id_tenant
             WHERE ve.id_tenant = ?
             ORDER BY ve.nombres, ve.apellidos
         `, [id_tenant]);

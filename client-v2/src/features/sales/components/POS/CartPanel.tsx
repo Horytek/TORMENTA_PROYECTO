@@ -124,6 +124,7 @@ export function CartPanel({ onCheckout, disabled }: CartPanelProps) {
         >
           <span className="text-base font-bold">💰</span>
           Cobrar S/ {total.toFixed(2)}
+          {!isEmpty && <span className="text-[10px] font-normal opacity-70">(F12)</span>}
         </Button>
       </div>
     </div>

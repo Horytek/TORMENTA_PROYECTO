@@ -42,6 +42,8 @@ export interface Product {
   costo_promedio?: number | string | null;
   /** Punto de reorden configurable; null = la alerta de stock usa <=0 (comportamiento por defecto). */
   stock_min?: number | null;
+  /** Suma de stock de todos los SKU del producto en todos los almacenes; ya lo calcula el backend. */
+  stock_total?: number | string;
 }
 
 /** Una variante generada de un producto (tabla `producto_sku`). */

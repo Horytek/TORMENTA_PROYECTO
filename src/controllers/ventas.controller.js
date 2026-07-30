@@ -546,6 +546,10 @@ const getVentas = async (req, res) => {
       where.push("v.estado_venta = ?");
       params.push(parseInt(req.query.estado, 10));
     }
+    if (req.query.dni_vendedor) {
+      where.push("v.dni_vendedor = ?");
+      params.push(req.query.dni_vendedor);
+    }
 
     // Armar cláusula WHERE
     let whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
@@ -835,6 +839,7 @@ const getProductosVentas = async (req, res) => {
         MA.nom_marca,
         CA.nom_subcat         AS categoria_p,
         PR.cod_barras         AS codigo_barras,
+        PR.stock_min,
         EXISTS(
           SELECT 1 FROM producto_sku sk
           WHERE sk.id_producto = PR.id_producto AND sk.id_tenant = PR.id_tenant AND sk.estado = 1

@@ -14,6 +14,8 @@ export interface Cliente {
   estado: number; // 1 = activo, 0 = inactivo
   /** Límite de crédito; null/undefined = sin límite configurado (no bloquea ventas a crédito). */
   limite_credito?: number | string | null;
+  /** Fecha de alta (YYYY-MM-DD), ya la devuelve el backend pero no se usaba en el frontend. */
+  f_creacion?: string;
 }
 
 /** Payload para crear/actualizar (POST /clientes, PUT /clientes/updateCliente). */

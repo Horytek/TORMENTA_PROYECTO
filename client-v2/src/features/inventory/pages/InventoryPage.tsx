@@ -344,6 +344,7 @@ export default function InventoryPage() {
         onClose={() => setVariantsProduct(null)}
         productId={variantsProduct?.codigo ?? null}
         productName={variantsProduct?.descripcion ?? ""}
+        stockMin={variantsProduct?.stock_min}
       />
     </div>
   );

@@ -6,29 +6,38 @@ const getAlmacenes = async (req, res) => {
     try {
         connection = await getConnection();
 
+        // Stock consolidado por almacén: no había ninguna pantalla que mostrara
+        // cuánto inventario tiene un almacén sin ir a filtrar Inventario a mano.
         const query = `
-          SELECT 
-              a.id_almacen, 
-              a.nom_almacen, 
+          SELECT
+              a.id_almacen,
+              a.nom_almacen,
               a.ubicacion,
               a.estado_almacen,
               s.id_sucursal,
-              s.nombre_sucursal
-          FROM 
+              s.nombre_sucursal,
+              COALESCE(stk.stock_total, 0) AS stock_total
+          FROM
               almacen a
-          LEFT JOIN 
-              sucursal_almacen sa 
-          ON 
+          LEFT JOIN
+              sucursal_almacen sa
+          ON
               a.id_almacen = sa.id_almacen
           LEFT JOIN
               sucursal s
           ON
               s.id_sucursal = sa.id_sucursal
+          LEFT JOIN (
+              SELECT id_almacen, SUM(stock) AS stock_total
+              FROM inventario_stock
+              WHERE id_tenant = ?
+              GROUP BY id_almacen
+          ) stk ON stk.id_almacen = a.id_almacen
           WHERE a.estado_almacen != 0 AND a.id_tenant = ?
           ORDER BY a.id_almacen;
       `;
 
-        const [result] = await connection.query(query, [req.id_tenant]);
+        const [result] = await connection.query(query, [req.id_tenant, req.id_tenant]);
         res.json({ code: 1, data: result });
 
     } catch (error) {

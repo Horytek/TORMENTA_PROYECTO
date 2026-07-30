@@ -6,6 +6,7 @@ import { Spinner } from "@/components/ui/spinner";
 
 import type { ClienteForSale } from "@/features/sales/types";
 import { clienteNombre, clienteDocumento } from "@/features/sales/types";
+import { getCuentasPorCobrarCliente } from "@/features/clientes/api/clientes";
 import api from "@/api/axios";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +40,7 @@ interface ApiCliente {
   dni?: string;
   ruc?: string;
   direccion?: string;
+  limite_credito?: number | string | null;
 }
 
 export function ClientSelector({ value, onChange }: ClientSelectorProps) {
@@ -77,6 +79,7 @@ export function ClientSelector({ value, onChange }: ClientSelectorProps) {
         dni: c.dni || "",
         ruc: c.ruc || "",
         direccion: c.direccion || "",
+        limite_credito: c.limite_credito,
       }));
     },
     enabled: debouncedSearch.trim().length > 0,
@@ -119,6 +122,17 @@ export function ClientSelector({ value, onChange }: ClientSelectorProps) {
 
   const displayDoc = value && value.id_cliente !== 0 ? clienteDocumento(value) : null;
 
+  // Crédito disponible: solo tiene sentido si el cliente tiene un límite
+  // configurado — sin límite, una venta a crédito no se bloquea por saldo.
+  const limiteCredito = value?.limite_credito != null ? Number(value.limite_credito) : null;
+  const { data: cuentasCliente = [] } = useQuery({
+    queryKey: ["cliente-cuentas-pos", value?.id_cliente],
+    queryFn: () => getCuentasPorCobrarCliente(value!.id_cliente),
+    enabled: !!value && value.id_cliente !== 0 && limiteCredito != null,
+  });
+  const saldoPendiente = cuentasCliente.reduce((sum, c) => sum + Number(c.saldo ?? 0), 0);
+  const creditoDisponible = limiteCredito != null ? Math.max(0, limiteCredito - saldoPendiente) : null;
+
   return (
     <div ref={popoverRef} className="relative">
       {/* Trigger button */}
@@ -136,6 +150,14 @@ export function ClientSelector({ value, onChange }: ClientSelectorProps) {
         {displayDoc && (
           <Badge variant="secondary" className="h-4 px-1 text-[9px] ml-1">
             {value?.ruc ? "RUC" : "DNI"} {displayDoc}
+          </Badge>
+        )}
+        {creditoDisponible != null && (
+          <Badge
+            variant="secondary"
+            className={cn("h-4 px-1 text-[9px]", creditoDisponible <= 0 && "bg-destructive/15 text-destructive")}
+          >
+            Crédito: S/ {creditoDisponible.toFixed(2)}
           </Badge>
         )}
         {value && (

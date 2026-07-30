@@ -181,9 +181,14 @@ export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
                   {product.stock !== undefined && (
                     <span className={[
                       "text-[10px] mt-0.5",
-                      outOfStock ? "text-destructive" : "text-muted-foreground",
+                      outOfStock
+                        ? "text-destructive"
+                        : product.stock_min != null && product.stock <= Number(product.stock_min)
+                        ? "text-amber-600 dark:text-amber-400"
+                        : "text-muted-foreground",
                     ].join(" ")}>
                       Stock: {product.stock}
+                      {!outOfStock && product.stock_min != null && product.stock <= Number(product.stock_min) && " ⚠"}
                     </span>
                   )}
                 </button>

@@ -689,19 +689,50 @@ const importExcel = async (req, res) => {
         connection = await getConnection();
         await connection.beginTransaction();
 
+        // Resuelve marca/subcategoría por NOMBRE una sola vez (no por fila):
+        // antes el import exigía conocer el id_marca/id_subcategoria numérico
+        // de memoria, que el usuario no tiene forma de saber sin ir a otra
+        // pantalla. Sigue aceptando id_marca/id_subcategoria numéricos si ya
+        // vienen así (compatibilidad con la plantilla anterior).
+        const [marcas] = await connection.query(
+            "SELECT id_marca, nom_marca FROM marca WHERE id_tenant = ?", [req.id_tenant]
+        );
+        const [subcats] = await connection.query(
+            "SELECT id_subcategoria, nom_subcat FROM sub_categoria WHERE id_tenant = ?", [req.id_tenant]
+        );
+        const idMarcaPorNombre = new Map(marcas.map(m => [m.nom_marca.trim().toLowerCase(), m.id_marca]));
+        const idSubcatPorNombre = new Map(subcats.map(s => [s.nom_subcat.trim().toLowerCase(), s.id_subcategoria]));
+
         let insertedCount = 0;
         let errors = [];
 
         for (const [index, item] of data.entries()) {
+            let id_marca = item.id_marca || null;
+            if (!id_marca && item.marca) {
+                id_marca = idMarcaPorNombre.get(String(item.marca).trim().toLowerCase()) || null;
+                if (!id_marca) {
+                    errors.push(`Fila ${index + 1}: la marca "${item.marca}" no existe.`);
+                    continue;
+                }
+            }
+            let id_subcategoria = item.id_subcategoria || null;
+            if (!id_subcategoria && item.subcategoria) {
+                id_subcategoria = idSubcatPorNombre.get(String(item.subcategoria).trim().toLowerCase()) || null;
+                if (!id_subcategoria) {
+                    errors.push(`Fila ${index + 1}: la subcategoría "${item.subcategoria}" no existe.`);
+                    continue;
+                }
+            }
+
             // Basic validation
-            if (!item.descripcion || !item.id_marca || !item.id_subcategoria || !item.undm || !item.precio) {
+            if (!item.descripcion || !id_marca || !id_subcategoria || !item.undm || !item.precio) {
                 errors.push(`Row ${index + 1}: Missing required fields`);
                 continue;
             }
 
             const producto = {
-                id_marca: item.id_marca,
-                id_subcategoria: item.id_subcategoria,
+                id_marca,
+                id_subcategoria,
                 descripcion: item.descripcion,
                 undm: item.undm,
                 precio: item.precio,

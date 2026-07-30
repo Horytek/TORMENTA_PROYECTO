@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CircleDollarSign, Receipt } from "lucide-react";
+import { CircleDollarSign, Receipt, ClipboardList } from "lucide-react";
 
 import {
   Sheet,
@@ -14,11 +14,19 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { usePermissions } from "@/hooks/usePermissions";
 
-import { getAccountsPayable } from "@/features/purchases/api/purchases";
+import { getAccountsPayable, getPurchaseOrders } from "@/features/purchases/api/purchases";
 import RegisterPaymentDialog from "@/features/purchases/components/RegisterPaymentDialog";
 import type { AccountPayable } from "@/features/purchases/types";
 import { proveedorNombre } from "../types";
 import type { Proveedor } from "../types";
+
+const ESTADO_OC_LABEL: Record<string, string> = {
+  draft: "Borrador",
+  approved: "Aprobada",
+  partially_received: "Recepción parcial",
+  received: "Recibida",
+  cancelled: "Cancelada",
+};
 
 const soles = (v: unknown) => `S/ ${Number(v ?? 0).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -46,6 +54,13 @@ export function SupplierAccountsDrawer({ proveedor, isOpen, onClose }: Props) {
     queryFn: () => getAccountsPayable({ id_destinatario: proveedor!.id }),
     enabled: isOpen && !!proveedor,
   });
+
+  const { data: ordenes = [], isLoading: isLoadingOrdenes } = useQuery({
+    queryKey: ["purchase-orders", proveedor?.id],
+    queryFn: () => getPurchaseOrders({ id_destinatario: proveedor!.id }),
+    enabled: isOpen && !!proveedor,
+  });
+  const ordenesPendientes = ordenes.filter((o) => o.estado !== "received" && o.estado !== "cancelled");
 
   const saldoTotal = cuentas.reduce((sum, c) => sum + Number(c.saldo), 0);
 
@@ -113,6 +128,36 @@ export function SupplierAccountsDrawer({ proveedor, isOpen, onClose }: Props) {
                 ))}
               </div>
             )}
+
+            <Separator />
+
+            <div className="space-y-2">
+              <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <ClipboardList className="h-3.5 w-3.5" /> Órdenes de compra pendientes
+              </h4>
+              {isLoadingOrdenes ? (
+                <div className="h-16 animate-pulse rounded-lg bg-muted" />
+              ) : ordenesPendientes.length === 0 ? (
+                <p className="py-4 text-center text-xs text-muted-foreground">
+                  Sin órdenes de compra pendientes con este proveedor.
+                </p>
+              ) : (
+                <div className="space-y-1.5">
+                  {ordenesPendientes.map((o) => (
+                    <div key={o.id} className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2 text-xs">
+                      <div>
+                        <p className="font-medium text-foreground">OC #{o.id} · {new Date(o.fecha).toLocaleDateString("es-PE")}</p>
+                        <p className="text-muted-foreground">{o.almacen}</p>
+                      </div>
+                      <div className="text-right">
+                        <Badge variant="secondary" className="text-[10px]">{ESTADO_OC_LABEL[o.estado] ?? o.estado}</Badge>
+                        <p className="mt-0.5 font-semibold text-foreground">{soles(o.monto_total)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </SheetContent>
       </Sheet>

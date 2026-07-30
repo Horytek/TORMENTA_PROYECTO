@@ -143,6 +143,7 @@ export default function ProductsPage() {
         onClose={() => setVariantsProduct(null)}
         productId={variantsProduct?.id_producto ?? null}
         productName={variantsProduct?.descripcion ?? ""}
+        stockMin={variantsProduct?.stock_min}
       />
 
       {/* Modal Importar Excel */}

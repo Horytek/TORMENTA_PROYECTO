@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Lock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Building2, Lock, RotateCcw } from "lucide-react";
 import { ProductCatalog } from "./ProductCatalog";
 import { CartPanel } from "./CartPanel";
 import { PaymentModal } from "./PaymentModal";
@@ -24,6 +25,7 @@ interface POSScreenProps {
 }
 
 export function POSScreen({ onSaleComplete }: POSScreenProps) {
+  const navigate = useNavigate();
   const user = useUserStore((s) => s.user);
   const cliente = useCartStore((s) => s.cliente);
   const setCliente = useCartStore((s) => s.setCliente);
@@ -108,6 +110,21 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
     setIsPaymentOpen(false);
   }, []);
 
+  // Atajo de teclado: F12 cobra el carrito actual (mismo gesto que las cajas
+  // registradoras físicas). No pisa F12 de DevTools porque el navegador
+  // reserva esa combinación al margen del preventDefault de la página.
+  const items = useCartStore((s) => s.items);
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "F12" && !isPaymentOpen && items.length > 0) {
+        e.preventDefault();
+        handleCheckout();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isPaymentOpen, items.length, handleCheckout]);
+
   return (
     <div className="flex flex-col h-full">
       {/* ── Header bar ─────────────────────────────────────── */}
@@ -155,9 +172,17 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
             </Badge>
           )}
           {lastSaleId && (
-            <Badge variant="outline" className="h-8 px-2.5 text-xs font-medium text-emerald-600 border-emerald-200 rounded-lg">
-              ✓ Venta #{lastSaleId}
-            </Badge>
+            <>
+              <Badge variant="outline" className="h-8 px-2.5 text-xs font-medium text-emerald-600 border-emerald-200 rounded-lg">
+                ✓ Venta #{lastSaleId}
+              </Badge>
+              <button
+                onClick={() => navigate("/sales/returns")}
+                className="flex items-center gap-1 rounded-lg border border-dashed border-muted-foreground/40 px-2.5 h-8 text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="h-3 w-3" /> Devolución
+              </button>
+            </>
           )}
         </div>
       </div>

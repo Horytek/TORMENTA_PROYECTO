@@ -102,6 +102,19 @@ export default function ProductsPanel({ onEdit, onViewVariants }: ProductsPanelP
       },
     },
     {
+      key: "stock_total", priority: "secondary", label: "Stock",
+      render: (_v, item) => {
+        const stock = Number(item.stock_total ?? 0);
+        const umbral = item.stock_min != null ? Number(item.stock_min) : 0;
+        const bajo = stock <= umbral;
+        return (
+          <span className={bajo ? "text-xs font-semibold text-destructive" : "text-xs font-semibold text-foreground"}>
+            {stock} {bajo && "⚠"}
+          </span>
+        );
+      },
+    },
+    {
       key: "undm", priority: "meta", semantic: "code",
       label: "Und.",
       format: (v) => (v as string) || "NIU",

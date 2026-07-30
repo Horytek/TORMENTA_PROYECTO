@@ -154,6 +154,7 @@ export interface VentasFilters {
   id_sucursal?: number;
   estado?: number;
   id_comprobante?: string;
+  dni_vendedor?: string;
 }
 
 export interface VentasStats {
@@ -175,6 +176,8 @@ export interface POSProduct {
   codigo_barras?: string;
   /** true = tiene variantes generadas; el POS debe pedir cuál antes de agregar. */
   tiene_variantes?: boolean;
+  /** Punto de reorden configurado en Productos; null/undefined = sin umbral configurado. */
+  stock_min?: number | null;
 }
 
 // ── Carrito completo ────────────────────────────────────────────
@@ -200,6 +203,8 @@ export interface ClienteForSale {
   direccion?: string;
   telefono?: string;
   email?: string;
+  /** Límite de crédito configurado; null/undefined = sin límite (no bloquea ventas a crédito). */
+  limite_credito?: number | string | null;
 }
 
 export function clienteNombre(c: ClienteForSale): string {

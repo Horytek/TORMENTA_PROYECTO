@@ -11,6 +11,8 @@ export interface Vendedor {
   porcentaje_comision?: number | string | null;
   /** Objetivo de venta mensual (S/.); null = sin meta configurada. */
   meta_mensual?: number | string | null;
+  /** Sucursal donde está asignado como responsable; null = sin sucursal asignada. */
+  nombre_sucursal?: string | null;
 }
 
 export interface VendedorInput {

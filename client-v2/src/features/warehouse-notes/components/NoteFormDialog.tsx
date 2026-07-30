@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Trash2, PackageSearch } from "lucide-react";
+import { Loader2, Trash2, PackageSearch, BookmarkPlus, ClipboardCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,7 @@ import {
   insertTransferenciaAlmacen,
 } from "../api/warehouseNotes";
 import type { NoteKind, NoteFormItem, NotaInsertPayload } from "../types";
+import { listarPlantillas, guardarPlantilla, eliminarPlantilla, type PlantillaNota } from "../lib/plantillas";
 
 /** "conjunto" = registra una salida y un ingreso a la vez (traslado entre almacenes). */
 type Mode = NoteKind | "conjunto";
@@ -103,19 +104,28 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
   const [tipoNota, setTipoNota] = useState<Mode>(defaultTipo);
   const [items, setItems] = useState<NoteFormItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [plantillas, setPlantillas] = useState<PlantillaNota[]>([]);
 
   useEffect(() => {
     if (isOpen) {
       setTipoNota(defaultTipo);
       setItems([]);
       setError(null);
+      setPlantillas(listarPlantillas());
     }
   }, [isOpen, defaultTipo]);
 
-  const { control, register, handleSubmit, watch, reset } = useForm<HeaderValues>({ defaultValues: emptyHeader });
+  const { control, register, handleSubmit, watch, reset, setValue } = useForm<HeaderValues>({ defaultValues: emptyHeader });
   const almacenOrigen = watch("almacenOrigen");
 
+  // Al cargar una plantilla, cambiar tipoNota dispara este mismo efecto — sin
+  // esta bandera, el reset borraría los datos que la plantilla acaba de poner.
+  const cargandoPlantillaRef = useRef(false);
   useEffect(() => {
+    if (cargandoPlantillaRef.current) {
+      cargandoPlantillaRef.current = false;
+      return;
+    }
     reset(emptyHeader);
     setItems([]);
   }, [tipoNota, reset]);
@@ -170,6 +180,31 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
   };
 
   const removeItem = (uniqueKey: string) => setItems((prev) => prev.filter((p) => p.uniqueKey !== uniqueKey));
+
+  const handleGuardarPlantilla = () => {
+    if (items.length === 0) return;
+    const nombre = window.prompt("Nombre de la plantilla (ej. \"Reposición semanal tienda X\"):");
+    if (!nombre?.trim()) return;
+    const nueva = guardarPlantilla({
+      nombre: nombre.trim(), tipo: tipoNota, destinatario: watch("destinatario"), glosa: watch("glosa"), items,
+    });
+    setPlantillas((prev) => [...prev, nueva]);
+  };
+
+  const handleCargarPlantilla = (id: string) => {
+    const p = plantillas.find((pl) => pl.id === id);
+    if (!p) return;
+    cargandoPlantillaRef.current = true;
+    setTipoNota(p.tipo as Mode);
+    setValue("destinatario", p.destinatario);
+    setValue("glosa", p.glosa);
+    setItems(p.items);
+  };
+
+  const handleEliminarPlantilla = (id: string) => {
+    eliminarPlantilla(id);
+    setPlantillas((prev) => prev.filter((p) => p.id !== id));
+  };
 
   const mutation = useMutation({
     mutationFn: async (values: HeaderValues) => {
@@ -266,6 +301,29 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
             </button>
           ))}
         </div>
+
+        {plantillas.length > 0 && (
+          <div className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2">
+            <ClipboardCheck className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <Select onValueChange={handleCargarPlantilla}>
+              <SelectTrigger className="h-8 flex-1 text-xs"><SelectValue placeholder="Cargar una plantilla…" /></SelectTrigger>
+              <SelectContent>
+                {plantillas.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between gap-2 pr-2">
+                    <SelectItem value={p.id} className="text-xs flex-1">{p.nombre}</SelectItem>
+                    <button
+                      type="button"
+                      className="text-muted-foreground hover:text-destructive cursor-pointer"
+                      onClick={(e) => { e.stopPropagation(); handleEliminarPlantilla(p.id); }}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -372,8 +430,15 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
           </FormField>
 
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <PackageSearch className="h-4 w-4" /> Productos
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <PackageSearch className="h-4 w-4" /> Productos
+              </div>
+              {items.length > 0 && (
+                <Button type="button" variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={handleGuardarPlantilla}>
+                  <BookmarkPlus className="h-3.5 w-3.5" /> Guardar como plantilla
+                </Button>
+              )}
             </div>
             <ProductPickerPanel
               tipo={tipoNota === "ingreso" ? "ingreso" : "salida"}

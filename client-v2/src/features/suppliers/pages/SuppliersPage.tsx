@@ -174,6 +174,7 @@ export default function SuppliersPage() {
         search={search}
         searchPlaceholder="Buscar por nombre o documento…"
         onSearch={setSearch}
+        exportFileName="proveedores"
         layout="auto"
         getItemId={(p) => p.id}
         empty={{

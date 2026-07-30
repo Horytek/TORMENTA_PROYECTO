@@ -14,12 +14,15 @@ interface Props {
   onClose: () => void;
 }
 
-const COLUMNAS_PLANTILLA = ["descripcion", "id_marca", "id_subcategoria", "undm", "precio", "cod_barras"];
+// Nombres de marca/subcategoría, no IDs: antes había que conocer de memoria
+// el id_marca/id_subcategoria numérico interno. El backend los resuelve por
+// nombre (case-insensitive) contra el catálogo del tenant.
+const COLUMNAS_PLANTILLA = ["descripcion", "marca", "subcategoria", "undm", "precio", "cod_barras"];
 
 interface FilaImportacion {
   descripcion?: string;
-  id_marca?: number | string;
-  id_subcategoria?: number | string;
+  marca?: string;
+  subcategoria?: string;
   undm?: string;
   precio?: number | string;
   cod_barras?: string;
@@ -27,7 +30,7 @@ interface FilaImportacion {
 
 const descargarPlantilla = () => {
   const ws = XLSX.utils.json_to_sheet([
-    { descripcion: "Camiseta Algodón", id_marca: 1, id_subcategoria: 1, undm: "NIU", precio: 35.9, cod_barras: "" },
+    { descripcion: "Camiseta Algodón", marca: "Genérica", subcategoria: "Polos", undm: "NIU", precio: 35.9, cod_barras: "" },
   ]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Productos");
@@ -82,7 +85,7 @@ export default function ImportProductsDialog({ isOpen, onClose }: Props) {
     }
   };
 
-  const filasSinDescripcion = filas.filter((f) => !f.descripcion || !f.id_marca || !f.id_subcategoria || !f.undm || !f.precio).length;
+  const filasSinDescripcion = filas.filter((f) => !f.descripcion || !f.marca || !f.subcategoria || !f.undm || !f.precio).length;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -91,6 +94,7 @@ export default function ImportProductsDialog({ isOpen, onClose }: Props) {
           <DialogTitle>Importar productos desde Excel</DialogTitle>
           <DialogDescription>
             Sube un archivo .xlsx o .csv con las columnas: {COLUMNAS_PLANTILLA.join(", ")}.
+            La marca y subcategoría deben existir ya en el sistema (se buscan por nombre, sin importar mayúsculas).
           </DialogDescription>
         </DialogHeader>
 

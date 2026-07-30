@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { UserPlus, Pencil, Trash2, Ban, RotateCcw, Users, Percent } from "lucide-react";
+import { UserPlus, Pencil, Trash2, Ban, RotateCcw, Users, Percent, Receipt, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection";
 import type { FieldDef, RecordAction } from "@/components/shared/AdaptiveCollection";
@@ -12,6 +14,8 @@ import {
   getVendedores, createVendedor, updateVendedor,
   deactivateVendedor, reactivateVendedor, deleteVendedor,
 } from "../api/vendedores";
+import { getUsuarios } from "@/features/users/api/users";
+import { getVentas } from "@/features/sales/api/ventas";
 import type { Vendedor, VendedorInput, VendedorUpdate } from "../types";
 import { ComisionesPanel } from "../components/ComisionesPanel";
 
@@ -35,10 +39,23 @@ export default function EmployeesPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [confirmDeactivate, setConfirmDeactivate] = useState<Vendedor | null>(null);
+  const [viewingSales, setViewingSales] = useState<Vendedor | null>(null);
 
   const { data: vendedores = [], isLoading } = useQuery({
     queryKey: ["empleados"],
     queryFn: getVendedores,
+  });
+
+  const { data: usuarios = [] } = useQuery({
+    queryKey: ["usuarios-para-empleado"],
+    queryFn: getUsuarios,
+    enabled: isFormOpen,
+  });
+
+  const { data: ventasVendedor = [], isLoading: isLoadingVentas } = useQuery({
+    queryKey: ["ventas-vendedor", viewingSales?.dni],
+    queryFn: () => getVentas({ dni_vendedor: viewingSales!.dni }),
+    enabled: !!viewingSales,
   });
 
   const createMut = useMutation({ mutationFn: (v: VendedorInput) => createVendedor(v) });
@@ -72,6 +89,7 @@ export default function EmployeesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.id_usuario) return;
     const porcentaje_comision = form.porcentaje_comision.trim() ? Number(form.porcentaje_comision) : null;
     const meta_mensual = form.meta_mensual.trim() ? Number(form.meta_mensual) : null;
     if (editing) {
@@ -127,9 +145,23 @@ export default function EmployeesPage() {
       label: "Estado",
       format: (v) => Number(v) === 1 ? "Activo" : "Inactivo",
     },
+    {
+      key: "nombre_sucursal",
+      priority: "meta",
+      semantic: "chip",
+      label: "Sucursal",
+      format: (v) => (v as string) || "Sin sucursal asignada",
+      collapsible: true,
+    },
   ];
 
   const actions: RecordAction[] = [
+    {
+      id: "ventas",
+      label: "Ver ventas",
+      icon: <Receipt className="h-3.5 w-3.5" />,
+      onClick: (item) => setViewingSales(item as Vendedor),
+    },
     {
       id: "edit",
       label: "Editar",
@@ -244,14 +276,17 @@ export default function EmployeesPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs text-muted-foreground font-medium">ID Usuario *</label>
-                <Input
-                  type="number"
-                  value={form.id_usuario}
-                  onChange={e => setForm(f => ({ ...f, id_usuario: e.target.value }))}
-                  placeholder="1"
-                  required
-                />
+                <label className="text-xs text-muted-foreground font-medium">Usuario *</label>
+                <Select value={form.id_usuario || undefined} onValueChange={(v) => setForm(f => ({ ...f, id_usuario: v }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un usuario" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {usuarios.map((u) => (
+                      <SelectItem key={u.id_usuario} value={String(u.id_usuario)}>@{u.usua}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="space-y-1.5">
@@ -346,6 +381,42 @@ export default function EmployeesPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Ventas recientes del empleado */}
+      <Sheet open={!!viewingSales} onOpenChange={(o) => !o && setViewingSales(null)}>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Receipt className="h-4 w-4" /> Ventas de {viewingSales?.nombre}
+            </SheetTitle>
+          </SheetHeader>
+          <div className="px-4 pb-4 space-y-2">
+            {isLoadingVentas ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : ventasVendedor.length === 0 ? (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                Sin ventas registradas para este empleado.
+              </p>
+            ) : (
+              ventasVendedor.map((v) => (
+                <div key={v.id_venta} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
+                  <div>
+                    <p className="font-medium text-foreground">{v.num_comprobante || `Venta #${v.id_venta}`}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {v.f_venta} · {v.nom_cliente || "Cliente general"}
+                    </p>
+                  </div>
+                  <span className="font-semibold text-foreground">
+                    S/ {Number(v.total_t ?? 0).toFixed(2)}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
