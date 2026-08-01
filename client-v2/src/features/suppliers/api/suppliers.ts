@@ -29,6 +29,11 @@ const buildBody = (input: ProveedorInput) => {
     telefono: input.telefono?.trim() || null,
     email: input.email?.trim() || null,
     estado_destinatario: input.estado ?? 1,
+    // Undefined (no tocado en este submit) se omite del JSON — el backend
+    // solo pisa la columna cuando la clave viene presente, así el toggle de
+    // estado no borra las condiciones comerciales ya configuradas.
+    ...(input.plazo_pago_dias !== undefined ? { plazo_pago_dias: input.plazo_pago_dias } : {}),
+    ...(input.linea_credito !== undefined ? { linea_credito: input.linea_credito } : {}),
   };
   return input.tipo === "natural"
     ? { ...base, dni: input.dni?.trim(), nombres: input.nombres?.trim(), apellidos: input.apellidos?.trim() }

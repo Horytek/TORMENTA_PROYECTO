@@ -2,7 +2,11 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getComisiones } from "../api/vendedores";
+import { getSucursales } from "@/features/branches/api/branches";
+
+const TODAS_SUCURSALES = "__todas__";
 
 const soles = (v: unknown) => `S/ ${Number(v ?? 0).toLocaleString("es-PE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -16,10 +20,17 @@ const hoy = () => new Date().toISOString().slice(0, 10);
 export function ComisionesPanel() {
   const [fechaInicio, setFechaInicio] = useState(primerDiaDelMes());
   const [fechaFin, setFechaFin] = useState(hoy());
+  const [sucursalId, setSucursalId] = useState(TODAS_SUCURSALES);
+
+  const { data: sucursales = [] } = useQuery({ queryKey: ["sucursales"], queryFn: getSucursales });
 
   const { data: comisiones = [], isLoading } = useQuery({
-    queryKey: ["comisiones", fechaInicio, fechaFin],
-    queryFn: () => getComisiones({ fecha_inicio: fechaInicio, fecha_fin: fechaFin }),
+    queryKey: ["comisiones", fechaInicio, fechaFin, sucursalId],
+    queryFn: () => getComisiones({
+      fecha_inicio: fechaInicio,
+      fecha_fin: fechaFin,
+      id_sucursal: sucursalId === TODAS_SUCURSALES ? undefined : sucursalId,
+    }),
   });
 
   const totalComision = comisiones.reduce((sum, c) => sum + Number(c.comision ?? 0), 0);
@@ -34,6 +45,18 @@ export function ComisionesPanel() {
         <div className="space-y-1">
           <label className="text-xs font-medium text-muted-foreground">Hasta</label>
           <Input type="date" value={fechaFin} onChange={(e) => setFechaFin(e.target.value)} className="h-9" />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">Sucursal</label>
+          <Select value={sucursalId} onValueChange={setSucursalId}>
+            <SelectTrigger className="h-9 w-[200px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={TODAS_SUCURSALES}>Todas las sucursales</SelectItem>
+              {sucursales.map((s) => (
+                <SelectItem key={s.id_sucursal} value={String(s.id_sucursal)}>{s.nombre_sucursal}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

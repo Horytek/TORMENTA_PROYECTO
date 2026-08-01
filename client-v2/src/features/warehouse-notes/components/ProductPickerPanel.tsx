@@ -79,6 +79,7 @@ export function ProductPickerPanel({ tipo, almacen, items, onAdd, disabled }: Pr
       nombre_tonalidad: null,
       nombre_talla: null,
       sku_label: variante.label,
+      costo: null,
     });
 
     setQtyByProduct((prev) => ({ ...prev, [producto.codigo]: "1" }));

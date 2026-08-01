@@ -1,4 +1,38 @@
 
+/**
+ * Código de barras de una variante: código del producto padre + id_sku.
+ * id_sku es AUTO_INCREMENT (único por sí solo), así que la concatenación ya
+ * es única sin necesidad de generador con reintentos. Si el producto padre no
+ * tiene código (caso raro, productos viejos sin autogeneración), la variante
+ * tampoco lo tiene — no hay de dónde derivarlo.
+ */
+export const codigoBarrasSku = (codBarrasProducto, id_sku) =>
+    codBarrasProducto ? `${codBarrasProducto}-${id_sku}` : null;
+
+/**
+ * EAN-13 válido (13 dígitos + dígito verificador real) por SKU, para
+ * imprimir en etiquetas que cualquier lector de tienda pueda escanear —
+ * `codigoBarrasSku` es alfanumérico y no cumple el estándar EAN-13.
+ *
+ * Prefijo "20": GS1 reserva el rango 20-29 para "restricted circulation
+ * numbers" — códigos de uso interno de una empresa, no productos
+ * registrados globalmente. Es exactamente este caso, así que no hay
+ * conflicto con un producto real de otra marca.
+ *
+ * id_sku es AUTO_INCREMENT global, así que el código ya es único sin
+ * generador con reintentos ni consulta a BD.
+ */
+export const generarEan13 = (id_sku) => {
+    const base = `20${String(id_sku).padStart(10, "0")}`; // 12 dígitos
+    let suma = 0;
+    for (let i = 0; i < base.length; i++) {
+        // Posición 1-indexada impar (1,3,5…) pesa 1; par pesa 3 — estándar EAN-13.
+        suma += Number(base[i]) * (i % 2 === 0 ? 1 : 3);
+    }
+    const digitoVerificador = (10 - (suma % 10)) % 10;
+    return base + digitoVerificador;
+};
+
 export const resolveSku = async (connection, id_producto, id_tonalidad, id_talla, id_tenant) => {
     // 1. Fetch tables to map Names
     // We assume standard "color" and "talla" codes in 'atributo' table.
@@ -24,7 +58,7 @@ export const resolveSku = async (connection, id_producto, id_tonalidad, id_talla
     const skuNameParts = [];
 
     // Fetch Product Name
-    const [prod] = await connection.query("SELECT descripcion, precio FROM producto WHERE id_producto = ?", [id_producto]);
+    const [prod] = await connection.query("SELECT descripcion, precio, cod_barras FROM producto WHERE id_producto = ?", [id_producto]);
     if (!prod.length) throw new Error(`Producto ${id_producto} not found`);
     skuNameParts.push(prod[0].descripcion);
 
@@ -84,6 +118,12 @@ export const resolveSku = async (connection, id_producto, id_tonalidad, id_talla
     `, [id_producto, id_tenant, sku_name.substring(0, 64), prod[0].precio, JSON.stringify(attributes), attrs_key]);
 
     const newSkuId = ins.insertId;
+
+    const cod_barras_sku = codigoBarrasSku(prod[0].cod_barras, newSkuId);
+    if (cod_barras_sku) {
+        await connection.query("UPDATE producto_sku SET cod_barras = ? WHERE id_sku = ?", [cod_barras_sku, newSkuId]);
+    }
+    await connection.query("UPDATE producto_sku SET ean13 = ? WHERE id_sku = ?", [generarEan13(newSkuId), newSkuId]);
 
     // Link Strict
     for (const l of attrLinks) {

@@ -1,12 +1,13 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import { Building2, Lock, RotateCcw } from "lucide-react";
 import { ProductCatalog } from "./ProductCatalog";
 import { CartPanel } from "./CartPanel";
 import { PaymentModal } from "./PaymentModal";
 import { ClientSelector, CLIENTE_VARIOS } from "./ClientSelector";
 import { HeldTicketsPanel } from "./HeldTicketsPanel";
+import { ReturnWizard } from "@/features/returns/components/ReturnWizard";
+import { TurnoCajaWidget } from "@/features/caja-turno/components/TurnoCajaWidget";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCartStore } from "@/store/useCartStore";
@@ -25,7 +26,6 @@ interface POSScreenProps {
 }
 
 export function POSScreen({ onSaleComplete }: POSScreenProps) {
-  const navigate = useNavigate();
   const user = useUserStore((s) => s.user);
   const cliente = useCartStore((s) => s.cliente);
   const setCliente = useCartStore((s) => s.setCliente);
@@ -39,6 +39,8 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [lastSaleId, setLastSaleId] = useState<number | null>(null);
   const [selectedAlmacenId, setSelectedAlmacenId] = useState<number | null>(null);
+  const [returnWizardOpen, setReturnWizardOpen] = useState(false);
+  const canDevolucion = can("devoluciones.create");
 
   // Obtener lista de almacenes disponibles
   const { data: almacenes = [] } = useQuery({
@@ -172,18 +174,19 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
             </Badge>
           )}
           {lastSaleId && (
-            <>
-              <Badge variant="outline" className="h-8 px-2.5 text-xs font-medium text-emerald-600 border-emerald-200 rounded-lg">
-                ✓ Venta #{lastSaleId}
-              </Badge>
-              <button
-                onClick={() => navigate("/sales/returns")}
-                className="flex items-center gap-1 rounded-lg border border-dashed border-muted-foreground/40 px-2.5 h-8 text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors cursor-pointer"
-              >
-                <RotateCcw className="h-3 w-3" /> Devolución
-              </button>
-            </>
+            <Badge variant="outline" className="h-8 px-2.5 text-xs font-medium text-emerald-600 border-emerald-200 rounded-lg">
+              ✓ Venta #{lastSaleId}
+            </Badge>
           )}
+          {canDevolucion && (
+            <button
+              onClick={() => setReturnWizardOpen(true)}
+              className="flex items-center gap-1 rounded-lg border border-dashed border-muted-foreground/40 px-2.5 h-8 text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors cursor-pointer"
+            >
+              <RotateCcw className="h-3 w-3" /> Cambio / Devolución
+            </button>
+          )}
+          <TurnoCajaWidget idSucursal={user?.id_sucursal} />
         </div>
       </div>
 
@@ -204,6 +207,11 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
         onSaleComplete={handleSaleComplete}
         selectedAlmacenId={selectedAlmacenId ?? undefined}
       />
+
+      {/* ── Cambio / devolución sin salir del POS ─────────────
+          Mismo componente que usa la pantalla de Devoluciones — acá solo se
+          le da un atajo desde la venta activa, no se reconstruye la lógica. */}
+      <ReturnWizard open={returnWizardOpen} onClose={() => setReturnWizardOpen(false)} />
     </div>
   );
 }

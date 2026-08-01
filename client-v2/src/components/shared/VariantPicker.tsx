@@ -50,15 +50,23 @@ export function VariantPicker({ idProducto, idAlmacen, onResolved }: VariantPick
     return map;
   }, [attrsCatalog]);
 
+  // Cascada: las opciones de CADA atributo se acotan a lo que ya elegiste en
+  // los demás. Con 3+ dimensiones esto es lo que evita llegar a "esa
+  // combinación no tiene variante generada" — con 1-2 dimensiones simplemente
+  // no filtra nada (no hay "los demás" que restrinjan).
   const valoresPorAtributo = useMemo(() => {
     const map = new Map<string, string[]>();
     attrIds.forEach((id) => {
+      const otrosElegidos = attrIds.filter((otroId) => otroId !== id && selection[otroId]);
+      const candidatos = otrosElegidos.length === 0
+        ? variants
+        : variants.filter((v) => otrosElegidos.every((otroId) => v.attrs?.[otroId] === selection[otroId]));
       const set = new Set<string>();
-      variants.forEach((v) => { if (v.attrs?.[id]) set.add(v.attrs[id]); });
+      candidatos.forEach((v) => { if (v.attrs?.[id]) set.add(v.attrs[id]); });
       map.set(id, [...set]);
     });
     return map;
-  }, [attrIds, variants]);
+  }, [attrIds, variants, selection]);
 
   const matched = useMemo(() => {
     if (attrIds.length === 0) return null;

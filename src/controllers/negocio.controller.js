@@ -1,4 +1,4 @@
-import { normalizarOrigen, esOrigenValido, vocabularioDe, requiereElegirOrigen } from "../services/costos/origenCosto.js";
+import { normalizarOrigen, esOrigenValido, vocabularioDe, requiereElegirOrigen, opcionesDeIngreso } from "../services/costos/origenCosto.js";
 import { getConnection } from "../database/database.js";
 import path from "path";
 import fs from "fs/promises";
@@ -72,6 +72,9 @@ export const getNegocio = async (req, res) => {
                 origen_productos: normalizarOrigen(empresa.origen_productos),
                 origen_vocabulario: vocabularioDe(empresa.origen_productos),
                 origen_elegible_por_linea: requiereElegirOrigen(empresa.origen_productos),
+                // Solo trae opciones reales cuando hay algo que elegir (MIXTO);
+                // para el resto es un array de un solo valor, el de la empresa.
+                origen_opciones_linea: opcionesDeIngreso(empresa.origen_productos),
                 dashboard_widgets: normalizarDashboardWidgets(empresa.dashboard_widgets)
             }
         });

@@ -96,7 +96,9 @@ const addDestinatarioNatural = async (req, res) => {
         direccion = "",
         email = "",
         telefono = "",
-        estado_destinatario = 1
+        estado_destinatario = 1,
+        plazo_pago_dias,
+        linea_credito
     } = req.body;
     const id_tenant = req.id_tenant;
 
@@ -113,8 +115,8 @@ const addDestinatarioNatural = async (req, res) => {
         await connection.beginTransaction();
 
         const [result] = await connection.query(
-            `INSERT INTO destinatario (dni, nombres, apellidos, ubicacion, direccion, email, telefono, estado_destinatario, id_tenant) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO destinatario (dni, nombres, apellidos, ubicacion, direccion, email, telefono, estado_destinatario, plazo_pago_dias, linea_credito, id_tenant)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 dni,
                 nombres.trim(),
@@ -124,6 +126,8 @@ const addDestinatarioNatural = async (req, res) => {
                 email || null,
                 telefono || null,
                 estado_destinatario,
+                plazo_pago_dias ?? null,
+                linea_credito ?? null,
                 id_tenant
             ]
         );
@@ -172,7 +176,9 @@ const addDestinatarioJuridico = async (req, res) => {
         direccion = "",
         email = "",
         telefono = "",
-        estado_destinatario = 1
+        estado_destinatario = 1,
+        plazo_pago_dias,
+        linea_credito
     } = req.body;
     const id_tenant = req.id_tenant;
 
@@ -189,8 +195,8 @@ const addDestinatarioJuridico = async (req, res) => {
         await connection.beginTransaction();
 
         const [result] = await connection.query(
-            `INSERT INTO destinatario (ruc, razon_social, ubicacion, direccion, email, telefono, estado_destinatario, id_tenant) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO destinatario (ruc, razon_social, ubicacion, direccion, email, telefono, estado_destinatario, plazo_pago_dias, linea_credito, id_tenant)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 ruc,
                 razon_social.trim(),
@@ -199,6 +205,8 @@ const addDestinatarioJuridico = async (req, res) => {
                 email || null,
                 telefono || null,
                 estado_destinatario,
+                plazo_pago_dias ?? null,
+                linea_credito ?? null,
                 id_tenant
             ]
         );
@@ -250,7 +258,9 @@ const updateDestinatarioNatural = async (req, res) => {
             direccion = "",
             ubicacion = "",
             email = "",
-            estado_destinatario
+            estado_destinatario,
+            plazo_pago_dias,
+            linea_credito
         } = req.body;
         const id_tenant = req.id_tenant;
 
@@ -293,6 +303,14 @@ const updateDestinatarioNatural = async (req, res) => {
         if (estado_destinatario !== undefined) {
             query += `, estado_destinatario = ?`;
             params.push(estado_destinatario);
+        }
+        if (plazo_pago_dias !== undefined) {
+            query += `, plazo_pago_dias = ?`;
+            params.push(plazo_pago_dias);
+        }
+        if (linea_credito !== undefined) {
+            query += `, linea_credito = ?`;
+            params.push(linea_credito);
         }
 
         query += ` WHERE id_destinatario = ? AND id_tenant = ?`;
@@ -337,7 +355,9 @@ const updateDestinatarioJuridico = async (req, res) => {
             direccion = "",
             ubicacion = "",
             email = "",
-            estado_destinatario
+            estado_destinatario,
+            plazo_pago_dias,
+            linea_credito
         } = req.body;
         const id_tenant = req.id_tenant;
 
@@ -379,6 +399,14 @@ const updateDestinatarioJuridico = async (req, res) => {
         if (estado_destinatario !== undefined) {
             query += `, estado_destinatario = ?`;
             params.push(estado_destinatario);
+        }
+        if (plazo_pago_dias !== undefined) {
+            query += `, plazo_pago_dias = ?`;
+            params.push(plazo_pago_dias);
+        }
+        if (linea_credito !== undefined) {
+            query += `, linea_credito = ?`;
+            params.push(linea_credito);
         }
 
         query += ` WHERE id_destinatario = ? AND id_tenant = ?`;
@@ -443,6 +471,8 @@ const getDestinatarios = async (req, res) => {
                 d.email,
                 d.telefono,
                 COALESCE(d.estado_destinatario, 1) AS estado_destinatario,
+                d.plazo_pago_dias,
+                d.linea_credito,
                 COALESCE(pc.productos_count, 0) AS productos_count
             FROM destinatario d
             LEFT JOIN (

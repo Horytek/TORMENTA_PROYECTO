@@ -24,6 +24,7 @@ import {
 import { FormField } from "@/components/shared/FormField";
 import { useUserStore } from "@/store/useUserStore";
 import { usePermissions } from "@/hooks/usePermissions";
+import { getNegocio } from "@/features/settings/api/settings";
 
 import { ProductPickerPanel } from "./ProductPickerPanel";
 import {
@@ -39,6 +40,7 @@ import {
 } from "../api/warehouseNotes";
 import type { NoteKind, NoteFormItem, NotaInsertPayload } from "../types";
 import { listarPlantillas, guardarPlantilla, eliminarPlantilla, type PlantillaNota } from "../lib/plantillas";
+import { costosIncompletos, costosParaPayload } from "../lib/costos";
 
 /** "conjunto" = registra una salida y un ingreso a la vez (traslado entre almacenes). */
 type Mode = NoteKind | "conjunto";
@@ -105,6 +107,7 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
   const [items, setItems] = useState<NoteFormItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [plantillas, setPlantillas] = useState<PlantillaNota[]>([]);
+  const [origenCosto, setOrigenCosto] = useState("");
 
   useEffect(() => {
     if (isOpen) {
@@ -112,8 +115,19 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
       setItems([]);
       setError(null);
       setPlantillas(listarPlantillas());
+      setOrigenCosto("");
     }
   }, [isOpen, defaultTipo]);
+
+  // Vocabulario ("costo de compra" vs "costo de producción") y si hay que
+  // preguntar el origen por nota: los manda el backend para no duplicar
+  // etiquetas que se desincronizarían (ver origenCosto.js).
+  const { data: negocio } = useQuery({
+    queryKey: ["negocio", "warehouse-notes"],
+    queryFn: getNegocio,
+    enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const { control, register, handleSubmit, watch, reset, setValue } = useForm<HeaderValues>({ defaultValues: emptyHeader });
   const almacenOrigen = watch("almacenOrigen");
@@ -128,12 +142,22 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
     }
     reset(emptyHeader);
     setItems([]);
+    setOrigenCosto("");
   }, [tipoNota, reset]);
 
   // El origen determina de dónde se lee el stock: si cambia, el carrito ya no es válido.
   useEffect(() => {
     setItems([]);
   }, [almacenOrigen]);
+
+  // Costo solo aplica a un ingreso real (no a un traslado entre almacenes):
+  // el backend lo ignora cuando almacenO viene con valor (esa mercadería ya
+  // tiene costo y recalcularlo lo duplicaría).
+  const esIngresoReal = tipoNota === "ingreso" && !almacenOrigen;
+  const vocabulario = negocio?.origen_vocabulario;
+  const mostrarSelectorOrigen = esIngresoReal && !!negocio?.origen_elegible_por_linea;
+  const opcionesOrigen = negocio?.origen_opciones_linea ?? [];
+  const faltanCostos = esIngresoReal && costosIncompletos(items);
 
   const { data: almacenes = [] } = useQuery({
     queryKey: ["nota-almacen-almacenes", tipoNota],
@@ -198,7 +222,9 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
     setTipoNota(p.tipo as Mode);
     setValue("destinatario", p.destinatario);
     setValue("glosa", p.glosa);
-    setItems(p.items);
+    // El costo no se reusa de la plantilla: es una foto de lo que costó esa
+    // vez, no un dato que se repita de compra en compra (ver punto 3.2).
+    setItems(p.items.map((i) => ({ ...i, costo: null })));
   };
 
   const handleEliminarPlantilla = (id: string) => {
@@ -238,12 +264,14 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
         });
       }
 
+      const costos = esIngresoReal ? costosParaPayload(items) : undefined;
       const payload: NotaInsertPayload = {
         ...common,
         almacenO: tipoNota === "salida" ? values.almacenOrigen : values.almacenOrigen || null,
         almacenD: tipoNota === "ingreso" ? values.almacenDestino : values.almacenDestino || null,
         numComprobante: numeroDocumento,
         ...(tipoNota === "salida" ? { nom_usuario: user?.username } : { usuario: user?.username }),
+        ...(costos ? { costos, origen_costo: mostrarSelectorOrigen ? origenCosto || null : null } : {}),
       };
       return tipoNota === "salida" ? insertNotaSalida(payload) : insertNotaIngreso(payload);
     },
@@ -263,6 +291,8 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
     tipoNota === "conjunto" ? !!numeroDocumentoIngreso && !!numeroDocumentoSalida : !!numeroDocumento;
   const origenOk = tipoNota === "ingreso" || !!watch("almacenOrigen");
   const destinoOk = tipoNota === "salida" || !!watch("almacenDestino");
+  const costosCapturados = esIngresoReal ? costosParaPayload(items) : undefined;
+  const faltaOrigenCosto = mostrarSelectorOrigen && !!costosCapturados && !origenCosto;
 
   const isValid =
     !!user?.username &&
@@ -272,7 +302,9 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
     !!watch("destinatario") &&
     !!watch("glosa") &&
     !!watch("nota") &&
-    items.length > 0;
+    items.length > 0 &&
+    !faltanCostos &&
+    !faltaOrigenCosto;
 
   const onSubmit = (values: HeaderValues) => {
     setError(null);
@@ -448,6 +480,19 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
               disabled={tipoNota !== "ingreso" && !almacenOrigen}
             />
 
+            {esIngresoReal && mostrarSelectorOrigen && (
+              <FormField label="Origen de esta mercadería" hint="Tu negocio compra y también fabrica; dinos de cuál se trata esta vez.">
+                <Select value={origenCosto || undefined} onValueChange={setOrigenCosto}>
+                  <SelectTrigger><SelectValue placeholder="Selecciona un origen" /></SelectTrigger>
+                  <SelectContent>
+                    {opcionesOrigen.map((o) => (
+                      <SelectItem key={o.valor} value={o.valor}>{o.etiqueta}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormField>
+            )}
+
             {items.length > 0 && (
               <div className="rounded-xl border border-border">
                 {items.map((item) => (
@@ -461,6 +506,30 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
                         {item.marca} · Cant: {item.cantidad}
                       </p>
                     </div>
+                    {esIngresoReal && (
+                      <div className="shrink-0">
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          placeholder={vocabulario?.campoCosto ?? "Costo"}
+                          title={vocabulario?.ayudaCosto}
+                          value={item.costo ?? ""}
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            const parsed = raw === "" ? null : Number(raw);
+                            setItems((prev) =>
+                              prev.map((p) =>
+                                p.uniqueKey === item.uniqueKey
+                                  ? { ...p, costo: parsed === null || Number.isNaN(parsed) ? null : parsed }
+                                  : p
+                              )
+                            );
+                          }}
+                          className="h-8 w-24 text-sm"
+                        />
+                      </div>
+                    )}
                     <Button
                       type="button"
                       variant="ghost"
@@ -475,6 +544,17 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
               </div>
             )}
           </div>
+
+          {faltanCostos && (
+            <p className="rounded-md border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+              Completa el {vocabulario?.campoCosto?.toLowerCase() ?? "costo"} de todos los productos, o de ninguno: un costo a medias no se puede guardar.
+            </p>
+          )}
+          {faltaOrigenCosto && !faltanCostos && (
+            <p className="rounded-md border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+              Selecciona el origen de esta mercadería para registrar el costo.
+            </p>
+          )}
 
           {error && (
             <p className="rounded-md border border-destructive/25 bg-destructive/10 px-3 py-2 text-sm text-destructive">

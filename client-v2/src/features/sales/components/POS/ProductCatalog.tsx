@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, type KeyboardEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Package } from "lucide-react";
 import { SearchInput } from "@/components/shared/SearchInput";
@@ -9,6 +9,7 @@ import { VariantPicker, type VariantResolved } from "@/components/shared/Variant
 import { useCartStore } from "@/store/useCartStore";
 import type { POSProduct, CartItem } from "@/features/sales/types";
 import { getProductosVentas } from "@/features/sales/api/ventas";
+import { buscarSkuPorBarcode } from "@/features/products/api/products";
 
 const SIN_VARIANTE: VariantResolved = { id_sku: null, label: null, stock: null, ready: true };
 
@@ -67,8 +68,35 @@ export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
       stock: variante.stock ?? product.stock,
       id_sku: variante.id_sku,
       sku_label: variante.label,
+      tipo_afectacion_igv: product.tipo_afectacion_igv,
     };
     addItem(cartItem);
+  };
+
+  // Un lector de código de barras "escribe" el código y manda Enter — no hay
+  // que distinguir escaneo de tipeo manual, solo reaccionar a Enter. Si el
+  // texto resuelve a una variante exacta (SKU), se agrega directo al carrito
+  // sin pasar por el selector manual de talla/color.
+  const handleScanEnter = async (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter" || !search.trim()) return;
+    const codigo = search.trim();
+    const match = await buscarSkuPorBarcode(codigo, selectedAlmacenId);
+    if (!match) return;
+    if (match.stock <= 0) return;
+    addItem({
+      id_producto: match.id_producto,
+      codigo_barra: codigo,
+      descripcion: match.nombre,
+      nom_marca: match.nom_marca,
+      cantidad: 1,
+      precio_unitario: Number(match.precio),
+      precio_total: Number(match.precio),
+      stock: match.stock,
+      id_sku: match.id_sku,
+      sku_label: match.label || null,
+      tipo_afectacion_igv: match.tipo_afectacion_igv,
+    });
+    setSearch("");
   };
 
   const handleCardClick = (product: POSProduct) => {
@@ -91,7 +119,8 @@ export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
         <SearchInput
           value={search}
           onChangeValue={setSearch}
-          placeholder="Buscar por nombre, código o barras…"
+          onKeyDown={handleScanEnter}
+          placeholder="Buscar por nombre, código o barras… (Enter para escanear)"
           wrapperClassName="w-full max-w-none"
         />
         {categorias.length > 0 && (
@@ -167,7 +196,12 @@ export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
                       {inCart}
                     </span>
                   )}
-                  <span className="text-xs font-medium text-foreground leading-tight line-clamp-2 mb-1">
+                  <span className="text-xs font-medium text-foreground leading-tight line-clamp-2 mb-1 flex items-center gap-1">
+                    {product.es_combo && (
+                      <span className="shrink-0 rounded bg-primary/10 text-primary px-1 py-0.5 text-[9px] font-bold uppercase">
+                        Combo
+                      </span>
+                    )}
                     {product.nombre}
                   </span>
                   {(product.nom_marca || product.categoria_p) && (

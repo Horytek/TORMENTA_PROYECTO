@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { UserPlus, Pencil, Trash2, Ban, RotateCcw, Users, Percent, Receipt, Loader2 } from "lucide-react";
+import { isAxiosError } from "axios";
+import { UserPlus, Pencil, Trash2, Ban, RotateCcw, Users, Percent, Receipt, Loader2, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -16,8 +17,12 @@ import {
 } from "../api/vendedores";
 import { getUsuarios } from "@/features/users/api/users";
 import { getVentas } from "@/features/sales/api/ventas";
+import { getSucursales, setSucursalVendedor } from "@/features/branches/api/branches";
 import type { Vendedor, VendedorInput, VendedorUpdate } from "../types";
 import { ComisionesPanel } from "../components/ComisionesPanel";
+
+const extractErrorMessage = (err: unknown): string | undefined =>
+  isAxiosError(err) ? err.response?.data?.message : undefined;
 
 interface FormState {
   dni: string;
@@ -27,9 +32,14 @@ interface FormState {
   telefono: string;
   porcentaje_comision: string;
   meta_mensual: string;
+  cargo: string;
+  fecha_ingreso: string;
 }
 
-const emptyForm: FormState = { dni: "", id_usuario: "", nombres: "", apellidos: "", telefono: "", porcentaje_comision: "", meta_mensual: "" };
+const emptyForm: FormState = {
+  dni: "", id_usuario: "", nombres: "", apellidos: "", telefono: "",
+  porcentaje_comision: "", meta_mensual: "", cargo: "", fecha_ingreso: "",
+};
 
 export default function EmployeesPage() {
   const qc = useQueryClient();
@@ -40,10 +50,27 @@ export default function EmployeesPage() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [confirmDeactivate, setConfirmDeactivate] = useState<Vendedor | null>(null);
   const [viewingSales, setViewingSales] = useState<Vendedor | null>(null);
+  const [assigningBranch, setAssigningBranch] = useState<Vendedor | null>(null);
+  const [selectedSucursalId, setSelectedSucursalId] = useState("");
 
   const { data: vendedores = [], isLoading } = useQuery({
     queryKey: ["empleados"],
     queryFn: getVendedores,
+  });
+
+  const { data: sucursales = [] } = useQuery({
+    queryKey: ["sucursales"],
+    queryFn: getSucursales,
+    enabled: !!assigningBranch,
+  });
+
+  const assignBranchMut = useMutation({
+    mutationFn: ({ id_sucursal, dni }: { id_sucursal: number; dni: string }) => setSucursalVendedor(id_sucursal, dni),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["empleados"] });
+      qc.invalidateQueries({ queryKey: ["sucursales"] });
+      setAssigningBranch(null);
+    },
   });
 
   const { data: usuarios = [] } = useQuery({
@@ -83,6 +110,8 @@ export default function EmployeesPage() {
       dni: v.dni, id_usuario: String(v.id_usuario), nombres: v.nombres, apellidos: v.apellidos, telefono: v.telefono ?? "",
       porcentaje_comision: v.porcentaje_comision != null ? String(v.porcentaje_comision) : "",
       meta_mensual: v.meta_mensual != null ? String(v.meta_mensual) : "",
+      cargo: v.cargo ?? "",
+      fecha_ingreso: v.fecha_ingreso ?? "",
     });
     setIsFormOpen(true);
   };
@@ -99,6 +128,11 @@ export default function EmployeesPage() {
     }
     qc.invalidateQueries({ queryKey: ["empleados"] });
     setIsFormOpen(false);
+  };
+
+  const openAssignBranch = (v: Vendedor) => {
+    setAssigningBranch(v);
+    setSelectedSucursalId("");
   };
 
   const handleDelete = async () => {
@@ -139,6 +173,13 @@ export default function EmployeesPage() {
       format: (v) => (v as string) || "—",
     },
     {
+      key: "cargo",
+      priority: "secondary",
+      semantic: "chip",
+      label: "Cargo",
+      format: (v) => (v as string) || "Sin especificar",
+    },
+    {
       key: "estado_vendedor",
       priority: "secondary",
       semantic: "badge",
@@ -167,6 +208,12 @@ export default function EmployeesPage() {
       label: "Editar",
       icon: <Pencil className="h-3.5 w-3.5" />,
       onClick: (item) => openEdit(item as Vendedor),
+    },
+    {
+      id: "assign-branch",
+      label: "Cambiar sucursal",
+      icon: <Building2 className="h-3.5 w-3.5" />,
+      onClick: (item) => openAssignBranch(item as Vendedor),
     },
     {
       id: "deactivate",
@@ -314,6 +361,24 @@ export default function EmployeesPage() {
                 placeholder="999123456"
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground font-medium">Cargo</label>
+                <Input
+                  value={form.cargo}
+                  onChange={e => setForm(f => ({ ...f, cargo: e.target.value }))}
+                  placeholder="Vendedor"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs text-muted-foreground font-medium">Fecha de ingreso</label>
+                <Input
+                  type="date"
+                  value={form.fecha_ingreso}
+                  onChange={e => setForm(f => ({ ...f, fecha_ingreso: e.target.value }))}
+                />
+              </div>
+            </div>
             <div className="space-y-1.5">
               <label className="text-xs text-muted-foreground font-medium">Comisión (%)</label>
               <Input
@@ -365,6 +430,45 @@ export default function EmployeesPage() {
         confirmLabel="Dar de baja"
         isPending={deactivateMut.isPending}
       />
+
+      {/* Cambiar sucursal */}
+      <Dialog open={!!assigningBranch} onOpenChange={(o) => !o && setAssigningBranch(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Cambiar sucursal</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">{assigningBranch?.nombre}</span> quedará como responsable de la sucursal elegida.
+            {assigningBranch?.nombre_sucursal && (
+              <> Actualmente: <span className="text-foreground">{assigningBranch.nombre_sucursal}</span>.</>
+            )}
+            {" "}Si la sucursal elegida ya tenía otro responsable, ambos intercambian de sucursal.
+          </p>
+          <Select value={selectedSucursalId || undefined} onValueChange={setSelectedSucursalId}>
+            <SelectTrigger><SelectValue placeholder="Selecciona una sucursal" /></SelectTrigger>
+            <SelectContent>
+              {sucursales.map((s) => (
+                <SelectItem key={s.id_sucursal} value={String(s.id_sucursal)}>{s.nombre_sucursal}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {assignBranchMut.isError && (
+            <p className="rounded-md border border-destructive/25 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {extractErrorMessage(assignBranchMut.error) ?? "No se pudo cambiar la sucursal."}
+            </p>
+          )}
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="ghost" onClick={() => setAssigningBranch(null)}>Cancelar</Button>
+            <Button
+              onClick={() => assigningBranch && selectedSucursalId && assignBranchMut.mutate({ id_sucursal: Number(selectedSucursalId), dni: assigningBranch.dni })}
+              disabled={!selectedSucursalId || assignBranchMut.isPending}
+            >
+              {assignBranchMut.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Guardar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Confirm delete */}
       <Dialog open={!!confirmDelete} onOpenChange={v => !v && setConfirmDelete(null)}>

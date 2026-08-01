@@ -60,7 +60,9 @@ export function SupplierAccountsDrawer({ proveedor, isOpen, onClose }: Props) {
     queryFn: () => getPurchaseOrders({ id_destinatario: proveedor!.id }),
     enabled: isOpen && !!proveedor,
   });
-  const ordenesPendientes = ordenes.filter((o) => o.estado !== "received" && o.estado !== "cancelled");
+  // Antes solo mostraba pendientes; el historial completo (recibidas,
+  // canceladas) también sirve para ver el trato pasado con el proveedor.
+  const ordenesOrdenadas = [...ordenes].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
 
   const saldoTotal = cuentas.reduce((sum, c) => sum + Number(c.saldo), 0);
 
@@ -71,7 +73,7 @@ export function SupplierAccountsDrawer({ proveedor, isOpen, onClose }: Props) {
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               <Receipt className="h-4 w-4 text-brand" />
-              Cuentas por pagar
+              Historial de compras
             </SheetTitle>
             <SheetDescription>{proveedor ? proveedorNombre(proveedor) : ""}</SheetDescription>
           </SheetHeader>
@@ -89,6 +91,9 @@ export function SupplierAccountsDrawer({ proveedor, isOpen, onClose }: Props) {
 
             <Separator />
 
+            <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <Receipt className="h-3.5 w-3.5" /> Facturas de compra
+            </h4>
             {isLoading ? (
               <div className="space-y-2">
                 {[...Array(3)].map((_, i) => <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />)}
@@ -133,17 +138,17 @@ export function SupplierAccountsDrawer({ proveedor, isOpen, onClose }: Props) {
 
             <div className="space-y-2">
               <h4 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                <ClipboardList className="h-3.5 w-3.5" /> Órdenes de compra pendientes
+                <ClipboardList className="h-3.5 w-3.5" /> Historial de órdenes de compra
               </h4>
               {isLoadingOrdenes ? (
                 <div className="h-16 animate-pulse rounded-lg bg-muted" />
-              ) : ordenesPendientes.length === 0 ? (
+              ) : ordenesOrdenadas.length === 0 ? (
                 <p className="py-4 text-center text-xs text-muted-foreground">
-                  Sin órdenes de compra pendientes con este proveedor.
+                  Sin órdenes de compra registradas con este proveedor.
                 </p>
               ) : (
                 <div className="space-y-1.5">
-                  {ordenesPendientes.map((o) => (
+                  {ordenesOrdenadas.map((o) => (
                     <div key={o.id} className="flex items-center justify-between rounded-lg border border-border/60 px-3 py-2 text-xs">
                       <div>
                         <p className="font-medium text-foreground">OC #{o.id} · {new Date(o.fecha).toLocaleDateString("es-PE")}</p>

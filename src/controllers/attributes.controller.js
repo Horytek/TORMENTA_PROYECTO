@@ -12,10 +12,10 @@ const getAttributes = async (req, res) => {
         // Let's assume tenant-specific for flexibility, or null for system defaults.
 
         const [result] = await connection.query(`
-            SELECT id_atributo, nombre, tipo_input, slug, id_tenant, es_filtro, es_visible, es_requerido 
-            FROM atributo 
+            SELECT id_atributo, nombre, codigo, tipo_input, slug, id_tenant, es_filtro, es_visible, es_requerido, orden
+            FROM atributo
             WHERE id_tenant = ? OR id_tenant IS NULL
-            ORDER BY id_atributo
+            ORDER BY orden, id_atributo
         `, [id_tenant]);
 
         res.json({ code: 1, data: result });
@@ -41,9 +41,14 @@ const createAttribute = async (req, res) => {
             return res.json({ code: 0, message: "Ya existe un atributo con ese nombre" });
         }
 
+        // Nuevo atributo va al final del orden de despliegue.
+        const [[{ siguienteOrden }]] = await connection.query(
+            "SELECT COALESCE(MAX(orden), 0) + 1 AS siguienteOrden FROM atributo WHERE id_tenant = ?", [id_tenant]
+        );
+
         const [ins] = await connection.query(`
-            INSERT INTO atributo (nombre, tipo_input, slug, id_tenant, es_filtro, es_visible, es_requerido) VALUES (?, ?, ?, ?, ?, ?, ?)
-        `, [nombre, tipo_input || 'SELECT', slug, id_tenant, es_filtro ? 1 : 0, es_visible ? 1 : 0, es_requerido ? 1 : 0]);
+            INSERT INTO atributo (nombre, tipo_input, slug, id_tenant, es_filtro, es_visible, es_requerido, orden) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `, [nombre, tipo_input || 'SELECT', slug, id_tenant, es_filtro ? 1 : 0, es_visible ? 1 : 0, es_requerido ? 1 : 0, siguienteOrden]);
 
         res.json({ code: 1, message: "Atributo creado", id: ins.insertId });
     } catch (error) {
@@ -95,10 +100,10 @@ const getAttributeValues = async (req, res) => {
         const id_tenant = req.id_tenant;
 
         const [result] = await connection.query(`
-            SELECT id_valor, valor, metadata 
-            FROM atributo_valor 
+            SELECT id_valor, valor, metadata, orden
+            FROM atributo_valor
             WHERE id_atributo = ? AND (id_tenant = ? OR id_tenant IS NULL)
-            ORDER BY valor
+            ORDER BY orden, valor
         `, [id, id_tenant]);
 
         // Parse metadata if JSON
@@ -136,9 +141,13 @@ const createAttributeValue = async (req, res) => {
 
         const metadataStr = metadata ? JSON.stringify(metadata) : null;
 
+        const [[{ siguienteOrden }]] = await connection.query(
+            "SELECT COALESCE(MAX(orden), 0) + 1 AS siguienteOrden FROM atributo_valor WHERE id_atributo = ? AND id_tenant = ?", [id, id_tenant]
+        );
+
         const [ins] = await connection.query(`
-            INSERT INTO atributo_valor (id_atributo, valor, metadata, id_tenant) VALUES (?, ?, ?, ?)
-        `, [id, valor, metadataStr, id_tenant]);
+            INSERT INTO atributo_valor (id_atributo, valor, metadata, id_tenant, orden) VALUES (?, ?, ?, ?, ?)
+        `, [id, valor, metadataStr, id_tenant, siguienteOrden]);
 
         res.json({ code: 1, message: "Valor agregado", id: ins.insertId, data: { id: ins.insertId, valor, metadata } });
     } catch (error) {
@@ -212,6 +221,115 @@ const updateAttributeValue = async (req, res) => {
     }
 };
 
+/**
+ * Cuánto tocaría desactivar un atributo, ANTES de hacerlo. Todo de solo
+ * lectura sobre `sku_atributo_valor` (la tabla real que liga cada SKU a los
+ * valores de atributo que lo componen) — no cambia nada.
+ */
+const getAttributeImpact = async (req, res) => {
+    let connection;
+    try {
+        connection = await getConnection();
+        const { id } = req.params; // id_atributo
+        const id_tenant = req.id_tenant;
+
+        const [[productos]] = await connection.query(`
+            SELECT COUNT(DISTINCT ps.id_producto) AS total
+            FROM sku_atributo_valor sav
+            JOIN producto_sku ps ON ps.id_sku = sav.id_sku
+            WHERE sav.id_atributo = ? AND sav.id_tenant = ?
+        `, [id, id_tenant]);
+
+        const [[variantes]] = await connection.query(`
+            SELECT COUNT(DISTINCT id_sku) AS total FROM sku_atributo_valor WHERE id_atributo = ? AND id_tenant = ?
+        `, [id, id_tenant]);
+
+        const [[categorias]] = await connection.query(`
+            SELECT COUNT(*) AS total FROM categoria_atributo WHERE id_atributo = ? AND id_tenant = ?
+        `, [id, id_tenant]);
+
+        const [[ventas]] = await connection.query(`
+            SELECT COUNT(*) AS total
+            FROM detalle_venta dv
+            JOIN sku_atributo_valor sav ON sav.id_sku = dv.id_sku AND sav.id_tenant = dv.id_tenant
+            WHERE sav.id_atributo = ? AND dv.id_tenant = ?
+        `, [id, id_tenant]);
+
+        res.json({
+            code: 1,
+            data: {
+                productos: productos.total,
+                variantes: variantes.total,
+                categorias: categorias.total,
+                lineasVenta: ventas.total,
+            },
+        });
+    } catch (error) {
+        console.error("Error getAttributeImpact:", error);
+        res.status(500).json({ code: 0, message: "Error interno" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+const reorderAttributes = async (req, res) => {
+    let connection;
+    try {
+        connection = await getConnection();
+        const { ids } = req.body; // array de id_atributo, en el orden deseado
+        const id_tenant = req.id_tenant;
+
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ code: 0, message: "Falta la lista ordenada de atributos" });
+        }
+
+        await connection.beginTransaction();
+        for (let i = 0; i < ids.length; i++) {
+            await connection.query("UPDATE atributo SET orden = ? WHERE id_atributo = ? AND id_tenant = ?", [i, ids[i], id_tenant]);
+        }
+        await connection.commit();
+
+        res.json({ code: 1, message: "Orden actualizado" });
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error("Error reorderAttributes:", error);
+        res.status(500).json({ code: 0, message: "Error interno" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+const reorderAttributeValues = async (req, res) => {
+    let connection;
+    try {
+        connection = await getConnection();
+        const { id } = req.params; // id_atributo (dueño de los valores)
+        const { ids } = req.body; // array de id_valor, en el orden deseado
+        const id_tenant = req.id_tenant;
+
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ code: 0, message: "Falta la lista ordenada de valores" });
+        }
+
+        await connection.beginTransaction();
+        for (let i = 0; i < ids.length; i++) {
+            await connection.query(
+                "UPDATE atributo_valor SET orden = ? WHERE id_valor = ? AND id_atributo = ? AND id_tenant = ?",
+                [i, ids[i], id, id_tenant]
+            );
+        }
+        await connection.commit();
+
+        res.json({ code: 1, message: "Orden actualizado" });
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error("Error reorderAttributeValues:", error);
+        res.status(500).json({ code: 0, message: "Error interno" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
 const getCategoryAttributes = async (req, res) => {
     let connection;
     try {
@@ -219,11 +337,15 @@ const getCategoryAttributes = async (req, res) => {
         const { id_categoria } = req.params;
         const id_tenant = req.id_tenant;
 
+        // `es_visible` es el toggle global del atributo (Configuración > Contenido):
+        // si el negocio lo desactivó, no debe ofrecerse para armar variantes nuevas,
+        // aunque siga linkeado a la categoría. Las variantes YA creadas con este
+        // atributo no se tocan — solo se filtra la oferta para productos nuevos.
         const [result] = await connection.query(`
-            SELECT A.id_atributo, A.nombre, A.tipo_input 
+            SELECT A.id_atributo, A.nombre, A.tipo_input
             FROM categoria_atributo CA
             JOIN atributo A ON A.id_atributo = CA.id_atributo
-            WHERE CA.id_categoria = ? AND CA.id_tenant = ?
+            WHERE CA.id_categoria = ? AND CA.id_tenant = ? AND A.es_visible = 1
         `, [id_categoria, id_tenant]);
 
         res.json({ code: 1, data: result });
@@ -268,9 +390,12 @@ export const methods = {
     getAttributes,
     createAttribute,
     updateAttribute,
+    getAttributeImpact,
+    reorderAttributes,
     getAttributeValues,
     createAttributeValue,
     deleteAttributeValue,
+    reorderAttributeValues,
     getCategoryAttributes,
     linkCategoryAttributes,
     updateAttributeValue

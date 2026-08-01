@@ -204,40 +204,36 @@ export const useCartStore = create<CartStore>()(
       },
 
       // ── Computados ───────────────────────────────────────────────
+      // Exonerado/inafecto (catálogo 07 SUNAT) no llevan IGV — el 18% plano
+      // solo aplica a líneas gravadas (el default histórico, cuando el
+      // producto no trae tipo_afectacion_igv).
       getSubtotal: () => {
         const { items } = get();
-        const rawSum = items.reduce((sum, i) => sum + i.precio_total, 0);
         const igv_incluido = useConfigStore.getState().igv_incluido;
-        if (igv_incluido) {
-          const base = rawSum / (1 + IGV_RATE);
-          return Math.round(base * 100) / 100;
-        }
-        return Math.round(rawSum * 100) / 100;
+        const base = items.reduce((sum, i) => {
+          const gravado = (i.tipo_afectacion_igv ?? "10") === "10";
+          if (!gravado) return sum + i.precio_total;
+          return sum + (igv_incluido ? i.precio_total / (1 + IGV_RATE) : i.precio_total);
+        }, 0);
+        return Math.round(base * 100) / 100;
       },
 
       getIgv: () => {
         const { items } = get();
-        const rawSum = items.reduce((sum, i) => sum + i.precio_total, 0);
         const igv_incluido = useConfigStore.getState().igv_incluido;
-        if (igv_incluido) {
-          return Math.round((rawSum - rawSum / (1 + IGV_RATE)) * 100) / 100;
-        }
-        const subtotal = get().getSubtotal();
-        return Math.round(subtotal * IGV_RATE * 100) / 100;
+        const igv = items.reduce((sum, i) => {
+          const gravado = (i.tipo_afectacion_igv ?? "10") === "10";
+          if (!gravado) return sum;
+          return sum + (igv_incluido ? i.precio_total - i.precio_total / (1 + IGV_RATE) : i.precio_total * IGV_RATE);
+        }, 0);
+        return Math.round(igv * 100) / 100;
       },
 
       getTotal: () => {
         const { items, descuento } = get();
         const rawSum = items.reduce((sum, i) => sum + i.precio_total, 0);
         const igv_incluido = useConfigStore.getState().igv_incluido;
-        let total: number;
-        if (igv_incluido) {
-          total = rawSum;
-        } else {
-          const subtotal = get().getSubtotal();
-          const igv = Math.round(subtotal * IGV_RATE * 100) / 100;
-          total = subtotal + igv;
-        }
+        const total = igv_incluido ? rawSum : get().getSubtotal() + get().getIgv();
         return Math.max(0, Math.round((total - descuento) * 100) / 100);
       },
 

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { CheckCircle2, XCircle, Receipt, Banknote, Plus, Trash2, AlertTriangle } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { CheckCircle2, XCircle, Receipt, Banknote, Plus, Trash2, AlertTriangle, UserCircle2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import {
 import { useCartStore } from "@/store/useCartStore";
 import { useUserStore } from "@/store/useUserStore";
 import { createVenta } from "@/features/sales/api/ventas";
+import { getVendedores } from "@/features/employees/api/vendedores";
 import type { ComprobanteTipo, MetodoPago, VentaPayload } from "@/features/sales/types";
 import { CLIENTE_VARIOS } from "./ClientSelector";
 
@@ -37,7 +38,11 @@ interface PaymentModalProps {
 type MetodoConMonto = {
   metodo: MetodoPago;
   monto: number;
+  /** N° de operación — solo aplica a métodos digitales (Yape/Plin). */
+  referencia?: string;
 };
+
+const METODOS_CON_REFERENCIA = new Set<MetodoPago>(["YAPE", "PLIN"]);
 
 const METODOS_DISPONIBLES: { value: MetodoPago; label: string }[] = [
   { value: "EFECTIVO", label: "💵 Efectivo" },
@@ -59,6 +64,11 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
 
   const [comprobanteTipo, setComprobanteTipo] = useState<ComprobanteTipo>("Boleta");
   const [observaciones, setObservaciones] = useState("");
+  // "" = sin elegir → el backend atribuye la venta a quien cobra en caja
+  // (comportamiento de siempre). Solo se manda dni_vendedor si el cajero
+  // elige explícitamente a otra persona (vendedor de piso distinto de caja).
+  const [vendedorDni, setVendedorDni] = useState("");
+  const [motivoDescuento, setMotivoDescuento] = useState("");
   const [status, setStatus] = useState<SaleStatus>("idle");
   const [result, setResult] = useState<{ success: boolean; message?: string; num_comprobante?: string } | null>(null);
   const idempotencyKeyRef = useRef(crearClaveIdempotente());
@@ -75,6 +85,14 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
   const [pagos, setPagos] = useState<MetodoConMonto[]>([
     { metodo: "EFECTIVO", monto: 0 },
   ]);
+
+  const { data: vendedores = [] } = useQuery({
+    queryKey: ["vendedores-pos"],
+    queryFn: getVendedores,
+    enabled: open,
+    staleTime: 5 * 60 * 1000,
+  });
+  const vendedoresActivos = useMemo(() => vendedores.filter((v) => v.estado_vendedor === 1), [vendedores]);
 
   const subtotal = cart.getSubtotal();
   const igv = cart.getIgv();
@@ -176,6 +194,14 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
     setPagos((prev) => [...prev, { metodo: disponibles[0].value, monto: 0 }]);
   }, [isNota, pagos.length, metodosUsados]);
 
+  const updateReferencia = useCallback((index: number, referencia: string) => {
+    setPagos((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], referencia };
+      return next;
+    });
+  }, []);
+
   // Eliminar un método (no el primero)
   const eliminarMetodo = useCallback((index: number) => {
     if (index === 0) return; // No eliminar el primero
@@ -188,6 +214,8 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
       // Sugerir monto redondeado en efectivo
       setPagos([{ metodo: isNota ? "EFECTIVO" : "EFECTIVO", monto: Math.ceil(total) }]);
       setObservaciones("");
+      setVendedorDni("");
+      setMotivoDescuento("");
       setStatus("idle");
       setResult(null);
     }
@@ -213,6 +241,7 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
       return "Debes seleccionar un cliente con RUC para emitir una Factura.";
     }
     if (cart.items.length === 0) return "El carrito está vacío.";
+    if (cart.descuento > 0 && !motivoDescuento.trim()) return "Indica el motivo del descuento aplicado.";
     if (isCredito && clienteFinal.id_cliente === 0) {
       return "Debes seleccionar un cliente para una venta a crédito.";
     }
@@ -234,7 +263,7 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
       if (unique.size !== metodos.length) return "No puedes usar el mismo método de pago más de una vez.";
     }
     return null;
-  }, [cart.cliente, cart.items, isNota, isCredito, pagos, total, totalPagado, resta, isExcedente, comprobanteTipo]);
+  }, [cart.cliente, cart.items, cart.descuento, motivoDescuento, isNota, isCredito, pagos, total, totalPagado, resta, isExcedente, comprobanteTipo]);
 
   // Mutación de venta
   const mutation = useMutation({
@@ -264,10 +293,18 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
         total_t: total,
         totalImporte_venta: total,
         descuento_venta: cart.descuento,
+        motivo_descuento: cart.descuento > 0 ? motivoDescuento.trim() : undefined,
+        referencia_pago: (() => {
+          const entradas = pagos
+            .filter((p) => METODOS_CON_REFERENCIA.has(p.metodo) && p.referencia?.trim())
+            .map((p) => [p.metodo, p.referencia!.trim()] as const);
+          return entradas.length > 0 ? Object.fromEntries(entradas) : undefined;
+        })(),
         vuelto: isCredito ? 0 : Math.max(0, totalPagado - total),
         recibido: montoRecibidoBackend,
         observacion: observaciones || undefined,
         comprobante_pago: metodoPagoBackend,
+        dni_vendedor: vendedorDni || undefined,
         detalles: cart.items.map((item) => ({
           id_producto: item.id_producto,
           cantidad: item.cantidad,
@@ -359,6 +396,14 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
                   />
                 </div>
               </div>
+              {cart.descuento > 0 && (
+                <Input
+                  value={motivoDescuento}
+                  onChange={(e) => setMotivoDescuento(e.target.value)}
+                  placeholder="Motivo del descuento (obligatorio)…"
+                  className="h-8 text-xs"
+                />
+              )}
               <Separator />
               <div className="flex justify-between text-lg font-bold">
                 <span>Total</span>
@@ -382,12 +427,32 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
               </Select>
             </div>
 
+            {/* Vendedor — solo si hay más de uno; por defecto la comisión va
+                a quien cobra en caja. Útil cuando quien atendió en piso no es
+                quien cobra. */}
+            {vendedoresActivos.length > 1 && (
+              <div className="space-y-1.5">
+                <Label className="flex items-center gap-1.5">
+                  <UserCircle2 className="h-3.5 w-3.5 text-muted-foreground" /> Vendedor (opcional)
+                </Label>
+                <Select value={vendedorDni || undefined} onValueChange={setVendedorDni}>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Quien cobra en caja" /></SelectTrigger>
+                  <SelectContent>
+                    {vendedoresActivos.map((v) => (
+                      <SelectItem key={v.dni} value={v.dni}>{v.nombre}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* ── Sistema de pago multi-método ── */}
             <div className="space-y-2">
               <Label>Método(s) de pago</Label>
               <div className="space-y-2">
                 {pagos.map((pago, index) => (
-                  <div key={index} className="flex items-center gap-2">
+                  <div key={index} className="space-y-1.5">
+                  <div className="flex items-center gap-2">
                     {/* Selector de método */}
                     <Select
                       value={pago.metodo}
@@ -438,6 +503,15 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     )}
+                  </div>
+                  {METODOS_CON_REFERENCIA.has(pago.metodo) && !isNota && (
+                    <Input
+                      value={pago.referencia ?? ""}
+                      onChange={(e) => updateReferencia(index, e.target.value)}
+                      placeholder={`N° de operación ${pago.metodo === "YAPE" ? "Yape" : "Plin"} (opcional)`}
+                      className="h-8 text-xs"
+                    />
+                  )}
                   </div>
                 ))}
               </div>

@@ -12,9 +12,12 @@ router.use(logMiddleware);
 
 router.get("/", productosController.getProductos);
 router.get("/lastid", productosController.getUltimoIdProducto);
+router.get("/sku-por-barcode", productosController.buscarSkuPorBarcode);
 router.get("/:id/variants", productosController.getProductVariants);
 router.get("/:id/attributes", productosController.getProductAttributes);
 router.get("/:id/historial-precio", productosController.getHistorialPrecioProducto);
+router.get("/:id/combo", productosController.getProductCombo);
+router.put("/:id/combo", requireCapability("productos", "editar"), productosController.updateProductCombo);
 router.post("/variants", requireCapability("productos", "crear"), productosController.registerVariants);
 router.get("/:id", productosController.getProducto);
 router.post("/", requireCapability("productos", "crear"), productosController.addProducto);

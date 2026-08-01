@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, X, Check, Tags } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Check, Tags, ArrowUp, ArrowDown } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import {
   createAttributeValue,
   updateAttributeValue,
   deleteAttributeValue,
+  reorderAttributeValues,
 } from "../api/content";
 import type { Attribute, AttributeValue } from "../types";
 
@@ -55,6 +56,19 @@ export default function AttributeValuesPanel({ attribute, canEdit }: { attribute
     mutationFn: (v: AttributeValue) => deleteAttributeValue(v.id_valor),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["attribute-values", attribute.id_atributo] }); setDeleting(null); },
   });
+
+  const reorder = useMutation({
+    mutationFn: (ids: number[]) => reorderAttributeValues(attribute.id_atributo, ids),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["attribute-values", attribute.id_atributo] }),
+  });
+
+  const move = (index: number, delta: number) => {
+    const target = index + delta;
+    if (target < 0 || target >= values.length) return;
+    const ids = values.map((v) => v.id_valor);
+    [ids[index], ids[target]] = [ids[target], ids[index]];
+    reorder.mutate(ids);
+  };
 
   return (
     <div className="space-y-4">
@@ -111,7 +125,7 @@ export default function AttributeValuesPanel({ attribute, canEdit }: { attribute
           </div>
         ) : (
           <ul className="divide-y divide-border">
-            {values.map((v) => (
+            {values.map((v, i) => (
               <li key={v.id_valor} className={cn("flex items-center gap-3 px-3 py-2", editing?.id_valor === v.id_valor && "bg-accent/40")}>
                 {isColor && (
                   <span className="h-5 w-5 shrink-0 rounded-md ring-1 ring-border" style={{ backgroundColor: v.metadata?.hex || "transparent" }} />
@@ -120,6 +134,8 @@ export default function AttributeValuesPanel({ attribute, canEdit }: { attribute
                 {isColor && v.metadata?.hex && <span className="num text-xs text-muted-foreground">{v.metadata.hex}</span>}
                 {canEdit && (
                   <div className="flex items-center gap-1">
+                    <IconAction label="Subir" onClick={() => move(i, -1)} disabled={i === 0 || reorder.isPending}><ArrowUp className="h-4 w-4" /></IconAction>
+                    <IconAction label="Bajar" onClick={() => move(i, 1)} disabled={i === values.length - 1 || reorder.isPending}><ArrowDown className="h-4 w-4" /></IconAction>
                     <IconAction label="Editar" onClick={() => startEdit(v)}><Pencil className="h-4 w-4" /></IconAction>
                     <IconAction label="Eliminar" danger onClick={() => setDeleting(v)}><Trash2 className="h-4 w-4" /></IconAction>
                   </div>

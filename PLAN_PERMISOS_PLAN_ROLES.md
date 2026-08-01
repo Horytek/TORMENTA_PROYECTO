@@ -184,8 +184,14 @@ en Developer + el resolver las convierte en capabilities). Lo que falta:
   marcarla en el módulo → aparece sola en la matriz de roles → `<Can>` en el
   botón. Pendiente menor: mismo editor para SUBMÓDULOS (SubmoduloFormDialog +
   submodulos.controller) — patrón idéntico.
-- **Registro automático al crear módulos**: crear un módulo en Developer siembra
-  sus acciones CRUD estándar en el catálogo (hoy son dos pasos manuales).
+- **Registro automático al crear módulos** — ✅ HECHO (cerrado por la parte 3,
+  commit `b0f39bcf`, sin actualizar esta línea hasta ahora): `ModuloFormDialog`
+  ya incluye "Acciones habilitadas" en el mismo formulario de creación, y
+  `addModulo` (`modulos.controller.js:61-62`) persiste `active_actions` en el
+  mismo INSERT — ya no son dos pasos. Queda como deuda menor, no bloqueante:
+  `PUT /api/developer/module-config/:type/:id` (`actionCatalog.controller.js:85-120`)
+  es el endpoint del flujo viejo de dos pasos, huérfano (0 referencias en
+  `client-v2`) — candidato a borrar cuando alguien confirme que no lo usa nada más.
 - Resultado medible: **agregar un permiso nuevo = 1 registro en el catálogo +
   envolver el botón en `<Can>`. Cero migraciones, cero SQL, cero deploys de backend.**
 

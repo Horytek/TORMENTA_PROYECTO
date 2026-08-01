@@ -1,9 +1,10 @@
 import api from "@/api/axios";
-import type { Product, Brand, Category, Subcategory, UnitOfMeasure, ProductAttribute, ProductVariant } from "../types";
+import type { Product, Brand, Category, Subcategory, UnitOfMeasure, ProductAttribute, ProductVariant, ComboItem } from "../types";
 
 // 1. Productos CRUD
-export const getProducts = async (params?: { page?: number; limit?: number; q?: string }): Promise<{ data: Product[]; total: number; totalPages: number }> => {
-  const response = await api.get("/productos", { params });
+export const getProducts = async (params?: { page?: number; limit?: number; q?: string; bajoStock?: boolean }): Promise<{ data: Product[]; total: number; totalPages: number }> => {
+  const { bajoStock, ...rest } = params ?? {};
+  const response = await api.get("/productos", { params: { ...rest, bajo_stock: bajoStock ? "1" : undefined } });
   const data = response.data;
   return {
     data: data?.data || [],
@@ -127,6 +128,23 @@ export const getProductVariants = async (productId: number, idAlmacen?: number):
   return data?.data || (Array.isArray(data) ? data : []);
 };
 
+export interface SkuPorBarcode {
+  id_producto: number;
+  id_sku: number;
+  nombre: string;
+  nom_marca?: string;
+  precio: number;
+  label: string;
+  stock: number;
+  tipo_afectacion_igv?: string;
+}
+
+/** Resuelve un código escaneado/tipeado a la variante exacta (SKU); null si no hay match. */
+export const buscarSkuPorBarcode = async (codigo: string, idAlmacen?: number): Promise<SkuPorBarcode | null> => {
+  const response = await api.get("/productos/sku-por-barcode", { params: { codigo, id_almacen: idAlmacen } });
+  return response.data?.code === 1 ? response.data.data : null;
+};
+
 export interface HistorialPrecioItem {
   id_log: number;
   fecha: string;
@@ -139,12 +157,35 @@ export const getHistorialPrecioProducto = async (productId: number): Promise<His
   return response.data?.data || [];
 };
 
-export const generateSKUs = async (productId: number, data: { id_atributo: number; values: { id: string | number; label: string }[] }[]): Promise<boolean> => {
+export interface CombinacionMatriz {
+  valores: { id_atributo: number; id_valor: number }[];
+  precio?: number;
+  stock_inicial?: number;
+}
+
+export const generateSKUs = async (
+  productId: number,
+  data: { id_atributo: number; values: { id: string | number; label: string }[] }[],
+  combinaciones?: CombinacionMatriz[]
+): Promise<boolean> => {
   const response = await api.post("/productos/skus/generate", {
     id_producto: productId,
-    attributes: data
+    attributes: data,
+    ...(combinaciones && combinaciones.length > 0 ? { combinaciones } : {}),
   });
   return response.data?.code === 1;
+};
+
+// 4.5. Composición de combos/kits
+export const getProductCombo = async (productId: number): Promise<ComboItem[]> => {
+  const response = await api.get(`/productos/${productId}/combo`);
+  return response.data?.data || [];
+};
+
+export const updateProductCombo = async (productId: number, items: ComboItem[]): Promise<boolean> => {
+  const response = await api.put(`/productos/${productId}/combo`, { items });
+  const data = response.data;
+  return data?.code === 1 || data?.success === true;
 };
 
 // 5. Importación masiva

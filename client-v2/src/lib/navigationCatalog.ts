@@ -24,6 +24,7 @@ import {
   ShieldAlert,
   Wallet,
   RotateCcw,
+  HandCoins,
 } from "lucide-react";
 import type { RouteModule, CatalogMeta } from "@/api/rutas";
 import { getIcon, type NavIcon } from "@/lib/iconRegistry";
@@ -73,6 +74,7 @@ const MODULE_META: Record<string, ModuleMeta> = {
   "compras/ordenes": { url: "/purchases/orders", icon: ClipboardList, group: "Logística", title: "Órdenes de Compra", keywords: ["proveedor", "compra", "recepción"] },
   "compras/facturas": { url: "/purchases/invoices", icon: FileSpreadsheet, group: "Logística", title: "Facturas de Compra", keywords: ["proveedor", "factura"] },
   "compras/cuentas-por-pagar": { url: "/purchases/accounts-payable", icon: Wallet, group: "Logística", title: "Cuentas por Pagar", keywords: ["deuda", "pago", "proveedor"] },
+  "compras/anticipos": { url: "/purchases/advances", icon: HandCoins, group: "Logística", title: "Anticipos a Proveedor", keywords: ["adelanto", "pago", "proveedor"] },
   "clientes": { url: "/people/clients", icon: User, group: "Personas", title: "Clientes" },
   "proveedores": { url: "/people/providers", icon: Users, group: "Personas", title: "Proveedores" },
   "empleados": { url: "/people/employees", icon: Users, group: "Personas", title: "Empleados", keywords: ["trabajadores", "rrhh"] },

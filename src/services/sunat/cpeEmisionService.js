@@ -217,6 +217,8 @@ export async function emitirComprobanteDesdeVenta({
       fecha_emision: String(payload.fechaEmision).slice(0, 10),
       moneda: payload.tipoMoneda,
       mto_oper_gravadas: totales.mtoOperGravadas,
+      mto_oper_exoneradas: totales.mtoOperExoneradas,
+      mto_oper_inafectas: totales.mtoOperInafectas,
       mto_igv: totales.mtoIGV,
       mto_imp_venta: totales.mtoImpVenta,
       tipo_doc_cliente: payload.client.tipoDoc,

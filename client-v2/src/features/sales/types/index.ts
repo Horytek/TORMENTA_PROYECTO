@@ -28,6 +28,8 @@ export interface CartItem {
   sku_label?: string | null;
   /** Descuento en monto (no %) aplicado a esta línea; se descuenta de precio_total. */
   descuento?: number;
+  /** Catálogo 07 SUNAT del producto: "10"=Gravado (default), "20"=Exonerado, "30"=Inafecto. */
+  tipo_afectacion_igv?: string;
 }
 
 // ── Detalle de venta (respuesta API / backend) ─────────────────
@@ -129,6 +131,10 @@ export interface VentaPayload {
   total_t: number;
   totalImporte_venta?: number;
   descuento_venta?: number;
+  /** Obligatorio cuando descuento_venta > 0 — el backend lo rechaza si falta. */
+  motivo_descuento?: string;
+  /** N° de operación por método de pago digital, ej. { YAPE: "123456" }. Solo los que se capturaron. */
+  referencia_pago?: Record<string, string>;
   vuelto?: number;
   recibido?: number;
   observacion?: string;
@@ -178,6 +184,10 @@ export interface POSProduct {
   tiene_variantes?: boolean;
   /** Punto de reorden configurado en Productos; null/undefined = sin umbral configurado. */
   stock_min?: number | null;
+  /** Catálogo 07 SUNAT: "10"=Gravado (default), "20"=Exonerado, "30"=Inafecto. */
+  tipo_afectacion_igv?: string;
+  /** Combo/kit: `stock` ya viene calculado como "combos armables" según sus componentes. */
+  es_combo?: boolean;
 }
 
 // ── Carrito completo ────────────────────────────────────────────

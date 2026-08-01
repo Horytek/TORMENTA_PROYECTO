@@ -85,13 +85,20 @@ export default function CategoryTemplates({ canEdit }: { canEdit: boolean }) {
 
       {/* Atributos de la categoría */}
       <section className="space-y-4">
+        <div className="rounded-lg border border-brand/20 bg-brand/5 p-3.5 text-xs text-foreground">
+          <p className="font-semibold text-brand mb-0.5">📋 Plantillas de Atributos por Categoría</p>
+          <p className="text-muted-foreground leading-relaxed">
+            Define qué atributos (Color, Talla, Material...) aplican automáticamente al seleccionar cada categoría. Al crear un producto, se filtrarán solo los atributos de su plantilla para acelerar el registro.
+          </p>
+        </div>
+
         {currentCat ? (
           <>
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-base font-semibold capitalize text-foreground">{currentCat.nombre}</h3>
                 <p className="text-xs text-muted-foreground">
-                  <span className="num font-medium text-foreground">{checked.size}</span> de {attributes.length} atributos aplican
+                  <span className="num font-medium text-foreground">{checked.size}</span> de {attributes.length} atributos aplican a esta categoría
                 </p>
               </div>
               {canEdit && (

@@ -14,11 +14,13 @@ export const TIPO_LABELS: Record<string, string> = {
 export interface Attribute {
   id_atributo: number;
   nombre: string;
+  codigo?: string;
   tipo_input: string;
   slug?: string;
   es_filtro?: number;
   es_visible?: number;
   es_requerido?: number;
+  orden?: number;
 }
 
 export interface AttributeInput {
@@ -40,4 +42,5 @@ export interface AttributeValue {
   id_valor: number;
   valor: string;
   metadata?: ValueMetadata | null;
+  orden?: number;
 }

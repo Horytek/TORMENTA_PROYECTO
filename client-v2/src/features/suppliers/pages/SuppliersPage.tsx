@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Phone, Mail, Receipt } from "lucide-react";
+import { isAxiosError } from "axios";
+import { Plus, Pencil, Trash2, Phone, Mail, Receipt, Ban, RotateCcw } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 
 import { cn } from "@/lib/utils";
@@ -9,9 +10,12 @@ import type { FieldDef, RecordAction } from "@/components/shared/AdaptiveCollect
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import SupplierForm from "../components/SupplierForm";
 import { SupplierAccountsDrawer } from "../components/SupplierAccountsDrawer";
-import { getProveedores, deleteProveedor } from "../api/suppliers";
+import { getProveedores, deleteProveedor, updateProveedor } from "../api/suppliers";
 import type { Proveedor } from "../types";
 import { proveedorNombre, proveedorDocumento, proveedorTipo } from "../types";
+
+const extractErrorMessage = (err: unknown): string | undefined =>
+  isAxiosError(err) ? err.response?.data?.message : undefined;
 
 export default function SuppliersPage() {
   const queryClient = useQueryClient();
@@ -20,6 +24,7 @@ export default function SuppliersPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Proveedor | null>(null);
   const [deleting, setDeleting] = useState<Proveedor | null>(null);
+  const [deactivating, setDeactivating] = useState<Proveedor | null>(null);
   const [viewingAccounts, setViewingAccounts] = useState<Proveedor | null>(null);
 
   const { can } = usePermissions();
@@ -36,6 +41,18 @@ export default function SuppliersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["suppliers"] });
       setDeleting(null);
+    },
+  });
+
+  // Cambiar estado no reescribe el resto del proveedor: `updateProveedor` solo
+  // manda las claves con valor (el backend hace UPDATE parcial), así que basta
+  // con `tipo` (para elegir el endpoint natural/jurídico) + `estado`.
+  const setEstadoMutation = useMutation({
+    mutationFn: ({ p, estado }: { p: Proveedor; estado: number }) =>
+      updateProveedor(p.id, { tipo: proveedorTipo(p), estado }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      setDeactivating(null);
     },
   });
 
@@ -142,7 +159,7 @@ export default function SuppliersPage() {
   const actions: RecordAction[] = [
     {
       id: "cuentas",
-      label: "Cuentas por pagar",
+      label: "Historial de compras",
       icon: <Receipt className="h-3.5 w-3.5" />,
       onClick: (item) => setViewingAccounts(item as Proveedor),
     },
@@ -152,6 +169,24 @@ export default function SuppliersPage() {
       icon: <Pencil className="h-3.5 w-3.5" />,
       onClick: (item) => openEdit(item as Proveedor),
       disabled: !canEdit,
+    },
+    {
+      id: "deactivate",
+      label: "Desactivar",
+      icon: <Ban className="h-3.5 w-3.5" />,
+      onClick: (item) => setDeactivating(item as Proveedor),
+      hidden: (item) => Number((item as Proveedor).estado) !== 1,
+      disabled: !canEdit,
+      variant: "secondary",
+    },
+    {
+      id: "reactivate",
+      label: "Reactivar",
+      icon: <RotateCcw className="h-3.5 w-3.5" />,
+      onClick: (item) => setEstadoMutation.mutate({ p: item as Proveedor, estado: 1 }),
+      hidden: (item) => Number((item as Proveedor).estado) === 1,
+      disabled: !canEdit,
+      variant: "secondary",
     },
     {
       id: "delete",
@@ -202,7 +237,7 @@ export default function SuppliersPage() {
 
       <ConfirmDialog
         open={!!deleting}
-        onClose={() => setDeleting(null)}
+        onClose={() => { setDeleting(null); deleteMutation.reset(); }}
         onConfirm={() => deleting && deleteMutation.mutate(deleting)}
         title="¿Eliminar proveedor?"
         description={
@@ -217,6 +252,26 @@ export default function SuppliersPage() {
         confirmLabel="Eliminar"
         variant="danger"
         isPending={deleteMutation.isPending}
+        error={deleteMutation.isError ? extractErrorMessage(deleteMutation.error) ?? "No se pudo eliminar el proveedor." : null}
+      />
+
+      <ConfirmDialog
+        open={!!deactivating}
+        onClose={() => { setDeactivating(null); setEstadoMutation.reset(); }}
+        onConfirm={() => deactivating && setEstadoMutation.mutate({ p: deactivating, estado: 0 })}
+        title="¿Desactivar proveedor?"
+        description={
+          <>
+            Deja de aparecer como opción activa al generar órdenes de compra; su historial no se pierde y podés reactivarlo cuando quieras.
+            <br />
+            <span className="mt-1 inline-block font-medium text-foreground">
+              {deactivating ? proveedorNombre(deactivating) : ""}
+            </span>
+          </>
+        }
+        confirmLabel="Desactivar"
+        isPending={setEstadoMutation.isPending}
+        error={setEstadoMutation.isError ? extractErrorMessage(setEstadoMutation.error) ?? "No se pudo desactivar el proveedor." : null}
       />
 
       <SupplierAccountsDrawer

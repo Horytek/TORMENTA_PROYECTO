@@ -48,6 +48,8 @@ const getVendedores = async (req, res) => {
                 ve.id_usuario,
                 ve.porcentaje_comision,
                 ve.meta_mensual,
+                ve.cargo,
+                ve.fecha_ingreso,
                 suc.nombre_sucursal
             FROM vendedor ve
             INNER JOIN usuario usu ON usu.id_usuario = ve.id_usuario
@@ -104,11 +106,13 @@ const getVendedor = async (req, res) => {
                 usu.usua, 
                 CONCAT(ve.nombres, ' ', ve.apellidos) AS nombre, 
                 ve.nombres, 
-                ve.apellidos, 
-                ve.telefono, 
-                ve.estado_vendedor, 
-                ve.id_usuario
-            FROM vendedor ve 
+                ve.apellidos,
+                ve.telefono,
+                ve.estado_vendedor,
+                ve.id_usuario,
+                ve.cargo,
+                ve.fecha_ingreso
+            FROM vendedor ve
             INNER JOIN usuario usu ON usu.id_usuario = ve.id_usuario
             WHERE ve.dni = ? AND ve.id_tenant = ?
             LIMIT 1
@@ -144,7 +148,7 @@ const getVendedor = async (req, res) => {
 
 // AGREGAR VENDEDOR - OPTIMIZADO
 const addVendedor = async (req, res) => {
-    const { dni, id_usuario, nombres, apellidos, telefono, estado_vendedor, porcentaje_comision, meta_mensual } = req.body;
+    const { dni, id_usuario, nombres, apellidos, telefono, estado_vendedor, porcentaje_comision, meta_mensual, cargo, fecha_ingreso } = req.body;
     const id_tenant = req.id_tenant;
 
     // Validaciones mejoradas
@@ -218,6 +222,8 @@ const addVendedor = async (req, res) => {
             estado_vendedor: estado_vendedor !== undefined ? estado_vendedor : 1,
             porcentaje_comision: porcentaje_comision ?? null,
             meta_mensual: meta_mensual ?? null,
+            cargo: cargo?.trim() || null,
+            fecha_ingreso: fecha_ingreso || null,
             id_tenant
         };
 
@@ -260,7 +266,7 @@ const addVendedor = async (req, res) => {
 // ACTUALIZAR VENDEDOR - OPTIMIZADO
 const updateVendedor = async (req, res) => {
     const { dni } = req.params; // DNI original
-    const { nuevo_dni, id_usuario, nombres, apellidos, telefono, estado_vendedor, porcentaje_comision, meta_mensual } = req.body;
+    const { nuevo_dni, id_usuario, nombres, apellidos, telefono, estado_vendedor, porcentaje_comision, meta_mensual, cargo, fecha_ingreso } = req.body;
     const id_tenant = req.id_tenant;
 
     // Validaciones mejoradas
@@ -336,7 +342,7 @@ const updateVendedor = async (req, res) => {
         // Obtener datos actuales del vendedor (para el swap y para no borrar
         // porcentaje_comision/meta_mensual cuando el caller no los manda)
         const [currentData] = await connection.query(
-            'SELECT id_usuario, porcentaje_comision, meta_mensual FROM vendedor WHERE dni = ? AND id_tenant = ?',
+            'SELECT id_usuario, porcentaje_comision, meta_mensual, cargo, fecha_ingreso FROM vendedor WHERE dni = ? AND id_tenant = ?',
             [dni, id_tenant]
         );
         const currentUserId = currentData[0]?.id_usuario;
@@ -372,7 +378,9 @@ const updateVendedor = async (req, res) => {
                 telefono = ?,
                 estado_vendedor = ?,
                 porcentaje_comision = ?,
-                meta_mensual = ?
+                meta_mensual = ?,
+                cargo = ?,
+                fecha_ingreso = ?
             WHERE dni = ? AND id_tenant = ?
         `, [
             nuevo_dni || dni,
@@ -383,6 +391,8 @@ const updateVendedor = async (req, res) => {
             estado_vendedor !== undefined ? estado_vendedor : 1,
             porcentaje_comision !== undefined ? porcentaje_comision : currentData[0]?.porcentaje_comision ?? null,
             meta_mensual !== undefined ? meta_mensual : currentData[0]?.meta_mensual ?? null,
+            cargo !== undefined ? (cargo?.trim() || null) : currentData[0]?.cargo ?? null,
+            fecha_ingreso !== undefined ? (fecha_ingreso || null) : currentData[0]?.fecha_ingreso ?? null,
             dni,
             id_tenant
         ]);
@@ -628,7 +638,7 @@ const deleteVendedor = async (req, res) => {
 // atribuidas (dni_vendedor no nulo) y con estado activo (no anuladas).
 const getComisiones = async (req, res) => {
     const id_tenant = req.id_tenant;
-    const { fecha_inicio, fecha_fin } = req.query;
+    const { fecha_inicio, fecha_fin, id_sucursal } = req.query;
     let connection;
 
     try {
@@ -638,6 +648,7 @@ const getComisiones = async (req, res) => {
         const params = [id_tenant];
         if (fecha_inicio) { where.push("v.f_venta >= ?"); params.push(fecha_inicio); }
         if (fecha_fin) { where.push("v.f_venta <= ?"); params.push(fecha_fin); }
+        if (id_sucursal) { where.push("v.id_sucursal = ?"); params.push(id_sucursal); }
 
         const [rows] = await connection.query(`
             SELECT

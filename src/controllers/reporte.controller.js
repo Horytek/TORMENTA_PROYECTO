@@ -1019,6 +1019,16 @@ const exportarRegistroVentas = async (req, res) => {
       }
     }
 
+    // RUC y razón social de la empresa del tenant que exporta — antes venían
+    // hardcodeados a un tenant específico, así que cualquier otro tenant
+    // recibía el RUC ajeno en su propio Registro de Ventas.
+    const [empresaResult] = await connection.query(
+      "SELECT ruc, COALESCE(nombreComercial, razonSocial) AS nombre FROM empresa WHERE id_tenant = ? LIMIT 1",
+      [id_tenant]
+    );
+    const rucEmpresa = empresaResult[0]?.ruc || "";
+    const nombreEmpresa = empresaResult[0]?.nombre || "";
+
     // Inicializar los filtros y parámetros
     const filters = [];
     const startDate = format(new Date(Number(ano), Number(mes) - 1, 1), 'yyyy-MM-dd');
@@ -1046,40 +1056,51 @@ const exportarRegistroVentas = async (req, res) => {
       queryParams.push(id_tenant);
     }
 
+    // `comprobante_electronico` es la fuente fiscal real (tipo/serie/correlativo
+    // ya separados, base gravada e IGV calculados al emitir, no recalculados
+    // acá). Es 1:1 con `venta` (UNIQUE uq_cpe_tenant_venta), así que el LEFT
+    // JOIN no duplica filas. Solo se cae al cálculo legado (dividir entre 1.18)
+    // en ventas sin CPE emitido — antiguas, o `sin_respaldo`.
     const query = `
-      SELECT 
+      SELECT
         ROW_NUMBER() OVER (ORDER BY v.id_venta) AS numero_correlativo,
         DAY(v.f_venta) AS dia_emision,
         DAY(v.f_venta) AS dia_vencimiento,
         c.num_comprobante AS num_comprobante,
         v.metodo_pago,
-        CASE 
+        COALESCE(ce.tipo_doc, '01') AS tipo_doc,
+        COALESCE(ce.serie, SUBSTRING_INDEX(c.num_comprobante, '-', 1)) AS serie,
+        COALESCE(ce.correlativo, SUBSTRING_INDEX(c.num_comprobante, '-', -1)) AS correlativo,
+        COALESCE(ce.tipo_doc_cliente, CASE
             WHEN cl.dni IS NOT NULL AND cl.dni <> '' THEN '1'
             ELSE '6'
-        END AS tipo_doc_cliente,
-        CASE 
-            WHEN cl.dni IS NOT NULL AND cl.dni <> '' THEN cl.dni 
-            ELSE cl.ruc 
-        END AS documento_cliente,
-        CASE 
-            WHEN cl.nombres IS NOT NULL AND cl.nombres <> '' AND cl.apellidos IS NOT NULL AND cl.apellidos <> '' 
-            THEN CONCAT(cl.nombres, ' ', cl.apellidos) 
-            ELSE cl.razon_social 
-        END AS nombre_cliente,
+        END) AS tipo_doc_cliente,
+        COALESCE(ce.num_doc_cliente, CASE
+            WHEN cl.dni IS NOT NULL AND cl.dni <> '' THEN cl.dni
+            ELSE cl.ruc
+        END) AS documento_cliente,
+        COALESCE(ce.nombre_cliente, CASE
+            WHEN cl.nombres IS NOT NULL AND cl.nombres <> '' AND cl.apellidos IS NOT NULL AND cl.apellidos <> ''
+            THEN CONCAT(cl.nombres, ' ', cl.apellidos)
+            ELSE cl.razon_social
+        END) AS nombre_cliente,
         s.nombre_sucursal,
-        ROUND(SUM((dv.cantidad * dv.precio) - dv.descuento) / 1.18, 2) AS base_imponible,
-        ROUND((SUM((dv.cantidad * dv.precio) - dv.descuento) / 1.18) * 0.18, 2) AS igv,
-        ROUND(SUM((dv.cantidad * dv.precio) - dv.descuento), 2) AS total
+        COALESCE(ce.mto_oper_gravadas, ROUND(SUM((dv.cantidad * dv.precio) - dv.descuento) / 1.18, 2)) AS base_imponible,
+        COALESCE(ce.mto_igv, ROUND((SUM((dv.cantidad * dv.precio) - dv.descuento) / 1.18) * 0.18, 2)) AS igv,
+        COALESCE(ce.mto_imp_venta, ROUND(SUM((dv.cantidad * dv.precio) - dv.descuento), 2)) AS total
       FROM venta v
       INNER JOIN detalle_venta dv ON v.id_venta = dv.id_venta
       INNER JOIN comprobante c ON c.id_comprobante = v.id_comprobante
       INNER JOIN cliente cl ON cl.id_cliente = v.id_cliente
       INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal
       INNER JOIN tipo_comprobante tc ON tc.id_tipocomprobante = c.id_tipocomprobante
+      LEFT JOIN comprobante_electronico ce ON ce.id_tenant = v.id_tenant AND ce.id_venta = v.id_venta
       WHERE v.estado_venta != 0 AND v.f_venta >= ? AND v.f_venta < ?
       ${filters.length > 0 ? 'AND ' + filters.join(' AND ') : ''}
-      GROUP BY v.id_venta, c.num_comprobante, cl.dni, cl.ruc, cl.nombres, cl.apellidos, cl.razon_social, 
-               v.f_venta, s.nombre_sucursal, v.metodo_pago
+      GROUP BY v.id_venta, c.num_comprobante, cl.dni, cl.ruc, cl.nombres, cl.apellidos, cl.razon_social,
+               v.f_venta, s.nombre_sucursal, v.metodo_pago,
+               ce.tipo_doc, ce.serie, ce.correlativo, ce.tipo_doc_cliente, ce.num_doc_cliente,
+               ce.nombre_cliente, ce.mto_oper_gravadas, ce.mto_igv, ce.mto_imp_venta
       ORDER BY v.id_venta`;
 
     const [resultados] = await connection.query(query, queryParams);
@@ -1110,8 +1131,8 @@ const exportarRegistroVentas = async (req, res) => {
 
     worksheet.getCell("B2").value = nombreSucursal;
     worksheet.getCell("B3").value = `${getMonthAbbreviation(mes)}-${ano.slice(-2)}`;
-    worksheet.getCell("B4").value = "20610588981";
-    worksheet.getCell("E5").value = "TEXTILES CREANDO MODA S.A.C.";
+    worksheet.getCell("B4").value = rucEmpresa;
+    worksheet.getCell("E5").value = nombreEmpresa;
 
     const startRow = 12;
     const totalColumns = 22;
@@ -1140,9 +1161,9 @@ const exportarRegistroVentas = async (req, res) => {
       worksheet.getCell(`A${currentRow}`).value = row.numero_correlativo;
       worksheet.getCell(`B${currentRow}`).value = row.dia_emision;
       worksheet.getCell(`C${currentRow}`).value = row.dia_vencimiento;
-      worksheet.getCell(`D${currentRow}`).value = "01";
-      worksheet.getCell(`E${currentRow}`).value = (row.num_comprobante || "").split("-")[0] || "";
-      worksheet.getCell(`F${currentRow}`).value = (row.num_comprobante || "").split("-")[1] || "";
+      worksheet.getCell(`D${currentRow}`).value = row.tipo_doc;
+      worksheet.getCell(`E${currentRow}`).value = row.serie || "";
+      worksheet.getCell(`F${currentRow}`).value = row.correlativo || "";
       worksheet.getCell(`G${currentRow}`).value = row.tipo_doc_cliente;
       worksheet.getCell(`H${currentRow}`).value = row.documento_cliente;
       worksheet.getCell(`I${currentRow}`).value = row.nombre_cliente;
@@ -1244,44 +1265,53 @@ const obtenerRegistroVentas = async (req, res) => {
     }
 
     const query = `
-      SELECT 
+      SELECT
         ROW_NUMBER() OVER (ORDER BY v.id_venta) AS numero_correlativo,
         v.f_venta AS fecha,
         s.nombre_sucursal AS sucursal,
         s.ubicacion AS ubicacion_sucursal,
         s.id_sucursal,
-        CASE 
-            WHEN cl.dni IS NOT NULL AND cl.dni <> '' THEN cl.dni 
-            ELSE cl.ruc 
-        END AS documento_cliente,
-        CASE 
-            WHEN cl.nombres IS NOT NULL AND cl.nombres <> '' AND cl.apellidos IS NOT NULL AND cl.apellidos <> '' 
-            THEN CONCAT(cl.nombres, ' ', cl.apellidos) 
-            ELSE cl.razon_social 
-        END AS nombre_cliente,
+        COALESCE(ce.num_doc_cliente, CASE
+            WHEN cl.dni IS NOT NULL AND cl.dni <> '' THEN cl.dni
+            ELSE cl.ruc
+        END) AS documento_cliente,
+        COALESCE(ce.nombre_cliente, CASE
+            WHEN cl.nombres IS NOT NULL AND cl.nombres <> '' AND cl.apellidos IS NOT NULL AND cl.apellidos <> ''
+            THEN CONCAT(cl.nombres, ' ', cl.apellidos)
+            ELSE cl.razon_social
+        END) AS nombre_cliente,
         c.num_comprobante AS num_comprobante,
         tc.nom_tipocomp AS tipo_comprobante,
-        ROUND(SUM((dv.cantidad * dv.precio) - dv.descuento) / 1.18, 2) AS importe,
-        ROUND((SUM((dv.cantidad * dv.precio) - dv.descuento) / 1.18) * 0.18, 2) AS igv,
-        ROUND(SUM((dv.cantidad * dv.precio) - dv.descuento), 2) AS total
+        COALESCE(ce.moneda, 'PEN') AS moneda,
+        ce.estado AS estado_sunat,
+        (ce.id_cpe IS NOT NULL) AS tiene_cpe,
+        COALESCE(ce.mto_oper_gravadas, ROUND(SUM((dv.cantidad * dv.precio) - dv.descuento) / 1.18, 2)) AS importe,
+        COALESCE(ce.mto_igv, ROUND((SUM((dv.cantidad * dv.precio) - dv.descuento) / 1.18) * 0.18, 2)) AS igv,
+        COALESCE(ce.mto_imp_venta, ROUND(SUM((dv.cantidad * dv.precio) - dv.descuento), 2)) AS total
       FROM venta v
       INNER JOIN detalle_venta dv ON v.id_venta = dv.id_venta
       INNER JOIN comprobante c ON c.id_comprobante = v.id_comprobante
       INNER JOIN tipo_comprobante tc ON tc.id_tipocomprobante = c.id_tipocomprobante
       INNER JOIN cliente cl ON cl.id_cliente = v.id_cliente
       INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal
+      LEFT JOIN comprobante_electronico ce ON ce.id_tenant = v.id_tenant AND ce.id_venta = v.id_venta
       WHERE v.estado_venta != 0
         AND v.id_tenant = ?
         ${extra.join(' ')}
-      GROUP BY 
+      GROUP BY
         v.id_venta, v.f_venta, s.nombre_sucursal, s.ubicacion,
         cl.dni, cl.ruc, cl.nombres, cl.apellidos, cl.razon_social,
-        c.num_comprobante, tc.nom_tipocomp
+        c.num_comprobante, tc.nom_tipocomp,
+        ce.num_doc_cliente, ce.nombre_cliente, ce.moneda, ce.estado, ce.id_cpe,
+        ce.mto_oper_gravadas, ce.mto_igv, ce.mto_imp_venta
       ORDER BY v.id_venta
     `;
 
     const [resultados] = await connection.query(query, params);
 
+    // `fuente` es transparencia, no adorno: un registro fiscal armado con el
+    // cálculo legado (1.18 fijo, sin desglose gravada/exonerada) no es lo
+    // mismo que uno tomado del CPE realmente emitido a SUNAT.
     const registroVentas = resultados.map(r => ({
       numero_correlativo: r.numero_correlativo,
       fecha: r.fecha,
@@ -1292,6 +1322,9 @@ const obtenerRegistroVentas = async (req, res) => {
       nombre_cliente: r.nombre_cliente,
       num_comprobante: r.num_comprobante,
       tipo_comprobante: r.tipo_comprobante,
+      moneda: r.moneda,
+      estado_sunat: r.estado_sunat,
+      fuente: r.tiene_cpe ? 'CPE' : 'LEGACY',
       importe: parseFloat(r.importe) || 0,
       igv: parseFloat(r.igv) || 0,
       total: parseFloat(r.total) || 0,

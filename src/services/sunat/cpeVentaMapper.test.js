@@ -117,7 +117,7 @@ describe("construirPayloadDesdeVenta — importes", () => {
     const { payload } = construir({ venta: { igv: 18 }, detalles: [linea({ total: 118 })] });
     expect(payload.mtoOperGravadas).toBe(100);
     expect(payload.mtoIGV).toBe(18);
-    expect(payload.details[0].tipAfeIgv).toBe(10); // gravado, operación onerosa
+    expect(payload.details[0].tipAfeIgv).toBe("10"); // gravado, operación onerosa
   });
 
   it("suma varias líneas sin perder céntimos", () => {
@@ -149,6 +149,56 @@ describe("construirPayloadDesdeVenta — importes", () => {
 
   it("tolera diferencias de redondeo menores a un céntimo grande", () => {
     expect(() => construir({ venta: { igv: 18.03 }, detalles: [linea({ total: 118 })] })).not.toThrow();
+  });
+
+  it("una línea exonerada no extrae IGV: el total cobrado es toda la base", () => {
+    const { payload } = construir({
+      venta: { igv: 0 },
+      detalles: [linea({ total: 100, tipo_afectacion_igv: "20" })],
+    });
+    expect(payload.mtoOperGravadas).toBe(0);
+    expect(payload.mtoOperExoneradas).toBe(100);
+    expect(payload.mtoOperInafectas).toBe(0);
+    expect(payload.mtoIGV).toBe(0);
+    expect(payload.details[0].tipAfeIgv).toBe("20");
+    expect(payload.details[0].igv).toBe(0);
+    expect(payload.details[0].mtoValorVenta).toBe(100);
+  });
+
+  it("una línea inafecta se comporta igual que exonerada, en su propia categoría", () => {
+    const { payload } = construir({
+      venta: { igv: 0 },
+      detalles: [linea({ total: 50, tipo_afectacion_igv: "30" })],
+    });
+    expect(payload.mtoOperInafectas).toBe(50);
+    expect(payload.mtoOperGravadas).toBe(0);
+    expect(payload.mtoIGV).toBe(0);
+  });
+
+  it("mezcla gravado + exonerado + inafecto en la misma venta sin perder cuadre", () => {
+    const { payload, totales } = construir({
+      venta: { igv: 18 },
+      detalles: [
+        linea({ id_producto: 1, total: 118, tipo_afectacion_igv: "10" }), // 100 + 18 IGV
+        linea({ id_producto: 2, total: 30, tipo_afectacion_igv: "20" }),
+        linea({ id_producto: 3, total: 20, tipo_afectacion_igv: "30" }),
+      ],
+    });
+    expect(payload.mtoOperGravadas).toBe(100);
+    expect(payload.mtoOperExoneradas).toBe(30);
+    expect(payload.mtoOperInafectas).toBe(20);
+    expect(payload.mtoIGV).toBe(18);
+    expect(payload.mtoImpVenta).toBe(168);
+    expect(totales.mtoOperExoneradas).toBe(30);
+  });
+
+  it("un tipo de afectación fuera de catálogo cae a gravado, nunca queda sin impuesto por accidente", () => {
+    const { payload } = construir({
+      venta: { igv: 18 },
+      detalles: [linea({ total: 118, tipo_afectacion_igv: "99" })],
+    });
+    expect(payload.details[0].tipAfeIgv).toBe("10");
+    expect(payload.mtoOperGravadas).toBe(100);
   });
 
   it("escribe la leyenda 1000 en palabras", () => {

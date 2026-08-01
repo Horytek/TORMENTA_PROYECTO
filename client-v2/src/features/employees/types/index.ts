@@ -13,6 +13,10 @@ export interface Vendedor {
   meta_mensual?: number | string | null;
   /** Sucursal donde está asignado como responsable; null = sin sucursal asignada. */
   nombre_sucursal?: string | null;
+  /** Cargo/puesto (ej. "Vendedor", "Encargado de almacén"); null = sin configurar. */
+  cargo?: string | null;
+  /** Fecha de ingreso (YYYY-MM-DD); null = sin configurar. */
+  fecha_ingreso?: string | null;
 }
 
 export interface VendedorInput {
@@ -24,6 +28,8 @@ export interface VendedorInput {
   estado_vendedor?: number;
   porcentaje_comision?: number | null;
   meta_mensual?: number | null;
+  cargo?: string | null;
+  fecha_ingreso?: string | null;
 }
 
 export interface VendedorUpdate extends VendedorInput {

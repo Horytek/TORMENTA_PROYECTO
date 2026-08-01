@@ -41,7 +41,7 @@ const empty: FormValues = {
 };
 
 const FLAGS: { key: "es_filtro" | "es_visible" | "es_requerido"; label: string; hint: string }[] = [
-  { key: "es_visible", label: "Visible en la tienda", hint: "Se muestra al cliente" },
+  { key: "es_visible", label: "Activo", hint: "Se ofrece al crear variantes nuevas y se muestra en la tienda. Desactivarlo no borra las variantes ya creadas con este atributo." },
   { key: "es_filtro", label: "Usar como filtro", hint: "Permite filtrar productos" },
   { key: "es_requerido", label: "Obligatorio", hint: "Requerido al crear variantes" },
 ];

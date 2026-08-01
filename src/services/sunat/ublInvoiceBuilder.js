@@ -60,8 +60,16 @@ export function buildInvoiceXmlFromApiPeruPayload(payload) {
   const clientName = payload?.client?.rznSocial || '';
 
   const mtoOperGravadas = toMoney(payload?.mtoOperGravadas);
+  const mtoOperExoneradas = toMoney(payload?.mtoOperExoneradas);
+  const mtoOperInafectas = toMoney(payload?.mtoOperInafectas);
   const mtoIGV = toMoney(payload?.mtoIGV);
   const mtoImpVenta = toMoney(payload?.mtoImpVenta);
+  // Suma de bases de todas las categorías (LegalMonetaryTotal la exige completa,
+  // no solo la gravada) — antes de esto, una venta con algo exonerado/inafecto
+  // declaraba de menos.
+  const lineExtensionTotal = toMoney(
+    Number(payload?.mtoOperGravadas || 0) + Number(payload?.mtoOperExoneradas || 0) + Number(payload?.mtoOperInafectas || 0)
+  );
 
   const legends = Array.isArray(payload?.legends) ? payload.legends : [];
   const legend1000 = legends.find((l) => String(l?.code) === '1000')?.value || '';
@@ -191,11 +199,35 @@ export function buildInvoiceXmlFromApiPeruPayload(payload) {
           <cbc:TaxTypeCode>VAT</cbc:TaxTypeCode>
         </cac:TaxScheme>
       </cac:TaxCategory>
-    </cac:TaxSubtotal>
+    </cac:TaxSubtotal>${Number(payload?.mtoOperExoneradas) > 0 ? `
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="${esc(currency)}">${esc(mtoOperExoneradas)}</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="${esc(currency)}">0.00</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cbc:TaxExemptionReasonCode>20</cbc:TaxExemptionReasonCode>
+        <cac:TaxScheme>
+          <cbc:ID>9997</cbc:ID>
+          <cbc:Name>EXO</cbc:Name>
+          <cbc:TaxTypeCode>FRE</cbc:TaxTypeCode>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>` : ''}${Number(payload?.mtoOperInafectas) > 0 ? `
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="${esc(currency)}">${esc(mtoOperInafectas)}</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="${esc(currency)}">0.00</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cbc:TaxExemptionReasonCode>30</cbc:TaxExemptionReasonCode>
+        <cac:TaxScheme>
+          <cbc:ID>9998</cbc:ID>
+          <cbc:Name>INA</cbc:Name>
+          <cbc:TaxTypeCode>FRE</cbc:TaxTypeCode>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>` : ''}
   </cac:TaxTotal>
 
   <cac:LegalMonetaryTotal>
-    <cbc:LineExtensionAmount currencyID="${esc(currency)}">${esc(mtoOperGravadas)}</cbc:LineExtensionAmount>
+    <cbc:LineExtensionAmount currencyID="${esc(currency)}">${esc(lineExtensionTotal)}</cbc:LineExtensionAmount>
     <cbc:TaxInclusiveAmount currencyID="${esc(currency)}">${esc(mtoImpVenta)}</cbc:TaxInclusiveAmount>
     <cbc:PayableAmount currencyID="${esc(currency)}">${esc(mtoImpVenta)}</cbc:PayableAmount>
   </cac:LegalMonetaryTotal>

@@ -47,7 +47,7 @@ export const deleteVendedor = async (dni: string): Promise<boolean> => {
   return isOk(res);
 };
 
-export const getComisiones = async (params: { fecha_inicio?: string; fecha_fin?: string }): Promise<ComisionVendedor[]> => {
+export const getComisiones = async (params: { fecha_inicio?: string; fecha_fin?: string; id_sucursal?: number | string }): Promise<ComisionVendedor[]> => {
   const res = await api.get<ApiResponse<ComisionVendedor[]>>("/vendedores/comisiones", { params });
   return unwrap(res);
 };

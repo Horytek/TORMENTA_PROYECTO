@@ -44,6 +44,18 @@ export interface Product {
   stock_min?: number | null;
   /** Suma de stock de todos los SKU del producto en todos los almacenes; ya lo calcula el backend. */
   stock_total?: number | string;
+  /** Catálogo 07 SUNAT: "10"=Gravado (default), "20"=Exonerado, "30"=Inafecto. */
+  tipo_afectacion_igv?: string;
+  /** Combo/kit: no tiene stock propio, se arma con `ComboItem[]` de otros productos. */
+  es_combo?: boolean | number;
+}
+
+/** Un componente de un combo/kit (tabla `combo_item`). */
+export interface ComboItem {
+  id_producto_componente: number;
+  cantidad: number;
+  descripcion?: string;
+  precio?: number;
 }
 
 /** Una variante generada de un producto (tabla `producto_sku`). */
@@ -52,6 +64,8 @@ export interface ProductVariant {
   id_producto: number;
   sku: string | null;
   cod_barras?: string | null;
+  /** EAN-13 numérico (rango GS1 20-29, uso interno), para imprimir etiquetas escaneables. */
+  ean13?: string | null;
   precio?: number | null;
   /** Stock en el almacén consultado (o total si no se filtró por almacén). */
   stock: number;
