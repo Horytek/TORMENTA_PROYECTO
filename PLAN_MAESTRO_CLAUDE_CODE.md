@@ -1,7 +1,7 @@
 # 🚀 PLAN MAESTRO DE ESPECIFICACIONES E IMPLEMENTACIÓN — HORYTEK ERP
 > **Documento de Instrucciones de Alta Precisión para Claude Code / Agente Autónomo**
 > **Proyecto**: Horytek ERP (*Proyecto Tormenta*) — Multi-tenant ERP + POS + SUNAT CPE
-> **Fecha de Auditoría**: 2026-08-01 | **Versión**: 3.6.0 (Fase 2 ejecutada + sistema de variantes/atributos verificado y extendido contra código real)
+> **Fecha de Auditoría**: 2026-08-01 | **Versión**: 3.7.0 (fusiona el estado pendiente de `PLAN_TRABAJO_SOCIO.md`, verificado contra código real)
 
 ---
 
@@ -13,7 +13,11 @@
 * **Captura de Costo Promedio en Nota de Ingreso**: `notaingreso.controller.js` ya invoca `aplicarIngresoAlCosto` (`src/services/costos/costoRepository.js`) antes de incrementar el stock.
 * **Captura de Costo Histórico al Vender**: `ventas.controller.js` ya consulta `obtenerCostosVigentes` e inserta `costo_unitario` en `detalle_venta`.
 * **Emisión SUNAT CPE (Factura/Boleta)**: Módulo `src/services/sunat/` funcional e idempotente.
+* **Operaciones exoneradas/inafectas en el builder UBL**: `ublInvoiceBuilder.js` ya arma `mtoOperExoneradas`/`mtoOperInafectas` además de gravadas (antes solo gravadas). Falta una prueba en vivo contra el ambiente beta de SUNAT para confiarlo del todo en producción — ver bloqueo de credenciales más abajo.
 * **Suite de Pruebas Unitarias Backend**: 112+ tests en `src/services/costos/` y `src/services/sunat/` corriendo con `npm test` en ~1.5s.
+* **Código de barras por SKU**: `codigoBarrasSku()` se llama en los 3 puntos de creación de SKU — ya no queda `producto_sku.cod_barras` en `NULL` para SKUs nuevos. Extendido esta sesión con EAN-13 real + impresión de etiquetas.
+* **Costo en la nota de ingreso**: `notaingreso.controller.js` aplica `aplicarIngresoAlCosto` antes de incrementar stock, agrupado por SKU, solo en ingresos reales (no traslados). UI de captura en `NoteFormDialog.tsx` con vocabulario dinámico desde `GET /api/negocio` (`origen_vocabulario.campoCosto/ayudaCosto`) y selector de origen solo si la empresa es MIXTO.
+* **Ciclo de compra completo**: antes era "cero tablas de compras" — hoy existen `ordenCompra`, `facturaCompra`, `cuentaPorPagar`, `anticipoProveedor` (backend montado en `/api/compras/*`) con su frontend completo en `client-v2/src/features/purchases/` (órdenes, facturas, cuentas por pagar, anticipos).
 
 ---
 
@@ -66,6 +70,21 @@ Entregado (solo lectura, cero cambios en la venta/stock):
    * El wizard de cambio/devolución (`ReturnWizard.tsx`) ya existía completo; esta sesión solo le agregó un atajo directo desde la venta activa en el POS (antes solo se llegaba navegando a `/sales/returns` y se perdía el carrito). La **emisión automática de Nota de Crédito SUNAT sigue sin construirse — decisión explícita**: mismo nivel de riesgo regulatorio que Nota de Débito, requiere spec oficial SUNAT antes de tocarlo.
 10. ❌ **Exportador a Software Contables Peruanos (CONCAR, SISCONT, FOXCONT) & SIRE SUNAT**:
     * Generador de archivos de importación contable y estructuras TXT oficiales del Registro de Ventas e Ingresos Electrónicos (RVIE/RCE). **No iniciado** (no confundir con la capa de datos SIRE de solo-lectura hecha en una sesión anterior sobre `PLAN_TRABAJO_SOCIO.md` — ese trabajo tampoco incluye el generador de TXT oficial, deliberadamente, por el mismo motivo regulatorio).
+11. ❌ **Modo offline (POS)**:
+    * Cero service worker, cero cola local de ventas. Si se cae internet, la caja no puede cobrar. Bsale/INVY/OKFAC (competencia directa) sí lo tienen — es paridad, no diferenciación. **No iniciado.**
+12. ❌ **Aprovisionamiento automático de permisos**:
+    * Agregar una capacidad nueva hoy exige sembrar filas a mano (rol × tenant) — no existe script que lo haga. Por eso hay ~89 chequeos de rol `developer` hardcodeados en el backend como atajo. **No iniciado**, estimado ~1 semana según `PLAN_TRABAJO_SOCIO.md`.
+13. ❌ **Nota de Débito y Liquidación de Compra**:
+    * Documentos SUNAT que el builder UBL no emite. **Decisión explícita de no construir** sin spec oficial — mismo riesgo regulatorio que Nota de Crédito.
+14. ⚠️ **Throttle SUNAT global por proceso**:
+    * Límite de 6 comprobantes/minuto compartido entre **todos** los tenants (no es por tenant). Se resuelve con outbox + worker — la misma pieza de infraestructura que el modo offline (ítem 11), por eso no se separó como tarea independiente. **No iniciado.**
+
+---
+
+### 🚧 Bloqueos externos (no son código — nadie los puede resolver escribiendo)
+
+* **Credenciales SUNAT de la empresa 2 ilegibles**: las filas de `clave` quedaron cifradas con un esquema anterior a `v1:` y no se pueden leer. Bloquea probar en verde tanto la emisión normal como las operaciones exoneradas/inafectas (ítem arriba). Se resuelve reingresando usuario/clave SOL + certificado `.p12` desde el panel — **solo lo puede hacer quien tiene esas credenciales**, no es un fix de código.
+* **Vertical de ropa sin validar con clientes**: todo el plan (Chiclayo/Trujillo, argumento de venta = margen) asume que 15–20 entrevistas a tiendas de ropa lo confirman. Sigue sin hacerse — es trabajo de founder/ventas, no de ingeniería.
 
 ---
 

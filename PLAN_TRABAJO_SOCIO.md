@@ -3,6 +3,16 @@
 > Fecha: 2026-07-25 · Rama: `feature/frontend-v2`
 > Documento para trabajar sin depender de una conversación. Si algo acá
 > contradice al código, **el código gana**: avisa de la discrepancia.
+>
+> ⚠️ **2026-08-01: fusionado en `PLAN_MAESTRO_CLAUDE_CODE.md`.** Este archivo
+> quedó desactualizado (la mayoría de §3.1-3.5 ya se completó: costo en nota de
+> ingreso, costo al vender, UI de captura, pantalla de márgenes, ciclo de
+> compra completo, cod_barras por SKU, exoneradas/inafectas en UBL). Lo que
+> seguía pendiente (modo offline, aprovisionamiento de permisos, throttle
+> SUNAT, nota de débito/liquidación, bloqueo de credenciales SUNAT) está
+> reflejado ahí. Usa `PLAN_MAESTRO_CLAUDE_CODE.md` como fuente de verdad; este
+> archivo queda solo como contexto histórico de la decisión estratégica de
+> verticalizar en ropa (§1) y las convenciones (§4).
 
 ---
 
