@@ -16,6 +16,14 @@ export interface VentaPendiente {
   creado_en: number;
   intentos: number;
   ultimo_error?: string;
+  /**
+   * El servidor respondió y rechazó la venta (4xx): no es un problema de
+   * conexión y reintentarla dará siempre el mismo error. Queda apartada para
+   * que alguien la resuelva a mano, y sobre todo para que NO bloquee al resto
+   * de la cola. El caso típico es 409 sin stock: dos cajas vendieron offline
+   * la última prenda y solo una puede ganar.
+   */
+  rechazada?: boolean;
 }
 
 function abrirDb(): Promise<IDBDatabase> {
@@ -56,7 +64,10 @@ export const listarVentasPendientes = (): Promise<VentaPendiente[]> =>
 export const eliminarVentaPendiente = (idempotency_key: string): Promise<void> =>
   conStore("readwrite", (store) => store.delete(idempotency_key)).then(() => undefined);
 
-export async function registrarIntentoFallido(idempotency_key: string, error: string): Promise<void> {
+async function actualizarPendiente(
+  idempotency_key: string,
+  cambios: (item: VentaPendiente) => VentaPendiente
+): Promise<void> {
   const db = await abrirDb();
   try {
     await new Promise<void>((resolve, reject) => {
@@ -65,7 +76,7 @@ export async function registrarIntentoFallido(idempotency_key: string, error: st
       const getReq = store.get(idempotency_key);
       getReq.onsuccess = () => {
         const item = getReq.result as VentaPendiente | undefined;
-        if (item) store.put({ ...item, intentos: item.intentos + 1, ultimo_error: error });
+        if (item) store.put(cambios(item));
       };
       tx.oncomplete = () => resolve();
       tx.onerror = () => reject(tx.error);
@@ -74,3 +85,23 @@ export async function registrarIntentoFallido(idempotency_key: string, error: st
     db.close();
   }
 }
+
+/** Falló por conexión: se reintentará sola en el próximo drenado. */
+export const registrarIntentoFallido = (idempotency_key: string, error: string): Promise<void> =>
+  actualizarPendiente(idempotency_key, (item) => ({
+    ...item,
+    intentos: item.intentos + 1,
+    ultimo_error: error,
+  }));
+
+/** El servidor la rechazó: se aparta para revisión y deja de reintentarse. */
+export const marcarRechazada = (idempotency_key: string, error: string): Promise<void> =>
+  actualizarPendiente(idempotency_key, (item) => ({
+    ...item,
+    intentos: item.intentos + 1,
+    ultimo_error: error,
+    rechazada: true,
+  }));
+
+/** Descarta una venta rechazada que el usuario ya resolvió (o decidió perder). */
+export const descartarVentaRechazada = eliminarVentaPendiente;

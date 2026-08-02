@@ -13,6 +13,59 @@ import { DATABASE, HOST, PASSWORD, PORT_DB, USER } from "../../src/config.js";
 const HOSTS_LOCALES = new Set(["localhost", "127.0.0.1", "::1", "host.docker.internal"]);
 const esHostLocal = (host) => HOSTS_LOCALES.has(String(host).trim().toLowerCase());
 
+/**
+ * Registra el submódulo y sus permisos.
+ *
+ * Sin esto, `cuentaPorCobrar.routes.js` exige la capacidad
+ * `clientes/cuentas-por-cobrar` contra un submódulo que no existe, y el
+ * resolver niega el acceso a TODOS — incluido el administrador. La pantalla
+ * queda muerta sin ningún error que explique por qué: el mismo modo de falla
+ * silencioso que ya tuvimos con Comprobantes.
+ *
+ * Cuelga de Clientes (`/clientes`) porque una cuenta por cobrar es deuda de un
+ * cliente, y así hereda su lugar en el menú.
+ */
+const registrarSubmoduloYPermisos = async (cx) => {
+  const [[modulo]] = await cx.query("SELECT id_modulo FROM modulo WHERE ruta = '/clientes' LIMIT 1");
+  if (!modulo) {
+    console.log("[aviso]    no existe el módulo /clientes: no se pudo registrar el submódulo.");
+    return;
+  }
+
+  let [[submodulo]] = await cx.query(
+    "SELECT id_submodulo FROM submodulos WHERE ruta = '/clientes/cuentas-por-cobrar' LIMIT 1"
+  );
+  if (submodulo) {
+    console.log(`[omitido]  submódulo Cuentas por Cobrar ya existía (id=${submodulo.id_submodulo}).`);
+  } else {
+    const [res] = await cx.query(
+      `INSERT INTO submodulos (id_modulo, nombre_sub, ruta, icon, group_name, sort_order, frontend_route, is_visible, active_actions)
+       VALUES (?, 'Cuentas por Cobrar', '/clientes/cuentas-por-cobrar', 'Wallet', 'Personas', 15, '/people/clients/receivables', 1, ?)`,
+      [modulo.id_modulo, JSON.stringify(["ver", "generar"])]
+    );
+    submodulo = { id_submodulo: res.insertId };
+    console.log(`[creado]   submódulo Cuentas por Cobrar (id=${submodulo.id_submodulo}).`);
+  }
+
+  // Permiso para el rol Administrador de cada tenant. `ON DUPLICATE KEY` hace
+  // que reejecutar no duplique ni pise un permiso ya afinado a mano.
+  const [tenants] = await cx.query("SELECT id_tenant FROM tenant");
+  for (const { id_tenant } of tenants) {
+    await cx.query(
+      `INSERT INTO permisos (id_rol, id_modulo, id_submodulo, crear, ver, editar, eliminar, desactivar, generar, actions_json, id_tenant, id_plan)
+       VALUES (1, ?, ?, 0, 1, 0, 0, 0, 1, '{}', ?, NULL)
+       ON DUPLICATE KEY UPDATE ver = 1, generar = 1`,
+      [modulo.id_modulo, submodulo.id_submodulo, id_tenant]
+    );
+  }
+  console.log(`[permisos] Administrador con acceso en ${tenants.length} tenant(s).`);
+
+  // El resolver cachea por `empresa.perm_version`: sin subirla, las sesiones
+  // abiertas tardan hasta 60 s en ver la capacidad nueva.
+  const [r] = await cx.query("UPDATE empresa SET perm_version = perm_version + 1");
+  console.log(`[caché]    perm_version incrementada en ${r.affectedRows} empresa(s).`);
+};
+
 const main = async () => {
   if (!esHostLocal(HOST) && !process.env.ALLOW_REMOTE_MIGRATE) {
     console.error(`Abortado: HOST="${HOST}" no es local. Usa ALLOW_REMOTE_MIGRATE=1 para permitir ejecuciones remotas.`);
@@ -89,6 +142,8 @@ const main = async () => {
     } else {
       console.log("[omitido]  pago_cuenta_por_cobrar ya existe.");
     }
+
+    await registrarSubmoduloYPermisos(cx);
   } finally {
     await cx.end();
   }
