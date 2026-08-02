@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, Lock, RotateCcw } from "lucide-react";
+import { guardarAlmacenes, leerAlmacenes } from "@/lib/catalogoOffline";
 import { ProductCatalog } from "./ProductCatalog";
 import { CartPanel } from "./CartPanel";
 import { PaymentModal } from "./PaymentModal";
@@ -43,11 +44,37 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
   const [returnWizardOpen, setReturnWizardOpen] = useState(false);
   const canDevolucion = can("devoluciones.create");
 
-  // Obtener lista de almacenes disponibles
-  const { data: almacenes = [] } = useQuery({
+  // Obtener lista de almacenes disponibles.
+  // Se guarda una foto porque sin ella, offline, `selectedAlmacenId` nunca se
+  // resuelve y la pantalla queda en "Cargando almacén…" sin llegar a pedir el
+  // catálogo: la caja no abre aunque el resto del soporte offline funcione.
+  const { data: almacenesRed } = useQuery({
     queryKey: ["pos-almacenes"],
     queryFn: getKardexInventarioAlmacenes,
   });
+  const [almacenesFoto, setAlmacenesFoto] = useState<typeof almacenesRed>(undefined);
+
+  useEffect(() => {
+    if (almacenesRed?.length) void guardarAlmacenes(almacenesRed);
+  }, [almacenesRed]);
+
+  // Se lee siempre al montar, sin esperar a que la consulta falle: offline
+  // React Query pausa la consulta y nunca entra en error, así que esperar el
+  // fallo dejaría el selector colgado en "Cargando almacén…" para siempre.
+  useEffect(() => {
+    let vigente = true;
+    void leerAlmacenes<NonNullable<typeof almacenesRed>[number]>().then((guardados) => {
+      if (vigente && guardados?.length) setAlmacenesFoto(guardados);
+    });
+    return () => {
+      vigente = false;
+    };
+  }, []);
+
+  const almacenes = useMemo(
+    () => (almacenesRed?.length ? almacenesRed : (almacenesFoto ?? [])),
+    [almacenesRed, almacenesFoto]
+  );
 
   // Almacenes visibles según el rol del usuario
   const availableAlmacenes = useMemo(() => {

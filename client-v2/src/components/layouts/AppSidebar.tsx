@@ -24,6 +24,7 @@ import {
   Building2,
 } from "lucide-react";
 import { removeToken } from "@/utils/authStorage";
+import { olvidarSesion } from "@/lib/sesionOffline";
 import { resetVerifyTokenCache } from "@/api/auth";
 import { cn } from "@/lib/utils";
 import {
@@ -51,6 +52,9 @@ export default function AppSidebar() {
 
   const handleLogout = async () => {
     await removeToken();
+    // Sin esto la sesión offline sobrevive al logout y el siguiente arranque
+    // sin señal reabriría la caja con el usuario que acaba de salir.
+    olvidarSesion();
     resetVerifyTokenCache();
     clearUser();
   };

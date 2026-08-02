@@ -7,6 +7,7 @@ import { useUserStore } from "@/store/useUserStore";
 import { verifyTokenRequest } from "@/api/auth";
 import { setAuthReady } from "@/api/axios";
 import { getToken } from "@/utils/authStorage";
+import { guardarSesion, leerSesion, olvidarSesion, tokenVigente, esFalloDeRed } from "@/lib/sesionOffline";
 
 // Solo el layout, el login y la infra de UI cargan de inmediato; TODO lo demás
 // (páginas de app Y de marketing) va diferido (code-split por ruta). Las páginas
@@ -126,12 +127,24 @@ export default function App() {
           if (roleId) {
             await useUserStore.getState().loadPermissionsAndCapabilities(roleId);
           }
+          // Foto de la sesión buena, para poder abrir la caja sin señal.
+          guardarSesion(resData, [...useUserStore.getState().capabilities]);
         } else {
+          olvidarSesion();
           clearUser();
         }
-      } catch {
-        // 401 means no valid session — expected, no need to surface as error
-        clearUser();
+      } catch (error) {
+        // Un 401 es el servidor diciendo que no; un fallo de red es no haber
+        // llegado a preguntar. Confundirlos deja al POS fuera justo cuando más
+        // se lo necesita, que es sin internet.
+        const sesion = esFalloDeRed(error) ? leerSesion() : null;
+        if (sesion && tokenVigente(await getToken())) {
+          setUserRaw(sesion.usuario);
+          useUserStore.getState().setCapabilities(sesion.capabilities);
+        } else {
+          olvidarSesion();
+          clearUser();
+        }
       } finally {
         setLoading(false);
         setAuthReady(true);

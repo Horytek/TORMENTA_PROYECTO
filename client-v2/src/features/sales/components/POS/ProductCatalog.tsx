@@ -1,6 +1,5 @@
 import { useState, useMemo, type KeyboardEvent } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Package } from "lucide-react";
+import { Package, WifiOff } from "lucide-react";
 import { SearchInput } from "@/components/shared/SearchInput";
 import { Spinner } from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
@@ -8,8 +7,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { VariantPicker, type VariantResolved } from "@/components/shared/VariantPicker";
 import { useCartStore } from "@/store/useCartStore";
 import type { POSProduct, CartItem } from "@/features/sales/types";
-import { getProductosVentas } from "@/features/sales/api/ventas";
+import { useCatalogoPOS } from "@/features/sales/hooks/useCatalogoPOS";
 import { buscarSkuPorBarcode } from "@/features/products/api/products";
+
+/** "hace 5 min" / "hace 2 h" — cuán vieja es la foto con la que se está vendiendo. */
+const antiguedad = (desde: number): string => {
+  const min = Math.floor((Date.now() - desde) / 60000);
+  if (min < 1) return "recién";
+  if (min < 60) return `hace ${min} min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `hace ${h} h`;
+  return `hace ${Math.floor(h / 24)} d`;
+};
 
 const SIN_VARIANTE: VariantResolved = { id_sku: null, label: null, stock: null, ready: true };
 // Estado inicial al abrir el diálogo de variantes: a diferencia de SIN_VARIANTE
@@ -33,10 +42,10 @@ export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
   const [variantDialogProduct, setVariantDialogProduct] = useState<POSProduct | null>(null);
   const [pendingVariant, setPendingVariant] = useState<VariantResolved>(SIN_VARIANTE);
 
-  const { data: products = [], isLoading } = useQuery<POSProduct[]>({
-    queryKey: ["productos-ventas", selectedAlmacenId],
-    queryFn: () => getProductosVentas(selectedAlmacenId ? { id_almacen: selectedAlmacenId } : undefined),
-  });
+  // Sin conexión cae a la última foto guardada, ya descontada de lo vendido
+  // offline. El service worker no cachea `/api/`, así que sin esto el POS
+  // abriría con la lista vacía y no se podría armar ni un carrito.
+  const { productos: products, isLoading, esFoto, fotoDe, sinDatos } = useCatalogoPOS(selectedAlmacenId);
 
   const categorias = useMemo(
     () => Array.from(new Set(products.map((p) => p.categoria_p).filter((c): c is string => Boolean(c)))).sort(),
@@ -119,6 +128,23 @@ export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
 
   return (
     <div className="flex flex-col h-full bg-card rounded-2xl border border-border overflow-hidden">
+      {/* Vender contra datos viejos está bien; hacerlo sin saberlo, no. */}
+      {esFoto && (
+        <div className="flex items-center gap-2 bg-amber-50 border-b border-amber-200 px-3 py-2 text-xs text-amber-800 dark:bg-amber-950 dark:border-amber-900 dark:text-amber-400">
+          <WifiOff className="h-3.5 w-3.5 shrink-0" />
+          <span>
+            Sin conexión — catálogo de {fotoDe ? antiguedad(fotoDe) : "la última vez"}. Ya se descontó lo
+            vendido en este equipo, pero el stock pudo cambiar en otra caja.
+          </span>
+        </div>
+      )}
+      {sinDatos && (
+        <div className="flex items-center gap-2 bg-rose-50 border-b border-rose-200 px-3 py-2 text-xs text-rose-800 dark:bg-rose-950 dark:border-rose-900 dark:text-rose-400">
+          <WifiOff className="h-3.5 w-3.5 shrink-0" />
+          <span>Sin conexión y sin catálogo guardado en este equipo. Conéctate una vez para poder vender offline.</span>
+        </div>
+      )}
+
       {/* Header con búsqueda */}
       <div className="p-3 border-b border-border space-y-2">
         <SearchInput
