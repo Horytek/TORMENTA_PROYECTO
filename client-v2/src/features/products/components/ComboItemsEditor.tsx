@@ -42,8 +42,9 @@ export default function ComboItemsEditor({ productId }: ComboItemsEditorProps) {
   });
 
   const yaAgregado = (id: number) => items.some((it) => it.id_producto_componente === id);
-  const opciones = candidatos.data.filter(
-    (p) => p.id_producto !== productId && !p.es_combo && !yaAgregado(p.id_producto)
+  const listaCandidatos: any[] = Array.isArray(candidatos) ? candidatos : (candidatos as any)?.data || [];
+  const opciones = listaCandidatos.filter(
+    (p: any) => p.id_producto !== productId && !p.es_combo && !yaAgregado(p.id_producto)
   );
 
   const agregar = (id_producto_componente: number, descripcion: string) => {
@@ -127,7 +128,7 @@ export default function ComboItemsEditor({ productId }: ComboItemsEditorProps) {
             />
             {search.trim().length >= 2 && opciones.length > 0 && (
               <div className="absolute z-10 mt-1 w-full rounded-lg border border-border bg-card shadow-md max-h-48 overflow-y-auto">
-                {opciones.map((p) => (
+                {opciones.map((p: any) => (
                   <button
                     key={p.id_producto}
                     type="button"

@@ -64,19 +64,9 @@ export const updateEmpresaAccount = async (
   return res.data?.code === 1;
 };
 
-const fileToBase64 = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve((reader.result as string).split(",")[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-
 /** Sube un logo a ImageKit (base64) y devuelve la URL pública. */
 export const uploadLogoBase64 = async (base64: string): Promise<string> => {
   const res = await api.post("/uploads/logo", { file: base64 });
   if (!res.data?.success) throw new Error(res.data?.message ?? "Error subiendo logotipo");
   return res.data.url as string;
 };
-
-export const fileToBase64Payload = fileToBase64;

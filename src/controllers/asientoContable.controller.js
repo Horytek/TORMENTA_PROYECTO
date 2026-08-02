@@ -1,5 +1,30 @@
 import { getConnection } from "../database/database.js";
 import { logAudit } from "../utils/auditLogger.js";
+import { generarExportacionContable } from "../services/contabilidad/exportadorContable.js";
+
+// Compartida por `getLibroDiario` y `exportarAsientos` — una fila por línea
+// de asiento, ya con el código de cuenta resuelto (lo que necesitan los 3
+// formatos de exportación, no solo la vista en pantalla).
+const obtenerFilasLibroDiario = async (connection, { id_tenant, fechaInicio, fechaFin, idPeriodo }) => {
+    const where = ["a.id_tenant = ?", "a.estado != 'anulado'"];
+    const params = [id_tenant];
+    if (fechaInicio) { where.push("a.fecha >= ?"); params.push(fechaInicio); }
+    if (fechaFin) { where.push("a.fecha <= ?"); params.push(fechaFin); }
+    if (idPeriodo) { where.push("a.id_periodo = ?"); params.push(idPeriodo); }
+
+    const [rows] = await connection.query(
+        `SELECT a.id_asiento, a.numero, a.fecha, a.descripcion AS asiento_descripcion, a.tipo,
+                c.codigo AS cuenta_codigo, c.nombre AS cuenta_nombre,
+                d.descripcion, d.debe, d.haber
+         FROM asiento_detalle d
+         INNER JOIN asiento_contable a ON d.id_asiento = a.id_asiento
+         INNER JOIN cuenta_contable c ON d.id_cuenta = c.id_cuenta
+         WHERE ${where.join(" AND ")}
+         ORDER BY a.fecha, a.numero, d.orden`,
+        params
+    );
+    return rows;
+};
 
 const getAsientos = async (req, res) => {
     const { fechaInicio, fechaFin, idPeriodo, estado } = req.query;
@@ -232,27 +257,42 @@ const getLibroDiario = async (req, res) => {
     let connection;
     try {
         connection = await getConnection();
-        const where = ["a.id_tenant = ?", "a.estado != 'anulado'"];
-        const params = [req.id_tenant];
-        if (fechaInicio) { where.push("a.fecha >= ?"); params.push(fechaInicio); }
-        if (fechaFin) { where.push("a.fecha <= ?"); params.push(fechaFin); }
-        if (idPeriodo) { where.push("a.id_periodo = ?"); params.push(idPeriodo); }
-
-        const [rows] = await connection.query(
-            `SELECT a.id_asiento, a.numero, a.fecha, a.descripcion AS asiento_descripcion, a.tipo,
-                    c.codigo AS cuenta_codigo, c.nombre AS cuenta_nombre,
-                    d.descripcion, d.debe, d.haber
-             FROM asiento_detalle d
-             INNER JOIN asiento_contable a ON d.id_asiento = a.id_asiento
-             INNER JOIN cuenta_contable c ON d.id_cuenta = c.id_cuenta
-             WHERE ${where.join(" AND ")}
-             ORDER BY a.fecha, a.numero, d.orden`,
-            params
-        );
+        const rows = await obtenerFilasLibroDiario(connection, { id_tenant: req.id_tenant, fechaInicio, fechaFin, idPeriodo });
         res.json({ success: true, data: rows });
     } catch (error) {
         console.error("Error en getLibroDiario:", error);
         res.status(500).json({ success: false, message: "Error al obtener el libro diario" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+// Exportación 1-clic a CONCAR/SISCONT/FOXCONT — mismas filas que ya arma
+// `getLibroDiario`, solo cambia el formato de salida (ver exportadorContable.js).
+const EXTENSIONES = { concar: "txt", siscont: "txt", foxcont: "csv" };
+
+const exportarAsientos = async (req, res) => {
+    const { fechaInicio, fechaFin, idPeriodo, formato } = req.query;
+    if (!EXTENSIONES[formato]) {
+        return res.status(400).json({ success: false, message: "Formato inválido. Usa concar, siscont o foxcont." });
+    }
+    let connection;
+    try {
+        connection = await getConnection();
+        const rows = await obtenerFilasLibroDiario(connection, { id_tenant: req.id_tenant, fechaInicio, fechaFin, idPeriodo });
+        if (rows.length === 0) {
+            return res.status(404).json({ success: false, message: "No hay asientos en ese rango para exportar." });
+        }
+
+        const contenido = generarExportacionContable(formato, rows);
+        const nombre = `asientos_${formato}_${new Date().toISOString().slice(0, 10)}.${EXTENSIONES[formato]}`;
+
+        res.setHeader("Content-Type", "text/plain; charset=utf-8");
+        res.setHeader("Content-Disposition", `attachment; filename="${nombre}"`);
+        res.send(contenido);
+    } catch (error) {
+        console.error("Error en exportarAsientos:", error);
+        res.status(500).json({ success: false, message: "Error al exportar asientos" });
     } finally {
         if (connection) connection.release();
     }
@@ -308,4 +348,4 @@ const getLibroMayor = async (req, res) => {
     }
 };
 
-export const methods = { getAsientos, getAsiento, createAsiento, revertirAsiento, getLibroDiario, getLibroMayor };
+export const methods = { getAsientos, getAsiento, createAsiento, revertirAsiento, getLibroDiario, getLibroMayor, exportarAsientos };

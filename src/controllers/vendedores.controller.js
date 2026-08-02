@@ -657,7 +657,8 @@ const getComisiones = async (req, res) => {
                 ve.porcentaje_comision,
                 ve.meta_mensual,
                 COUNT(DISTINCT v.id_venta) AS cantidad_ventas,
-                COALESCE(SUM(dv.total), 0) AS total_ventas
+                COALESCE(SUM(dv.total), 0) AS total_ventas,
+                COALESCE(SUM(dv.cantidad), 0) AS unidades_vendidas
             FROM venta v
             INNER JOIN vendedor ve ON ve.dni = v.dni_vendedor AND ve.id_tenant = v.id_tenant
             INNER JOIN detalle_venta dv ON dv.id_venta = v.id_venta
@@ -670,6 +671,10 @@ const getComisiones = async (req, res) => {
             ...r,
             comision: r.porcentaje_comision != null ? Number(r.total_ventas) * (Number(r.porcentaje_comision) / 100) : null,
             pct_meta: r.meta_mensual != null && Number(r.meta_mensual) > 0 ? (Number(r.total_ventas) / Number(r.meta_mensual)) * 100 : null,
+            // UPT (unidades por ticket) y ticket promedio: la base para el reporte de
+            // rendimiento por vendedor — no necesitan otra consulta, ya están los datos.
+            upt: r.cantidad_ventas > 0 ? Number(r.unidades_vendidas) / Number(r.cantidad_ventas) : 0,
+            ticket_promedio: r.cantidad_ventas > 0 ? Number(r.total_ventas) / Number(r.cantidad_ventas) : 0,
         }));
 
         res.json({ code: 1, data });

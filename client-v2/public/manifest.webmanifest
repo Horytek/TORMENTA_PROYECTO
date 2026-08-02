@@ -1,0 +1,13 @@
+{
+  "name": "Horytek ERP",
+  "short_name": "Horytek",
+  "start_url": "/sales/pos",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#29394A",
+  "theme_color": "#29394A",
+  "icons": [
+    { "src": "/favicon-32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "/horycore.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

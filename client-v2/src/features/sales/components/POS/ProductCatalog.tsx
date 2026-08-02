@@ -12,6 +12,10 @@ import { getProductosVentas } from "@/features/sales/api/ventas";
 import { buscarSkuPorBarcode } from "@/features/products/api/products";
 
 const SIN_VARIANTE: VariantResolved = { id_sku: null, label: null, stock: null, ready: true };
+// Estado inicial al abrir el diálogo de variantes: a diferencia de SIN_VARIANTE
+// (que es el resultado real para un producto sin variantes), acá todavía no
+// se eligió nada — debe bloquear "Agregar" hasta que VariantPicker resuelva.
+const VARIANTE_SIN_ELEGIR: VariantResolved = { id_sku: null, label: null, stock: null, ready: false };
 
 // ─────────────────────────────────────────────────────────────────
 // ProductCatalog — Grid de productos para el POS
@@ -68,6 +72,7 @@ export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
       stock: variante.stock ?? product.stock,
       id_sku: variante.id_sku,
       sku_label: variante.label,
+      atributos_fijados: variante.atributosFijados,
       tipo_afectacion_igv: product.tipo_afectacion_igv,
     };
     addItem(cartItem);
@@ -101,7 +106,7 @@ export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
 
   const handleCardClick = (product: POSProduct) => {
     if (product.tiene_variantes) {
-      setPendingVariant(SIN_VARIANTE);
+      setPendingVariant(VARIANTE_SIN_ELEGIR);
       setVariantDialogProduct(product);
       return;
     }
@@ -245,12 +250,13 @@ export function ProductCatalog({ selectedAlmacenId }: ProductCatalogProps) {
               idProducto={variantDialogProduct.codigo}
               idAlmacen={selectedAlmacenId}
               onResolved={setPendingVariant}
+              permitirColapsada
             />
           )}
           <DialogFooter>
             <Button
               className="w-full"
-              disabled={!pendingVariant.ready || !pendingVariant.id_sku}
+              disabled={!pendingVariant.ready}
               onClick={() => {
                 if (variantDialogProduct) handleAddToCart(variantDialogProduct, pendingVariant);
                 setVariantDialogProduct(null);

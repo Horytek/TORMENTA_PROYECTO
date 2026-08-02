@@ -6,6 +6,8 @@ import type {
   ProductoMargen,
   GananciaSucursal,
   ReporteFiltros,
+  StockAgingItem,
+  VentaHeatmapPunto,
 } from "../types";
 
 export const getSucursalesReporte = async (): Promise<SucursalReporte[]> => {
@@ -30,5 +32,15 @@ export const getTopProductosMargen = async (params: ReporteFiltros): Promise<Pro
 
 export const getAnalisisGananciasSucursales = async (): Promise<GananciaSucursal[]> => {
   const response = await api.get("/reporte/analisis_ganancias_sucursales");
+  return response.data?.data || [];
+};
+
+export const getStockAging = async (): Promise<StockAgingItem[]> => {
+  const response = await api.get("/reporte/stock_aging");
+  return response.data?.data || [];
+};
+
+export const getVentasHeatmap = async (): Promise<VentaHeatmapPunto[]> => {
+  const response = await api.get("/reporte/ventas_heatmap");
   return response.data?.data || [];
 };

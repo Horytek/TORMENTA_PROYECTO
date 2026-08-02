@@ -47,4 +47,8 @@ export interface ComisionVendedor {
   comision: number | string | null;
   /** % de avance de total_ventas sobre meta_mensual; null si no hay meta configurada. */
   pct_meta: number | string | null;
+  unidades_vendidas: number | string;
+  /** Unidades por ticket (unidades_vendidas / cantidad_ventas). */
+  upt: number | string;
+  ticket_promedio: number | string;
 }

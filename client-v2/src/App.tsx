@@ -28,6 +28,8 @@ const UpdatesPage = lazy(() => import("@/features/landing/pages/UpdatesPage"));
 const ContactPage = lazy(() => import("@/features/landing/pages/ContactPage"));
 const PaymentResultPage = lazy(() => import("@/features/landing/pages/PaymentResultPage"));
 const RegisterPage = lazy(() => import("@/features/registration/pages/RegisterPage"));
+const CatalogoPublicoPage = lazy(() => import("@/features/catalog-express/pages/CatalogoPublicoPage"));
+const CatalogExpressManagePage = lazy(() => import("@/features/catalog-express/pages/CatalogExpressManagePage"));
 
 const ProductsPage = lazy(() => import("@/features/products/pages/ProductsPage"));
 const CostosInicialesPage = lazy(() => import("@/features/costos/pages/CostosInicialesPage"));
@@ -67,6 +69,7 @@ const PurchaseOrdersPage = lazy(() => import("@/features/purchases/pages/Purchas
 const PurchaseInvoicesPage = lazy(() => import("@/features/purchases/pages/PurchaseInvoicesPage"));
 const AccountsPayablePage = lazy(() => import("@/features/purchases/pages/AccountsPayablePage"));
 const AdvancesPage = lazy(() => import("@/features/purchases/pages/AdvancesPage"));
+const InventoryMovementsPage = lazy(() => import("@/features/inventory-movements/pages/InventoryMovementsPage"));
 
 // Initialize Query Client for TanStack Query
 const queryClient = new QueryClient({
@@ -156,6 +159,7 @@ export default function App() {
               <Route path="/actualizaciones" element={<UpdatesPage />} />
               <Route path="/contactanos" element={<ContactPage />} />
               <Route path="/registro" element={<RegisterPage />} />
+              <Route path="/catalogo/:idTenant" element={<CatalogoPublicoPage />} />
               <Route path="/status" element={<StatusPage />} />
               <Route path="/success" element={<PaymentResultPage />} />
               <Route path="/failure" element={<PaymentResultPage />} />
@@ -192,6 +196,10 @@ export default function App() {
                     element={<RequireCapability capability="productos.view"><ProductsPage /></RequireCapability>}
                   />
                   <Route
+                    path="/catalog-express"
+                    element={<CatalogExpressManagePage />}
+                  />
+                  <Route
                     path="/products/costos"
                     element={<RequireCapability capability="productos.view"><CostosInicialesPage /></RequireCapability>}
                   />
@@ -226,6 +234,10 @@ export default function App() {
                   <Route
                     path="/inventory"
                     element={<RequireCapability capability="almacen.view"><InventoryPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/inventory/movements"
+                    element={<RequireCapability capability="almacen.view"><InventoryMovementsPage /></RequireCapability>}
                   />
                   <Route
                     path="/people/employees"

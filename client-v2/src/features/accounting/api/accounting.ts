@@ -94,6 +94,29 @@ export const revertirAsiento = async (id: number): Promise<boolean> =>
 export const getLibroDiario = async (params: { fechaInicio?: string; fechaFin?: string; idPeriodo?: number }): Promise<LibroDiarioLinea[]> =>
   unwrapList<LibroDiarioLinea>(await api.get("/contabilidad/asientos/libro-diario", { params }));
 
+export type FormatoContable = "concar" | "siscont" | "foxcont";
+
+/** Descarga el archivo de importación (CONCAR/SISCONT/FOXCONT) — el backend ya arma el Content-Disposition. */
+export const exportarAsientosContables = async (
+  formato: FormatoContable,
+  params: { fechaInicio?: string; fechaFin?: string; idPeriodo?: number }
+): Promise<void> => {
+  const response = await api.get("/contabilidad/asientos/exportar", {
+    params: { ...params, formato },
+    responseType: "blob",
+  });
+  const disposition = response.headers["content-disposition"] as string | undefined;
+  const filename = disposition?.match(/filename="?([^"]+)"?/)?.[1] ?? `asientos_${formato}.txt`;
+  const url = URL.createObjectURL(response.data as Blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 export const getLibroMayor = async (params: { idCuenta: number; fechaInicio?: string; fechaFin?: string }): Promise<LibroMayorResponse | null> =>
   unwrapOne<LibroMayorResponse>(await api.get("/contabilidad/asientos/libro-mayor", { params }));
 

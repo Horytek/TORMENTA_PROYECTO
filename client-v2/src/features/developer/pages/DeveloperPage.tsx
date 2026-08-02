@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Terminal, Users, ListChecks, DatabaseZap, ShieldCheck, LayoutTemplate, KeyRound, Landmark } from "lucide-react";
+import { Terminal, Users, ListChecks, DatabaseZap, ShieldCheck, LayoutTemplate, KeyRound, Landmark, Sliders } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { ModulosTab } from "../components/ModulosTab";
@@ -10,6 +10,7 @@ import { PermissionsAuditTab } from "../components/PermissionsAuditTab";
 import { PlanEntitlementsTab } from "../components/PlanEntitlementsTab";
 import { AdminPlanPermissionsTab } from "../components/AdminPlanPermissionsTab";
 import { SunatTab } from "../components/SunatTab";
+import VariantConfigDebugTab from "../components/VariantConfigDebugTab";
 
 export default function DeveloperPage() {
   const [activeTab, setActiveTab] = useState("modulos");
@@ -30,6 +31,7 @@ export default function DeveloperPage() {
           <TabsTrigger value="acciones"><ListChecks className="mr-1.5 h-4 w-4" />Catálogo de Acciones</TabsTrigger>
           <TabsTrigger value="auditoria"><ShieldCheck className="mr-1.5 h-4 w-4" />Auditoría de Permisos</TabsTrigger>
           <TabsTrigger value="sunat"><Landmark className="mr-1.5 h-4 w-4" />SUNAT</TabsTrigger>
+          <TabsTrigger value="variantes"><Sliders className="mr-1.5 h-4 w-4" />Variantes</TabsTrigger>
           <TabsTrigger value="limpiador"><DatabaseZap className="mr-1.5 h-4 w-4" />Limpiador BD</TabsTrigger>
         </TabsList>
 
@@ -40,6 +42,7 @@ export default function DeveloperPage() {
         <TabsContent value="acciones"><ActionCatalogTab /></TabsContent>
         <TabsContent value="auditoria"><PermissionsAuditTab /></TabsContent>
         <TabsContent value="sunat"><SunatTab /></TabsContent>
+        <TabsContent value="variantes"><VariantConfigDebugTab /></TabsContent>
         <TabsContent value="limpiador"><DatabaseCleanerTab /></TabsContent>
       </Tabs>
     </div>

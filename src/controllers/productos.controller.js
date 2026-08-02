@@ -113,7 +113,7 @@ const getProductos = async (req, res) => {
                    CA.nom_subcat, MA.nom_marca, PR.undm,
                    CAST(PR.precio AS DECIMAL(10, 2)) AS precio, PR.cod_barras,
                    PR.estado_producto AS estado, PR.id_marca, PR.id_subcategoria,
-                   cat.id_categoria, PR.stock_min, PR.tipo_afectacion_igv,
+                   cat.id_categoria, PR.stock_min, PR.tipo_afectacion_igv, PR.imagen_url,
                    SUM(COALESCE(INV.stock, 0)) AS stock_total,
                    (SELECT AVG(sub.costo_promedio) FROM producto_sku sub
                     WHERE sub.id_producto = PR.id_producto AND sub.id_tenant = PR.id_tenant
@@ -125,7 +125,7 @@ const getProductos = async (req, res) => {
             LEFT JOIN producto_sku PSK ON PSK.id_producto = PR.id_producto AND PSK.id_tenant = PR.id_tenant
             LEFT JOIN inventario_stock INV ON INV.id_sku = PSK.id_sku AND INV.id_tenant = PSK.id_tenant
             ${whereSQL}
-            GROUP BY PR.id_producto, PR.descripcion, CA.nom_subcat, MA.nom_marca, PR.undm, PR.precio, PR.cod_barras, PR.estado_producto, PR.id_marca, PR.id_subcategoria, cat.id_categoria, PR.stock_min, PR.tipo_afectacion_igv
+            GROUP BY PR.id_producto, PR.descripcion, CA.nom_subcat, MA.nom_marca, PR.undm, PR.precio, PR.cod_barras, PR.estado_producto, PR.id_marca, PR.id_subcategoria, cat.id_categoria, PR.stock_min, PR.tipo_afectacion_igv, PR.imagen_url
             ${havingSQL}
             ORDER BY ${sortBy} ${sortDir}
             LIMIT ? OFFSET ?
@@ -202,13 +202,13 @@ const getProducto = async (req, res) => {
 const addProducto = async (req, res) => {
     let connection;
     try {
-        const { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto, stock_min, tipo_afectacion_igv, es_combo } = req.body;
+        const { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto, stock_min, tipo_afectacion_igv, es_combo, imagen_url } = req.body;
 
         if (id_marca === undefined || id_subcategoria === undefined || descripcion === undefined || undm === undefined || id_subcategoria === undefined || estado_producto === undefined || precio === undefined) {
             res.status(400).json({ message: "Bad Request. Please fill all field." });
         }
 
-        const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto, id_tenant: req.id_tenant, stock_min: stock_min ?? null, tipo_afectacion_igv: tipo_afectacion_igv || '10', es_combo: es_combo ? 1 : 0 };
+        const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto, id_tenant: req.id_tenant, stock_min: stock_min ?? null, tipo_afectacion_igv: tipo_afectacion_igv || '10', es_combo: es_combo ? 1 : 0, imagen_url: imagen_url || null };
         connection = await getConnection();
         const [result] = await connection.query("INSERT INTO producto SET ? ", producto);
 
@@ -230,7 +230,7 @@ const updateProducto = async (req, res) => {
     let connection;
     try {
         const { id } = req.params;
-        const { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto, stock_min, tipo_afectacion_igv, es_combo } = req.body;
+        const { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto, stock_min, tipo_afectacion_igv, es_combo, imagen_url } = req.body;
 
         if (id_marca === undefined || id_subcategoria === undefined || descripcion === undefined || undm === undefined || id_subcategoria === undefined || estado_producto === undefined || precio === undefined) {
             res.status(400).json({ message: "Bad Request. Please fill all field." });
@@ -249,6 +249,9 @@ const updateProducto = async (req, res) => {
         }
 
         const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto, stock_min: stock_min ?? null, tipo_afectacion_igv: tipo_afectacion_igv || '10', es_combo: es_combo ? 1 : 0 };
+        if (imagen_url !== undefined) {
+            producto.imagen_url = imagen_url;
+        }
         const [result] = await connection.query("UPDATE producto SET ? WHERE id_producto = ? AND id_tenant = ?", [producto, id, req.id_tenant]);
 
         if (result.affectedRows === 0) {
@@ -977,6 +980,92 @@ const getHistorialPrecioProducto = async (req, res) => {
     }
 };
 
+// Operaciones en lote sobre productos (BatchOperationWizard): ajuste de
+// precio, reasignar categoría/marca, o activar/desactivar. Una sola
+// `tipo` por request — el wizard aplica una operación a la vez, no un
+// parche combinado.
+const batchUpdateProductos = async (req, res) => {
+    let connection;
+    try {
+        const { ids, tipo } = req.body;
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ code: 0, message: "Selecciona al menos un producto" });
+        }
+        if (!["precio", "categoria", "estado"].includes(tipo)) {
+            return res.status(400).json({ code: 0, message: "Tipo de operación inválido" });
+        }
+
+        connection = await getConnection();
+
+        // Regla de Oro Nº1: se releen los productos filtrados por id_tenant —
+        // nunca se confía en que los ids del body ya pertenecen a este tenant.
+        const [productos] = await connection.query(
+            `SELECT id_producto, precio FROM producto WHERE id_producto IN (?) AND id_tenant = ?`,
+            [ids, req.id_tenant]
+        );
+        if (productos.length === 0) {
+            return res.status(404).json({ code: 0, message: "No se encontraron productos de este tenant con esos ids" });
+        }
+        const idsValidos = productos.map((p) => p.id_producto);
+
+        await connection.beginTransaction();
+
+        if (tipo === "precio") {
+            const { ajuste_tipo, ajuste_valor } = req.body;
+            const valor = Number(ajuste_valor);
+            if (!["porcentaje", "monto"].includes(ajuste_tipo) || !Number.isFinite(valor) || valor === 0) {
+                await connection.rollback();
+                return res.status(400).json({ code: 0, message: "Ajuste de precio inválido" });
+            }
+
+            const ip = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || null;
+            for (const p of productos) {
+                const precioActual = Number(p.precio);
+                const precioNuevo = ajuste_tipo === "porcentaje"
+                    ? Math.max(0, Math.round(precioActual * (1 + valor / 100) * 100) / 100)
+                    : Math.max(0, Math.round((precioActual + valor) * 100) / 100);
+                if (precioNuevo === precioActual) continue;
+
+                await connection.query("UPDATE producto SET precio = ? WHERE id_producto = ? AND id_tenant = ?", [precioNuevo, p.id_producto, req.id_tenant]);
+                if (req.id_usuario) {
+                    await logProductos.cambioPrecio(p.id_producto, req.id_usuario, ip, req.id_tenant, precioActual, precioNuevo);
+                }
+            }
+        } else if (tipo === "categoria") {
+            const { id_subcategoria, id_marca } = req.body;
+            const sets = [];
+            const params = [];
+            if (id_subcategoria) { sets.push("id_subcategoria = ?"); params.push(id_subcategoria); }
+            if (id_marca) { sets.push("id_marca = ?"); params.push(id_marca); }
+            if (sets.length === 0) {
+                await connection.rollback();
+                return res.status(400).json({ code: 0, message: "Elige una categoría o una marca para reasignar" });
+            }
+            await connection.query(
+                `UPDATE producto SET ${sets.join(", ")} WHERE id_producto IN (?) AND id_tenant = ?`,
+                [...params, idsValidos, req.id_tenant]
+            );
+        } else if (tipo === "estado") {
+            const { estado_producto } = req.body;
+            await connection.query(
+                "UPDATE producto SET estado_producto = ? WHERE id_producto IN (?) AND id_tenant = ?",
+                [estado_producto ? 1 : 0, idsValidos, req.id_tenant]
+            );
+        }
+
+        await connection.commit();
+        queryCache.clear();
+
+        res.json({ code: 1, message: "Actualización en lote aplicada", data: { afectados: idsValidos.length } });
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error('Error en batchUpdateProductos:', error);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
 export const methods = {
     getProductos,
     getUltimoIdProducto,
@@ -992,6 +1081,7 @@ export const methods = {
     registerVariants,
     generateSKUs,
     importExcel,
-    getHistorialPrecioProducto
+    getHistorialPrecioProducto,
+    batchUpdateProductos
 };
 

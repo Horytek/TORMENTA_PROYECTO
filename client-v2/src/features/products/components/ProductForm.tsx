@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -14,6 +14,8 @@ import { MatrixVariantGrid, type MatrixCell } from "./MatrixVariantGrid";
 import { VariantTableBuilder } from "./VariantTableBuilder";
 import { cartesianCombos, comboKey, deriveVariantMode } from "../lib/variantMatrix";
 import ComboItemsEditor from "./ComboItemsEditor";
+import { ProductImageGallery } from "./ProductImageGallery";
+import { uploadProductImage } from "../api/productImages";
 import { useUserStore } from "@/store/useUserStore";
 
 // UI Components
@@ -21,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Star, Trash2, Upload } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -86,6 +88,25 @@ export default function ProductForm({
   const [loadingAttrs, setLoadingAttrs] = useState(false);
 
   const tenantId = useUserStore((state) => state.user?.id_tenant);
+
+  const newInputRef = useRef<HTMLInputElement>(null);
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+
+  const handleNewImageFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setNewImageFiles((prev) => [...prev, ...files]);
+    const previews = files.map((f) => URL.createObjectURL(f));
+    setNewImagePreviews((prev) => [...prev, ...previews]);
+    e.target.value = "";
+  };
+
+  const removeNewImage = (index: number) => {
+    if (newImagePreviews[index]) URL.revokeObjectURL(newImagePreviews[index]);
+    setNewImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const {
     control,
@@ -392,6 +413,17 @@ export default function ProductForm({
           await generateSKUs(productId, attributesPayload, combinaciones);
         }
 
+        // Subir imágenes seleccionadas a ImageKit
+        if (!initialData && newImageFiles.length > 0 && productId) {
+          for (const file of newImageFiles) {
+            try {
+              await uploadProductImage(productId, file);
+            } catch (err) {
+              console.error("Error al subir imagen a ImageKit:", err);
+            }
+          }
+        }
+
         onSuccess();
         onClose();
       }
@@ -669,6 +701,65 @@ export default function ProductForm({
               <p className="text-xs text-muted-foreground border-t border-slate-100 dark:border-zinc-900 pt-4">
                 Guarda el producto primero; la composición del combo se edita al volver a abrirlo.
               </p>
+            )}
+
+            {initialData ? (
+              <ProductImageGallery productId={initialData.id_producto} />
+            ) : (
+              <div className="border-t border-slate-100 dark:border-zinc-900 pt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Imágenes del producto</h4>
+                    <p className="text-xs text-muted-foreground">
+                      La primera imagen (⭐) será la principal en el catálogo. Se subirán automáticamente a ImageKit.
+                    </p>
+                  </div>
+                </div>
+
+                {newImagePreviews.length > 0 && (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
+                    {newImagePreviews.map((url, idx) => (
+                      <div key={idx} className="group relative aspect-square overflow-hidden rounded-lg border bg-muted">
+                        <img src={url} alt="" className="h-full w-full object-cover" />
+                        {idx === 0 && (
+                          <span className="absolute top-1 left-1 bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow flex items-center gap-0.5">
+                            <Star className="w-2.5 h-2.5 fill-white" /> Principal
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeNewImage(idx)}
+                          className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <input
+                  ref={newInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  multiple
+                  className="hidden"
+                  onChange={handleNewImageFiles}
+                />
+
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => newInputRef.current?.click()}
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    {newImageFiles.length > 0 ? "Agregar más imágenes" : "Subir primera imagen"}
+                  </Button>
+                </div>
+              </div>
             )}
 
             {/* Atributos y variantes dinámicas */}

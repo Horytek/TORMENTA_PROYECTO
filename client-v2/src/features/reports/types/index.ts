@@ -36,3 +36,22 @@ export interface ReporteFiltros {
   week?: string;
   limit?: number;
 }
+
+export type RangoAntiguedad = "0-30" | "31-60" | "61-90" | "90+" | "Sin dato";
+
+export interface StockAgingItem {
+  id_producto: number;
+  descripcion: string;
+  nom_marca: string | null;
+  categoria: string | null;
+  stock: number;
+  dias_sin_movimiento: number | null;
+  rango: RangoAntiguedad;
+}
+
+/** `dia_semana`: 1=domingo…7=sábado (convención DAYOFWEEK de MySQL). */
+export interface VentaHeatmapPunto {
+  dia_semana: number;
+  hora: number;
+  ventas: number;
+}

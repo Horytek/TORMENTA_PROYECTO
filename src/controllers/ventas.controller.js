@@ -7,6 +7,7 @@ import { esErrorDeStock } from "../services/inventario/errores.js";
 import { obtenerCostosVigentes } from "../services/costos/costoRepository.js";
 import { costoDeLineaRepartida } from "../services/costos/costoPromedio.js";
 import { getComboItemsPorProductos, disponibilidadCombos } from "../services/combos/comboRepository.js";
+import { acumularPuntos, canjearPuntos, PuntosInsuficientesError } from "../services/loyalty/puntosRepository.js";
 import { resolveSku } from "../utils/skuHelper.js";
 import { saldoPendienteCliente } from "./cuentaPorCobrar.controller.js";
 
@@ -55,6 +56,21 @@ const normalizarIdOpcional = (valor) => {
   return Number.isInteger(id) && id > 0 ? id : null;
 };
 
+/**
+ * Fase B — atributos fijados de una variante colapsada (ej. { "5": "M" } =
+ * talla M, cualquier color). Solo se valida la FORMA (objeto plano de
+ * string→string) — si el cajero mandó ids/valores que no existen, el filtro
+ * de `descontarPorProducto` simplemente no encuentra candidatas y la venta
+ * falla con "sin stock", que es una falla segura.
+ */
+const normalizarAtributosFijados = (valor) => {
+  if (!valor || typeof valor !== "object" || Array.isArray(valor)) return null;
+  const entradas = Object.entries(valor).filter(
+    ([id, val]) => /^\d+$/.test(id) && typeof val === "string" && val.trim() !== ""
+  );
+  return entradas.length > 0 ? Object.fromEntries(entradas) : null;
+};
+
 const normalizarDetalleVenta = (detalle) => {
   const id_producto = normalizarIdOpcional(detalle.id_producto);
   if (!id_producto) throw new VentaValidationError("El producto de la venta no es válido.");
@@ -75,7 +91,10 @@ const normalizarDetalleVenta = (detalle) => {
     total,
     id_tonalidad: normalizarIdOpcional(detalle.id_tonalidad),
     id_talla: normalizarIdOpcional(detalle.id_talla),
-    id_sku: normalizarIdOpcional(detalle.id_sku)
+    id_sku: normalizarIdOpcional(detalle.id_sku),
+    // Mutuamente excluyente con id_sku: si el cajero eligió un SKU exacto, un
+    // atributos_fijados que haya viajado junto (residual del cliente) se ignora.
+    atributos_fijados: normalizarIdOpcional(detalle.id_sku) ? null : normalizarAtributosFijados(detalle.atributos_fijados),
   };
 };
 
@@ -317,7 +336,7 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
     id_sucursal, id_almacen, id_comprobante, id_cliente, estado_venta,
     f_venta, igv, detalles, fecha_iso, metodo_pago, fecha,
     descuento_venta, vuelto, recibido, observacion, estado_sunat, idempotency_key,
-    id_usuario, dni_vendedor, motivo_descuento, referencia_pago
+    id_usuario, dni_vendedor, motivo_descuento, referencia_pago, puntos_canjeados
   } = saleData;
 
   const fechaVenta = f_venta || fecha;
@@ -490,7 +509,7 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
   const lineas = [];
 
   for (const detalle of detallesNormalizados) {
-    const { id_producto, cantidad, precio, descuento, total, id_tonalidad, id_talla, id_sku } = detalle;
+    const { id_producto, cantidad, precio, descuento, total, id_tonalidad, id_talla, id_sku, atributos_fijados } = detalle;
     const id_ton = id_tonalidad || null;
     const id_tal = id_talla || null;
     const esCombo = idsCombo.has(id_producto);
@@ -521,6 +540,15 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
         // Si el POS mandó un id_sku (producto con variante elegida), se descuenta
         // exactamente ese SKU.
         movimientos = [{ ...(await restarStockSku(connection, { id_tenant, id_sku, id_almacen, cantidad })), cantidad }];
+      } else if (atributos_fijados) {
+        // Fase B: el cajero vendió sobre una "variante colapsada" (ej. talla M,
+        // cualquier color) en vez de un SKU exacto. Se reparte solo entre los
+        // SKU que matchean los atributos fijados — mismo motor de reparto que
+        // el pool completo, acotado.
+        movimientos = await descontarPorProducto(connection, {
+          id_tenant, id_producto, id_almacen, cantidad, atributosFijados: atributos_fijados,
+          descripcion: `producto ${id_producto} (variante colapsada)`,
+        });
       } else {
         // Si no, se reparte entre los SKU del producto — mismo camino que ya
         // usan notas/guías.
@@ -623,6 +651,24 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
 
   // 5. (Removed) Insertar Venta Boucher & Update
   // 6. (Removed) Insertar Detalles Boucher
+
+  // 7. Club de Puntos: el descuento del canje ya está aplicado al total (vía
+  // `descuento_global`, calculado en el frontend) — acá solo se mueve el
+  // saldo y se audita. Ganar puntos nunca puede tumbar la venta; canjear de
+  // más que el saldo disponible sí (mismo criterio que el stock).
+  try {
+    if (Number(puntos_canjeados) > 0) {
+      await canjearPuntos(connection, { id_tenant, id_cliente, id_venta, puntos: Math.floor(Number(puntos_canjeados)) });
+    }
+    if (id_cliente) {
+      await acumularPuntos(connection, { id_tenant, id_cliente, id_venta, totalVenta });
+    }
+  } catch (error) {
+    if (error instanceof PuntosInsuficientesError) {
+      throw new VentaValidationError(error.message, error.statusCode);
+    }
+    throw error;
+  }
 
   return { id_venta, num_comprobante: nuevoNumComprobante, total_venta: totalVenta };
 };

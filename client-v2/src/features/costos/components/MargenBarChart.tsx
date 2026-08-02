@@ -67,7 +67,7 @@ export function MargenBarChart({ productos }: MargenBarChartProps) {
                   fontSize: "11px",
                   color: "var(--foreground)",
                 }}
-                formatter={(value: number) => [soles(value), "Ganancia"]}
+                formatter={(value: any) => [soles(Number(value) || 0), "Ganancia"]}
               />
               <Bar dataKey="margen" radius={[0, 4, 4, 0]} maxBarSize={22}>
                 {data.map((d) => (

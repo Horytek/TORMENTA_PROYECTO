@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Check, Bookmark, ChevronRight, Layers } from "lucide-react";
+import { Loader2, Check, Bookmark, ChevronRight, Layers, Sparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,10 +13,24 @@ import type { Category } from "@/features/products/types";
 import { getAttributes, getCategoryAttributeIds, linkCategoryAttributes } from "../api/content";
 import { TIPO_LABELS } from "../types";
 
+// Presets de industria (1 clic): sugieren atributos por NOMBRE, no por id —
+// cada tenant crea sus propios atributos con ids distintos, así que solo se
+// puede matchear por lo que el admin ya haya nombrado igual (case/acentos
+// insensible). Lo que no tenga match se avisa en vez de crearse solo: crear
+// un atributo nuevo sin que lo pidan explícitamente sería sorprender al admin.
+const INDUSTRY_PRESETS: { id: string; label: string; nombres: string[] }[] = [
+  { id: "ropa", label: "Ropa Textil", nombres: ["Color", "Talla", "Material"] },
+  { id: "calzado", label: "Calzado", nombres: ["Color", "Talla"] },
+  { id: "accesorios", label: "Accesorios", nombres: ["Color", "Material"] },
+];
+
+const normalizar = (s: string) => s.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
 export default function CategoryTemplates({ canEdit }: { canEdit: boolean }) {
   const qc = useQueryClient();
   const [selected, setSelected] = useState<number | null>(null);
   const [checked, setChecked] = useState<Set<number>>(new Set());
+  const [presetSinMatch, setPresetSinMatch] = useState<string[] | null>(null);
 
   const { data: categories = [], isLoading: loadingCats } = useQuery({ queryKey: ["categorias"], queryFn: getCategories });
   const { data: attributes = [] } = useQuery({ queryKey: ["attributes"], queryFn: getAttributes });
@@ -31,7 +45,7 @@ export default function CategoryTemplates({ canEdit }: { canEdit: boolean }) {
     enabled: selected != null,
   });
 
-  useEffect(() => { setChecked(new Set(linkedIds)); }, [linkedIds]);
+  useEffect(() => { setChecked(new Set(linkedIds)); setPresetSinMatch(null); }, [linkedIds]);
 
   const currentCat = useMemo(() => categories.find((c) => c.id_categoria === selected) ?? null, [categories, selected]);
 
@@ -41,6 +55,19 @@ export default function CategoryTemplates({ canEdit }: { canEdit: boolean }) {
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
+
+  const aplicarPreset = (nombres: string[]) => {
+    const porNombre = new Map(attributes.map((a) => [normalizar(a.nombre), a.id_atributo]));
+    const sinMatch: string[] = [];
+    const idsMatcheados: number[] = [];
+    for (const nombre of nombres) {
+      const id = porNombre.get(normalizar(nombre));
+      if (id != null) idsMatcheados.push(id);
+      else sinMatch.push(nombre);
+    }
+    setChecked((prev) => new Set([...prev, ...idsMatcheados]));
+    setPresetSinMatch(sinMatch.length > 0 ? sinMatch : null);
+  };
 
   const save = useMutation({
     mutationFn: () => linkCategoryAttributes(selected as number, [...checked]),
@@ -108,6 +135,31 @@ export default function CategoryTemplates({ canEdit }: { canEdit: boolean }) {
                 </Button>
               )}
             </div>
+
+            {canEdit && attributes.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                  <Sparkles className="h-3.5 w-3.5 text-brand" /> Presets:
+                </span>
+                {INDUSTRY_PRESETS.map((preset) => (
+                  <Button
+                    key={preset.id}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => aplicarPreset(preset.nombres)}
+                  >
+                    {preset.label}
+                  </Button>
+                ))}
+              </div>
+            )}
+            {presetSinMatch && (
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                No tienes creado{presetSinMatch.length > 1 ? "s" : ""}: {presetSinMatch.join(", ")}. Créalo{presetSinMatch.length > 1 ? "s" : ""} en la pestaña "Atributos" y vuelve a aplicar el preset.
+              </p>
+            )}
 
             {loadingLinked ? (
               <div className="flex h-40 items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-brand" /></div>

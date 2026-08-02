@@ -4,6 +4,7 @@ import path from "path";
 import ExcelJS from "exceljs";
 import fs from "fs";
 import { fileURLToPath } from 'url';
+import { stockPorProducto } from "../services/inventario/stockRepository.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1495,8 +1496,114 @@ const getTopProductosMargen = async (req, res) => {
 };
 
 
+// Antigüedad de Stock (Aging Report): DSI y clasificación 0-30/31-60/61-90/90+
+// días por producto. "Antigüedad" = días desde la última entrada REAL de
+// stock (nota con id_almacenO NULL — un traslado no es una entrada nueva,
+// mismo criterio que ya usa `notaingreso.controller.js` para el costo
+// promedio). Si un SKU nunca tuvo una nota de ingreso registrada (llegó por
+// otra vía, ej. import inicial), se usa `producto_sku.f_creacion` como
+// referencia — es la única fecha que sí está poblada en todos los casos.
+const getStockAging = async (req, res) => {
+  let connection;
+  try {
+    const id_tenant = req.id_tenant;
+    connection = await getConnection();
+
+    const [productos] = await connection.query(`
+      SELECT PR.id_producto, PR.descripcion, MA.nom_marca, CA.nom_subcat AS categoria
+      FROM producto PR
+      INNER JOIN marca MA ON MA.id_marca = PR.id_marca
+      INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
+      WHERE PR.estado_producto = 1 AND PR.id_tenant = ?
+    `, [id_tenant]);
+
+    const stockMap = await stockPorProducto(connection, { id_tenant, ids_producto: productos.map((p) => p.id_producto) });
+
+    // Última entrada real por SKU (ingresos, no traslados), agregada a nivel
+    // de producto tomando la MÁS RECIENTE entre sus SKUs: si el producto tuvo
+    // reposición reciente en cualquier variante, no está "parado" en su
+    // conjunto aunque a alguna talla/color en particular le falte.
+    const [entradas] = await connection.query(`
+      SELECT ps.id_producto, MAX(n.fecha) AS ultima_entrada
+      FROM detalle_nota dn
+      INNER JOIN nota n ON n.id_nota = dn.id_nota
+      INNER JOIN producto_sku ps ON ps.id_sku = dn.id_sku
+      WHERE n.id_almacenO IS NULL AND n.estado_nota = 0 AND dn.id_tenant = ?
+      GROUP BY ps.id_producto
+    `, [id_tenant]);
+    const ultimaEntradaPorProducto = new Map(entradas.map((e) => [e.id_producto, e.ultima_entrada]));
+
+    const [creaciones] = await connection.query(`
+      SELECT id_producto, MAX(f_creacion) AS f_creacion FROM producto_sku WHERE id_tenant = ? GROUP BY id_producto
+    `, [id_tenant]);
+    const creacionPorProducto = new Map(creaciones.map((c) => [c.id_producto, c.f_creacion]));
+
+    const ahora = Date.now();
+    const bucket = (dias) => {
+      if (dias <= 30) return "0-30";
+      if (dias <= 60) return "31-60";
+      if (dias <= 90) return "61-90";
+      return "90+";
+    };
+
+    const data = productos
+      .map((p) => {
+        const stock = stockMap.get(p.id_producto) ?? 0;
+        const referencia = ultimaEntradaPorProducto.get(p.id_producto) ?? creacionPorProducto.get(p.id_producto) ?? null;
+        const dias = referencia ? Math.max(0, Math.floor((ahora - new Date(referencia).getTime()) / 86400000)) : null;
+        return {
+          id_producto: p.id_producto,
+          descripcion: p.descripcion,
+          nom_marca: p.nom_marca,
+          categoria: p.categoria,
+          stock,
+          dias_sin_movimiento: dias,
+          rango: dias == null ? "Sin dato" : bucket(dias),
+        };
+      })
+      .filter((p) => p.stock > 0)
+      .sort((a, b) => (b.dias_sin_movimiento ?? -1) - (a.dias_sin_movimiento ?? -1));
+
+    res.json({ code: 1, data });
+  } catch (error) {
+    console.error('Error en getStockAging:', error);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+// Mapa de calor de horas pico: cantidad de ventas por hora del día × día de
+// la semana, para decidir turnos de caja. `DAYOFWEEK` de MySQL: 1=domingo…7=sábado.
+const getVentasHeatmap = async (req, res) => {
+  let connection;
+  try {
+    const id_tenant = req.id_tenant;
+    connection = await getConnection();
+
+    const [filas] = await connection.query(`
+      SELECT DAYOFWEEK(v.f_venta) AS dia_semana, HOUR(v.hora_creacion) AS hora, COUNT(*) AS ventas
+      FROM venta v
+      WHERE v.id_tenant = ? AND v.estado_venta = 1 AND v.f_venta IS NOT NULL AND v.hora_creacion IS NOT NULL
+      GROUP BY dia_semana, hora
+    `, [id_tenant]);
+
+    res.json({
+      code: 1,
+      data: filas.map((f) => ({ dia_semana: f.dia_semana, hora: f.hora, ventas: Number(f.ventas) })),
+    });
+  } catch (error) {
+    console.error('Error en getVentasHeatmap:', error);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 export const methods = {
   getTotalSalesRevenue,
+  getStockAging,
+  getVentasHeatmap,
   getTotalProductosVendidos,
   getVentasPDF,
   getProductoMasVendido,

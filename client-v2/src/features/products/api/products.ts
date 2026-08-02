@@ -188,6 +188,21 @@ export const updateProductCombo = async (productId: number, items: ComboItem[]):
   return data?.code === 1 || data?.success === true;
 };
 
+// 4.6. Operaciones en lote (BatchOperationWizard)
+export type BatchOperationPayload =
+  | { tipo: "precio"; ajuste_tipo: "porcentaje" | "monto"; ajuste_valor: number }
+  | { tipo: "categoria"; id_subcategoria?: number; id_marca?: number }
+  | { tipo: "estado"; estado_producto: 0 | 1 };
+
+export const batchUpdateProducts = async (
+  ids: number[],
+  payload: BatchOperationPayload
+): Promise<{ success: boolean; afectados: number }> => {
+  const response = await api.post("/productos/batch", { ids, ...payload });
+  const data = response.data;
+  return { success: data?.code === 1, afectados: data?.data?.afectados ?? 0 };
+};
+
 // 5. Importación masiva
 export interface ImportExcelResult {
   inserted: number;

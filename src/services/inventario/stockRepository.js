@@ -171,12 +171,30 @@ export const restarStockSku = async (cx, { id_tenant, id_sku, id_almacen, cantid
  * candidatas antes de decidir, para que el reparto se calcule sobre valores que
  * nadie va a cambiar a mitad de la operación.
  *
+ * `atributosFijados` (Fase B — "variante colapsada"): { id_atributo → valor }.
+ * Si viene, acota las candidatas a los SKU que matchean esos atributos exactos
+ * (ej. talla=M) y reparte SOLO entre esos — los demás atributos (ej. color)
+ * quedan libres. Con `null`/vacío el comportamiento es idéntico al de siempre
+ * (pool de todo el producto).
+ *
  * @returns {Promise<Array<{id_sku, cantidad, stockAnterior, stockActual}>>}
  */
 export const descontarPorProducto = async (
   cx,
-  { id_tenant, id_producto, id_almacen, cantidad, politica = POLITICA.CONCENTRAR, descripcion = null }
+  { id_tenant, id_producto, id_almacen, cantidad, politica = POLITICA.CONCENTRAR, descripcion = null, atributosFijados = null }
 ) => {
+  const filtrosAtributo = [];
+  const paramsAtributo = [];
+  if (atributosFijados && typeof atributosFijados === "object") {
+    for (const [idAtributo, valor] of Object.entries(atributosFijados)) {
+      if (valor === undefined || valor === null || valor === "") continue;
+      // attributes_json es un objeto plano { "<id_atributo>": "<valor>" } — JSON_EXTRACT
+      // con la ruta armada a partir de la key evita traer todo el producto y filtrar en JS.
+      filtrosAtributo.push(`JSON_UNQUOTE(JSON_EXTRACT(ps.attributes_json, CONCAT('$."', ?, '"'))) = ?`);
+      paramsAtributo.push(String(idAtributo), String(valor));
+    }
+  }
+
   // FOR UPDATE ordenado por id_sku: todas las transacciones toman los bloqueos
   // en el mismo orden, así que no pueden trabarse entre sí.
   const [candidatas] = await cx.query(
@@ -184,9 +202,10 @@ export const descontarPorProducto = async (
      FROM inventario_stock s
      INNER JOIN producto_sku ps ON ps.id_sku = s.id_sku AND ps.id_tenant = s.id_tenant
      WHERE s.id_tenant = ? AND ps.id_producto = ? AND s.id_almacen = ?
+     ${filtrosAtributo.length > 0 ? `AND ${filtrosAtributo.join(" AND ")}` : ""}
      ORDER BY s.id_sku
      FOR UPDATE`,
-    [id_tenant, id_producto, id_almacen]
+    [id_tenant, id_producto, id_almacen, ...paramsAtributo]
   );
 
   if (candidatas.length === 0) {

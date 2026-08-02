@@ -73,6 +73,8 @@ import uploadsRoutes from "./routes/uploads.routes.js";
 import ordenCompraRoutes from "./routes/ordenCompra.routes.js";
 import devolucionesRoutes from "./routes/devoluciones.routes.js";
 import cajaTurnoRoutes from "./routes/cajaTurno.routes.js";
+import catalogoPublicoRoutes from "./routes/catalogoPublico.routes.js";
+import puntosRoutes from "./routes/puntos.routes.js";
 import facturaCompraRoutes from "./routes/facturaCompra.routes.js";
 import cuentaPorPagarRoutes from "./routes/cuentaPorPagar.routes.js";
 import anticipoProveedorRoutes from "./routes/anticipoProveedor.routes.js";
@@ -92,6 +94,7 @@ import presupuestoRoutes from "./routes/presupuesto.routes.js";
 import estadosFinancierosRoutes from "./routes/estadosFinancieros.routes.js";
 import auditoriaContableRoutes from "./routes/auditoriaContable.routes.js";
 import resumenContableRoutes from "./routes/resumenContable.routes.js";
+import inventoryMovementRoutes from "./routes/inventoryMovement.routes.js";
 
 // Settings
 const port = process.env.PORT || 4000;
@@ -245,7 +248,10 @@ app.use("/api/logs", logsRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/compras/ordenes", ordenCompraRoutes);
 app.use("/api/devoluciones", devolucionesRoutes);
+app.use("/api/catalogo", catalogoPublicoRoutes);
+app.use("/api/puntos", puntosRoutes);
 app.use("/api/caja-turno", cajaTurnoRoutes);
+app.use("/api/inventory-movements", inventoryMovementRoutes);
 app.use("/api/compras/facturas", facturaCompraRoutes);
 app.use("/api/compras/cuentas-por-pagar", cuentaPorPagarRoutes);
 app.use("/api/compras/anticipos", anticipoProveedorRoutes);

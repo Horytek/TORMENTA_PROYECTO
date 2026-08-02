@@ -110,6 +110,22 @@ const SUNAT_BETA_MIN_INTERVAL_MS = 120000; // 2 minutes between requests for Bet
 const SUNAT_PROD_MIN_INTERVAL_MS = 5000; // 5 seconds for Production
 const SUNAT_INITIAL_DELAY_MS = 3000; // 3 second delay before first attempt
 
+/**
+ * Throttle SUNAT global por proceso: el límite es compartido entre TODOS los
+ * tenants (no por tenant/empresa), por eso vive en una variable de módulo y
+ * no en `config`. Cada envío pasa uno a la vez por `sunatSendBill`, así que
+ * espaciarlos parejo a 60s/6 = 10s entre sí ya da un techo duro de 6
+ * comprobantes/minuto para el proceso completo, sin necesidad de una cola
+ * ni un worker aparte — y SUNAT es más estricto con ráfagas que con un
+ * envío parejo, así que este gate es además más seguro que uno tipo
+ * "ventana deslizante" que permitiría 6 seguidos y luego una pausa.
+ * ponytail: límite en memoria de un solo proceso — si Azure escala a 2+
+ * instancias hay que mover este contador a Redis (mismo caso que la
+ * presencia de sockets, ver CLAUDE.md §10).
+ */
+const SUNAT_MAX_COMPROBANTES_POR_MINUTO = 6;
+const SUNAT_GLOBAL_MIN_INTERVAL_MS = 60000 / SUNAT_MAX_COMPROBANTES_POR_MINUTO; // 10s
+
 export async function sunatSendBill({ fileName, zipBuffer, config } = {}) {
   console.log('[SunatSoapClient] sunatSendBill called for', fileName);
 
@@ -132,12 +148,12 @@ export async function sunatSendBill({ fileName, zipBuffer, config } = {}) {
   console.log(`[SunatSoapClient] Initial delay: waiting ${SUNAT_INITIAL_DELAY_MS}ms before SUNAT request...`);
   await new Promise(resolve => setTimeout(resolve, SUNAT_INITIAL_DELAY_MS));
 
-  // Additional rate limiting between consecutive requests (even if no success yet)
+  // Throttle SUNAT global (6/min compartido entre todos los tenants) — ver comentario arriba.
   const now = Date.now();
   const timeSinceLastSend = now - lastSunatSendTime;
-  if (lastSunatSendTime > 0 && timeSinceLastSend < 10000) {
-    const waitTime = 10000 - timeSinceLastSend;
-    console.log(`[SunatSoapClient] Backend throttle: waiting additional ${waitTime}ms...`);
+  if (lastSunatSendTime > 0 && timeSinceLastSend < SUNAT_GLOBAL_MIN_INTERVAL_MS) {
+    const waitTime = SUNAT_GLOBAL_MIN_INTERVAL_MS - timeSinceLastSend;
+    console.log(`[SunatSoapClient] Throttle SUNAT global (máx. ${SUNAT_MAX_COMPROBANTES_POR_MINUTO}/min): esperando ${waitTime}ms...`);
     await new Promise(resolve => setTimeout(resolve, waitTime));
   }
   lastSunatSendTime = Date.now();

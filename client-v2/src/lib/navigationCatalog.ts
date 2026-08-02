@@ -25,6 +25,8 @@ import {
   Wallet,
   RotateCcw,
   HandCoins,
+  ArrowLeftRight,
+  MessageCircle,
 } from "lucide-react";
 import type { RouteModule, CatalogMeta } from "@/api/rutas";
 import { getIcon, type NavIcon } from "@/lib/iconRegistry";
@@ -64,9 +66,11 @@ export interface ModuleMeta {
  */
 const MODULE_META: Record<string, ModuleMeta> = {
   "productos": { url: "/products", icon: Tags, group: "General", title: "Productos", keywords: ["sku", "catálogo", "stock"] },
+  "catalogo": { url: "/catalog-express", icon: MessageCircle, group: "General", title: "Catálogo WhatsApp", keywords: ["whatsapp", "catalogo", "tienda", "vitrina", "pedidos"] },
   "ventas": { url: "/sales", icon: ShoppingCart, group: "General", title: "Punto de Venta (POS)", keywords: ["caja", "cobrar", "vender"] },
   "devoluciones": { url: "/sales/returns", icon: RotateCcw, group: "General", title: "Devoluciones", keywords: ["reembolso", "nota de crédito", "cambio", "retorno"] },
   "almacen": { url: "/inventory", icon: Package, group: "Logística", title: "Inventario / Kárdex", keywords: ["stock", "movimientos", "kardex"] },
+  "almacen/movimientos": { url: "/inventory/movements", icon: ArrowLeftRight, group: "Logística", title: "Movimientos e Inventarios", keywords: ["transferencia", "conteo", "ciego", "auditoría"] },
   "almaceng": { url: "/logistics/warehouses", icon: Warehouse, group: "Logística", title: "Almacenes" },
   "nota_almacen": { url: "/logistics/warehouse-notes", icon: ClipboardList, group: "Logística", title: "Notas de Almacén", keywords: ["ingreso", "salida", "traslado"] },
   "guia_remision": { url: "/logistics/guides", icon: Truck, group: "Logística", title: "Guías de Remisión", keywords: ["despacho", "transporte", "sunat"] },

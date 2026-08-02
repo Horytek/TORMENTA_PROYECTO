@@ -1,8 +1,11 @@
 import { useState } from "react";
-import { History, BarChart3 } from "lucide-react";
+import { History, BarChart3, Clock, Flame, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SalesReportPanel } from "@/features/sales/components/shared/SalesReportPanel";
 import { ManagementReportsPanel } from "../components/ManagementReportsPanel";
+import { StockAgingReport } from "../components/StockAgingReport";
+import { SalesHeatmapReport } from "../components/SalesHeatmapReport";
+import { SellerPerformanceReport } from "../components/SellerPerformanceReport";
 
 /**
  * Historial de ventas + reportes gerenciales (/reports). El historial reusa
@@ -27,6 +30,15 @@ export default function ReportsPage() {
           <TabsTrigger value="gerencial" className="gap-1.5 rounded-md text-xs font-semibold">
             <BarChart3 className="h-3.5 w-3.5" /> Gerencial
           </TabsTrigger>
+          <TabsTrigger value="antiguedad" className="gap-1.5 rounded-md text-xs font-semibold">
+            <Clock className="h-3.5 w-3.5" /> Antigüedad de stock
+          </TabsTrigger>
+          <TabsTrigger value="horas-pico" className="gap-1.5 rounded-md text-xs font-semibold">
+            <Flame className="h-3.5 w-3.5" /> Horas pico
+          </TabsTrigger>
+          <TabsTrigger value="vendedores" className="gap-1.5 rounded-md text-xs font-semibold">
+            <Users className="h-3.5 w-3.5" /> Vendedores
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="historial" className="flex-1 min-h-0 mt-3 focus-visible:outline-none">
@@ -35,6 +47,18 @@ export default function ReportsPage() {
 
         <TabsContent value="gerencial" className="flex-1 min-h-0 mt-3 overflow-y-auto focus-visible:outline-none">
           <ManagementReportsPanel />
+        </TabsContent>
+
+        <TabsContent value="antiguedad" className="flex-1 min-h-0 mt-3 overflow-y-auto focus-visible:outline-none">
+          <StockAgingReport />
+        </TabsContent>
+
+        <TabsContent value="horas-pico" className="flex-1 min-h-0 mt-3 overflow-y-auto focus-visible:outline-none">
+          <SalesHeatmapReport />
+        </TabsContent>
+
+        <TabsContent value="vendedores" className="flex-1 min-h-0 mt-3 overflow-y-auto focus-visible:outline-none">
+          <SellerPerformanceReport />
         </TabsContent>
       </Tabs>
     </div>

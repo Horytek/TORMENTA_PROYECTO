@@ -4,6 +4,7 @@ import { Building2, Lock, RotateCcw } from "lucide-react";
 import { ProductCatalog } from "./ProductCatalog";
 import { CartPanel } from "./CartPanel";
 import { PaymentModal } from "./PaymentModal";
+import { OfflineSyncBadge } from "./OfflineSyncBadge";
 import { ClientSelector, CLIENTE_VARIOS } from "./ClientSelector";
 import { HeldTicketsPanel } from "./HeldTicketsPanel";
 import { ReturnWizard } from "@/features/returns/components/ReturnWizard";
@@ -168,6 +169,7 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <OfflineSyncBadge />
           {user?.sucursal && (
             <Badge variant="secondary" className="h-8 px-2.5 text-xs font-medium rounded-lg">
               📍 {user.sucursal}

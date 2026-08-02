@@ -3,9 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { Download } from "lucide-react";
+import { Download, Landmark } from "lucide-react";
 import * as XLSX from "xlsx";
-import { getLibroDiario } from "../api/accounting";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { getLibroDiario, exportarAsientosContables, type FormatoContable } from "../api/accounting";
 
 const firstDayOfMonth = () => {
   const d = new Date();
@@ -53,6 +56,13 @@ export function JournalBookPanel() {
     XLSX.writeFile(wb, `libro_diario_${fechaInicio}_a_${fechaFin}.xlsx`);
   };
 
+  const handleExportContable = (formato: FormatoContable) => {
+    exportarAsientosContables(formato, { fechaInicio, fechaFin }).catch(() => {
+      // El backend ya valida rango vacío/formato inválido con un mensaje propio;
+      // acá no hay mucho más que hacer que dejar que el usuario reintente.
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-4">
@@ -72,6 +82,18 @@ export function JournalBookPanel() {
         >
           <Download className="h-4 w-4" /> Exportar Excel
         </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" disabled={lineas.length === 0} className="gap-2 h-9">
+              <Landmark className="h-4 w-4" /> Exportar contable
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={() => handleExportContable("concar")}>CONCAR</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExportContable("siscont")}>SISCONT</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleExportContable("foxcont")}>FOXCONT</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <div className="ml-auto text-right">
           <p className="text-xs text-muted-foreground">Totales del período</p>
           <p className="num text-sm font-semibold text-foreground">

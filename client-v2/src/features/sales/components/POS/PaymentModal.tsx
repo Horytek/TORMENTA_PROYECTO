@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckCircle2, XCircle, Receipt, Banknote, Plus, Trash2, AlertTriangle, UserCircle2 } from "lucide-react";
+import { CheckCircle2, XCircle, Receipt, Banknote, Plus, Trash2, AlertTriangle, UserCircle2, Gift, WifiOff } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,15 +17,29 @@ import {
 import { useCartStore } from "@/store/useCartStore";
 import { useUserStore } from "@/store/useUserStore";
 import { createVenta } from "@/features/sales/api/ventas";
+import { encolarVenta } from "@/lib/offlineOutbox";
 import { getVendedores } from "@/features/employees/api/vendedores";
-import type { ComprobanteTipo, MetodoPago, VentaPayload } from "@/features/sales/types";
+import { getPuntosCliente } from "@/features/loyalty/api/puntos";
+import type { ComprobanteTipo, MetodoPago, VentaPayload, CreateVentaResponse } from "@/features/sales/types";
 import { CLIENTE_VARIOS } from "./ClientSelector";
 
 // ─────────────────────────────────────────────────────────────────
 // PaymentModal — Modal de cobro del POS con sistema de pago mixto
 // ─────────────────────────────────────────────────────────────────
 
-type SaleStatus = "idle" | "processing" | "success" | "error";
+type SaleStatus = "idle" | "processing" | "success" | "error" | "queued";
+
+/**
+ * true solo cuando la petición nunca llegó a un servidor a responder (sin
+ * conexión, DNS caído, timeout de red) — nunca cuando el backend respondió
+ * con un error de negocio (stock insuficiente, cliente inválido, etc.), que
+ * el cajero SÍ necesita ver y corregir en el momento, no guardar a ciegas.
+ */
+const esErrorDeRed = (err: unknown): boolean => {
+  if (!navigator.onLine) return true;
+  const axiosErr = err as { response?: unknown; request?: unknown; code?: string } | null;
+  return !axiosErr?.response && (!!axiosErr?.request || axiosErr?.code === "ERR_NETWORK");
+};
 
 interface PaymentModalProps {
   open: boolean;
@@ -69,6 +83,11 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
   // elige explícitamente a otra persona (vendedor de piso distinto de caja).
   const [vendedorDni, setVendedorDni] = useState("");
   const [motivoDescuento, setMotivoDescuento] = useState("");
+  const [puntosACanjear, setPuntosACanjear] = useState("");
+  // Puntos que YA quedaron reflejados en cart.descuento — se resetea si el
+  // cajero edita el descuento a mano, para no mandar un canje que no
+  // corresponde al monto real aplicado.
+  const [puntosCanjeadosAplicados, setPuntosCanjeadosAplicados] = useState(0);
   const [status, setStatus] = useState<SaleStatus>("idle");
   const [result, setResult] = useState<{ success: boolean; message?: string; num_comprobante?: string } | null>(null);
   const idempotencyKeyRef = useRef(crearClaveIdempotente());
@@ -93,6 +112,31 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
     staleTime: 5 * 60 * 1000,
   });
   const vendedoresActivos = useMemo(() => vendedores.filter((v) => v.estado_vendedor === 1), [vendedores]);
+
+  // Club de puntos: solo aplica a un cliente real (no "Varios", id_cliente=0).
+  const clienteFinal = cart.cliente ?? CLIENTE_VARIOS;
+  const { data: puntosCliente } = useQuery({
+    queryKey: ["puntos-cliente", clienteFinal.id_cliente],
+    queryFn: () => getPuntosCliente(clienteFinal.id_cliente),
+    enabled: open && clienteFinal.id_cliente > 0,
+  });
+  const puntosDisponibles = puntosCliente?.config.activo ? puntosCliente.saldo : 0;
+  const valorCanjePorPunto = puntosCliente?.config.valor_canje_por_punto ?? 0;
+
+  useEffect(() => {
+    // Cambió el cliente (o se cerró el modal): el canje anterior ya no aplica.
+    setPuntosACanjear("");
+    setPuntosCanjeadosAplicados(0);
+  }, [clienteFinal.id_cliente]);
+
+  const aplicarCanjePuntos = () => {
+    const puntos = Math.floor(Number(puntosACanjear)) || 0;
+    if (puntos <= 0 || puntos > puntosDisponibles) return;
+    const monto = Math.round(puntos * valorCanjePorPunto * 100) / 100;
+    cart.setDescuento(monto);
+    setMotivoDescuento(`Canje de ${puntos} puntos de fidelización`);
+    setPuntosCanjeadosAplicados(puntos);
+  };
 
   const subtotal = cart.getSubtotal();
   const igv = cart.getIgv();
@@ -305,6 +349,7 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
         observacion: observaciones || undefined,
         comprobante_pago: metodoPagoBackend,
         dni_vendedor: vendedorDni || undefined,
+        puntos_canjeados: puntosCanjeadosAplicados > 0 ? puntosCanjeadosAplicados : undefined,
         detalles: cart.items.map((item) => ({
           id_producto: item.id_producto,
           cantidad: item.cantidad,
@@ -313,13 +358,27 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
           id_tonalidad: item.id_tonalidad,
           id_talla: item.id_talla,
           id_sku: item.id_sku,
+          atributos_fijados: item.atributos_fijados,
           descuento: item.descuento,
         })),
       };
 
-      return createVenta(payload);
+      try {
+        return await createVenta(payload);
+      } catch (err) {
+        if (!esErrorDeRed(err)) throw err;
+        // Sin conexión: se guarda localmente con la misma idempotency_key que
+        // llevaría el envío real, para que el sync posterior no duplique nada.
+        await encolarVenta(payload, idempotencyKeyRef.current);
+        return { success: true, queued: true } as CreateVentaResponse & { queued: true };
+      }
     },
     onSuccess: (data) => {
+      if ("queued" in data && data.queued) {
+        setStatus("queued");
+        cart.clearCart();
+        return;
+      }
       setStatus("success");
       setResult({
         success: data.success,
@@ -348,7 +407,7 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
 
   const handleClose = useCallback(() => {
     if (status === "processing") return;
-    if (status === "success" || status === "error") {
+    if (status === "success" || status === "error" || status === "queued") {
       cart.setIsProcessing(false);
     }
     onClose();
@@ -363,6 +422,7 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
             {status === "idle" && "Cobrar"}
             {status === "processing" && "Procesando…"}
             {status === "success" && "Venta completada"}
+            {status === "queued" && "Venta guardada sin conexión"}
             {status === "error" && "Error en la venta"}
           </DialogTitle>
         </DialogHeader>
@@ -380,6 +440,40 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
                 <span className="text-muted-foreground">IGV (18%)</span>
                 <span className="font-medium">S/ {igv.toFixed(2)}</span>
               </div>
+              {puntosDisponibles > 0 && (
+                <div className="space-y-1.5 rounded-lg border border-dashed border-brand/30 bg-brand/5 p-2.5">
+                  <p className="flex items-center gap-1.5 text-xs font-medium text-brand">
+                    <Gift className="h-3.5 w-3.5" /> {puntosDisponibles} puntos disponibles (S/ {(puntosDisponibles * valorCanjePorPunto).toFixed(2)})
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      type="number"
+                      min={0}
+                      max={puntosDisponibles}
+                      step={1}
+                      value={puntosACanjear}
+                      onChange={(e) => setPuntosACanjear(e.target.value)}
+                      placeholder="Puntos a canjear"
+                      className="h-7 text-xs"
+                    />
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 shrink-0 text-xs"
+                      disabled={!puntosACanjear || Number(puntosACanjear) <= 0 || Number(puntosACanjear) > puntosDisponibles}
+                      onClick={aplicarCanjePuntos}
+                    >
+                      Canjear
+                    </Button>
+                  </div>
+                  {puntosCanjeadosAplicados > 0 && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Aplicado: {puntosCanjeadosAplicados} puntos → S/ {(puntosCanjeadosAplicados * valorCanjePorPunto).toFixed(2)} de descuento.
+                    </p>
+                  )}
+                </div>
+              )}
               <div className="flex items-center justify-between gap-2 text-sm">
                 <Label htmlFor="pos-descuento" className="text-muted-foreground font-normal">Descuento</Label>
                 <div className="relative w-28">
@@ -390,7 +484,10 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
                     min={0}
                     step={0.01}
                     value={cart.descuento || ""}
-                    onChange={(e) => cart.setDescuento(Number(e.target.value) || 0)}
+                    onChange={(e) => {
+                      cart.setDescuento(Number(e.target.value) || 0);
+                      setPuntosCanjeadosAplicados(0); // editado a mano: ya no corresponde al canje de puntos
+                    }}
                     placeholder="0.00"
                     className="h-7 pl-7 text-right text-sm"
                   />
@@ -622,6 +719,26 @@ export function PaymentModal({ open, onClose, onSaleComplete, selectedAlmacenId 
               {result.message && (
                 <p className="mt-1 text-xs text-muted-foreground">{result.message}</p>
               )}
+            </div>
+            <Button className="w-full" onClick={handleClose}>
+              Nueva venta
+            </Button>
+          </div>
+        )}
+
+        {/* ── QUEUED (sin conexión) ── */}
+        {status === "queued" && (
+          <div className="flex flex-col items-center justify-center py-12 gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-50 ring-2 ring-amber-200 dark:bg-amber-950 dark:ring-amber-800">
+              <WifiOff className="h-8 w-8 text-amber-500" />
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                Venta guardada en este dispositivo
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                No hay conexión. Se enviará y emitirá el comprobante automáticamente cuando vuelva el internet.
+              </p>
             </div>
             <Button className="w-full" onClick={handleClose}>
               Nueva venta

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryState, parseAsString } from "nuqs";
 import * as XLSX from "xlsx";
 import type { Product } from "../types";
-import { getProducts, deleteProduct, createProduct } from "../api/products";
+import { getProducts, deleteProduct, createProduct, updateProduct } from "../api/products";
 import { useUserStore } from "@/store/useUserStore";
 import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection";
 import type { FieldDef, RecordAction, RhythmConfig } from "@/components/shared/AdaptiveCollection";
@@ -12,9 +12,10 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
-import { ShieldAlert, Loader2, Eye, Edit, Trash2, Download, Copy, Coins, CheckCircle2, Ban } from "lucide-react";
+import { ShieldAlert, Loader2, Eye, Edit, Trash2, Download, Copy, Coins, CheckCircle2, Ban, Wand2 } from "lucide-react";
 import { cargarCostosIniciales, parseErrorCosto } from "@/features/costos/api/costos";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import BatchOperationWizard from "./BatchOperationWizard";
 
 interface ProductsPanelProps {
   onEdit: (product: Product) => void;
@@ -36,6 +37,7 @@ export default function ProductsPanel({ onEdit, onViewVariants }: ProductsPanelP
   const [costoInput, setCostoInput] = useState("");
   const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
   const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [batchWizardOpen, setBatchWizardOpen] = useState(false);
 
   const { data = { data: [], total: 0, totalPages: 1 }, isLoading } = useQuery({
     queryKey: ["products", page, searchTerm, bajoStock],
@@ -379,6 +381,12 @@ export default function ProductsPanel({ onEdit, onViewVariants }: ProductsPanelP
             onClick: () => setConfirmBulkDelete(true),
           },
           {
+            id: "batch-wizard", label: "Operación en lote…",
+            icon: <Wand2 className="h-4 w-4" />,
+            disabled: selectedIds.length === 0,
+            onClick: () => setBatchWizardOpen(true),
+          },
+          {
             id: "export", label: "Exportar CSV",
             icon: <Download className="h-4 w-4" />,
             onClick: () => exportToCSV(),
@@ -424,6 +432,16 @@ export default function ProductsPanel({ onEdit, onViewVariants }: ProductsPanelP
         confirmLabel="Eliminar"
         variant="danger"
         isPending={bulkDeleteMutation.isPending}
+      />
+
+      <BatchOperationWizard
+        open={batchWizardOpen}
+        onClose={() => setBatchWizardOpen(false)}
+        products={products.filter((p) => selectedIds.includes(p.id_producto))}
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ["products"] });
+          setSelectedIds([]);
+        }}
       />
     </>
   );
