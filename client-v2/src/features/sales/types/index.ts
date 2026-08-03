@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────
 
 export type ComprobanteTipo = "Boleta" | "Factura" | "Nota de venta";
-export type MetodoPago = "EFECTIVO" | "TARJETA" | "TRANSFERENCIA" | "YAPE" | "PLIN" | "MIXTO";
+export type MetodoPago = "EFECTIVO" | "TARJETA" | "TRANSFERENCIA" | "YAPE" | "PLIN" | "MIXTO" | "CREDITO";
 export type VentaEstado = 1 | 0;
 
 // ── Item en carrito ─────────────────────────────────────────────
@@ -26,6 +26,18 @@ export interface CartItem {
   /** Variante elegida (motor genérico atributo/producto_sku); null = sin variante. */
   id_sku?: number | null;
   sku_label?: string | null;
+  /**
+   * Fase B — variante colapsada: el cajero fijó solo ALGUNOS atributos (ej.
+   * talla=M, "cualquier color") en vez de un SKU exacto. { id_atributo → valor }.
+   * Mutuamente excluyente con `id_sku`: si viene esto, `id_sku` queda null y el
+   * backend reparte el stock entre los SKU reales que matchean (ver
+   * `descontarPorProducto` en stockRepository.js).
+   */
+  atributos_fijados?: Record<string, string> | null;
+  /** Descuento en monto (no %) aplicado a esta línea; se descuenta de precio_total. */
+  descuento?: number;
+  /** Catálogo 07 SUNAT del producto: "10"=Gravado (default), "20"=Exonerado, "30"=Inafecto. */
+  tipo_afectacion_igv?: string;
 }
 
 // ── Detalle de venta (respuesta API / backend) ─────────────────
@@ -127,6 +139,13 @@ export interface VentaPayload {
   total_t: number;
   totalImporte_venta?: number;
   descuento_venta?: number;
+  /** Obligatorio cuando descuento_venta > 0 — el backend lo rechaza si falta. */
+  motivo_descuento?: string;
+  /** N° de operación por método de pago digital, ej. { YAPE: "123456" }. Solo los que se capturaron. */
+  referencia_pago?: Record<string, string>;
+  /** Puntos del Club de Fidelización canjeados en esta venta (ya restados de descuento_venta en el frontend). */
+  dni_vendedor?: string;
+  puntos_canjeados?: number;
   vuelto?: number;
   recibido?: number;
   observacion?: string;
@@ -142,6 +161,9 @@ export interface VentaDetallePayload {
   id_tonalidad?: number;
   id_talla?: number;
   id_sku?: number | null;
+  /** Ver `CartItem.atributos_fijados`. */
+  atributos_fijados?: Record<string, string> | null;
+  descuento?: number;
 }
 
 // ── Libro de ventas (reporte) ──────────────────────────────────
@@ -151,6 +173,7 @@ export interface VentasFilters {
   id_sucursal?: number;
   estado?: number;
   id_comprobante?: string;
+  dni_vendedor?: string;
 }
 
 export interface VentasStats {
@@ -172,6 +195,12 @@ export interface POSProduct {
   codigo_barras?: string;
   /** true = tiene variantes generadas; el POS debe pedir cuál antes de agregar. */
   tiene_variantes?: boolean;
+  /** Punto de reorden configurado en Productos; null/undefined = sin umbral configurado. */
+  stock_min?: number | null;
+  /** Catálogo 07 SUNAT: "10"=Gravado (default), "20"=Exonerado, "30"=Inafecto. */
+  tipo_afectacion_igv?: string;
+  /** Combo/kit: `stock` ya viene calculado como "combos armables" según sus componentes. */
+  es_combo?: boolean;
 }
 
 // ── Carrito completo ────────────────────────────────────────────
@@ -197,6 +226,8 @@ export interface ClienteForSale {
   direccion?: string;
   telefono?: string;
   email?: string;
+  /** Límite de crédito configurado; null/undefined = sin límite (no bloquea ventas a crédito). */
+  limite_credito?: number | string | null;
 }
 
 export function clienteNombre(c: ClienteForSale): string {

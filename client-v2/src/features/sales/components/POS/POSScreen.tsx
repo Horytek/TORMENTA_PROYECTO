@@ -1,11 +1,15 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Lock } from "lucide-react";
+import { Building2, Lock, RotateCcw } from "lucide-react";
+import { guardarAlmacenes, leerAlmacenes } from "@/lib/catalogoOffline";
 import { ProductCatalog } from "./ProductCatalog";
 import { CartPanel } from "./CartPanel";
 import { PaymentModal } from "./PaymentModal";
+import { OfflineSyncBadge } from "./OfflineSyncBadge";
 import { ClientSelector, CLIENTE_VARIOS } from "./ClientSelector";
 import { HeldTicketsPanel } from "./HeldTicketsPanel";
+import { ReturnWizard } from "@/features/returns/components/ReturnWizard";
+import { TurnoCajaWidget } from "@/features/caja-turno/components/TurnoCajaWidget";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCartStore } from "@/store/useCartStore";
@@ -37,12 +41,40 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [lastSaleId, setLastSaleId] = useState<number | null>(null);
   const [selectedAlmacenId, setSelectedAlmacenId] = useState<number | null>(null);
+  const [returnWizardOpen, setReturnWizardOpen] = useState(false);
+  const canDevolucion = can("devoluciones.create");
 
-  // Obtener lista de almacenes disponibles
-  const { data: almacenes = [] } = useQuery({
+  // Obtener lista de almacenes disponibles.
+  // Se guarda una foto porque sin ella, offline, `selectedAlmacenId` nunca se
+  // resuelve y la pantalla queda en "Cargando almacén…" sin llegar a pedir el
+  // catálogo: la caja no abre aunque el resto del soporte offline funcione.
+  const { data: almacenesRed } = useQuery({
     queryKey: ["pos-almacenes"],
     queryFn: getKardexInventarioAlmacenes,
   });
+  const [almacenesFoto, setAlmacenesFoto] = useState<typeof almacenesRed>(undefined);
+
+  useEffect(() => {
+    if (almacenesRed?.length) void guardarAlmacenes(almacenesRed);
+  }, [almacenesRed]);
+
+  // Se lee siempre al montar, sin esperar a que la consulta falle: offline
+  // React Query pausa la consulta y nunca entra en error, así que esperar el
+  // fallo dejaría el selector colgado en "Cargando almacén…" para siempre.
+  useEffect(() => {
+    let vigente = true;
+    void leerAlmacenes<NonNullable<typeof almacenesRed>[number]>().then((guardados) => {
+      if (vigente && guardados?.length) setAlmacenesFoto(guardados);
+    });
+    return () => {
+      vigente = false;
+    };
+  }, []);
+
+  const almacenes = useMemo(
+    () => (almacenesRed?.length ? almacenesRed : (almacenesFoto ?? [])),
+    [almacenesRed, almacenesFoto]
+  );
 
   // Almacenes visibles según el rol del usuario
   const availableAlmacenes = useMemo(() => {
@@ -108,6 +140,21 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
     setIsPaymentOpen(false);
   }, []);
 
+  // Atajo de teclado: F12 cobra el carrito actual (mismo gesto que las cajas
+  // registradoras físicas). No pisa F12 de DevTools porque el navegador
+  // reserva esa combinación al margen del preventDefault de la página.
+  const items = useCartStore((s) => s.items);
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "F12" && !isPaymentOpen && items.length > 0) {
+        e.preventDefault();
+        handleCheckout();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isPaymentOpen, items.length, handleCheckout]);
+
   return (
     <div className="flex flex-col h-full">
       {/* ── Header bar ─────────────────────────────────────── */}
@@ -149,6 +196,7 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
+          <OfflineSyncBadge />
           {user?.sucursal && (
             <Badge variant="secondary" className="h-8 px-2.5 text-xs font-medium rounded-lg">
               📍 {user.sucursal}
@@ -159,6 +207,15 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
               ✓ Venta #{lastSaleId}
             </Badge>
           )}
+          {canDevolucion && (
+            <button
+              onClick={() => setReturnWizardOpen(true)}
+              className="flex items-center gap-1 rounded-lg border border-dashed border-muted-foreground/40 px-2.5 h-8 text-xs text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors cursor-pointer"
+            >
+              <RotateCcw className="h-3 w-3" /> Cambio / Devolución
+            </button>
+          )}
+          <TurnoCajaWidget idSucursal={user?.id_sucursal} />
         </div>
       </div>
 
@@ -179,6 +236,11 @@ export function POSScreen({ onSaleComplete }: POSScreenProps) {
         onSaleComplete={handleSaleComplete}
         selectedAlmacenId={selectedAlmacenId ?? undefined}
       />
+
+      {/* ── Cambio / devolución sin salir del POS ─────────────
+          Mismo componente que usa la pantalla de Devoluciones — acá solo se
+          le da un atajo desde la venta activa, no se reconstruye la lógica. */}
+      <ReturnWizard open={returnWizardOpen} onClose={() => setReturnWizardOpen(false)} />
     </div>
   );
 }

@@ -75,7 +75,7 @@ export const getUbigeosGuia = async (): Promise<GuideUbigeo[]> =>
 export const getDestinatariosGuia = async (): Promise<GuideDestinatario[]> =>
   unwrapList<GuideDestinatario>(await api.get("/guia_remision/clienteguia"));
 
-export const getProductosGuia = async (filtros: { descripcion?: string; codbarras?: string } = {}): Promise<GuideProducto[]> =>
+export const getProductosGuia = async (filtros: { descripcion?: string; codbarras?: string; almacen?: number | string } = {}): Promise<GuideProducto[]> =>
   unwrapList<GuideProducto>(await api.get("/guia_remision/productos", { params: cleanParams(filtros) }));
 
 export const getTransportistasPublicos = async (): Promise<TransportistaPublico[]> =>

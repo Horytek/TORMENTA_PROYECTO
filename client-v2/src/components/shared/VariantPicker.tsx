@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { getProductAttributes, getProductVariants } from "@/features/products/api/products";
+import { collapseVariants } from "@/lib/variantCollapse";
+
+const CUALQUIERA = "__cualquiera__";
 
 export interface VariantResolved {
   id_sku: number | null;
@@ -9,12 +12,20 @@ export interface VariantResolved {
   stock: number | null;
   /** true = ya se puede agregar (sin variantes, o variante completa elegida). */
   ready: boolean;
+  /**
+   * Fase B: se llenó cuando el cajero dejó uno o más atributos en "Cualquiera"
+   * — el pedido es sobre una variante COLAPSADA (ej. talla M, cualquier color),
+   * no un SKU exacto. Mutuamente excluyente con `id_sku` (que queda null).
+   */
+  atributosFijados?: Record<string, string> | null;
 }
 
 interface VariantPickerProps {
   idProducto: number;
   idAlmacen?: number;
   onResolved: (result: VariantResolved) => void;
+  /** Fase B: permite dejar atributos en "Cualquiera" y vender sobre el grupo colapsado. Default: false. */
+  permitirColapsada?: boolean;
 }
 
 /**
@@ -22,7 +33,7 @@ interface VariantPickerProps {
  * tiene variantes generadas, no renderiza nada y resuelve de inmediato — cero
  * fricción para el caso común. Reusado en Notas, Guías, Compras y POS.
  */
-export function VariantPicker({ idProducto, idAlmacen, onResolved }: VariantPickerProps) {
+export function VariantPicker({ idProducto, idAlmacen, onResolved, permitirColapsada = false }: VariantPickerProps) {
   const { data: variants = [], isLoading } = useQuery({
     queryKey: ["product-variants", idProducto, idAlmacen],
     queryFn: () => getProductVariants(idProducto, idAlmacen),
@@ -50,21 +61,46 @@ export function VariantPicker({ idProducto, idAlmacen, onResolved }: VariantPick
     return map;
   }, [attrsCatalog]);
 
+  // Cascada: las opciones de CADA atributo se acotan a lo que ya elegiste en
+  // los demás. "Cualquiera" no fija nada, así que no debe filtrar como si
+  // fuera un valor real — se excluye de "lo ya elegido".
   const valoresPorAtributo = useMemo(() => {
     const map = new Map<string, string[]>();
     attrIds.forEach((id) => {
+      const otrosElegidos = attrIds.filter((otroId) => otroId !== id && selection[otroId] && selection[otroId] !== CUALQUIERA);
+      const candidatos = otrosElegidos.length === 0
+        ? variants
+        : variants.filter((v) => otrosElegidos.every((otroId) => v.attrs?.[otroId] === selection[otroId]));
       const set = new Set<string>();
-      variants.forEach((v) => { if (v.attrs?.[id]) set.add(v.attrs[id]); });
+      candidatos.forEach((v) => { if (v.attrs?.[id]) set.add(v.attrs[id]); });
       map.set(id, [...set]);
     });
     return map;
-  }, [attrIds, variants]);
+  }, [attrIds, variants, selection]);
+
+  const attrsCualquiera = useMemo(
+    () => attrIds.filter((id) => selection[id] === CUALQUIERA),
+    [attrIds, selection]
+  );
+  const attrsFijados = useMemo(
+    () => attrIds.filter((id) => selection[id] && selection[id] !== CUALQUIERA),
+    [attrIds, selection]
+  );
+  const todosDecididos = attrIds.length > 0 && attrIds.every((id) => Boolean(selection[id]));
 
   const matched = useMemo(() => {
-    if (attrIds.length === 0) return null;
+    if (attrIds.length === 0 || attrsCualquiera.length > 0) return null;
     if (attrIds.some((id) => !selection[id])) return null;
     return variants.find((v) => attrIds.every((id) => v.attrs?.[id] === selection[id])) ?? null;
-  }, [attrIds, selection, variants]);
+  }, [attrIds, attrsCualquiera.length, selection, variants]);
+
+  // Fase B: uno o más atributos en "Cualquiera" → agrupar por los que SÍ se
+  // fijaron y quedarse con el grupo cuyos valores coinciden con la selección.
+  const grupoColapsado = useMemo(() => {
+    if (!permitirColapsada || attrsCualquiera.length === 0 || !todosDecididos) return null;
+    const grupos = collapseVariants(variants, attrsFijados);
+    return grupos.find((g) => attrsFijados.every((id) => g.attrs[id] === selection[id])) ?? null;
+  }, [permitirColapsada, attrsCualquiera.length, todosDecididos, variants, attrsFijados, selection]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -79,11 +115,19 @@ export function VariantPicker({ idProducto, idAlmacen, onResolved }: VariantPick
         stock: matched.stock,
         ready: true,
       });
+    } else if (grupoColapsado) {
+      onResolved({
+        id_sku: null,
+        label: `${grupoColapsado.label} (cualquiera: ${attrsCualquiera.map((id) => nombrePorId.get(id) ?? "").join(", ")})`,
+        stock: grupoColapsado.stock,
+        ready: true,
+        atributosFijados: Object.fromEntries(attrsFijados.map((id) => [id, selection[id]])),
+      });
     } else {
       onResolved({ id_sku: null, label: null, stock: null, ready: false });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- onResolved intencionalmente fuera: solo reaccionar a cambios reales de selección
-  }, [matched, attrIds.length, isLoading]);
+  }, [matched, grupoColapsado, attrIds.length, isLoading]);
 
   if (isLoading || attrIds.length === 0) return null;
 
@@ -109,16 +153,34 @@ export function VariantPicker({ idProducto, idAlmacen, onResolved }: VariantPick
               {val}
             </button>
           ))}
+          {permitirColapsada && (
+            <button
+              type="button"
+              onClick={() => setSelection((s) => ({ ...s, [id]: CUALQUIERA }))}
+              className={cn(
+                "rounded-md border border-dashed px-2 py-0.5 text-[11px] italic transition-colors",
+                selection[id] === CUALQUIERA
+                  ? "border-brand bg-brand/10 font-medium text-foreground"
+                  : "border-muted-foreground/40 text-muted-foreground hover:bg-accent/50"
+              )}
+            >
+              Cualquiera
+            </button>
+          )}
         </div>
       ))}
       {matched ? (
         <p className="text-[11px] text-muted-foreground">
           Stock disponible: <span className="num font-medium text-foreground">{matched.stock}</span>
         </p>
-      ) : attrIds.every((id) => selection[id]) ? (
+      ) : grupoColapsado ? (
+        <p className="text-[11px] text-muted-foreground">
+          Stock disponible (variante colapsada): <span className="num font-medium text-foreground">{grupoColapsado.stock}</span>
+        </p>
+      ) : todosDecididos ? (
         <p className="text-[11px] text-destructive">Esa combinación no tiene variante generada.</p>
       ) : (
-        <p className="text-[11px] text-muted-foreground">Elige una opción de cada atributo.</p>
+        <p className="text-[11px] text-muted-foreground">Elige una opción de cada atributo{permitirColapsada ? " (o \"Cualquiera\")" : ""}.</p>
       )}
     </div>
   );

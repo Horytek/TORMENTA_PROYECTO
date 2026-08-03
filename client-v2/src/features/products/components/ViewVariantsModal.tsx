@@ -1,6 +1,10 @@
-import { useState, useEffect } from "react";
-import { getProductAttributes } from "../api/products";
-import { Loader2, Palette, Ruler, Boxes, Info } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getProductAttributes, getHistorialPrecioProducto, getProductVariants } from "../api/products";
+import { Loader2, Palette, Ruler, Boxes, Info, History, Package, Printer } from "lucide-react";
+import PrintLabelsDialog from "./PrintLabelsDialog";
+import { collapseVariants } from "@/lib/variantCollapse";
+import { useAttributeVisibility } from "@/hooks/useAttributeVisibility";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +23,8 @@ interface ViewVariantsModalProps {
   onClose: () => void;
   productId: number | null;
   productName: string;
+  /** Punto de reorden configurado del producto; null/undefined = usa el umbral genérico (5). */
+  stockMin?: number | null;
 }
 
 interface AttributeValue {
@@ -39,7 +45,9 @@ export default function ViewVariantsModal({
   onClose,
   productId,
   productName,
+  stockMin,
 }: ViewVariantsModalProps) {
+  const umbralBajo = stockMin != null ? Number(stockMin) : 5;
   const [loading, setLoading] = useState(false);
   const [attributes, setAttributes] = useState<AttributeData[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +81,29 @@ export default function ViewVariantsModal({
       fetchAttributes();
     }
   }, [isOpen, productId]);
+
+  const { data: historialPrecio = [] } = useQuery({
+    queryKey: ["historial-precio", productId],
+    queryFn: () => getHistorialPrecioProducto(productId!),
+    enabled: isOpen && !!productId,
+  });
+
+  const { data: skus = [] } = useQuery({
+    queryKey: ["product-variants-skus", productId],
+    queryFn: () => getProductVariants(productId!),
+    enabled: isOpen && !!productId,
+  });
+
+  const [printOpen, setPrintOpen] = useState(false);
+
+  // Vista colapsada: agrupa SKUs que quedan idénticos al ignorar atributos
+  // desactivados (Configuración > Variantes y atributos), sumando su stock.
+  // Es solo de vista — los SKUs reales y su stock individual no cambian.
+  const { activeAttributeIds } = useAttributeVisibility();
+  const skusColapsados = useMemo(
+    () => collapseVariants(skus, activeAttributeIds),
+    [skus, activeAttributeIds]
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -174,6 +205,93 @@ export default function ViewVariantsModal({
               })}
             </div>
           )}
+
+          {skus.length > 0 && (
+            <div className="mt-4 border-t border-border pt-3">
+              <div className="mb-2 flex items-center justify-between">
+                <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Package className="h-3.5 w-3.5 text-brand" /> Stock por variante ({skusColapsados.length} {skusColapsados.length === 1 ? "variante" : "variantes"})
+                </p>
+                <Button variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={() => setPrintOpen(true)}>
+                  <Printer className="h-3.5 w-3.5" /> Imprimir etiquetas
+                </Button>
+              </div>
+              <div className="max-h-48 overflow-y-auto rounded-lg border border-border bg-card shadow-inner">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead className="sticky top-0 bg-muted text-[10px] uppercase font-semibold text-muted-foreground backdrop-blur border-b border-border">
+                    <tr>
+                      <th className="px-3 py-2">Variante</th>
+                      <th className="px-3 py-2">Código / SKU</th>
+                      <th className="px-3 py-2 text-right">Precio</th>
+                      <th className="px-3 py-2 text-right">Stock</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/40">
+                    {skusColapsados.map((grupo) => {
+                      const stockNum = Number(grupo.stock);
+                      const skuOriginal = grupo.id_skus.length === 1
+                        ? skus.find((s) => s.id_sku === grupo.id_skus[0])
+                        : null;
+                      const precios = new Set(
+                        skus.filter((s) => grupo.id_skus.includes(s.id_sku)).map((s) => s.precio)
+                      );
+                      return (
+                        <tr key={grupo.key} className="hover:bg-muted/30 transition-colors">
+                          <td className="px-3 py-2 font-medium text-foreground">
+                            {grupo.label}
+                            {grupo.id_skus.length > 1 && (
+                              <span className="ml-1.5 text-[10px] font-normal text-muted-foreground">
+                                ({grupo.id_skus.length} variantes agrupadas)
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-muted-foreground font-mono text-[11px]">
+                            {skuOriginal ? (skuOriginal.cod_barras || skuOriginal.sku || "-") : "—"}
+                          </td>
+                          <td className="px-3 py-2 text-right text-muted-foreground font-medium">
+                            {precios.size === 1 && [...precios][0] != null
+                              ? `S/ ${Number([...precios][0]).toFixed(2)}`
+                              : precios.size > 1 ? "Varía" : "-"}
+                          </td>
+                          <td className="px-3 py-2 text-right font-semibold">
+                            <span
+                              className={
+                                stockNum === 0
+                                  ? "text-destructive"
+                                  : stockNum <= umbralBajo
+                                  ? "text-orange-600 dark:text-orange-400"
+                                  : "text-emerald-600 dark:text-emerald-400"
+                              }
+                            >
+                              {stockNum.toLocaleString()} disp.
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {historialPrecio.length > 0 && (
+            <div className="mt-4 border-t border-border pt-3">
+              <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <History className="h-3.5 w-3.5" /> Historial de precio
+              </p>
+              <ul className="space-y-1.5">
+                {historialPrecio.map((h) => (
+                  <li key={h.id_log} className="text-xs text-muted-foreground">
+                    <span className="text-foreground">{h.descripcion}</span>
+                    {" — "}
+                    {new Date(h.fecha).toLocaleDateString("es-PE")}
+                    {h.usuario ? ` · ${h.usuario}` : ""}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         <DialogFooter className="border-t border-border pt-4">
@@ -182,6 +300,13 @@ export default function ViewVariantsModal({
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <PrintLabelsDialog
+        open={printOpen}
+        onClose={() => setPrintOpen(false)}
+        productName={productName}
+        skus={skus}
+      />
     </Dialog>
   );
 }

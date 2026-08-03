@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Phone, Mail } from "lucide-react";
+import { isAxiosError } from "axios";
+import { Plus, Pencil, Trash2, Phone, Mail, Receipt, Ban, RotateCcw } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 
 import { cn } from "@/lib/utils";
@@ -8,9 +9,13 @@ import { AdaptiveCollection } from "@/components/shared/AdaptiveCollection/Adapt
 import type { FieldDef, RecordAction } from "@/components/shared/AdaptiveCollection/types";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import SupplierForm from "../components/SupplierForm";
-import { getProveedores, deleteProveedor } from "../api/suppliers";
+import { SupplierAccountsDrawer } from "../components/SupplierAccountsDrawer";
+import { getProveedores, deleteProveedor, updateProveedor } from "../api/suppliers";
 import type { Proveedor } from "../types";
 import { proveedorNombre, proveedorDocumento, proveedorTipo } from "../types";
+
+const extractErrorMessage = (err: unknown): string | undefined =>
+  isAxiosError(err) ? err.response?.data?.message : undefined;
 
 export default function SuppliersPage() {
   const queryClient = useQueryClient();
@@ -19,6 +24,8 @@ export default function SuppliersPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editing, setEditing] = useState<Proveedor | null>(null);
   const [deleting, setDeleting] = useState<Proveedor | null>(null);
+  const [deactivating, setDeactivating] = useState<Proveedor | null>(null);
+  const [viewingAccounts, setViewingAccounts] = useState<Proveedor | null>(null);
 
   const { can } = usePermissions();
   const canEdit = can("proveedores.edit");
@@ -37,13 +44,28 @@ export default function SuppliersPage() {
     },
   });
 
+  // Cambiar estado no reescribe el resto del proveedor: `updateProveedor` solo
+  // manda las claves con valor (el backend hace UPDATE parcial), así que basta
+  // con `tipo` (para elegir el endpoint natural/jurídico) + `estado`.
+  const setEstadoMutation = useMutation({
+    mutationFn: ({ p, estado }: { p: Proveedor; estado: number }) =>
+      updateProveedor(p.id, { tipo: proveedorTipo(p), estado }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      setDeactivating(null);
+    },
+  });
+
   const openCreate = () => { setEditing(null); setIsFormOpen(true); };
   const openEdit = (p: Proveedor) => { setEditing(p); setIsFormOpen(true); };
 
   // ── Fields para AdaptiveCard ──────────────────────────────
   const fields: FieldDef<Proveedor>[] = [
     {
-      key: "nombre",
+      // "destinatario" es el campo real que devuelve el backend (nombre
+      // compuesto ya armado); "nombre" no existe en el objeto y dejaba la
+      // búsqueda por nombre siempre sin resultados.
+      key: "destinatario",
       label: "Nombre",
       priority: "primary",
       semantic: "title",
@@ -57,7 +79,10 @@ export default function SuppliersPage() {
       format: (v) => (v as string) || "—",
     },
     {
-      key: "contacto",
+      // Mismo motivo que arriba: "contacto" no existe en el objeto real
+      // (son "telefono"/"email" por separado) — se usa "telefono" para que
+      // al menos ese dato sea buscable; el render sigue mostrando ambos.
+      key: "telefono",
       label: "Teléfono / Email",
       priority: "secondary",
       semantic: "chip",
@@ -133,11 +158,35 @@ export default function SuppliersPage() {
   // ── Acciones de registro ─────────────────────────────────
   const actions: RecordAction[] = [
     {
+      id: "cuentas",
+      label: "Historial de compras",
+      icon: <Receipt className="h-3.5 w-3.5" />,
+      onClick: (item) => setViewingAccounts(item as Proveedor),
+    },
+    {
       id: "edit",
       label: "Editar",
       icon: <Pencil className="h-3.5 w-3.5" />,
       onClick: (item) => openEdit(item as Proveedor),
       disabled: !canEdit,
+    },
+    {
+      id: "deactivate",
+      label: "Desactivar",
+      icon: <Ban className="h-3.5 w-3.5" />,
+      onClick: (item) => setDeactivating(item as Proveedor),
+      hidden: (item) => Number((item as Proveedor).estado) !== 1,
+      disabled: !canEdit,
+      variant: "secondary",
+    },
+    {
+      id: "reactivate",
+      label: "Reactivar",
+      icon: <RotateCcw className="h-3.5 w-3.5" />,
+      onClick: (item) => setEstadoMutation.mutate({ p: item as Proveedor, estado: 1 }),
+      hidden: (item) => Number((item as Proveedor).estado) === 1,
+      disabled: !canEdit,
+      variant: "secondary",
     },
     {
       id: "delete",
@@ -160,6 +209,7 @@ export default function SuppliersPage() {
         search={search}
         searchPlaceholder="Buscar por nombre o documento…"
         onSearch={setSearch}
+        exportFileName="proveedores"
         layout="auto"
         getItemId={(p) => p.id}
         empty={{
@@ -187,7 +237,7 @@ export default function SuppliersPage() {
 
       <ConfirmDialog
         open={!!deleting}
-        onClose={() => setDeleting(null)}
+        onClose={() => { setDeleting(null); deleteMutation.reset(); }}
         onConfirm={() => deleting && deleteMutation.mutate(deleting)}
         title="¿Eliminar proveedor?"
         description={
@@ -202,6 +252,32 @@ export default function SuppliersPage() {
         confirmLabel="Eliminar"
         variant="danger"
         isPending={deleteMutation.isPending}
+        error={deleteMutation.isError ? extractErrorMessage(deleteMutation.error) ?? "No se pudo eliminar el proveedor." : null}
+      />
+
+      <ConfirmDialog
+        open={!!deactivating}
+        onClose={() => { setDeactivating(null); setEstadoMutation.reset(); }}
+        onConfirm={() => deactivating && setEstadoMutation.mutate({ p: deactivating, estado: 0 })}
+        title="¿Desactivar proveedor?"
+        description={
+          <>
+            Deja de aparecer como opción activa al generar órdenes de compra; su historial no se pierde y podés reactivarlo cuando quieras.
+            <br />
+            <span className="mt-1 inline-block font-medium text-foreground">
+              {deactivating ? proveedorNombre(deactivating) : ""}
+            </span>
+          </>
+        }
+        confirmLabel="Desactivar"
+        isPending={setEstadoMutation.isPending}
+        error={setEstadoMutation.isError ? extractErrorMessage(setEstadoMutation.error) ?? "No se pudo desactivar el proveedor." : null}
+      />
+
+      <SupplierAccountsDrawer
+        proveedor={viewingAccounts}
+        isOpen={!!viewingAccounts}
+        onClose={() => setViewingAccounts(null)}
       />
     </>
   );

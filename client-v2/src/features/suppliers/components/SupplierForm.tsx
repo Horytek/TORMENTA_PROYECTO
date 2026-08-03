@@ -28,6 +28,8 @@ interface FormValues {
   telefono: string;
   email: string;
   direccion: string;
+  plazo_pago_dias: string;
+  linea_credito: string;
 }
 
 const empty: FormValues = {
@@ -40,6 +42,8 @@ const empty: FormValues = {
   telefono: "",
   email: "",
   direccion: "",
+  plazo_pago_dias: "",
+  linea_credito: "",
 };
 
 export default function SupplierForm({ isOpen, onClose, initialData }: SupplierFormProps) {
@@ -69,6 +73,8 @@ export default function SupplierForm({ isOpen, onClose, initialData }: SupplierF
         telefono: initialData.telefono ?? "",
         email: initialData.email ?? "",
         direccion: initialData.direccion ?? "",
+        plazo_pago_dias: initialData.plazo_pago_dias != null ? String(initialData.plazo_pago_dias) : "",
+        linea_credito: initialData.linea_credito != null ? String(initialData.linea_credito) : "",
       });
     } else {
       reset(empty);
@@ -77,7 +83,12 @@ export default function SupplierForm({ isOpen, onClose, initialData }: SupplierF
 
   const mutation = useMutation({
     mutationFn: (values: FormValues) => {
-      const input: ProveedorInput = { ...values, estado: initialData?.estado ?? 1 };
+      const input: ProveedorInput = {
+        ...values,
+        estado: initialData?.estado ?? 1,
+        plazo_pago_dias: values.plazo_pago_dias.trim() ? Number(values.plazo_pago_dias) : null,
+        linea_credito: values.linea_credito.trim() ? Number(values.linea_credito) : null,
+      };
       return isEdit ? updateProveedor(initialData!.id, input) : createProveedor(input);
     },
     onSuccess: () => {
@@ -188,6 +199,15 @@ export default function SupplierForm({ isOpen, onClose, initialData }: SupplierF
       <FormField label="Dirección" htmlFor="direccion" optional>
         <Input id="direccion" placeholder="Av. Industrial 456" {...register("direccion")} />
       </FormField>
+
+      <div className="grid grid-cols-2 gap-3">
+        <FormField label="Plazo de pago (días)" htmlFor="plazo_pago_dias" optional>
+          <Input id="plazo_pago_dias" type="number" min={0} inputMode="numeric" placeholder="30" {...register("plazo_pago_dias")} />
+        </FormField>
+        <FormField label="Línea de crédito (S/)" htmlFor="linea_credito" optional>
+          <Input id="linea_credito" type="number" min={0} step="0.01" placeholder="Sin límite" {...register("linea_credito")} />
+        </FormField>
+      </div>
     </FormDialog>
   );
 }

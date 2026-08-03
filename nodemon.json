@@ -1,0 +1,6 @@
+{
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "ignore": ["client/**", "client-v2/**", "scripts/**", "*.log", "tmp*.json"]
+}

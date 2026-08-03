@@ -9,6 +9,7 @@ const CAP = "compras/ordenes";
 router.use(auth);
 
 router.get("/", requireCapability(CAP, "ver"), ordenCompraController.getOrdenes);
+router.get("/comparacion-precios", requireCapability(CAP, "ver"), ordenCompraController.comparacionPrecios);
 router.get("/:id", requireCapability(CAP, "ver"), ordenCompraController.getOrdenDetalle);
 router.post("/", requireCapability(CAP, "crear"), ordenCompraController.crearOrden);
 router.post("/:id/aprobar", requireCapability(CAP, "editar"), ordenCompraController.aprobarOrden);

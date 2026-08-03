@@ -32,6 +32,7 @@ function formatFecha(fecha: string) {
 const ESTADO_LABEL: Record<EstadoOrdenCompra, string> = {
   draft: "Borrador",
   approved: "Aprobada",
+  partially_received: "Recepción parcial",
   received: "Recibida",
   cancelled: "Cancelada",
 };
@@ -70,7 +71,8 @@ export default function PurchaseOrdersPage() {
     onSuccess: invalidate,
   });
   const receiveMutation = useMutation({
-    mutationFn: receivePurchaseOrder,
+    mutationFn: ({ id, items }: { id: number; items?: { id_detalle_orden_compra: number; cantidad: number }[] }) =>
+      receivePurchaseOrder(id, items),
     onSuccess: invalidate,
   });
   const cancelMutation = useMutation({
@@ -188,7 +190,7 @@ export default function PurchaseOrdersPage() {
         canReceive={canReceive}
         canCancel={canCancel}
         onApprove={(id) => approveMutation.mutate(id)}
-        onReceive={(id) => receiveMutation.mutate(id)}
+        onReceive={(id, items) => receiveMutation.mutate({ id, items })}
         onCancel={(id) => setCancelling(ordenes.find((o) => o.id === id) ?? null)}
         isMutating={isMutating}
       />

@@ -1,5 +1,5 @@
 import api from "@/api/axios";
-import type { Vendedor, VendedorInput, VendedorUpdate } from "../types";
+import type { Vendedor, VendedorInput, VendedorUpdate, ComisionVendedor } from "../types";
 
 interface ApiResponse<T> {
   code: number;
@@ -37,7 +37,17 @@ export const deactivateVendedor = async (dni: string): Promise<boolean> => {
   return isOk(res);
 };
 
+export const reactivateVendedor = async (dni: string): Promise<boolean> => {
+  const res = await api.put<ApiResponse<unknown>>(`/vendedores/reactivate/${dni}`);
+  return isOk(res);
+};
+
 export const deleteVendedor = async (dni: string): Promise<boolean> => {
   const res = await api.delete<ApiResponse<unknown>>(`/vendedores/${dni}`);
   return isOk(res);
+};
+
+export const getComisiones = async (params: { fecha_inicio?: string; fecha_fin?: string; id_sucursal?: number | string }): Promise<ComisionVendedor[]> => {
+  const res = await api.get<ApiResponse<ComisionVendedor[]>>("/vendedores/comisiones", { params });
+  return unwrap(res);
 };

@@ -11,12 +11,14 @@ import BrandsPanel from "../components/BrandsPanel";
 import CategoriesPanel from "../components/CategoriesPanel";
 import SubcategoriesPanel from "../components/SubcategoriesPanel";
 import ViewVariantsModal from "../components/ViewVariantsModal";
+import ImportProductsDialog from "../components/ImportProductsDialog";
 import ContentPage from "@/features/content/pages/ContentPage";
+import ProductImageManagerTab from "../components/ProductImageManagerTab";
 
 // UI Components
 import { Button } from "@/components/ui/button";
 import {
-  Plus, Layers, Tag, Bookmark, Package, Tags, Coins,
+  Plus, Layers, Tag, Bookmark, Package, Tags, Coins, Upload, Image as ImageIcon,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -30,6 +32,7 @@ export default function ProductsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [variantsProduct, setVariantsProduct] = useState<Product | null>(null);
+  const [isImportOpen, setIsImportOpen] = useState(false);
 
   const handleCreateOpen = () => {
     setEditingProduct(null);
@@ -56,10 +59,14 @@ export default function ProductsPage() {
             </p>
           </div>
 
-          <TabsList className="bg-muted p-1 rounded-lg h-11 w-full md:w-auto grid grid-cols-5 gap-1">
+          <TabsList className="bg-muted p-1 rounded-lg h-11 w-full md:w-auto grid grid-cols-6 gap-1">
             <TabsTrigger value="productos" className="rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold">
               <Package className="h-3.5 w-3.5" />
               <span>Productos</span>
+            </TabsTrigger>
+            <TabsTrigger value="imagenes" className="rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold">
+              <ImageIcon className="h-3.5 w-3.5" />
+              <span>Imágenes</span>
             </TabsTrigger>
             <TabsTrigger value="marcas" className="rounded-lg flex items-center justify-center gap-1.5 text-xs font-semibold">
               <Tag className="h-3.5 w-3.5" />
@@ -83,13 +90,15 @@ export default function ProductsPage() {
         {/* Tab: Products */}
         <TabsContent value="productos" className="space-y-4 focus-visible:outline-none">
           <div className="flex justify-end gap-2">
-            {/* Tarea de puesta a punto, no de uso diario: por eso vive acá y no
-                en el sidebar. Sin costos cargados, el margen sale en cero. */}
             <Button asChild variant="outline" className="gap-2">
               <Link to="/products/costos">
                 <Coins className="h-4 w-4" />
                 Costos iniciales
               </Link>
+            </Button>
+            <Button variant="outline" onClick={() => setIsImportOpen(true)} className="gap-2">
+              <Upload className="h-4 w-4" />
+              Importar Excel
             </Button>
             <Button onClick={handleCreateOpen} className="gap-2">
               <Plus className="h-4 w-4" />
@@ -97,6 +106,11 @@ export default function ProductsPage() {
             </Button>
           </div>
           <ProductsPanel onEdit={handleEditOpen} onViewVariants={setVariantsProduct} />
+        </TabsContent>
+
+        {/* Tab: Images Manager (ImageKit) */}
+        <TabsContent value="imagenes" className="focus-visible:outline-none">
+          <ProductImageManagerTab />
         </TabsContent>
 
         {/* Tab: Brands */}
@@ -137,7 +151,11 @@ export default function ProductsPage() {
         onClose={() => setVariantsProduct(null)}
         productId={variantsProduct?.id_producto ?? null}
         productName={variantsProduct?.descripcion ?? ""}
+        stockMin={variantsProduct?.stock_min}
       />
+
+      {/* Modal Importar Excel */}
+      <ImportProductsDialog isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} />
     </div>
   );
 }

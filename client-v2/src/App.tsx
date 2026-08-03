@@ -7,6 +7,7 @@ import { useUserStore } from "@/store/useUserStore";
 import { verifyTokenRequest } from "@/api/auth";
 import { setAuthReady } from "@/api/axios";
 import { getToken } from "@/utils/authStorage";
+import { guardarSesion, leerSesion, olvidarSesion, tokenVigente, esFalloDeRed } from "@/lib/sesionOffline";
 
 // Solo el layout, el login y la infra de UI cargan de inmediato; TODO lo demás
 // (páginas de app Y de marketing) va diferido (code-split por ruta). Las páginas
@@ -28,6 +29,8 @@ const UpdatesPage = lazy(() => import("@/features/landing/pages/UpdatesPage"));
 const ContactPage = lazy(() => import("@/features/landing/pages/ContactPage"));
 const PaymentResultPage = lazy(() => import("@/features/landing/pages/PaymentResultPage"));
 const RegisterPage = lazy(() => import("@/features/registration/pages/RegisterPage"));
+const CatalogoPublicoPage = lazy(() => import("@/features/catalog-express/pages/CatalogoPublicoPage"));
+const CatalogExpressManagePage = lazy(() => import("@/features/catalog-express/pages/CatalogExpressManagePage"));
 
 const ProductsPage = lazy(() => import("@/features/products/pages/ProductsPage"));
 const CostosInicialesPage = lazy(() => import("@/features/costos/pages/CostosInicialesPage"));
@@ -50,7 +53,14 @@ const EmployeesPage = lazy(() => import("@/features/employees/pages/EmployeesPag
 const WarehouseNotesPage = lazy(() => import("@/features/warehouse-notes/pages/WarehouseNotesPage"));
 const GuidesPage = lazy(() => import("@/features/despatch-guides/pages/GuidesPage"));
 const DeveloperPage = lazy(() => import("@/features/developer/pages/DeveloperPage"));
-const ExpressHomePage = lazy(() => import("@/features/express/pages/ExpressHomePage"));
+const ExpressLayout = lazy(() => import("@/features/express/components/ExpressLayout").then((m) => ({ default: m.ExpressLayout })));
+const ExpressDashboardPage = lazy(() => import("@/features/express/pages/ExpressDashboardPage"));
+const ExpressPOSPage = lazy(() => import("@/features/express/pages/ExpressPOSPage"));
+const ExpressInventoryPage = lazy(() => import("@/features/express/pages/ExpressInventoryPage"));
+const ExpressUsersPage = lazy(() => import("@/features/express/pages/ExpressUsersPage"));
+const ExpressSettingsPage = lazy(() => import("@/features/express/pages/ExpressSettingsPage"));
+const ExpressSubscriptionPage = lazy(() => import("@/features/express/pages/ExpressSubscriptionPage"));
+const ExpressSalesHistoryPage = lazy(() => import("@/features/express/pages/ExpressSalesHistoryPage"));
 const AccountingPage = lazy(() => import("@/features/accounting/pages/AccountingPage"));
 const SystemLogsPage = lazy(() => import("@/features/system-logs/pages/SystemLogsPage"));
 const ComprobantesPage = lazy(() => import("@/features/comprobantes/pages/ComprobantesPage"));
@@ -59,6 +69,8 @@ const StatusPage = lazy(() => import("@/features/status/pages/StatusPage"));
 const PurchaseOrdersPage = lazy(() => import("@/features/purchases/pages/PurchaseOrdersPage"));
 const PurchaseInvoicesPage = lazy(() => import("@/features/purchases/pages/PurchaseInvoicesPage"));
 const AccountsPayablePage = lazy(() => import("@/features/purchases/pages/AccountsPayablePage"));
+const AdvancesPage = lazy(() => import("@/features/purchases/pages/AdvancesPage"));
+const InventoryMovementsPage = lazy(() => import("@/features/inventory-movements/pages/InventoryMovementsPage"));
 
 // Initialize Query Client for TanStack Query
 const queryClient = new QueryClient({
@@ -115,12 +127,24 @@ export default function App() {
           if (roleId) {
             await useUserStore.getState().loadPermissionsAndCapabilities(roleId);
           }
+          // Foto de la sesión buena, para poder abrir la caja sin señal.
+          guardarSesion(resData, [...useUserStore.getState().capabilities]);
         } else {
+          olvidarSesion();
           clearUser();
         }
-      } catch {
-        // 401 means no valid session — expected, no need to surface as error
-        clearUser();
+      } catch (error) {
+        // Un 401 es el servidor diciendo que no; un fallo de red es no haber
+        // llegado a preguntar. Confundirlos deja al POS fuera justo cuando más
+        // se lo necesita, que es sin internet.
+        const sesion = esFalloDeRed(error) ? leerSesion() : null;
+        if (sesion && tokenVigente(await getToken())) {
+          setUserRaw(sesion.usuario);
+          useUserStore.getState().setCapabilities(sesion.capabilities);
+        } else {
+          olvidarSesion();
+          clearUser();
+        }
       } finally {
         setLoading(false);
         setAuthReady(true);
@@ -148,12 +172,24 @@ export default function App() {
               <Route path="/actualizaciones" element={<UpdatesPage />} />
               <Route path="/contactanos" element={<ContactPage />} />
               <Route path="/registro" element={<RegisterPage />} />
+              <Route path="/catalogo/:idTenant" element={<CatalogoPublicoPage />} />
               <Route path="/status" element={<StatusPage />} />
               <Route path="/success" element={<PaymentResultPage />} />
               <Route path="/failure" element={<PaymentResultPage />} />
               <Route path="/pending" element={<PaymentResultPage />} />
               {/* Pocket POS (Express) tiene su propio sistema de auth, independiente del ERP */}
-              <Route path="/express-pos" element={<ExpressHomePage />} />
+              <Route path="/express-pos">
+                <Route index element={<Navigate to="dashboard" replace />} />
+                <Route element={<ExpressLayout />}>
+                  <Route path="dashboard" element={<ExpressDashboardPage />} />
+                  <Route path="pos" element={<ExpressPOSPage />} />
+                  <Route path="inventory" element={<ExpressInventoryPage />} />
+                  <Route path="users" element={<ExpressUsersPage />} />
+                  <Route path="settings" element={<ExpressSettingsPage />} />
+                  <Route path="subscription" element={<ExpressSubscriptionPage />} />
+                  <Route path="history" element={<ExpressSalesHistoryPage />} />
+                </Route>
+              </Route>
 
               <Route path="/sobre-nosotros" element={<LandingSubPage pageId="sobre-nosotros" />} />
               <Route path="/equipo" element={<LandingSubPage pageId="equipo" />} />
@@ -171,6 +207,10 @@ export default function App() {
                   <Route
                     path="/products"
                     element={<RequireCapability capability="productos.view"><ProductsPage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/catalog-express"
+                    element={<CatalogExpressManagePage />}
                   />
                   <Route
                     path="/products/costos"
@@ -209,6 +249,10 @@ export default function App() {
                     element={<RequireCapability capability="almacen.view"><InventoryPage /></RequireCapability>}
                   />
                   <Route
+                    path="/inventory/movements"
+                    element={<RequireCapability capability="almacen.view"><InventoryMovementsPage /></RequireCapability>}
+                  />
+                  <Route
                     path="/people/employees"
                     element={<RequireCapability capability="empleados.view"><EmployeesPage /></RequireCapability>}
                   />
@@ -231,6 +275,10 @@ export default function App() {
                   <Route
                     path="/purchases/accounts-payable"
                     element={<RequireCapability capability="compras/cuentas-por-pagar.view"><AccountsPayablePage /></RequireCapability>}
+                  />
+                  <Route
+                    path="/purchases/advances"
+                    element={<RequireCapability capability="compras/anticipos.view"><AdvancesPage /></RequireCapability>}
                   />
                   <Route
                     path="/logistics/warehouse-notes"

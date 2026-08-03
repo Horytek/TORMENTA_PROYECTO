@@ -25,7 +25,7 @@ export const SQL_VENTA_PARA_CPE = `
 
 const SQL_DETALLES_PARA_CPE = `
   SELECT dv.id_detalle, dv.id_producto, dv.cantidad, dv.precio, dv.descuento, dv.total,
-         p.descripcion AS nombre, p.undm
+         p.descripcion AS nombre, p.undm, p.tipo_afectacion_igv
   FROM detalle_venta dv
   INNER JOIN producto p ON p.id_producto = dv.id_producto
   WHERE dv.id_venta = ? AND dv.id_tenant = ?
@@ -88,17 +88,17 @@ export const crearCpePendiente = async (cx, datos) => {
       INSERT INTO comprobante_electronico
         (id_tenant, id_empresa, id_venta, id_sucursal, tipo_doc, serie, correlativo,
          ruc_emisor, nombre_archivo, fecha_emision, moneda,
-         mto_oper_gravadas, mto_igv, mto_imp_venta,
+         mto_oper_gravadas, mto_oper_exoneradas, mto_oper_inafectas, mto_igv, mto_imp_venta,
          tipo_doc_cliente, num_doc_cliente, nombre_cliente,
          estado, sunat_env, origen, idempotency_key, creado_por)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDIENTE', ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDIENTE', ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE id_cpe = LAST_INSERT_ID(id_cpe)
     `,
     [
       datos.id_tenant, datos.id_empresa, datos.id_venta, datos.id_sucursal ?? null,
       datos.tipo_doc, datos.serie, datos.correlativo,
       datos.ruc_emisor, datos.nombre_archivo, datos.fecha_emision, datos.moneda ?? "PEN",
-      datos.mto_oper_gravadas, datos.mto_igv, datos.mto_imp_venta,
+      datos.mto_oper_gravadas, datos.mto_oper_exoneradas ?? 0, datos.mto_oper_inafectas ?? 0, datos.mto_igv, datos.mto_imp_venta,
       datos.tipo_doc_cliente ?? null, datos.num_doc_cliente ?? null, datos.nombre_cliente ?? null,
       datos.sunat_env ?? "beta", datos.origen ?? "SERVIDOR",
       datos.idempotency_key ?? null, datos.creado_por ?? null,

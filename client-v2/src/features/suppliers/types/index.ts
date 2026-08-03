@@ -19,6 +19,10 @@ export interface Proveedor {
   estado: number; // 1 = activo, 0 = inactivo
   /** Cantidad de productos asociados — viene del join con productos */
   productos_count?: number;
+  /** Días de plazo de pago por defecto; null = sin configurar. */
+  plazo_pago_dias?: number | null;
+  /** Línea de crédito otorgada por el proveedor (S/); null = sin límite configurado. */
+  linea_credito?: number | null;
 }
 
 /** Payload para crear/actualizar (POST /destinatario/natural | /destinatario/juridico). */
@@ -35,6 +39,8 @@ export interface ProveedorInput {
   telefono?: string;
   email?: string;
   estado?: number;
+  plazo_pago_dias?: number | null;
+  linea_credito?: number | null;
 }
 
 export const proveedorTipo = (p: Proveedor): TipoProveedor => {
@@ -54,3 +60,6 @@ export const proveedorDocumento = (p: Proveedor): string =>
 
 export const proveedorLabel = (p: Proveedor): string =>
   `${proveedorNombre(p)} — ${proveedorDocumento(p)}`;
+
+// Cuentas por pagar: ver `@/features/purchases/types` (AccountPayable, AccountPayablePayment,
+// RegisterPaymentPayload) — se consolidó ahí para no duplicar con la página de Compras.

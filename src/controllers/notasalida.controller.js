@@ -352,13 +352,134 @@ const getDestinatario = async (req, res) => {
   }
 };
 
+// Núcleo de la salida (sin abrir/cerrar transacción ni responder HTTP): lo
+// usan tanto `insertNotaAndDetalle` (salida sola) como `insertTransferencia`
+// (salida+ingreso en una sola transacción, ver transferenciaAlmacen.controller.js).
+// Antes el modo "Conjunto" del frontend llamaba a este endpoint y al de
+// ingreso por separado, sin transacción compartida: si el ingreso fallaba, la
+// salida ya había descontado el stock y quedaba perdido.
+const crearSalidaCore = async (connection, { almacenO, almacenD, destinatario, glosa, nota, fecha, producto, numComprobante, cantidad, observacion, nom_usuario, tonalidad, talla, sku, id_tenant }) => {
+  const tonalidades = tonalidad || [];
+  const tallas = talla || [];
+  const skus = sku || [];
+
+  // Insertar el comprobante
+  const [comprobanteResult] = await connection.query(
+    "INSERT INTO comprobante (id_tipocomprobante, num_comprobante, id_tenant) VALUES (7, ?, ?)",
+    [numComprobante, id_tenant]
+  );
+
+  const id_comprobante = comprobanteResult.insertId;
+  const [usuarioResult] = await connection.query(
+    "SELECT id_usuario FROM usuario where usua = ? AND id_tenant = ?",
+    [nom_usuario, id_tenant]
+  );
+  const id_usuario = usuarioResult[0].id_usuario;
+  // Insertar la nota
+  const [notaResult] = await connection.query(
+    `INSERT INTO nota
+    (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion, id_usuario, estado_espera, id_tenant)
+    VALUES (?, ?, 2, ?, ?, ?, ?, ?, 0, ?, ?, 0, ?)`,
+    [almacenO, almacenD || null, destinatario, id_comprobante, glosa, fecha, nota, observacion, id_usuario, id_tenant]
+  );
+
+  const id_nota = notaResult.insertId;
+
+  // Obtener precios de todos los productos en un solo query (optimización)
+  const productosPlaceholders = producto.map(() => '?').join(',');
+  const [preciosResult] = await connection.query(
+    `SELECT id_producto, precio FROM producto WHERE id_producto IN (${productosPlaceholders}) AND id_tenant = ?`,
+    [...producto, id_tenant]
+  );
+
+  // Crear mapa de precios
+  const preciosMap = new Map(preciosResult.map(p => [p.id_producto, p.precio]));
+
+  // Validar que todos los productos existan
+  for (const id_prod of producto) {
+    if (!preciosMap.has(id_prod)) {
+      throw new Error(`El producto con ID ${id_prod} no existe.`);
+    }
+  }
+
+  // Preparar datos para batch insert de detalles
+  const detalleValues = [];
+  const detalleParams = [];
+
+  for (let i = 0; i < producto.length; i++) {
+    const id_producto = producto[i];
+    const cantidadProducto = cantidad[i];
+    const precio = preciosMap.get(id_producto);
+    const totalProducto = cantidadProducto * precio;
+    const id_ton = tonalidades[i] || null;
+    const id_tal = tallas[i] || null;
+    const id_sku_val = skus[i] || null; // Capture SKU
+
+    detalleValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    detalleParams.push(id_producto, id_nota, cantidadProducto, precio, totalProducto, id_tenant, id_ton, id_tal, id_sku_val);
+  }
+
+  // Batch insert de detalles
+  const [detalleResult] = await connection.query(
+    `INSERT INTO detalle_nota (id_producto, id_nota, cantidad, precio, total, id_tenant, id_tonalidad, id_talla, id_sku) VALUES ${detalleValues.join(', ')}`,
+    detalleParams
+  );
+
+  // Obtener IDs de detalles insertados
+  const firstDetalleId = detalleResult.insertId;
+
+  const bitacoraValues = [];
+  const bitacoraParams = [];
+
+  for (let i = 0; i < producto.length; i++) {
+    const id_producto = producto[i];
+    const cantidadProducto = cantidad[i];
+    const id_detalle = firstDetalleId + i;
+    const id_ton = tonalidades[i] || null;
+    const id_tal = tallas[i] || null;
+    const id_sku_elegido = skus[i] || null;
+
+    // Si el usuario eligió una variante específica en el picker, se descuenta
+    // exactamente esa — repartir automáticamente ignoraría su elección.
+    // Sin variante elegida, se mantiene el reparto de siempre.
+    const movimientos = id_sku_elegido
+      ? [{
+          ...(await restarStockSku(connection, {
+            id_tenant, id_sku: id_sku_elegido, id_almacen: almacenO, cantidad: cantidadProducto,
+          })),
+          cantidad: cantidadProducto,
+        }]
+      : await descontarPorProducto(connection, {
+          id_tenant,
+          id_producto,
+          id_almacen: almacenO,
+          cantidad: cantidadProducto,
+        });
+
+    // Una fila de bitácora por SKU tocado: es lo que permite que la anulación
+    // devuelva las unidades a las mismas variantes.
+    for (const mov of movimientos) {
+      bitacoraValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+      bitacoraParams.push(id_nota, id_producto, mov.id_sku, almacenO, id_detalle, mov.cantidad,
+        mov.stockAnterior, mov.stockActual, fecha, id_tenant, id_ton, id_tal);
+    }
+  }
+
+  // Batch insert de bitácora
+  if (bitacoraValues.length > 0) {
+    await connection.query(
+      `INSERT INTO bitacora_nota (id_nota, id_producto, id_sku, id_almacen, id_detalle_nota, sale, stock_anterior, stock_actual, fecha, id_tenant, id_tonalidad, id_talla) VALUES ${bitacoraValues.join(', ')}`,
+      bitacoraParams
+    );
+  }
+
+  return { id_nota, id_usuario };
+};
+
 const insertNotaAndDetalle = async (req, res) => {
   const {
     almacenO, almacenD, destinatario, glosa, nota, fecha, producto, numComprobante, cantidad, observacion, nom_usuario
   } = req.body;
-  const tonalidades = req.body.tonalidad || [];
-  const tallas = req.body.talla || [];
-  const skus = req.body.sku || []; // Read SKUs
   const id_tenant = req.id_tenant;
 
   if (
@@ -372,122 +493,12 @@ const insertNotaAndDetalle = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
-
     await connection.beginTransaction();
 
-    // Insertar el comprobante
-    const [comprobanteResult] = await connection.query(
-      "INSERT INTO comprobante (id_tipocomprobante, num_comprobante, id_tenant) VALUES (7, ?, ?)",
-      [numComprobante, id_tenant]
-    );
-
-    const id_comprobante = comprobanteResult.insertId;
-    const [usuarioResult] = await connection.query(
-      "SELECT id_usuario FROM usuario where usua = ? AND id_tenant = ?",
-      [nom_usuario, id_tenant]
-    );
-    const id_usuario = usuarioResult[0].id_usuario;
-    // Insertar la nota
-    const [notaResult] = await connection.query(
-      `INSERT INTO nota 
-      (id_almacenO, id_almacenD, id_tiponota, id_destinatario, id_comprobante, glosa, fecha, nom_nota, estado_nota, observacion, id_usuario, estado_espera, id_tenant) 
-      VALUES (?, ?, 2, ?, ?, ?, ?, ?, 0, ?, ?, 0, ?)`,
-      [almacenO, almacenD || null, destinatario, id_comprobante, glosa, fecha, nota, observacion, id_usuario, id_tenant]
-    );
-
-    const id_nota = notaResult.insertId;
-
-    // Obtener precios de todos los productos en un solo query (optimización)
-    const productosPlaceholders = producto.map(() => '?').join(',');
-    const [preciosResult] = await connection.query(
-      `SELECT id_producto, precio FROM producto WHERE id_producto IN (${productosPlaceholders}) AND id_tenant = ?`,
-      [...producto, id_tenant]
-    );
-
-    // Crear mapa de precios
-    const preciosMap = new Map(preciosResult.map(p => [p.id_producto, p.precio]));
-
-    // Validar que todos los productos existan
-    for (const id_prod of producto) {
-      if (!preciosMap.has(id_prod)) {
-        throw new Error(`El producto con ID ${id_prod} no existe.`);
-      }
-    }
-
-    // Preparar datos para batch insert de detalles
-    const detalleValues = [];
-    const detalleParams = [];
-
-    for (let i = 0; i < producto.length; i++) {
-      const id_producto = producto[i];
-      const cantidadProducto = cantidad[i];
-      const precio = preciosMap.get(id_producto);
-      const totalProducto = cantidadProducto * precio;
-      const id_ton = tonalidades[i] || null;
-      const id_tal = tallas[i] || null;
-      const id_sku_val = skus[i] || null; // Capture SKU
-
-      detalleValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?)');
-      detalleParams.push(id_producto, id_nota, cantidadProducto, precio, totalProducto, id_tenant, id_ton, id_tal, id_sku_val);
-    }
-
-    // Batch insert de detalles
-    const [detalleResult] = await connection.query(
-      `INSERT INTO detalle_nota (id_producto, id_nota, cantidad, precio, total, id_tenant, id_tonalidad, id_talla, id_sku) VALUES ${detalleValues.join(', ')}`,
-      detalleParams
-    );
-
-    // Obtener IDs de detalles insertados
-    const firstDetalleId = detalleResult.insertId;
-
-    // Obtener stocks: BLOQUE ELIMINADO en favor de validación inside-loop para variantes
-    // const [stocksResult] ...
-    // const stocksMap ...
-
-    const bitacoraValues = [];
-    const bitacoraParams = [];
-
-    for (let i = 0; i < producto.length; i++) {
-      const id_producto = producto[i];
-      const cantidadProducto = cantidad[i];
-      const id_detalle = firstDetalleId + i;
-      const id_ton = tonalidades[i] || null;
-      const id_tal = tallas[i] || null;
-      const id_sku_elegido = skus[i] || null;
-
-      // Si el usuario eligió una variante específica en el picker, se descuenta
-      // exactamente esa — repartir automáticamente ignoraría su elección.
-      // Sin variante elegida, se mantiene el reparto de siempre.
-      const movimientos = id_sku_elegido
-        ? [{
-            ...(await restarStockSku(connection, {
-              id_tenant, id_sku: id_sku_elegido, id_almacen: almacenO, cantidad: cantidadProducto,
-            })),
-            cantidad: cantidadProducto,
-          }]
-        : await descontarPorProducto(connection, {
-            id_tenant,
-            id_producto,
-            id_almacen: almacenO,
-            cantidad: cantidadProducto,
-          });
-
-      // Una fila de bitácora por SKU tocado: es lo que permite que la anulación
-      // devuelva las unidades a las mismas variantes.
-      for (const mov of movimientos) {
-        bitacoraValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-        bitacoraParams.push(id_nota, id_producto, mov.id_sku, almacenO, id_detalle, mov.cantidad,
-          mov.stockAnterior, mov.stockActual, fecha, id_tenant, id_ton, id_tal);
-      }
-    }
-
-    // Batch insert de bitácora
-    if (bitacoraValues.length > 0) {
-      await connection.query(
-        `INSERT INTO bitacora_nota (id_nota, id_producto, id_sku, id_almacen, id_detalle_nota, sale, stock_anterior, stock_actual, fecha, id_tenant, id_tonalidad, id_talla) VALUES ${bitacoraValues.join(', ')}`,
-        bitacoraParams
-      );
-    }
+    const { id_nota, id_usuario } = await crearSalidaCore(connection, {
+      almacenO, almacenD, destinatario, glosa, nota, fecha, producto, numComprobante, cantidad, observacion, nom_usuario,
+      tonalidad: req.body.tonalidad, talla: req.body.talla, sku: req.body.sku, id_tenant,
+    });
 
     await connection.commit();
 
@@ -498,8 +509,8 @@ const insertNotaAndDetalle = async (req, res) => {
     const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress ||
       (req.connection.socket ? req.connection.socket.remoteAddress : null);
 
-    if (usuarioResult[0]?.id_usuario && id_tenant) {
-      await logInventario.notaSalida(id_nota, usuarioResult[0].id_usuario, ip, id_tenant);
+    if (id_usuario && id_tenant) {
+      await logInventario.notaSalida(id_nota, id_usuario, ip, id_tenant);
     }
 
     res.json({ code: 1, message: 'Nota y detalle insertados correctamente' });
@@ -626,6 +637,8 @@ const anularNota = async (req, res) => {
     }
   }
 };
+
+export { crearSalidaCore };
 
 export const methods = {
   getSalidas,

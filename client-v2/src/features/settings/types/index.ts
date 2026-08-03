@@ -14,6 +14,21 @@ export interface Negocio {
   logotipo_url?: string;  // backend returns logotipo_url (maps from empresa.logotipo)
   igv_incluido?: boolean; // true=precio incluye IGV, false=precio sin IGV
   dashboard_widgets?: string[] | null; // secciones visibles del dashboard; null = todas
+  /** De dónde viene la mercadería del negocio (ver services/costos/origenCosto.js). */
+  origen_productos?: "ADQUIRIDOS" | "PROPIOS" | "MIXTO";
+  /** Vocabulario de pantalla para origen_productos. El backend lo manda para no duplicar etiquetas. */
+  origen_vocabulario?: {
+    etiqueta: string;
+    descripcion: string;
+    campoCosto: string;
+    ayudaCosto: string;
+    tituloIngreso: string;
+    nombreContraparte: string;
+  };
+  /** true si la empresa es MIXTO y hay que preguntar el origen en cada nota de ingreso. */
+  origen_elegible_por_linea?: boolean;
+  /** Opciones para el selector de origen cuando es elegible por línea. */
+  origen_opciones_linea?: { valor: "ADQUIRIDOS" | "PROPIOS"; etiqueta: string }[];
 }
 
 /** Claves válidas de widget, deben coincidir con DASHBOARD_WIDGETS en negocio.controller.js */

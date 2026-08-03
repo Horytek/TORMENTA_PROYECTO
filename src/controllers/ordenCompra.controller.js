@@ -5,7 +5,7 @@ import { aplicarIngresoAlCosto } from "../services/costos/costoRepository.js";
 import { resolveSku } from "../utils/skuHelper.js";
 
 const ESTADOS_CANCELABLES = ["draft", "approved"];
-const ESTADOS_RECIBIBLES = ["draft", "approved"];
+const ESTADOS_RECIBIBLES = ["draft", "approved", "partially_received"];
 
 const getOrdenes = async (req, res) => {
   const { estado = "", id_destinatario = "", fecha_i = "2022-01-01", fecha_e = "2099-12-31" } = req.query;
@@ -89,6 +89,7 @@ const getOrdenDetalle = async (req, res) => {
          p.descripcion,
          m.nom_marca AS marca,
          doc.cantidad,
+         doc.cantidad_recibida,
          doc.precio_unitario,
          doc.total,
          t.nombre AS nombre_tonalidad,
@@ -107,6 +108,65 @@ const getOrdenDetalle = async (req, res) => {
     res.json({ success: true, data: { ...cabecera, items } });
   } catch (error) {
     console.error("Error en getOrdenDetalle:", error);
+    res.status(500).json({ success: false, message: "Error interno del servidor" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+// Compara el precio pagado por un producto entre proveedores, usando solo el
+// historial de órdenes de compra (facturas sueltas sin OC no tienen detalle
+// por producto, esa limitación queda documentada en la UI).
+const comparacionPrecios = async (req, res) => {
+  const { id_producto } = req.query;
+  const id_tenant = req.id_tenant;
+
+  if (!id_producto) {
+    return res.status(400).json({ success: false, message: "Falta id_producto" });
+  }
+
+  let connection;
+  try {
+    connection = await getConnection();
+    const [rows] = await connection.query(
+      `SELECT
+         oc.id_destinatario,
+         COALESCE(d.razon_social, CONCAT(d.nombres, ' ', d.apellidos)) AS proveedor,
+         doc.precio_unitario,
+         oc.fecha
+       FROM detalle_orden_compra doc
+       INNER JOIN orden_compra oc ON oc.id_orden_compra = doc.id_orden_compra
+       LEFT JOIN destinatario d ON d.id_destinatario = oc.id_destinatario
+       WHERE doc.id_tenant = ? AND doc.id_producto = ?
+       ORDER BY oc.fecha DESC`,
+      [id_tenant, id_producto]
+    );
+
+    const porProveedor = new Map();
+    for (const r of rows) {
+      const key = r.id_destinatario;
+      const actual = porProveedor.get(key);
+      const precio = Number(r.precio_unitario);
+      if (!actual) {
+        porProveedor.set(key, {
+          id_destinatario: r.id_destinatario,
+          proveedor: r.proveedor,
+          ultimo_precio: precio,
+          fecha_ultimo: r.fecha,
+          precio_min: precio,
+          precio_prom: precio,
+          n: 1,
+        });
+      } else {
+        actual.precio_min = Math.min(actual.precio_min, precio);
+        actual.precio_prom = (actual.precio_prom * actual.n + precio) / (actual.n + 1);
+        actual.n += 1;
+      }
+    }
+
+    res.json({ success: true, data: Array.from(porProveedor.values()) });
+  } catch (error) {
+    console.error("Error en comparacionPrecios:", error);
     res.status(500).json({ success: false, message: "Error interno del servidor" });
   } finally {
     if (connection) connection.release();
@@ -247,6 +307,9 @@ const recibirOrden = async (req, res) => {
   const { id } = req.params;
   const id_tenant = req.id_tenant;
   const id_usuario = req.user?.id_usuario ?? null;
+  // Body opcional { items: [{ id_detalle_orden_compra, cantidad }] }: si no
+  // llega, se recibe todo lo pendiente (compatible con el botón "Recibir todo").
+  const itemsBody = Array.isArray(req.body?.items) ? req.body.items : null;
 
   let connection;
   try {
@@ -263,16 +326,34 @@ const recibirOrden = async (req, res) => {
       return res.status(400).json({ success: false, message: "La orden no está en un estado que permita recibirla" });
     }
 
-    const [items] = await connection.query(
+    const [detalles] = await connection.query(
       // `id_sku` va en el SELECT porque `crearOrden` ya lo guarda: sin él la
       // recepción caería siempre en `resolveSku` y le sumaría el stock al SKU
       // base del producto, no a la variante que realmente se compró.
-      "SELECT id_producto, id_tonalidad, id_talla, id_sku, cantidad, precio_unitario, total FROM detalle_orden_compra WHERE id_orden_compra = ? AND id_tenant = ?",
+      "SELECT id_detalle_orden_compra, id_producto, id_tonalidad, id_talla, id_sku, cantidad, cantidad_recibida, precio_unitario, total FROM detalle_orden_compra WHERE id_orden_compra = ? AND id_tenant = ?",
       [id, id_tenant]
     );
-    if (items.length === 0) {
+    if (detalles.length === 0) {
       await connection.rollback();
       return res.status(400).json({ success: false, message: "La orden no tiene ítems" });
+    }
+
+    // Cuánto se recibe EN ESTA operación por línea, topado a lo pendiente.
+    const cantidadPedidaPorDetalle = new Map(
+      (itemsBody ?? []).map((it) => [Number(it.id_detalle_orden_compra), Number(it.cantidad)])
+    );
+    const items = [];
+    for (const d of detalles) {
+      const pendiente = Number(d.cantidad) - Number(d.cantidad_recibida);
+      if (pendiente <= 0) continue;
+      const pedido = itemsBody ? (cantidadPedidaPorDetalle.get(d.id_detalle_orden_compra) ?? 0) : pendiente;
+      const cantidadRecibirAhora = Math.min(Math.max(0, pedido), pendiente);
+      if (cantidadRecibirAhora <= 0) continue;
+      items.push({ ...d, cantidad: cantidadRecibirAhora, total: Math.round(cantidadRecibirAhora * Number(d.precio_unitario) * 100) / 100 });
+    }
+    if (items.length === 0) {
+      await connection.rollback();
+      return res.status(400).json({ success: false, message: "No hay cantidades pendientes que recibir" });
     }
 
     const numComprobante = await siguienteNumComprobante(connection, id_tenant);
@@ -347,9 +428,21 @@ const recibirOrden = async (req, res) => {
       );
     }
 
-    await connection.query(
-      "UPDATE orden_compra SET estado = 'received' WHERE id_orden_compra = ? AND id_tenant = ?",
+    for (const it of items) {
+      await connection.query(
+        "UPDATE detalle_orden_compra SET cantidad_recibida = cantidad_recibida + ? WHERE id_detalle_orden_compra = ? AND id_tenant = ?",
+        [it.cantidad, it.id_detalle_orden_compra, id_tenant]
+      );
+    }
+
+    const [[resumen]] = await connection.query(
+      "SELECT SUM(cantidad_recibida >= cantidad) AS completos, COUNT(*) AS total FROM detalle_orden_compra WHERE id_orden_compra = ? AND id_tenant = ?",
       [id, id_tenant]
+    );
+    const nuevoEstado = Number(resumen.completos) === Number(resumen.total) ? "received" : "partially_received";
+    await connection.query(
+      "UPDATE orden_compra SET estado = ? WHERE id_orden_compra = ? AND id_tenant = ?",
+      [nuevoEstado, id, id_tenant]
     );
 
     await connection.commit();
@@ -359,7 +452,10 @@ const recibirOrden = async (req, res) => {
       await logInventario.notaIngreso(id_nota, id_usuario, ip, id_tenant);
     }
 
-    res.json({ success: true, message: "Orden recibida: inventario actualizado", data: { id_nota } });
+    const mensaje = nuevoEstado === "received"
+      ? "Orden recibida por completo: inventario actualizado"
+      : "Recepción parcial registrada: inventario actualizado";
+    res.json({ success: true, message: mensaje, data: { id_nota, estado: nuevoEstado } });
   } catch (error) {
     if (connection) await connection.rollback();
     console.error("Error en recibirOrden:", error);
@@ -372,6 +468,7 @@ const recibirOrden = async (req, res) => {
 export const methods = {
   getOrdenes,
   getOrdenDetalle,
+  comparacionPrecios,
   crearOrden,
   aprobarOrden,
   cancelarOrden,

@@ -19,6 +19,7 @@ export function CartPanel({ onCheckout, disabled }: CartPanelProps) {
   const cliente = useCartStore((s) => s.cliente);
   const removeItem = useCartStore((s) => s.removeItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const setLineDiscount = useCartStore((s) => s.setLineDiscount);
   const getSubtotal = useCartStore((s) => s.getSubtotal);
   const getIgv = useCartStore((s) => s.getIgv);
   const getTotal = useCartStore((s) => s.getTotal);
@@ -89,6 +90,7 @@ export function CartPanel({ onCheckout, disabled }: CartPanelProps) {
                   item={item}
                   onQuantityChange={(qty) => updateQuantity(item.id_producto, qty, item.id_sku)}
                   onRemove={() => removeItem(item.id_producto, item.id_sku)}
+                  onDiscountChange={(monto) => setLineDiscount(item.id_producto, monto, item.id_sku)}
                 />
               ))}
             </div>
@@ -122,6 +124,7 @@ export function CartPanel({ onCheckout, disabled }: CartPanelProps) {
         >
           <span className="text-base font-bold">💰</span>
           Cobrar S/ {total.toFixed(2)}
+          {!isEmpty && <span className="text-[10px] font-normal opacity-70">(F12)</span>}
         </Button>
       </div>
     </div>
@@ -140,12 +143,14 @@ interface CartItemRowProps {
     precio_unitario: number;
     precio_total: number;
     sku_label?: string | null;
+    descuento?: number;
   };
   onQuantityChange: (qty: number) => void;
   onRemove: () => void;
+  onDiscountChange: (monto: number) => void;
 }
 
-function CartItemRow({ item, onQuantityChange, onRemove }: CartItemRowProps) {
+function CartItemRow({ item, onQuantityChange, onRemove, onDiscountChange }: CartItemRowProps) {
   return (
     <div className="flex items-start gap-2 rounded-lg border border-border/60 bg-zinc-50/40 dark:bg-zinc-900/40 p-2 group">
       {/* Info */}
@@ -189,6 +194,20 @@ function CartItemRow({ item, onQuantityChange, onRemove }: CartItemRowProps) {
         <span className="text-[10px] text-muted-foreground">
           S/ {item.precio_unitario.toFixed(2)} c/u
         </span>
+
+        {/* Descuento por línea */}
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] text-muted-foreground">Desc.</span>
+          <input
+            type="number"
+            min={0}
+            step="0.01"
+            value={item.descuento ?? ""}
+            placeholder="0.00"
+            onChange={(e) => onDiscountChange(Number(e.target.value) || 0)}
+            className="h-5 w-14 rounded-md border border-border bg-card px-1 text-[10px] tabular-nums focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          />
+        </div>
 
         {/* Remove */}
         <button

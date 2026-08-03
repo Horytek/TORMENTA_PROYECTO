@@ -12,6 +12,9 @@ import { FormField } from "@/components/shared/FormField";
 import { getNegocio, updateNegocio } from "../api/settings";
 import type { Negocio } from "../types";
 import { DASHBOARD_WIDGET_OPTIONS } from "../types";
+import { VariantesSettingsCard } from "../components/VariantesSettingsCard";
+import { PuntosSettingsCard } from "@/features/loyalty/components/PuntosSettingsCard";
+import { CatalogoSettingsCard } from "@/features/catalog-express/components/CatalogoSettingsCard";
 
 const ALL_WIDGET_KEYS = DASHBOARD_WIDGET_OPTIONS.map((w) => w.key);
 
@@ -275,6 +278,15 @@ export default function SettingsPage() {
           </FormField>
         </CardContent>
       </Card>
+
+      {/* Variantes y atributos (Talla, Color…) a nivel de toda la empresa */}
+      <VariantesSettingsCard />
+
+      {/* Club de puntos / fidelización */}
+      <PuntosSettingsCard />
+
+      {/* Catálogo Digital WhatsApp público */}
+      <CatalogoSettingsCard />
 
       {/* Panel principal */}
       <Card>

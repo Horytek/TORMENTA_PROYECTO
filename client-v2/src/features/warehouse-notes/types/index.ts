@@ -99,6 +99,8 @@ export interface NoteFormItem {
   nombre_tonalidad: string | null;
   nombre_talla: string | null;
   sku_label: string | null;
+  /** Costo unitario de esta línea (solo aplica a ingresos reales, no traslados). null = no ingresado. */
+  costo: number | null;
 }
 
 /** Payload esperado por POST /nota_ingreso/addNota y POST /nota_salida/nuevanota. */
@@ -119,9 +121,32 @@ export interface NotaInsertPayload {
   /** Ingreso identifica al usuario con `usuario`; salida con `nom_usuario`. */
   usuario?: string;
   nom_usuario?: string;
+  /** Costo unitario por línea, paralelo a `producto`. Solo se manda en ingresos reales (sin almacenO). */
+  costos?: number[];
+  /** Solo se respeta si la empresa es MIXTO; ver services/costos/origenCosto.js. */
+  origen_costo?: string | null;
 }
 
 export interface NotaInsertResult {
   success: boolean;
   message?: string;
+}
+
+/** Payload de POST /transferencia_almacen — salida + ingreso en una sola transacción. */
+export interface TransferenciaInsertPayload {
+  almacenO: number | string;
+  almacenD: number | string;
+  destinatario: number | string;
+  glosa: string;
+  nota: string;
+  fecha: string;
+  observacion?: string;
+  producto: number[];
+  cantidad: number[];
+  tonalidad: (number | null)[];
+  talla: (number | null)[];
+  sku: (number | null)[];
+  numComprobanteSalida: string;
+  numComprobanteIngreso: string;
+  usuario: string;
 }

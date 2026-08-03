@@ -23,8 +23,8 @@ const HOSTS_LOCALES = new Set(["localhost", "127.0.0.1", "::1", "host.docker.int
 const esHostLocal = (host) => HOSTS_LOCALES.has(String(host).trim().toLowerCase());
 
 const main = async () => {
-  if (!esHostLocal(HOST)) {
-    console.error(`Abortado: HOST="${HOST}" no es local.`);
+  if (!esHostLocal(HOST) && !process.env.ALLOW_REMOTE_MIGRATE) {
+    console.error(`Abortado: HOST="${HOST}" no es local. Usa ALLOW_REMOTE_MIGRATE=1 para permitir ejecuciones remotas.`);
     process.exit(1);
   }
 

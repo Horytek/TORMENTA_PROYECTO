@@ -36,3 +36,16 @@ export const updateSucursal = async (input: SucursalInput): Promise<boolean> =>
 
 export const deleteSucursal = async (id: number): Promise<boolean> =>
   isOk(await api.delete(`/sucursales/delete/${id}`));
+
+/** Baja/alta reversible: `updatesucursal` hace UPDATE parcial por campos presentes, así que alcanza con id + estado. */
+export const setSucursalEstado = async (id: number, estado_sucursal: number): Promise<boolean> =>
+  isOk(await api.post("/sucursales/updatesucursal", { id, estado_sucursal }));
+
+/**
+ * Reasigna el vendedor responsable de una sucursal. Es la misma operación que
+ * ya usa BranchForm.tsx (`dni` en `updatesucursal`), expuesta acá para poder
+ * cambiar la sucursal de un empleado desde su propia ficha en vez de tener
+ * que ir al módulo de Sucursales y editarla desde ahí.
+ */
+export const setSucursalVendedor = async (id_sucursal: number, dni: string): Promise<boolean> =>
+  isOk(await api.post("/sucursales/updatesucursal", { id: id_sucursal, dni }));

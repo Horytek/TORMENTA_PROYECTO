@@ -76,6 +76,13 @@ export default function WarehousesPage() {
       format: (val) => (Number(val) === 1 ? "Activo" : "Inactivo"),
     },
     {
+      key: "stock_total",
+      label: "Stock total",
+      priority: "secondary",
+      semantic: "number",
+      format: (val) => `${Number(val ?? 0)} unid.`,
+    },
+    {
       key: "id_almacen",
       label: "ID",
       priority: "meta",

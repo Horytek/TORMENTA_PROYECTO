@@ -1,5 +1,7 @@
 import { getConnection } from "./../database/database.js";
 import { logProductos } from "../utils/logActions.js";
+import { codigoBarrasSku, generarEan13 } from "../utils/skuHelper.js";
+import { getComboItems, setComboItems } from "../services/combos/comboRepository.js";
 
 // Cache compartido (mismo que los demás)
 const queryCache = new Map();
@@ -42,8 +44,10 @@ const getProductos = async (req, res) => {
             descripcion,
             id_producto,
             cod_barras,
-            q
+            q,
+            bajo_stock
         } = req.query;
+        const filtrarBajoStock = bajo_stock === '1' || bajo_stock === 'true';
 
         const whereClauses = ['PR.id_tenant = ?'];
         const params = [req.id_tenant];
@@ -69,16 +73,38 @@ const getProductos = async (req, res) => {
         }
 
         const whereSQL = `WHERE ${whereClauses.join(' AND ')}`;
+        // "Bajo stock mínimo" es un HAVING sobre el stock agregado por SKU, no
+        // un WHERE de producto: no se puede resolver antes del GROUP BY, así
+        // que el conteo total también necesita agrupar cuando este filtro está activo.
+        const havingSQL = filtrarBajoStock
+            ? 'HAVING PR.stock_min IS NOT NULL AND SUM(COALESCE(INV.stock, 0)) <= PR.stock_min'
+            : '';
 
-        const [countResult] = await connection.query(
-            `
-            SELECT COUNT(*) AS total
-            FROM producto PR
-            ${id_categoria ? 'INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria' : ''}
-            ${whereSQL}
-            `,
-            params
-        );
+        const [countResult] = filtrarBajoStock
+            ? await connection.query(
+                `
+                SELECT COUNT(*) AS total FROM (
+                    SELECT PR.id_producto
+                    FROM producto PR
+                    ${id_categoria ? 'INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria' : ''}
+                    LEFT JOIN producto_sku PSK ON PSK.id_producto = PR.id_producto AND PSK.id_tenant = PR.id_tenant
+                    LEFT JOIN inventario_stock INV ON INV.id_sku = PSK.id_sku AND INV.id_tenant = PSK.id_tenant
+                    ${whereSQL}
+                    GROUP BY PR.id_producto, PR.stock_min
+                    ${havingSQL}
+                ) sub
+                `,
+                params
+            )
+            : await connection.query(
+                `
+                SELECT COUNT(*) AS total
+                FROM producto PR
+                ${id_categoria ? 'INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria' : ''}
+                ${whereSQL}
+                `,
+                params
+            );
         const total = countResult[0]?.total || 0;
 
         const [result] = await connection.query(
@@ -87,8 +113,11 @@ const getProductos = async (req, res) => {
                    CA.nom_subcat, MA.nom_marca, PR.undm,
                    CAST(PR.precio AS DECIMAL(10, 2)) AS precio, PR.cod_barras,
                    PR.estado_producto AS estado, PR.id_marca, PR.id_subcategoria,
-                   cat.id_categoria,
-                   SUM(COALESCE(INV.stock, 0)) AS stock_total
+                   cat.id_categoria, PR.stock_min, PR.tipo_afectacion_igv, PR.imagen_url,
+                   SUM(COALESCE(INV.stock, 0)) AS stock_total,
+                   (SELECT AVG(sub.costo_promedio) FROM producto_sku sub
+                    WHERE sub.id_producto = PR.id_producto AND sub.id_tenant = PR.id_tenant
+                      AND sub.costo_promedio IS NOT NULL) AS costo_promedio
             FROM producto PR
             INNER JOIN marca MA ON MA.id_marca = PR.id_marca
             INNER JOIN sub_categoria CA ON CA.id_subcategoria = PR.id_subcategoria
@@ -96,7 +125,8 @@ const getProductos = async (req, res) => {
             LEFT JOIN producto_sku PSK ON PSK.id_producto = PR.id_producto AND PSK.id_tenant = PR.id_tenant
             LEFT JOIN inventario_stock INV ON INV.id_sku = PSK.id_sku AND INV.id_tenant = PSK.id_tenant
             ${whereSQL}
-            GROUP BY PR.id_producto, PR.descripcion, CA.nom_subcat, MA.nom_marca, PR.undm, PR.precio, PR.cod_barras, PR.estado_producto, PR.id_marca, PR.id_subcategoria, cat.id_categoria
+            GROUP BY PR.id_producto, PR.descripcion, CA.nom_subcat, MA.nom_marca, PR.undm, PR.precio, PR.cod_barras, PR.estado_producto, PR.id_marca, PR.id_subcategoria, cat.id_categoria, PR.stock_min, PR.tipo_afectacion_igv, PR.imagen_url
+            ${havingSQL}
             ORDER BY ${sortBy} ${sortDir}
             LIMIT ? OFFSET ?
             `,
@@ -148,7 +178,7 @@ const getProducto = async (req, res) => {
         const { id } = req.params;
         connection = await getConnection();
         const [result] = await connection.query(`
-                SELECT id_producto, id_marca, SC.id_categoria, PR.id_subcategoria, descripcion, precio, cod_barras, undm, estado_producto
+                SELECT id_producto, id_marca, SC.id_categoria, PR.id_subcategoria, descripcion, precio, cod_barras, undm, estado_producto, PR.stock_min, PR.tipo_afectacion_igv, PR.es_combo
                 FROM producto PR
                 INNER JOIN sub_categoria SC ON PR.id_subcategoria = SC.id_subcategoria
                 WHERE PR.id_producto = ? AND PR.id_tenant = ?
@@ -172,13 +202,13 @@ const getProducto = async (req, res) => {
 const addProducto = async (req, res) => {
     let connection;
     try {
-        const { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto } = req.body;
+        const { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto, stock_min, tipo_afectacion_igv, es_combo, imagen_url } = req.body;
 
         if (id_marca === undefined || id_subcategoria === undefined || descripcion === undefined || undm === undefined || id_subcategoria === undefined || estado_producto === undefined || precio === undefined) {
             res.status(400).json({ message: "Bad Request. Please fill all field." });
         }
 
-        const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto, id_tenant: req.id_tenant };
+        const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto, id_tenant: req.id_tenant, stock_min: stock_min ?? null, tipo_afectacion_igv: tipo_afectacion_igv || '10', es_combo: es_combo ? 1 : 0, imagen_url: imagen_url || null };
         connection = await getConnection();
         const [result] = await connection.query("INSERT INTO producto SET ? ", producto);
 
@@ -200,7 +230,7 @@ const updateProducto = async (req, res) => {
     let connection;
     try {
         const { id } = req.params;
-        const { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto } = req.body;
+        const { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto, stock_min, tipo_afectacion_igv, es_combo, imagen_url } = req.body;
 
         if (id_marca === undefined || id_subcategoria === undefined || descripcion === undefined || undm === undefined || id_subcategoria === undefined || estado_producto === undefined || precio === undefined) {
             res.status(400).json({ message: "Bad Request. Please fill all field." });
@@ -218,7 +248,10 @@ const updateProducto = async (req, res) => {
             return res.status(404).json({ code: 0, message: "Producto no encontrado" });
         }
 
-        const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto };
+        const producto = { id_marca, id_subcategoria, descripcion, undm, precio, cod_barras, estado_producto, stock_min: stock_min ?? null, tipo_afectacion_igv: tipo_afectacion_igv || '10', es_combo: es_combo ? 1 : 0 };
+        if (imagen_url !== undefined) {
+            producto.imagen_url = imagen_url;
+        }
         const [result] = await connection.query("UPDATE producto SET ? WHERE id_producto = ? AND id_tenant = ?", [producto, id, req.id_tenant]);
 
         if (result.affectedRows === 0) {
@@ -318,6 +351,7 @@ const getProductVariants = async (req, res) => {
                 sku.id_sku,
                 sku.sku,
                 sku.cod_barras,
+                sku.ean13,
                 sku.precio,
                 sku.attributes_json,
                 COALESCE(SUM(ist.stock), 0) AS stock
@@ -326,7 +360,7 @@ const getProductVariants = async (req, res) => {
             WHERE sku.id_producto = ?
               AND sku.id_tenant   = ?
               AND sku.estado = 1
-            GROUP BY sku.id_sku, sku.sku, sku.cod_barras, sku.precio, sku.attributes_json
+            GROUP BY sku.id_sku, sku.sku, sku.cod_barras, sku.ean13, sku.precio, sku.attributes_json
             ORDER BY sku.id_sku
         `, params);
 
@@ -335,6 +369,7 @@ const getProductVariants = async (req, res) => {
             id_producto: Number(id),
             sku: r.sku,
             cod_barras: r.cod_barras,
+            ean13: r.ean13,
             precio: r.precio,
             stock: Number(r.stock),
             attrs: typeof r.attributes_json === 'string' ? JSON.parse(r.attributes_json || '{}') : (r.attributes_json || {}),
@@ -348,6 +383,118 @@ const getProductVariants = async (req, res) => {
         if (connection) {
             connection.release();
         }
+    }
+};
+
+const getProductCombo = async (req, res) => {
+    let connection;
+    try {
+        const { id } = req.params;
+        connection = await getConnection();
+        const items = await getComboItems(connection, { id_tenant: req.id_tenant, id_producto_combo: Number(id) });
+        res.json({ code: 1, data: items });
+    } catch (error) {
+        console.error('Error en getProductCombo:', error);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+const updateProductCombo = async (req, res) => {
+    let connection;
+    try {
+        const { id } = req.params;
+        const id_producto_combo = Number(id);
+        const items = Array.isArray(req.body?.items) ? req.body.items : [];
+
+        connection = await getConnection();
+
+        // Un componente no puede ser a su vez un combo: evita ciclos y que
+        // vender un combo intente "descontar" otro combo (que no tiene stock
+        // propio del que descontar).
+        const idsComponentes = [...new Set(items.map((it) => Number(it.id_producto_componente)))];
+        if (idsComponentes.length > 0) {
+            const [combosEntreComponentes] = await connection.query(
+                `SELECT id_producto FROM producto WHERE id_tenant = ? AND es_combo = 1 AND id_producto IN (${idsComponentes.map(() => "?").join(",")})`,
+                [req.id_tenant, ...idsComponentes]
+            );
+            if (combosEntreComponentes.length > 0) {
+                return res.status(400).json({ code: 0, message: "Un combo no puede tener otro combo como componente." });
+            }
+        }
+
+        await setComboItems(connection, { id_tenant: req.id_tenant, id_producto_combo, items });
+        queryCache.clear();
+        res.json({ code: 1, message: "Composición del combo actualizada" });
+    } catch (error) {
+        console.error('Error en updateProductCombo:', error);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+// Resuelve un código escaneado a la variante exacta (SKU), no al producto
+// padre: es lo que permite que un lector de código de barras distinga una M
+// de una L en vez de solo llegar al producto y forzar una elección manual.
+const buscarSkuPorBarcode = async (req, res) => {
+    let connection;
+    try {
+        const { codigo, id_almacen } = req.query;
+        if (!codigo) {
+            return res.status(400).json({ code: 0, message: "Falta el código a buscar" });
+        }
+        connection = await getConnection();
+
+        const filtrarAlmacen = id_almacen && !isNaN(id_almacen);
+        const almacenFilter = filtrarAlmacen ? "AND ist.id_almacen = ?" : "";
+        const params = [codigo, req.id_tenant, ...(filtrarAlmacen ? [id_almacen] : [])];
+
+        const [result] = await connection.query(`
+            SELECT
+                sku.id_sku,
+                sku.id_producto,
+                sku.attributes_json,
+                p.descripcion AS nombre,
+                p.precio AS precio_producto,
+                sku.precio AS precio_sku,
+                p.tipo_afectacion_igv,
+                m.nom_marca,
+                COALESCE(SUM(ist.stock), 0) AS stock
+            FROM producto_sku sku
+            INNER JOIN producto p ON p.id_producto = sku.id_producto AND p.id_tenant = sku.id_tenant
+            INNER JOIN marca m ON p.id_marca = m.id_marca
+            LEFT JOIN inventario_stock ist ON ist.id_sku = sku.id_sku ${almacenFilter}
+            WHERE sku.cod_barras = ? AND sku.id_tenant = ? AND sku.estado = 1
+            GROUP BY sku.id_sku, sku.id_producto, sku.attributes_json, p.descripcion, p.precio, sku.precio, p.tipo_afectacion_igv, m.nom_marca
+            LIMIT 1
+        `, params);
+
+        if (result.length === 0) {
+            return res.json({ code: 0, message: "No se encontró una variante con ese código" });
+        }
+
+        const r = result[0];
+        const attrs = typeof r.attributes_json === 'string' ? JSON.parse(r.attributes_json || '{}') : (r.attributes_json || {});
+        res.json({
+            code: 1,
+            data: {
+                id_producto: r.id_producto,
+                id_sku: r.id_sku,
+                nombre: r.nombre,
+                nom_marca: r.nom_marca,
+                precio: r.precio_sku ?? r.precio_producto,
+                tipo_afectacion_igv: r.tipo_afectacion_igv,
+                label: Object.values(attrs).filter(Boolean).join(" / "),
+                stock: Number(r.stock),
+            },
+        });
+    } catch (error) {
+        console.error('Error en buscarSkuPorBarcode:', error);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    } finally {
+        if (connection) connection.release();
     }
 };
 
@@ -499,6 +646,12 @@ const registerVariants = async (req, res) => {
                     `, [id_producto, req.id_tenant, sku_name.substring(0, 64), product.precio, JSON.stringify(attributes), attrs_key]);
                     id_sku = ins.insertId;
 
+                    const cod_barras_sku = codigoBarrasSku(product.cod_barras, id_sku);
+                    if (cod_barras_sku) {
+                        await connection.query("UPDATE producto_sku SET cod_barras = ? WHERE id_sku = ?", [cod_barras_sku, id_sku]);
+                    }
+                    await connection.query("UPDATE producto_sku SET ean13 = ? WHERE id_sku = ?", [generarEan13(id_sku), id_sku]);
+
                     for (const l of attrLinks) {
                         await connection.query("INSERT IGNORE INTO sku_atributo_valor (id_sku, id_atributo, id_valor, id_tenant) VALUES (?, ?, ?, ?)", [id_sku, l.id_atributo, l.id_valor, req.id_tenant]);
                     }
@@ -534,8 +687,10 @@ const registerVariants = async (req, res) => {
 const generateSKUs = async (req, res) => {
     let connection;
     try {
-        const { id_producto, attributes } = req.body;
-        // attributes: [{ id_atributo, values: [id_valor, id_valor...] }, ...]
+        const { id_producto, attributes, combinaciones } = req.body;
+        // attributes: [{ id_atributo, values: [id_valor, id_valor...] }, ...] — cartesian de TODOS los valores (flujo checkbox).
+        // combinaciones (opcional): [{ valores: [{id_atributo, id_valor}], precio?, stock_inicial? }, ...] — lista
+        // explícita (flujo de grilla matricial): permite excluir celdas y fijar precio/stock por combinación.
 
         if (!id_producto || !Array.isArray(attributes)) {
             return res.status(400).json({ code: 0, message: "Datos incompletos" });
@@ -569,9 +724,11 @@ const generateSKUs = async (req, res) => {
             return result;
         };
 
-        // If no attributes, maybe just create 1 SKU default? 
+        const usaCombinacionesExplicitas = Array.isArray(combinaciones) && combinaciones.length > 0;
+
+        // If no attributes, maybe just create 1 SKU default?
         // For now assume strictly for variants. If empty, do nothing.
-        if (attributes.length === 0) {
+        if (attributes.length === 0 && !usaCombinacionesExplicitas) {
             // Logic for "Simple Product" (Single SKU) vs "Variable Product"
             // For now, return success
             await connection.commit();
@@ -585,7 +742,23 @@ const generateSKUs = async (req, res) => {
         // Let's trust frontend for labels for SKU naming to avoid complex lookups, but verify IDs exist if needed.
         // Or assume the 'values' array contains objects { id: 1, label: 'Rojo' }.
 
-        const combinations = cartesian(attributes);
+        // Grilla matricial: la lista de combos ya viene armada por el usuario
+        // (incluye solo las celdas activadas, no el cartesiano completo).
+        const combinations = usaCombinacionesExplicitas
+            ? combinaciones.map(c => Array.isArray(c.valores) ? c.valores : [])
+            : cartesian(attributes);
+
+        // Precio/stock por combinación, keyeado por sus id_valor ordenados —
+        // así no depende de que el cliente replique el orden por id_atributo
+        // que este endpoint usa internamente para armar attrs_key.
+        const overridePorCombo = new Map();
+        if (usaCombinacionesExplicitas) {
+            for (const c of combinaciones) {
+                const clave = (Array.isArray(c.valores) ? c.valores : [])
+                    .map(v => v.id_valor).sort((a, b) => a - b).join(',');
+                overridePorCombo.set(clave, { precio: c.precio, stock_inicial: c.stock_inicial });
+            }
+        }
 
         // Resolver los id_valor recibidos contra atributo_valor real: no confiar en el
         // `label` que manda el frontend para nombrar el SKU (podría venir manipulado
@@ -632,6 +805,13 @@ const generateSKUs = async (req, res) => {
             const sku_name = sku_parts.join(" - ").substring(0, 150); // truncated
             const attrs_key = attrs_key_parts.join("|");
 
+            const claveOverride = combo.map(c => c.id_valor).sort((a, b) => a - b).join(',');
+            const override = overridePorCombo.get(claveOverride);
+            const precioNum = Number(override?.precio);
+            const precioSku = Number.isFinite(precioNum) && precioNum > 0 ? precioNum : product.precio;
+            const stockNum = Number(override?.stock_inicial);
+            const stockInicial = Number.isFinite(stockNum) && stockNum >= 0 ? stockNum : 0;
+
             // Check existence (filtrado también por tenant — Regla de Oro Nº1)
             const [existing] = await connection.query("SELECT id_sku FROM producto_sku WHERE id_producto = ? AND attrs_key = ? AND id_tenant = ?", [id_producto, attrs_key, req.id_tenant]);
 
@@ -642,20 +822,26 @@ const generateSKUs = async (req, res) => {
                 const [ins] = await connection.query(`
                     INSERT INTO producto_sku (id_producto, id_tenant, sku, precio, attributes_json, attrs_key)
                     VALUES (?, ?, ?, ?, ?, ?)
-                `, [id_producto, req.id_tenant, sku_name, product.precio, JSON.stringify(attrs_json), attrs_key]);
+                `, [id_producto, req.id_tenant, sku_name, precioSku, JSON.stringify(attrs_json), attrs_key]);
                 id_sku = ins.insertId;
+
+                const cod_barras_sku = codigoBarrasSku(product.cod_barras, id_sku);
+                if (cod_barras_sku) {
+                    await connection.query("UPDATE producto_sku SET cod_barras = ? WHERE id_sku = ?", [cod_barras_sku, id_sku]);
+                }
+                await connection.query("UPDATE producto_sku SET ean13 = ? WHERE id_sku = ?", [generarEan13(id_sku), id_sku]);
 
                 for (const l of attrLinks) {
                     await connection.query("INSERT IGNORE INTO sku_atributo_valor (id_sku, id_atributo, id_valor, id_tenant) VALUES (?, ?, ?, ?)", [id_sku, l.id_atributo, l.id_valor, req.id_tenant]);
                 }
             }
 
-// Fila inicial de stock en cero para el SKU recién creado.
+// Fila inicial de stock para el SKU recién creado (0 salvo que la grilla matricial haya fijado un stock inicial).
             await connection.query(`
                 INSERT INTO inventario_stock (id_tenant, id_sku, id_almacen, stock, reservado)
-                VALUES (?, ?, 1, 0, 0)
+                VALUES (?, ?, 1, ?, 0)
                 ON DUPLICATE KEY UPDATE stock = stock
-            `, [req.id_tenant, id_sku]); // Almacén 1 por defecto
+            `, [req.id_tenant, id_sku, stockInicial]); // Almacén 1 por defecto
         }
 
         await connection.commit();
@@ -686,19 +872,50 @@ const importExcel = async (req, res) => {
         connection = await getConnection();
         await connection.beginTransaction();
 
+        // Resuelve marca/subcategoría por NOMBRE una sola vez (no por fila):
+        // antes el import exigía conocer el id_marca/id_subcategoria numérico
+        // de memoria, que el usuario no tiene forma de saber sin ir a otra
+        // pantalla. Sigue aceptando id_marca/id_subcategoria numéricos si ya
+        // vienen así (compatibilidad con la plantilla anterior).
+        const [marcas] = await connection.query(
+            "SELECT id_marca, nom_marca FROM marca WHERE id_tenant = ?", [req.id_tenant]
+        );
+        const [subcats] = await connection.query(
+            "SELECT id_subcategoria, nom_subcat FROM sub_categoria WHERE id_tenant = ?", [req.id_tenant]
+        );
+        const idMarcaPorNombre = new Map(marcas.map(m => [m.nom_marca.trim().toLowerCase(), m.id_marca]));
+        const idSubcatPorNombre = new Map(subcats.map(s => [s.nom_subcat.trim().toLowerCase(), s.id_subcategoria]));
+
         let insertedCount = 0;
         let errors = [];
 
         for (const [index, item] of data.entries()) {
+            let id_marca = item.id_marca || null;
+            if (!id_marca && item.marca) {
+                id_marca = idMarcaPorNombre.get(String(item.marca).trim().toLowerCase()) || null;
+                if (!id_marca) {
+                    errors.push(`Fila ${index + 1}: la marca "${item.marca}" no existe.`);
+                    continue;
+                }
+            }
+            let id_subcategoria = item.id_subcategoria || null;
+            if (!id_subcategoria && item.subcategoria) {
+                id_subcategoria = idSubcatPorNombre.get(String(item.subcategoria).trim().toLowerCase()) || null;
+                if (!id_subcategoria) {
+                    errors.push(`Fila ${index + 1}: la subcategoría "${item.subcategoria}" no existe.`);
+                    continue;
+                }
+            }
+
             // Basic validation
-            if (!item.descripcion || !item.id_marca || !item.id_subcategoria || !item.undm || !item.precio) {
+            if (!item.descripcion || !id_marca || !id_subcategoria || !item.undm || !item.precio) {
                 errors.push(`Row ${index + 1}: Missing required fields`);
                 continue;
             }
 
             const producto = {
-                id_marca: item.id_marca,
-                id_subcategoria: item.id_subcategoria,
+                id_marca,
+                id_subcategoria,
                 descripcion: item.descripcion,
                 undm: item.undm,
                 precio: item.precio,
@@ -736,6 +953,119 @@ const importExcel = async (req, res) => {
     }
 };
 
+// Historial de cambios de precio — mismo patrón que clientes.getHistorialCliente
+// (recurso = "producto_id:X"), filtrado a la acción de cambio de precio.
+const getHistorialPrecioProducto = async (req, res) => {
+    let connection;
+    try {
+        const { id } = req.params;
+        const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 15, 1), 50);
+        connection = await getConnection();
+
+        const [rows] = await connection.query(`
+            SELECT l.id_log, l.fecha, l.descripcion, u.usua AS usuario
+            FROM log_sistema l
+            LEFT JOIN usuario u ON l.id_usuario = u.id_usuario
+            WHERE l.id_tenant = ? AND l.recurso = ? AND l.accion = 'PRODUCTO_CAMBIO_PRECIO'
+            ORDER BY l.fecha DESC
+            LIMIT ?
+        `, [req.id_tenant, `producto_id:${id}`, limit]);
+
+        res.json({ code: 1, data: rows });
+    } catch (error) {
+        console.error('Error en getHistorialPrecioProducto:', error);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
+// Operaciones en lote sobre productos (BatchOperationWizard): ajuste de
+// precio, reasignar categoría/marca, o activar/desactivar. Una sola
+// `tipo` por request — el wizard aplica una operación a la vez, no un
+// parche combinado.
+const batchUpdateProductos = async (req, res) => {
+    let connection;
+    try {
+        const { ids, tipo } = req.body;
+        if (!Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ code: 0, message: "Selecciona al menos un producto" });
+        }
+        if (!["precio", "categoria", "estado"].includes(tipo)) {
+            return res.status(400).json({ code: 0, message: "Tipo de operación inválido" });
+        }
+
+        connection = await getConnection();
+
+        // Regla de Oro Nº1: se releen los productos filtrados por id_tenant —
+        // nunca se confía en que los ids del body ya pertenecen a este tenant.
+        const [productos] = await connection.query(
+            `SELECT id_producto, precio FROM producto WHERE id_producto IN (?) AND id_tenant = ?`,
+            [ids, req.id_tenant]
+        );
+        if (productos.length === 0) {
+            return res.status(404).json({ code: 0, message: "No se encontraron productos de este tenant con esos ids" });
+        }
+        const idsValidos = productos.map((p) => p.id_producto);
+
+        await connection.beginTransaction();
+
+        if (tipo === "precio") {
+            const { ajuste_tipo, ajuste_valor } = req.body;
+            const valor = Number(ajuste_valor);
+            if (!["porcentaje", "monto"].includes(ajuste_tipo) || !Number.isFinite(valor) || valor === 0) {
+                await connection.rollback();
+                return res.status(400).json({ code: 0, message: "Ajuste de precio inválido" });
+            }
+
+            const ip = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || null;
+            for (const p of productos) {
+                const precioActual = Number(p.precio);
+                const precioNuevo = ajuste_tipo === "porcentaje"
+                    ? Math.max(0, Math.round(precioActual * (1 + valor / 100) * 100) / 100)
+                    : Math.max(0, Math.round((precioActual + valor) * 100) / 100);
+                if (precioNuevo === precioActual) continue;
+
+                await connection.query("UPDATE producto SET precio = ? WHERE id_producto = ? AND id_tenant = ?", [precioNuevo, p.id_producto, req.id_tenant]);
+                if (req.id_usuario) {
+                    await logProductos.cambioPrecio(p.id_producto, req.id_usuario, ip, req.id_tenant, precioActual, precioNuevo);
+                }
+            }
+        } else if (tipo === "categoria") {
+            const { id_subcategoria, id_marca } = req.body;
+            const sets = [];
+            const params = [];
+            if (id_subcategoria) { sets.push("id_subcategoria = ?"); params.push(id_subcategoria); }
+            if (id_marca) { sets.push("id_marca = ?"); params.push(id_marca); }
+            if (sets.length === 0) {
+                await connection.rollback();
+                return res.status(400).json({ code: 0, message: "Elige una categoría o una marca para reasignar" });
+            }
+            await connection.query(
+                `UPDATE producto SET ${sets.join(", ")} WHERE id_producto IN (?) AND id_tenant = ?`,
+                [...params, idsValidos, req.id_tenant]
+            );
+        } else if (tipo === "estado") {
+            const { estado_producto } = req.body;
+            await connection.query(
+                "UPDATE producto SET estado_producto = ? WHERE id_producto IN (?) AND id_tenant = ?",
+                [estado_producto ? 1 : 0, idsValidos, req.id_tenant]
+            );
+        }
+
+        await connection.commit();
+        queryCache.clear();
+
+        res.json({ code: 1, message: "Actualización en lote aplicada", data: { afectados: idsValidos.length } });
+    } catch (error) {
+        if (connection) await connection.rollback();
+        console.error('Error en batchUpdateProductos:', error);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
 export const methods = {
     getProductos,
     getUltimoIdProducto,
@@ -744,9 +1074,14 @@ export const methods = {
     updateProducto,
     deleteProducto,
     getProductVariants,
+    getProductCombo,
+    updateProductCombo,
+    buscarSkuPorBarcode,
     getProductAttributes,
     registerVariants,
     generateSKUs,
-    importExcel
+    importExcel,
+    getHistorialPrecioProducto,
+    batchUpdateProductos
 };
 

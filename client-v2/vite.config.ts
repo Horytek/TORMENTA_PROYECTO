@@ -4,6 +4,26 @@ import tailwindcss from '@tailwindcss/vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { resolve } from 'path'
 
+/**
+ * `envDir: '..'` hace que Vite lea el .env de la raíz, que es del BACKEND y
+ * trae `NODE_ENV=development`. Vite lo toma para decidir el modo, así que un
+ * `npm run build` local salía compilado en desarrollo: React en versión de
+ * desarrollo, `import.meta.env.PROD` en false y, por lo tanto, el service
+ * worker sin registrarse — todo sin un solo aviso.
+ *
+ * En CI no pasaba porque el workflow escribe un .env nuevo solo con las
+ * VITE_*, pero cualquier build local mentía, y un dist compilado a mano y
+ * subido habría llevado React de desarrollo a producción.
+ *
+ * El modo lo decide el comando, no una variable del backend.
+ */
+// ⚠️ `envDir: '..'` hace que Vite lea el .env de la RAÍZ, que es del backend.
+// Si ese archivo define `NODE_ENV`, Vite lo usa para decidir el modo y un
+// `vite build` sale compilado en desarrollo: React en versión de desarrollo e
+// `import.meta.env.PROD` en false, sin ningún aviso. Por eso `NODE_ENV` no va
+// en el .env — el backend lo recibe de `nodemon.json` en local y del entorno
+// en producción. Si algún día vuelve a aparecer ahí, este es el síntoma.
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [

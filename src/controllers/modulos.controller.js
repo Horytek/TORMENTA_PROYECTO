@@ -1,5 +1,6 @@
 import { getConnection } from "./../database/database.js";
 import { AuthZService } from "../services/authz.service.js";
+import { aprovisionarPermisosAdmin } from "../services/authz/permisosProvisioning.js";
 
 // Cache para consultas frecuentes
 const queryCache = new Map();
@@ -60,6 +61,10 @@ const addModulo = async (req, res) => {
 
         const query = "INSERT INTO modulo (nombre_modulo, ruta, icon, group_name, sort_order, frontend_route, is_visible, active_actions) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         const [result] = await connection.query(query, [nombre_modulo.trim(), ruta.trim(), icon, group_name, sort_order, frontend_route, is_visible ? 1 : 0, activeActionsJson]);
+
+        // Aprovisionamiento automático: sin esto el módulo queda invisible
+        // para todos los roles hasta sembrar `permisos` a mano por tenant.
+        await aprovisionarPermisosAdmin(connection, { id_modulo: result.insertId });
 
         await connection.commit();
 
@@ -285,6 +290,11 @@ const addSubmodulo = async (req, res) => {
 
         const query = "INSERT INTO submodulos (id_modulo, nombre_sub, ruta, icon, group_name, sort_order, frontend_route, is_visible) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         const [result] = await connection.query(query, [id_modulo, nombre_sub.trim(), ruta.trim(), icon, group_name, sort_order, frontend_route, is_visible ? 1 : 0]);
+
+        // Aprovisionamiento automático: mismo criterio que addModulo, pero a
+        // nivel de submódulo (el permiso del módulo padre no cubre submódulos
+        // con fila propia en `permisos`).
+        await aprovisionarPermisosAdmin(connection, { id_modulo, id_submodulo: result.insertId });
 
         await connection.commit();
 

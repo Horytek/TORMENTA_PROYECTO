@@ -16,6 +16,16 @@ import { ErrorCpe, CATEGORIAS } from "./cpeErrores.js";
 
 export const TASA_IGV = 0.18;
 
+/** Catálogo 07 SUNAT: solo estos tres son operaciones onerosas comunes en retail. Gravado es el default histórico. */
+const AFECTACION_GRAVADO = "10";
+const AFECTACIONES_VALIDAS = new Set(["10", "20", "30"]);
+
+/** Normaliza lo que venga de `producto.tipo_afectacion_igv`; cualquier valor fuera de catálogo cae a Gravado, nunca a "sin impuesto" por accidente. */
+function normalizarAfectacion(valor) {
+  const texto = String(valor ?? "").trim();
+  return AFECTACIONES_VALIDAS.has(texto) ? texto : AFECTACION_GRAVADO;
+}
+
 /** Diferencia máxima tolerada entre el total del comprobante y la suma de la venta. */
 const TOLERANCIA_DESCUADRE = 0.05;
 
@@ -128,9 +138,13 @@ function construirLineas(detalles) {
       );
     }
 
-    // El total incluye IGV → se extrae la base gravada.
-    const valorVenta = redondear(totalLinea / (1 + TASA_IGV));
-    const igv = redondear(totalLinea - valorVenta);
+    const tipAfeIgv = normalizarAfectacion(detalle.tipo_afectacion_igv);
+    const esGravado = tipAfeIgv === AFECTACION_GRAVADO;
+
+    // El total incluye IGV solo en líneas gravadas — exonerado/inafecto no
+    // tienen IGV que extraer, el total cobrado ES la base íntegra.
+    const valorVenta = esGravado ? redondear(totalLinea / (1 + TASA_IGV)) : totalLinea;
+    const igv = esGravado ? redondear(totalLinea - valorVenta) : 0;
 
     return {
       codProducto: String(detalle.id_producto ?? ""),
@@ -140,9 +154,9 @@ function construirLineas(detalles) {
       mtoValorUnitario: redondear(valorVenta / cantidad, 10),
       mtoValorVenta: valorVenta,
       mtoBaseIgv: valorVenta,
-      porcentajeIgv: TASA_IGV * 100,
+      porcentajeIgv: esGravado ? TASA_IGV * 100 : 0,
       igv,
-      tipAfeIgv: 10, // Gravado - Operación Onerosa
+      tipAfeIgv,
       totalImpuestos: igv,
       mtoPrecioUnitario: redondear(totalLinea / cantidad, 10),
       _totalLinea: totalLinea,
@@ -202,8 +216,15 @@ export function construirPayloadDesdeVenta({ venta, detalles, cliente, empresa }
 
   // Cuadre de cabecera: la suma de líneas debe coincidir con lo cobrado.
   const totalLineas = redondear(lineas.reduce((acc, l) => acc + l._totalLinea, 0));
-  const mtoOperGravadas = redondear(lineas.reduce((acc, l) => acc + l.mtoValorVenta, 0));
-  const mtoIGV = redondear(totalLineas - mtoOperGravadas);
+  const sumaPorAfectacion = (codigo) =>
+    redondear(lineas.filter((l) => l.tipAfeIgv === codigo).reduce((acc, l) => acc + l.mtoValorVenta, 0));
+  const mtoOperGravadas = sumaPorAfectacion(AFECTACION_GRAVADO);
+  const mtoOperExoneradas = sumaPorAfectacion("20");
+  const mtoOperInafectas = sumaPorAfectacion("30");
+  // Exonerado/inafecto no aportan IGV (su mtoValorVenta ya es el total sin
+  // extracción), así que restarlos junto con gravadas sigue dando el IGV real
+  // — y con cero líneas no gravadas da exactamente lo mismo que antes.
+  const mtoIGV = redondear(totalLineas - mtoOperGravadas - mtoOperExoneradas - mtoOperInafectas);
 
   // `venta.igv` es un MONTO en esta BD: sirve de contraste contra lo calculado.
   const igvVenta = Number(venta.igv);
@@ -225,6 +246,8 @@ export function construirPayloadDesdeVenta({ venta, detalles, cliente, empresa }
     company: resolverEmpresa(empresa),
     client: resolverCliente(cliente, tipoDoc),
     mtoOperGravadas,
+    mtoOperExoneradas,
+    mtoOperInafectas,
     mtoIGV,
     valorVenta: mtoOperGravadas,
     totalImpuestos: mtoIGV,
@@ -234,7 +257,10 @@ export function construirPayloadDesdeVenta({ venta, detalles, cliente, empresa }
     details: lineas.map(({ _totalLinea, ...linea }) => linea),
   };
 
-  return { payload, tipoDoc, serie, correlativo, totales: { mtoOperGravadas, mtoIGV, mtoImpVenta: totalLineas } };
+  return {
+    payload, tipoDoc, serie, correlativo,
+    totales: { mtoOperGravadas, mtoOperExoneradas, mtoOperInafectas, mtoIGV, mtoImpVenta: totalLineas },
+  };
 }
 
 export default { construirPayloadDesdeVenta, mapearTipoComprobante, partirNumComprobante, TASA_IGV };

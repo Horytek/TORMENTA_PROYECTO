@@ -24,6 +24,9 @@ import {
   ShieldAlert,
   Wallet,
   RotateCcw,
+  HandCoins,
+  ArrowLeftRight,
+  MessageCircle,
 } from "lucide-react";
 import type { RouteModule, CatalogMeta } from "@/api/rutas";
 import { getIcon, type NavIcon } from "@/lib/iconRegistry";
@@ -63,9 +66,11 @@ export interface ModuleMeta {
  */
 const MODULE_META: Record<string, ModuleMeta> = {
   "productos": { url: "/products", icon: Tags, group: "General", title: "Productos", keywords: ["sku", "catálogo", "stock"] },
+  "catalogo": { url: "/catalog-express", icon: MessageCircle, group: "General", title: "Catálogo WhatsApp", keywords: ["whatsapp", "catalogo", "tienda", "vitrina", "pedidos"] },
   "ventas": { url: "/sales", icon: ShoppingCart, group: "General", title: "Punto de Venta (POS)", keywords: ["caja", "cobrar", "vender"] },
   "devoluciones": { url: "/sales/returns", icon: RotateCcw, group: "General", title: "Devoluciones", keywords: ["reembolso", "nota de crédito", "cambio", "retorno"] },
   "almacen": { url: "/inventory", icon: Package, group: "Logística", title: "Inventario / Kárdex", keywords: ["stock", "movimientos", "kardex"] },
+  "almacen/movimientos": { url: "/inventory/movements", icon: ArrowLeftRight, group: "Logística", title: "Movimientos e Inventarios", keywords: ["transferencia", "conteo", "ciego", "auditoría"] },
   "almaceng": { url: "/logistics/warehouses", icon: Warehouse, group: "Logística", title: "Almacenes" },
   "nota_almacen": { url: "/logistics/warehouse-notes", icon: ClipboardList, group: "Logística", title: "Notas de Almacén", keywords: ["ingreso", "salida", "traslado"] },
   "guia_remision": { url: "/logistics/guides", icon: Truck, group: "Logística", title: "Guías de Remisión", keywords: ["despacho", "transporte", "sunat"] },
@@ -73,6 +78,7 @@ const MODULE_META: Record<string, ModuleMeta> = {
   "compras/ordenes": { url: "/purchases/orders", icon: ClipboardList, group: "Logística", title: "Órdenes de Compra", keywords: ["proveedor", "compra", "recepción"] },
   "compras/facturas": { url: "/purchases/invoices", icon: FileSpreadsheet, group: "Logística", title: "Facturas de Compra", keywords: ["proveedor", "factura"] },
   "compras/cuentas-por-pagar": { url: "/purchases/accounts-payable", icon: Wallet, group: "Logística", title: "Cuentas por Pagar", keywords: ["deuda", "pago", "proveedor"] },
+  "compras/anticipos": { url: "/purchases/advances", icon: HandCoins, group: "Logística", title: "Anticipos a Proveedor", keywords: ["adelanto", "pago", "proveedor"] },
   "clientes": { url: "/people/clients", icon: User, group: "Personas", title: "Clientes" },
   "proveedores": { url: "/people/providers", icon: Users, group: "Personas", title: "Proveedores" },
   "empleados": { url: "/people/employees", icon: Users, group: "Personas", title: "Empleados", keywords: ["trabajadores", "rrhh"] },

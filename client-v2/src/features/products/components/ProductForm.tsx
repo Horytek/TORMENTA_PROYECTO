@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -8,8 +8,14 @@ import type {
 import {
   createProduct, updateProduct, getProduct, getBrands, getCategories, getSubcategories,
   getUnits, getLastIdProducto, getCategoryAttributes, getAttributeValues, generateSKUs,
-  getProductAttributes
+  getProductAttributes, type CombinacionMatriz
 } from "../api/products";
+import { MatrixVariantGrid, type MatrixCell } from "./MatrixVariantGrid";
+import { VariantTableBuilder } from "./VariantTableBuilder";
+import { cartesianCombos, comboKey, deriveVariantMode } from "../lib/variantMatrix";
+import ComboItemsEditor from "./ComboItemsEditor";
+import { ProductImageGallery } from "./ProductImageGallery";
+import { uploadProductImage } from "../api/productImages";
 import { useUserStore } from "@/store/useUserStore";
 
 // UI Components
@@ -17,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2, Plus, Star, Trash2, Upload } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -41,11 +47,14 @@ const productSchema = z.object({
     "El precio debe ser un número positivo"
   ),
   cod_barras: z.string().optional().or(z.literal("")),
+  stock_min: z.string().optional().or(z.literal("")),
+  tipo_afectacion_igv: z.string(),
   undm: z.string().min(1, "Debe seleccionar una unidad de medida"),
   id_marca: z.string().min(1, "Debe seleccionar una marca"),
   id_categoria: z.string().min(1, "Debe seleccionar una categoría"),
   id_subcategoria: z.string().min(1, "Debe seleccionar una subcategoría"),
   estado_producto: z.string(),
+  es_combo: z.boolean(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -73,9 +82,31 @@ export default function ProductForm({
   // Atributos dinámicos (talla, color…) según la categoría elegida
   const [categoryAttrs, setCategoryAttrs] = useState<ProductAttribute[]>([]);
   const [selectedAttrs, setSelectedAttrs] = useState<Record<number, string[]>>({});
+  // Grilla matricial: solo aplica cuando hay exactamente 2 atributos con valores
+  // elegidos (ej. Talla × Color). Clave = "idValorA:idValorB".
+  const [matrixCells, setMatrixCells] = useState<Record<string, MatrixCell>>({});
   const [loadingAttrs, setLoadingAttrs] = useState(false);
 
   const tenantId = useUserStore((state) => state.user?.id_tenant);
+
+  const newInputRef = useRef<HTMLInputElement>(null);
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
+  const [newImagePreviews, setNewImagePreviews] = useState<string[]>([]);
+
+  const handleNewImageFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setNewImageFiles((prev) => [...prev, ...files]);
+    const previews = files.map((f) => URL.createObjectURL(f));
+    setNewImagePreviews((prev) => [...prev, ...previews]);
+    e.target.value = "";
+  };
+
+  const removeNewImage = (index: number) => {
+    if (newImagePreviews[index]) URL.revokeObjectURL(newImagePreviews[index]);
+    setNewImageFiles((prev) => prev.filter((_, i) => i !== index));
+    setNewImagePreviews((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const {
     control,
@@ -90,11 +121,14 @@ export default function ProductForm({
       descripcion: "",
       precio: "",
       cod_barras: "",
+      stock_min: "",
+      tipo_afectacion_igv: "10",
       undm: "",
       id_marca: "",
       id_categoria: "",
       id_subcategoria: "",
       estado_producto: "1",
+      es_combo: false,
     },
   });
 
@@ -128,7 +162,9 @@ export default function ProductForm({
   }, [isOpen]);
 
   // Cargar atributos de la categoría elegida (con sus valores) para el
-  // bloque de variantes más abajo.
+  // bloque de variantes más abajo. Si la categoría tiene una plantilla asignada
+  // en Configuración > Contenido > Plantillas, usa esa plantilla. Si no, usa
+  // todos los atributos visibles del sistema como fallback para no bloquear.
   useEffect(() => {
     const loadAttributes = async () => {
       if (!watchIdCategoria) {
@@ -139,7 +175,14 @@ export default function ProductForm({
       setLoadingAttrs(true);
       try {
         const catId = Number(watchIdCategoria);
-        const attrs = await getCategoryAttributes(catId);
+        let attrs = await getCategoryAttributes(catId);
+
+        // Fallback: Si la categoría no tiene plantilla asignada aún, carga todos los atributos
+        if (!attrs || attrs.length === 0) {
+          const { getAttributes: getAllAttrs } = await import("@/features/content/api/content");
+          const allSystemAttrs = await getAllAttrs();
+          attrs = allSystemAttrs.filter((a) => a.es_visible !== 0);
+        }
 
         const attrsWithValues = await Promise.all(
           attrs.map(async (attr) => {
@@ -183,11 +226,14 @@ export default function ProductForm({
           descripcion: prod.descripcion || "",
           precio: String(prod.precio ?? ""),
           cod_barras: prod.cod_barras || "",
+          stock_min: prod.stock_min != null ? String(prod.stock_min) : "",
+          tipo_afectacion_igv: prod.tipo_afectacion_igv || "10",
           undm: prod.undm || "",
           id_marca: String(prod.id_marca ?? ""),
           id_categoria: String(idCat ?? ""),
           id_subcategoria: String(prod.id_subcategoria ?? ""),
           estado_producto: String(prod.estado_producto ?? prod.estado ?? "1"),
+          es_combo: Boolean(prod.es_combo),
         });
 
         // Cargar los valores de atributo ya seleccionados en modo edición
@@ -205,6 +251,9 @@ export default function ProductForm({
           } else {
             setSelectedAttrs({});
           }
+          // Editar variantes por celda (con su precio/stock actual) queda para
+          // otra pantalla — acá la grilla siempre arranca en blanco.
+          setMatrixCells({});
         } catch (err) {
           console.error("Error loading product attributes:", err);
         }
@@ -217,13 +266,17 @@ export default function ProductForm({
         descripcion: "",
         precio: "",
         cod_barras: "",
+        stock_min: "",
+        tipo_afectacion_igv: "10",
         undm: "",
         id_marca: "",
         id_categoria: "",
         id_subcategoria: "",
         estado_producto: "1",
+        es_combo: false,
       });
       setSelectedAttrs({});
+      setMatrixCells({});
 
       const generateBarcode = async () => {
         try {
@@ -248,6 +301,16 @@ export default function ProductForm({
     );
   }, [watchIdCategoria, subcategories]);
 
+  // La grilla matricial solo tiene sentido con exactamente 2 dimensiones
+  // (ej. Talla × Color); con 1, 3+ o ninguna, se sigue con los checkboxes.
+  const attrsConValores = useMemo(
+    () => categoryAttrs.filter((a) => (selectedAttrs[a.id_atributo] || []).length > 0),
+    [categoryAttrs, selectedAttrs]
+  );
+  const modoVariantes = deriveVariantMode(attrsConValores);
+  const mostrarGrilla = modoVariantes === "grilla_2d";
+  const mostrarTablaND = modoVariantes === "tabla_nd";
+
   const handleAttributeCheckboxChange = (attrId: number, valueId: string, checked: boolean) => {
     setSelectedAttrs((prev) => {
       const current = prev[attrId] || [];
@@ -268,8 +331,11 @@ export default function ProductForm({
         id_subcategoria: Number(values.id_subcategoria),
         precio: Number(values.precio).toFixed(2),
         cod_barras: values.cod_barras || "",
+        stock_min: values.stock_min ? Number(values.stock_min) : null,
+        tipo_afectacion_igv: values.tipo_afectacion_igv,
         undm: values.undm,
         estado_producto: Number(values.estado_producto),
+        es_combo: values.es_combo,
       };
 
       let isSuccess = false;
@@ -304,8 +370,58 @@ export default function ProductForm({
           }
         });
 
+        // Grilla matricial activa: manda la lista explícita de celdas incluidas
+        // (con su precio/stock si se editó) en vez del cartesiano completo —
+        // así se pueden excluir combinaciones que no existen en la realidad.
+        let combinaciones: CombinacionMatriz[] | undefined;
+        if (mostrarGrilla) {
+          const [attrA, attrB] = attrsConValores;
+          const valoresA = (attrA.values ?? []).filter((v) => (selectedAttrs[attrA.id_atributo] || []).includes(String(v.id_valor)));
+          const valoresB = (attrB.values ?? []).filter((v) => (selectedAttrs[attrB.id_atributo] || []).includes(String(v.id_valor)));
+          combinaciones = [];
+          for (const va of valoresA) {
+            for (const vb of valoresB) {
+              const celda = matrixCells[`${va.id_valor}:${vb.id_valor}`];
+              if (celda && !celda.selected) continue; // excluida a mano
+              combinaciones.push({
+                valores: [
+                  { id_atributo: attrA.id_atributo, id_valor: va.id_valor },
+                  { id_atributo: attrB.id_atributo, id_valor: vb.id_valor },
+                ],
+                precio: celda?.precio ? Number(celda.precio) : undefined,
+                stock_inicial: celda?.stock !== undefined && celda.stock !== "" ? Number(celda.stock) : undefined,
+              });
+            }
+          }
+        } else if (mostrarTablaND) {
+          // 3+ atributos: mismo criterio que la grilla 2D, pero la fuente de
+          // combinaciones es el cartesiano completo de VariantTableBuilder
+          // en vez de un doble for anidado a mano.
+          combinaciones = [];
+          for (const combo of cartesianCombos(attrsConValores, selectedAttrs)) {
+            const celda = matrixCells[comboKey(combo)];
+            if (celda && !celda.selected) continue; // excluida a mano
+            combinaciones.push({
+              valores: combo.map((c) => ({ id_atributo: c.id_atributo, id_valor: c.id_valor })),
+              precio: celda?.precio ? Number(celda.precio) : undefined,
+              stock_inicial: celda?.stock !== undefined && celda.stock !== "" ? Number(celda.stock) : undefined,
+            });
+          }
+        }
+
         if (attributesPayload.length > 0) {
-          await generateSKUs(productId, attributesPayload);
+          await generateSKUs(productId, attributesPayload, combinaciones);
+        }
+
+        // Subir imágenes seleccionadas a ImageKit
+        if (!initialData && newImageFiles.length > 0 && productId) {
+          for (const file of newImageFiles) {
+            try {
+              await uploadProductImage(productId, file);
+            } catch (err) {
+              console.error("Error al subir imagen a ImageKit:", err);
+            }
+          }
         }
 
         onSuccess();
@@ -501,6 +617,46 @@ export default function ProductForm({
                 />
               </div>
 
+              {/* Stock mínimo */}
+              <div className="space-y-2">
+                <Label htmlFor="stock_min">Stock mínimo (opcional)</Label>
+                <Controller
+                  name="stock_min"
+                  control={control}
+                  render={({ field }) => (
+                    <Input
+                      {...field}
+                      id="stock_min"
+                      type="number"
+                      min={0}
+                      placeholder="Alerta si el stock baja de este número"
+                      className=""
+                    />
+                  )}
+                />
+              </div>
+
+              {/* Tipo de afectación IGV */}
+              <div className="space-y-2">
+                <Label htmlFor="tipo_afectacion_igv">Afectación IGV</Label>
+                <Controller
+                  name="tipo_afectacion_igv"
+                  control={control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <SelectTrigger id="tipo_afectacion_igv" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent position="popper">
+                        <SelectItem value="10">Gravado (18%)</SelectItem>
+                        <SelectItem value="20">Exonerado</SelectItem>
+                        <SelectItem value="30">Inafecto</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+
               {/* Product State */}
               <div className="space-y-2">
                 <Label htmlFor="estado_producto">Estado</Label>
@@ -520,7 +676,91 @@ export default function ProductForm({
                   )}
                 />
               </div>
+
+              {/* Combo/Kit */}
+              <div className="space-y-2 col-span-2">
+                <Controller
+                  name="es_combo"
+                  control={control}
+                  render={({ field }) => (
+                    <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                      <Checkbox checked={field.value} onCheckedChange={(checked) => field.onChange(!!checked)} />
+                      <span className="text-slate-700 dark:text-slate-300 font-medium">
+                        Es un combo/kit (se arma con otros productos, no tiene stock propio)
+                      </span>
+                    </label>
+                  )}
+                />
+              </div>
             </div>
+
+            {watch("es_combo") && initialData && (
+              <ComboItemsEditor productId={initialData.id_producto} />
+            )}
+            {watch("es_combo") && !initialData && (
+              <p className="text-xs text-muted-foreground border-t border-slate-100 dark:border-zinc-900 pt-4">
+                Guarda el producto primero; la composición del combo se edita al volver a abrirlo.
+              </p>
+            )}
+
+            {initialData ? (
+              <ProductImageGallery productId={initialData.id_producto} />
+            ) : (
+              <div className="border-t border-slate-100 dark:border-zinc-900 pt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Imágenes del producto</h4>
+                    <p className="text-xs text-muted-foreground">
+                      La primera imagen (⭐) será la principal en el catálogo. Se subirán automáticamente a ImageKit.
+                    </p>
+                  </div>
+                </div>
+
+                {newImagePreviews.length > 0 && (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
+                    {newImagePreviews.map((url, idx) => (
+                      <div key={idx} className="group relative aspect-square overflow-hidden rounded-lg border bg-muted">
+                        <img src={url} alt="" className="h-full w-full object-cover" />
+                        {idx === 0 && (
+                          <span className="absolute top-1 left-1 bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow flex items-center gap-0.5">
+                            <Star className="w-2.5 h-2.5 fill-white" /> Principal
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeNewImage(idx)}
+                          className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <input
+                  ref={newInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  multiple
+                  className="hidden"
+                  onChange={handleNewImageFiles}
+                />
+
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => newInputRef.current?.click()}
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    {newImageFiles.length > 0 ? "Agregar más imágenes" : "Subir primera imagen"}
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Atributos y variantes dinámicas */}
             {watchIdCategoria && (
@@ -566,6 +806,38 @@ export default function ProductForm({
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+
+                {mostrarGrilla && (
+                  <div className="mt-4 space-y-2">
+                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                      Grilla de combinaciones
+                    </Label>
+                    <MatrixVariantGrid
+                      attrA={attrsConValores[0]}
+                      attrB={attrsConValores[1]}
+                      seleccionadosA={selectedAttrs[attrsConValores[0].id_atributo] || []}
+                      seleccionadosB={selectedAttrs[attrsConValores[1].id_atributo] || []}
+                      precioBase={Number(watch("precio")) || 0}
+                      cells={matrixCells}
+                      onChange={setMatrixCells}
+                    />
+                  </div>
+                )}
+
+                {mostrarTablaND && (
+                  <div className="mt-4 space-y-2">
+                    <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                      Tabla de combinaciones ({attrsConValores.length} atributos)
+                    </Label>
+                    <VariantTableBuilder
+                      attrs={attrsConValores}
+                      seleccionados={selectedAttrs}
+                      precioBase={Number(watch("precio")) || 0}
+                      cells={matrixCells}
+                      onChange={setMatrixCells}
+                    />
                   </div>
                 )}
               </div>

@@ -1,0 +1,23 @@
+==================================================
+DATOS DE PRUEBA - CONFIGURACION SUNAT (BETA)
+==================================================
+
+1. CONFIGURACION SUNAT:
+-----------------------
+Entorno       : Beta (Pruebas)
+Usuario SOL   : 20610588981MODATEST
+Contrasena SOL: MODATEST
+
+
+2. CERTIFICADO DIGITAL:
+-----------------------
+Contrasena del certificado: 123456
+Certificado (.p12/.pfx)   : (Opcional en Beta)
+
+
+3. API GRE (OPCIONAL):
+----------------------
+Client ID    : client_id_test
+Client Secret: client_secret_test
+
+==================================================

@@ -395,7 +395,7 @@ export default function GuideFormDialog({ isOpen, onClose }: GuideFormDialogProp
             <div className="flex items-center gap-2 text-sm font-medium text-foreground">
               <PackageSearch className="h-4 w-4" /> Productos
             </div>
-            <GuideProductPicker almacen={sucursalId} items={items} onAdd={addItem} />
+            <GuideProductPicker idAlmacen={sucursalSeleccionada?.id_almacen ?? null} items={items} onAdd={addItem} />
 
             {items.length > 0 && (
               <div className="rounded-xl border border-border">

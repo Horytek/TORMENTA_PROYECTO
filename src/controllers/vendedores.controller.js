@@ -37,17 +37,23 @@ const getVendedores = async (req, res) => {
         connection = await getConnection();
 
         const [result] = await connection.query(`
-            SELECT 
-                ve.dni, 
-                usu.usua, 
-                CONCAT(ve.nombres, ' ', ve.apellidos) AS nombre, 
-                ve.nombres, 
-                ve.apellidos, 
-                ve.telefono, 
-                ve.estado_vendedor, 
-                ve.id_usuario
-            FROM vendedor ve 
+            SELECT
+                ve.dni,
+                usu.usua,
+                CONCAT(ve.nombres, ' ', ve.apellidos) AS nombre,
+                ve.nombres,
+                ve.apellidos,
+                ve.telefono,
+                ve.estado_vendedor,
+                ve.id_usuario,
+                ve.porcentaje_comision,
+                ve.meta_mensual,
+                ve.cargo,
+                ve.fecha_ingreso,
+                suc.nombre_sucursal
+            FROM vendedor ve
             INNER JOIN usuario usu ON usu.id_usuario = ve.id_usuario
+            LEFT JOIN sucursal suc ON suc.dni = ve.dni AND suc.id_tenant = ve.id_tenant
             WHERE ve.id_tenant = ?
             ORDER BY ve.nombres, ve.apellidos
         `, [id_tenant]);
@@ -100,11 +106,13 @@ const getVendedor = async (req, res) => {
                 usu.usua, 
                 CONCAT(ve.nombres, ' ', ve.apellidos) AS nombre, 
                 ve.nombres, 
-                ve.apellidos, 
-                ve.telefono, 
-                ve.estado_vendedor, 
-                ve.id_usuario
-            FROM vendedor ve 
+                ve.apellidos,
+                ve.telefono,
+                ve.estado_vendedor,
+                ve.id_usuario,
+                ve.cargo,
+                ve.fecha_ingreso
+            FROM vendedor ve
             INNER JOIN usuario usu ON usu.id_usuario = ve.id_usuario
             WHERE ve.dni = ? AND ve.id_tenant = ?
             LIMIT 1
@@ -140,7 +148,7 @@ const getVendedor = async (req, res) => {
 
 // AGREGAR VENDEDOR - OPTIMIZADO
 const addVendedor = async (req, res) => {
-    const { dni, id_usuario, nombres, apellidos, telefono, estado_vendedor } = req.body;
+    const { dni, id_usuario, nombres, apellidos, telefono, estado_vendedor, porcentaje_comision, meta_mensual, cargo, fecha_ingreso } = req.body;
     const id_tenant = req.id_tenant;
 
     // Validaciones mejoradas
@@ -212,6 +220,10 @@ const addVendedor = async (req, res) => {
             apellidos: apellidos?.trim() || '',
             telefono: telefono?.trim() || '',
             estado_vendedor: estado_vendedor !== undefined ? estado_vendedor : 1,
+            porcentaje_comision: porcentaje_comision ?? null,
+            meta_mensual: meta_mensual ?? null,
+            cargo: cargo?.trim() || null,
+            fecha_ingreso: fecha_ingreso || null,
             id_tenant
         };
 
@@ -254,7 +266,7 @@ const addVendedor = async (req, res) => {
 // ACTUALIZAR VENDEDOR - OPTIMIZADO
 const updateVendedor = async (req, res) => {
     const { dni } = req.params; // DNI original
-    const { nuevo_dni, id_usuario, nombres, apellidos, telefono, estado_vendedor } = req.body;
+    const { nuevo_dni, id_usuario, nombres, apellidos, telefono, estado_vendedor, porcentaje_comision, meta_mensual, cargo, fecha_ingreso } = req.body;
     const id_tenant = req.id_tenant;
 
     // Validaciones mejoradas
@@ -327,9 +339,10 @@ const updateVendedor = async (req, res) => {
             }
         }
 
-        // Obtener datos actuales del vendedor (para el swap)
+        // Obtener datos actuales del vendedor (para el swap y para no borrar
+        // porcentaje_comision/meta_mensual cuando el caller no los manda)
         const [currentData] = await connection.query(
-            'SELECT id_usuario FROM vendedor WHERE dni = ? AND id_tenant = ?',
+            'SELECT id_usuario, porcentaje_comision, meta_mensual, cargo, fecha_ingreso FROM vendedor WHERE dni = ? AND id_tenant = ?',
             [dni, id_tenant]
         );
         const currentUserId = currentData[0]?.id_usuario;
@@ -358,12 +371,16 @@ const updateVendedor = async (req, res) => {
 
         const [result] = await connection.query(`
             UPDATE vendedor
-            SET dni = ?, 
-                id_usuario = ?, 
-                nombres = ?, 
-                apellidos = ?, 
-                telefono = ?, 
-                estado_vendedor = ?
+            SET dni = ?,
+                id_usuario = ?,
+                nombres = ?,
+                apellidos = ?,
+                telefono = ?,
+                estado_vendedor = ?,
+                porcentaje_comision = ?,
+                meta_mensual = ?,
+                cargo = ?,
+                fecha_ingreso = ?
             WHERE dni = ? AND id_tenant = ?
         `, [
             nuevo_dni || dni,
@@ -372,6 +389,10 @@ const updateVendedor = async (req, res) => {
             apellidos?.trim() || '',
             telefono?.trim() || '',
             estado_vendedor !== undefined ? estado_vendedor : 1,
+            porcentaje_comision !== undefined ? porcentaje_comision : currentData[0]?.porcentaje_comision ?? null,
+            meta_mensual !== undefined ? meta_mensual : currentData[0]?.meta_mensual ?? null,
+            cargo !== undefined ? (cargo?.trim() || null) : currentData[0]?.cargo ?? null,
+            fecha_ingreso !== undefined ? (fecha_ingreso || null) : currentData[0]?.fecha_ingreso ?? null,
             dni,
             id_tenant
         ]);
@@ -417,12 +438,15 @@ const updateVendedor = async (req, res) => {
     }
 };
 
-// DESACTIVAR VENDEDOR - OPTIMIZADO CON LÓGICA INTELIGENTE
+// DESACTIVAR VENDEDOR
+// "Dar de baja" siempre desactiva y nunca borra — para eliminar de verdad ya
+// existe `deleteVendedor`, con su propia confirmación en el frontend. Antes
+// esta acción borraba el registro sin aviso cuando el vendedor no tenía
+// sucursal asociada, lo que la volvía irreversible pese a llamarse "baja".
 const deactivateVendedor = async (req, res) => {
     const { dni } = req.params;
     const id_tenant = req.id_tenant;
 
-    // Validaciones mejoradas
     if (!dni || dni.trim() === '') {
         return res.status(400).json({
             code: 0,
@@ -441,94 +465,79 @@ const deactivateVendedor = async (req, res) => {
     try {
         connection = await getConnection();
 
-        // Verificar si el vendedor existe
-        const [vendedorExiste] = await connection.query(
-            "SELECT dni, estado_vendedor FROM vendedor WHERE dni = ? AND id_tenant = ? LIMIT 1",
+        const [updateResult] = await connection.query(
+            "UPDATE vendedor SET estado_vendedor = 0 WHERE dni = ? AND id_tenant = ?",
             [dni, id_tenant]
         );
 
-        if (vendedorExiste.length === 0) {
+        if (updateResult.affectedRows === 0) {
             return res.status(404).json({
                 code: 0,
                 message: "Vendedor no encontrado"
             });
         }
 
-        // Verificar si el vendedor está en una sucursal
-        const [sucursales] = await connection.query(
-            "SELECT COUNT(*) AS total FROM sucursal WHERE dni = ? AND id_tenant = ?",
+        queryCache.clear();
+
+        return res.json({
+            code: 1,
+            message: "Vendedor desactivado"
+        });
+    } catch (error) {
+        console.error('Error en deactivateVendedor:', error);
+        res.status(500).json({
+            code: 0,
+            message: "Error interno del servidor"
+        });
+    } finally {
+        if (connection) {
+            connection.release();
+        }
+    }
+};
+
+// REACTIVAR VENDEDOR — acción explícita, simétrica a desactivar. Antes
+// "Reactivar" abría el formulario de edición y reactivaba solo como efecto
+// secundario de guardar, sin que el usuario lo decidiera directamente.
+const reactivateVendedor = async (req, res) => {
+    const { dni } = req.params;
+    const id_tenant = req.id_tenant;
+
+    if (!dni || !/^\d{8}$/.test(dni)) {
+        return res.status(400).json({
+            code: 0,
+            message: "DNI inválido. Debe tener 8 dígitos numéricos"
+        });
+    }
+
+    let connection;
+    try {
+        connection = await getConnection();
+
+        const [updateResult] = await connection.query(
+            "UPDATE vendedor SET estado_vendedor = 1 WHERE dni = ? AND id_tenant = ?",
             [dni, id_tenant]
         );
 
-        const tieneSucursales = sucursales[0].total > 0;
-
-        await connection.beginTransaction();
-
-        if (tieneSucursales) {
-            // Si tiene sucursales, solo desactivar
-            const [updateResult] = await connection.query(
-                "UPDATE vendedor SET estado_vendedor = 0 WHERE dni = ? AND id_tenant = ?",
-                [dni, id_tenant]
-            );
-
-            await connection.commit();
-
-            if (updateResult.affectedRows === 0) {
-                return res.status(404).json({
-                    code: 0,
-                    message: "No se pudo desactivar el vendedor"
-                });
-            }
-
-            // Limpiar caché
-            queryCache.clear();
-
-            return res.json({
-                code: 2,
-                message: `Vendedor desactivado porque está asociado a ${sucursales[0].total} sucursal(es)`,
-                sucursales_asociadas: sucursales[0].total
-            });
-        } else {
-            // Si no tiene sucursales, eliminar
-            const [deleteResult] = await connection.query(
-                "DELETE FROM vendedor WHERE dni = ? AND id_tenant = ?",
-                [dni, id_tenant]
-            );
-
-            await connection.commit();
-
-            if (deleteResult.affectedRows === 0) {
-                return res.status(404).json({
-                    code: 0,
-                    message: "No se pudo eliminar el vendedor"
-                });
-            }
-
-            // Limpiar caché
-            queryCache.clear();
-
-            return res.json({
-                code: 1,
-                message: "Vendedor eliminado con éxito"
+        if (updateResult.affectedRows === 0) {
+            return res.status(404).json({
+                code: 0,
+                message: "Vendedor no encontrado"
             });
         }
+
+        queryCache.clear();
+
+        return res.json({
+            code: 1,
+            message: "Vendedor reactivado"
+        });
     } catch (error) {
-        if (connection) {
-            await connection.rollback();
-        }
-        console.error('Error en deactivateVendedor:', error);
-
-        if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-            res.status(400).json({
-                code: 0,
-                message: "No se puede eliminar el vendedor porque tiene datos relacionados"
-            });
-        } else {
-            res.status(500).json({
-                code: 0,
-                message: "Error interno del servidor"
-            });
-        }
+        console.error('Error en reactivateVendedor:', error);
+        res.status(500).json({
+            code: 0,
+            message: "Error interno del servidor"
+        });
     } finally {
         if (connection) {
             connection.release();
@@ -625,11 +634,65 @@ const deleteVendedor = async (req, res) => {
     }
 };
 
+// Comisiones por vendedor en un rango de fechas — solo cuenta ventas
+// atribuidas (dni_vendedor no nulo) y con estado activo (no anuladas).
+const getComisiones = async (req, res) => {
+    const id_tenant = req.id_tenant;
+    const { fecha_inicio, fecha_fin, id_sucursal } = req.query;
+    let connection;
+
+    try {
+        connection = await getConnection();
+
+        const where = ["v.estado_venta != 0", "v.id_tenant = ?", "v.dni_vendedor IS NOT NULL"];
+        const params = [id_tenant];
+        if (fecha_inicio) { where.push("v.f_venta >= ?"); params.push(fecha_inicio); }
+        if (fecha_fin) { where.push("v.f_venta <= ?"); params.push(fecha_fin); }
+        if (id_sucursal) { where.push("v.id_sucursal = ?"); params.push(id_sucursal); }
+
+        const [rows] = await connection.query(`
+            SELECT
+                ve.dni,
+                CONCAT(ve.nombres, ' ', ve.apellidos) AS nombre,
+                ve.porcentaje_comision,
+                ve.meta_mensual,
+                COUNT(DISTINCT v.id_venta) AS cantidad_ventas,
+                COALESCE(SUM(dv.total), 0) AS total_ventas,
+                COALESCE(SUM(dv.cantidad), 0) AS unidades_vendidas
+            FROM venta v
+            INNER JOIN vendedor ve ON ve.dni = v.dni_vendedor AND ve.id_tenant = v.id_tenant
+            INNER JOIN detalle_venta dv ON dv.id_venta = v.id_venta
+            WHERE ${where.join(" AND ")}
+            GROUP BY ve.dni, ve.nombres, ve.apellidos, ve.porcentaje_comision, ve.meta_mensual
+            ORDER BY total_ventas DESC
+        `, params);
+
+        const data = rows.map((r) => ({
+            ...r,
+            comision: r.porcentaje_comision != null ? Number(r.total_ventas) * (Number(r.porcentaje_comision) / 100) : null,
+            pct_meta: r.meta_mensual != null && Number(r.meta_mensual) > 0 ? (Number(r.total_ventas) / Number(r.meta_mensual)) * 100 : null,
+            // UPT (unidades por ticket) y ticket promedio: la base para el reporte de
+            // rendimiento por vendedor — no necesitan otra consulta, ya están los datos.
+            upt: r.cantidad_ventas > 0 ? Number(r.unidades_vendidas) / Number(r.cantidad_ventas) : 0,
+            ticket_promedio: r.cantidad_ventas > 0 ? Number(r.total_ventas) / Number(r.cantidad_ventas) : 0,
+        }));
+
+        res.json({ code: 1, data });
+    } catch (error) {
+        console.error('Error en getComisiones:', error);
+        res.status(500).json({ code: 0, message: "Error interno del servidor" });
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
 export const methods = {
     getVendedores,
     getVendedor,
     addVendedor,
     updateVendedor,
     deactivateVendedor,
-    deleteVendedor
+    reactivateVendedor,
+    deleteVendedor,
+    getComisiones
 };

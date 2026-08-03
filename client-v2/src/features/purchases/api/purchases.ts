@@ -10,6 +10,9 @@ import type {
   AccountPayable,
   AccountPayablePayment,
   RegisterPaymentPayload,
+  SupplierAdvance,
+  SupplierAdvanceInsertPayload,
+  ApplyAdvancePayload,
 } from "../types";
 
 interface MutationResult {
@@ -30,6 +33,19 @@ export const getPurchaseOrders = async (filtros: { estado?: string; id_destinata
 export const getPurchaseOrder = async (id: number): Promise<PurchaseOrderDetail | null> =>
   unwrapOne<PurchaseOrderDetail>(await api.get(`/compras/ordenes/${id}`));
 
+export interface PriceComparisonRow {
+  id_destinatario: number;
+  proveedor: string;
+  ultimo_precio: number;
+  fecha_ultimo: string;
+  precio_min: number;
+  precio_prom: number;
+  n: number;
+}
+
+export const getPriceComparison = async (id_producto: number): Promise<PriceComparisonRow[]> =>
+  unwrapList<PriceComparisonRow>(await api.get("/compras/ordenes/comparacion-precios", { params: { id_producto } }));
+
 export const createPurchaseOrder = async (data: PurchaseOrderInsertPayload): Promise<MutationResult> => {
   try {
     const res = await api.post("/compras/ordenes", data);
@@ -48,9 +64,12 @@ export const approvePurchaseOrder = async (id: number): Promise<MutationResult> 
   }
 };
 
-export const receivePurchaseOrder = async (id: number): Promise<MutationResult> => {
+export const receivePurchaseOrder = async (
+  id: number,
+  items?: { id_detalle_orden_compra: number; cantidad: number }[]
+): Promise<MutationResult> => {
   try {
-    const res = await api.post(`/compras/ordenes/${id}/recibir`);
+    const res = await api.post(`/compras/ordenes/${id}/recibir`, items ? { items } : undefined);
     return { success: isOk(res), message: res.data?.message };
   } catch (err) {
     return { success: false, message: extractErrorMessage(err) };
@@ -86,7 +105,7 @@ export const createPurchaseInvoice = async (data: PurchaseInvoiceInsertPayload):
 // Cuentas por pagar
 // ─────────────────────────────────────────────────────────────────
 
-export const getAccountsPayable = async (filtros: { estado?: string } = {}): Promise<AccountPayable[]> =>
+export const getAccountsPayable = async (filtros: { estado?: string; id_destinatario?: number | string } = {}): Promise<AccountPayable[]> =>
   unwrapList<AccountPayable>(await api.get("/compras/cuentas-por-pagar", { params: filtros }));
 
 export const getAccountPayablePayments = async (id: number): Promise<AccountPayablePayment[]> =>
@@ -95,6 +114,31 @@ export const getAccountPayablePayments = async (id: number): Promise<AccountPaya
 export const registerAccountPayablePayment = async (id: number, data: RegisterPaymentPayload): Promise<MutationResult> => {
   try {
     const res = await api.post(`/compras/cuentas-por-pagar/${id}/pagos`, data);
+    return { success: isOk(res), message: res.data?.message };
+  } catch (err) {
+    return { success: false, message: extractErrorMessage(err) };
+  }
+};
+
+// ─────────────────────────────────────────────────────────────────
+// Anticipos a proveedor
+// ─────────────────────────────────────────────────────────────────
+
+export const getSupplierAdvances = async (filtros: { estado?: string; id_destinatario?: number | string } = {}): Promise<SupplierAdvance[]> =>
+  unwrapList<SupplierAdvance>(await api.get("/compras/anticipos", { params: filtros }));
+
+export const createSupplierAdvance = async (data: SupplierAdvanceInsertPayload): Promise<MutationResult> => {
+  try {
+    const res = await api.post("/compras/anticipos", data);
+    return { success: isOk(res), message: res.data?.message };
+  } catch (err) {
+    return { success: false, message: extractErrorMessage(err) };
+  }
+};
+
+export const applySupplierAdvance = async (id: number, data: ApplyAdvancePayload): Promise<MutationResult> => {
+  try {
+    const res = await api.post(`/compras/anticipos/${id}/aplicar`, data);
     return { success: isOk(res), message: res.data?.message };
   } catch (err) {
     return { success: false, message: extractErrorMessage(err) };

@@ -85,10 +85,11 @@ const getProductos = async (req, res) => {
                 COALESCE(SUM(i.stock), 0) AS stock, 
                 p.undm AS um, 
                 CAST(p.precio AS DECIMAL(10, 2)) AS precio, 
-                p.cod_barras, 
-                p.estado_producto AS estado
-            FROM producto p 
-            INNER JOIN marca m ON p.id_marca = m.id_marca 
+                p.cod_barras,
+                p.estado_producto AS estado,
+                p.stock_min
+            FROM producto p
+            INNER JOIN marca m ON p.id_marca = m.id_marca
             INNER JOIN sub_categoria CA ON CA.id_subcategoria = p.id_subcategoria
             ${invJoin}
             ${where}

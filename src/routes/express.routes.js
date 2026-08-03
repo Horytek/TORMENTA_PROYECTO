@@ -52,6 +52,7 @@ import { getNotifications, markAsRead } from "../controllers/notifications.contr
 router.get("/subscription/plans", getPlans);
 router.get("/subscription/status", getSubscriptionStatus);
 router.post("/subscription/subscribe", subscribeToPlan);
+router.post("/subscription/renew", createRenewalPreference);
 // Notifications
 router.get("/notifications", getNotifications);
 router.put("/notifications/:id/read", markAsRead);

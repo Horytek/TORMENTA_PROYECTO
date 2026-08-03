@@ -36,6 +36,7 @@ interface CartStore {
   addItem: (product: CartItem) => void;
   removeItem: (idProducto: number, idSku?: number | null) => void;
   updateQuantity: (idProducto: number, cantidad: number, idSku?: number | null) => void;
+  setLineDiscount: (idProducto: number, monto: number, idSku?: number | null) => void;
   clearCart: () => void;
   setCliente: (cliente: ClienteForSale | null) => void;
   setComprobanteTipo: (tipo: ComprobanteTipo) => void;
@@ -89,7 +90,7 @@ export const useCartStore = create<CartStore>()(
                 ? {
                     ...i,
                     cantidad: i.cantidad + product.cantidad,
-                    precio_total: (i.cantidad + product.cantidad) * i.precio_unitario,
+                    precio_total: Math.max(0, (i.cantidad + product.cantidad) * i.precio_unitario - (i.descuento ?? 0)),
                   }
                 : i
             );
@@ -114,9 +115,21 @@ export const useCartStore = create<CartStore>()(
         set((state) => ({
           items: state.items.map((i) =>
             mismoItem(i, idProducto, idSku)
-              ? { ...i, cantidad, precio_total: cantidad * i.precio_unitario }
+              ? { ...i, cantidad, precio_total: Math.max(0, cantidad * i.precio_unitario - (i.descuento ?? 0)) }
               : i
           ),
+        }));
+      },
+
+      // ── Descuento por línea (monto, no %) ──────────────────────────
+      setLineDiscount: (idProducto, monto, idSku) => {
+        set((state) => ({
+          items: state.items.map((i) => {
+            if (!mismoItem(i, idProducto, idSku)) return i;
+            const bruto = i.cantidad * i.precio_unitario;
+            const descuento = Math.min(Math.max(0, monto), bruto);
+            return { ...i, descuento, precio_total: bruto - descuento };
+          }),
         }));
       },
 
@@ -191,40 +204,36 @@ export const useCartStore = create<CartStore>()(
       },
 
       // ── Computados ───────────────────────────────────────────────
+      // Exonerado/inafecto (catálogo 07 SUNAT) no llevan IGV — el 18% plano
+      // solo aplica a líneas gravadas (el default histórico, cuando el
+      // producto no trae tipo_afectacion_igv).
       getSubtotal: () => {
         const { items } = get();
-        const rawSum = items.reduce((sum, i) => sum + i.precio_total, 0);
         const igv_incluido = useConfigStore.getState().igv_incluido;
-        if (igv_incluido) {
-          const base = rawSum / (1 + IGV_RATE);
-          return Math.round(base * 100) / 100;
-        }
-        return Math.round(rawSum * 100) / 100;
+        const base = items.reduce((sum, i) => {
+          const gravado = (i.tipo_afectacion_igv ?? "10") === "10";
+          if (!gravado) return sum + i.precio_total;
+          return sum + (igv_incluido ? i.precio_total / (1 + IGV_RATE) : i.precio_total);
+        }, 0);
+        return Math.round(base * 100) / 100;
       },
 
       getIgv: () => {
         const { items } = get();
-        const rawSum = items.reduce((sum, i) => sum + i.precio_total, 0);
         const igv_incluido = useConfigStore.getState().igv_incluido;
-        if (igv_incluido) {
-          return Math.round((rawSum - rawSum / (1 + IGV_RATE)) * 100) / 100;
-        }
-        const subtotal = get().getSubtotal();
-        return Math.round(subtotal * IGV_RATE * 100) / 100;
+        const igv = items.reduce((sum, i) => {
+          const gravado = (i.tipo_afectacion_igv ?? "10") === "10";
+          if (!gravado) return sum;
+          return sum + (igv_incluido ? i.precio_total - i.precio_total / (1 + IGV_RATE) : i.precio_total * IGV_RATE);
+        }, 0);
+        return Math.round(igv * 100) / 100;
       },
 
       getTotal: () => {
         const { items, descuento } = get();
         const rawSum = items.reduce((sum, i) => sum + i.precio_total, 0);
         const igv_incluido = useConfigStore.getState().igv_incluido;
-        let total: number;
-        if (igv_incluido) {
-          total = rawSum;
-        } else {
-          const subtotal = get().getSubtotal();
-          const igv = Math.round(subtotal * IGV_RATE * 100) / 100;
-          total = subtotal + igv;
-        }
+        const total = igv_incluido ? rawSum : get().getSubtotal() + get().getIgv();
         return Math.max(0, Math.round((total - descuento) * 100) / 100);
       },
 

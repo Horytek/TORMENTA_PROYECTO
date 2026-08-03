@@ -10,10 +10,12 @@ router.use(auth);
 
 
 router.get("/", empleadosController.getVendedores);
+router.get("/comisiones", empleadosController.getComisiones);
 router.get("/:dni", empleadosController.getVendedor);
 router.post("/", requireCapability("empleados", "crear"), empleadosController.addVendedor);
 router.put("/update/:dni", requireCapability("empleados", "editar"), empleadosController.updateVendedor);
 router.put("/deactivate/:dni", requireCapability("empleados", "desactivar"), empleadosController.deactivateVendedor);
+router.put("/reactivate/:dni", requireCapability("empleados", "desactivar"), empleadosController.reactivateVendedor);
 router.delete("/:dni", requireCapability("empleados", "eliminar"), empleadosController.deleteVendedor);
 
 export default router;

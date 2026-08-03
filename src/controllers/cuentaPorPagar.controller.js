@@ -1,7 +1,7 @@
 import { getConnection } from "../database/database.js";
 
 const getCuentasPorPagar = async (req, res) => {
-  const { estado = "" } = req.query;
+  const { estado = "", id_destinatario = "" } = req.query;
   const id_tenant = req.id_tenant;
 
   let connection;
@@ -10,6 +10,7 @@ const getCuentasPorPagar = async (req, res) => {
     const where = ["cxp.id_tenant = ?"];
     const params = [id_tenant];
     if (estado) { where.push("cxp.estado = ?"); params.push(estado); }
+    if (id_destinatario) { where.push("fc.id_destinatario = ?"); params.push(id_destinatario); }
 
     const [rows] = await connection.query(
       `SELECT

@@ -167,8 +167,8 @@ const ejecutar = async () => {
   if (!HOST || !DATABASE || !USER) {
     throw new Error("Falta configurar la conexión MySQL local en el archivo .env.");
   }
-  if (!esHostLocal(HOST)) {
-    throw new Error("Migración cancelada: esta versión solo está autorizada para MySQL local.");
+  if (!esHostLocal(HOST) && !process.env.ALLOW_REMOTE_MIGRATE) {
+    throw new Error("Migración cancelada: esta versión solo está autorizada para MySQL local (o establece ALLOW_REMOTE_MIGRATE=1).");
   }
 
   const connection = await mysql.createConnection({

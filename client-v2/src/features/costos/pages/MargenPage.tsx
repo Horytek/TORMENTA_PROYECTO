@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PageLoader } from "@/components/shared/PageLoader";
 import { getMargen } from "../api/costos";
+import { MargenBarChart } from "../components/MargenBarChart";
+import { BcgMatrix } from "../components/BcgMatrix";
 import type { MargenProducto } from "../types";
 
 const soles = (valor: number | null) =>
@@ -116,6 +118,11 @@ export default function MargenPage() {
               </Button>
             </div>
           )}
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <MargenBarChart productos={productos} />
+            <BcgMatrix productos={productos} />
+          </div>
 
           <Card className="overflow-hidden rounded-2xl border-border/70 shadow-sm">
             <div className="overflow-x-auto">

@@ -15,7 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FormField } from "@/components/shared/FormField";
 import { useUserStore } from "@/store/useUserStore";
 
-import { getClaves, addClave, getFunciones, getPlanes, getEmpresaAccount, updateEmpresaAccount, uploadLogoBase64, fileToBase64Payload } from "../api/account";
+import { getClaves, addClave, getFunciones, getPlanes, getEmpresaAccount, updateEmpresaAccount, uploadLogoBase64 } from "../api/account";
+import { fileToBase64 } from "@/lib/file";
 import type { AccountFormValues, Clave, Funcion, Plan } from "../types";
 
 const PLAN_LABELS: Record<string, string> = { "1": "Enterprise", "2": "Pro", "3": "Basic" };
@@ -147,13 +148,13 @@ export function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   const handleCertFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const base64 = await fileToBase64Payload(file);
+    const base64 = await fileToBase64(file);
     setForm((f) => ({ ...f, certificadoBase64: base64 }));
   };
   const handleLogoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const base64 = await fileToBase64Payload(file);
+    const base64 = await fileToBase64(file);
     setForm((f) => ({ ...f, logoBase64: base64 }));
   };
 

@@ -8,6 +8,10 @@ export interface InventarioProducto {
   precio: number;
   cod_barras: string | null;
   estado: number;
+  /** Costo promedio ponderado (agregado entre SKUs); null si no hay ingresos con costo registrados. */
+  costo_promedio?: number | string | null;
+  /** Punto de reorden configurado en Productos; null = sin umbral configurado. */
+  stock_min?: number | null;
 }
 
 // ─── Histórico de kardex (movimientos por producto + rango fechas) ──

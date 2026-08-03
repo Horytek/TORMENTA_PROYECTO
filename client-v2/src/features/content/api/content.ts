@@ -25,6 +25,22 @@ export const createAttribute = async (input: AttributeInput): Promise<boolean> =
 export const updateAttribute = async (id: number, input: AttributeInput): Promise<boolean> =>
   isOk(await api.put(`/attributes/${id}`, input));
 
+/** `ids` en el orden final deseado (todos los atributos del tenant, no solo los movidos). */
+export const reorderAttributes = async (ids: number[]): Promise<boolean> =>
+  isOk(await api.put("/attributes/reorder", { ids }));
+
+export interface AttributeImpact {
+  productos: number;
+  variantes: number;
+  categorias: number;
+  lineasVenta: number;
+}
+
+export const getAttributeImpact = async (id: number): Promise<AttributeImpact> => {
+  const response = await api.get(`/attributes/${id}/impact`);
+  return response.data?.data ?? { productos: 0, variantes: 0, categorias: 0, lineasVenta: 0 };
+};
+
 // ── Valores ──────────────────────────────────────────────────
 export const getAttributeValues = async (idAtributo: number): Promise<AttributeValue[]> =>
   unwrapList<Record<string, unknown>>(await api.get(`/attributes/${idAtributo}/values`)).map((v) => ({
@@ -47,6 +63,10 @@ export const updateAttributeValue = async (
 
 export const deleteAttributeValue = async (idValor: number): Promise<boolean> =>
   isOk(await api.delete(`/attributes/values/${idValor}`));
+
+/** `ids` en el orden final deseado (todos los valores de ese atributo). */
+export const reorderAttributeValues = async (idAtributo: number, ids: number[]): Promise<boolean> =>
+  isOk(await api.put(`/attributes/${idAtributo}/values/reorder`, { ids }));
 
 // ── Plantillas por categoría (qué atributos aplican a cada categoría) ──
 export const getCategoryAttributeIds = async (idCategoria: number): Promise<number[]> => {

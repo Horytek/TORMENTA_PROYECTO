@@ -1,4 +1,4 @@
-export type EstadoOrdenCompra = "draft" | "approved" | "received" | "cancelled";
+export type EstadoOrdenCompra = "draft" | "approved" | "partially_received" | "received" | "cancelled";
 export type EstadoFactura = "pendiente" | "pagada" | "anulada";
 export type EstadoCuentaPorPagar = "pendiente" | "pagada_parcial" | "pagada" | "vencida";
 
@@ -21,6 +21,7 @@ export interface PurchaseOrderItem {
   descripcion: string;
   marca: string;
   cantidad: number;
+  cantidad_recibida: number;
   precio_unitario: number;
   total: number;
   nombre_tonalidad: string | null;
@@ -108,4 +109,32 @@ export interface RegisterPaymentPayload {
   fecha: string;
   medio_pago: string;
   referencia?: string;
+}
+
+export type EstadoAnticipo = "disponible" | "aplicado" | "anulado";
+
+/** Dinero entregado a un proveedor antes de que exista una factura de compra. */
+export interface SupplierAdvance {
+  id: number;
+  monto: number;
+  saldo_disponible: number;
+  fecha: string;
+  medio_pago: string;
+  referencia: string | null;
+  estado: EstadoAnticipo;
+  id_destinatario: number;
+  proveedor: string;
+}
+
+export interface SupplierAdvanceInsertPayload {
+  id_destinatario: number | string;
+  monto: number;
+  fecha: string;
+  medio_pago: string;
+  referencia?: string;
+}
+
+export interface ApplyAdvancePayload {
+  id_cuenta_por_pagar: number;
+  monto: number;
 }

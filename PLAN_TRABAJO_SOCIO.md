@@ -1,228 +1,162 @@
 # Plan de trabajo — reparto con el socio técnico
 
-> Fecha: 2026-07-25 · Rama: `feature/frontend-v2`
-> Documento para trabajar sin depender de una conversación. Si algo acá
-> contradice al código, **el código gana**: avisa de la discrepancia.
+> Actualizado: 2026-08-03 · Rama: `feature/frontend-v2`
+> Roadmap completo de producto: `PLAN_MAESTRO_CLAUDE_CODE.md`.
+> **Este documento no repite el roadmap.** Sirve para dos cosas concretas: qué
+> falta de verdad —medido contra la base, no declarado— y quién agarra qué.
+>
+> Si algo acá contradice al código, **el código gana**: avisa de la discrepancia.
 
 ---
 
-## 1. Contexto en una página
+## 1. Estado medido hoy
 
-Horytek ERP es un **ERP + POS multi-tenant** para PYMES peruanas. El cliente
-real de hoy es **retail de ropa** (TEXTILES CREANDO MODA S.A.C., Chiclayo):
-producto con variantes talla × color, temporada, material.
+Números sacados de la base local, no del plan:
 
-La decisión estratégica de esta semana, después de investigar competidores y
-tesis del norte:
+| Métrica | Valor | Qué significa |
+|---|---|---|
+| `attrs_key` canónica / legada | **350 / 1306** | `resolveSku` solo entiende la canónica |
+| Filas huérfanas en `inventario_stock` | **17** (25 uds) | Ningún reporte puede atribuirlas a un producto |
+| SKU con costo | **0 de 1687** | La pantalla de Margen no tiene nada que mostrar |
+| Stock del tenant 1 | 35 368 | Foto de referencia: ningún cambio debe alterarla |
+| Módulos con permiso pero sin plan | **9 de 21** | 403 el día que se active `AUTHZ_UNIFIED` |
+| `exchangeProducto` → movimientos de stock | **0 referencias** | El cambio de talla no mueve inventario |
 
-- **Verticalizar en ropa**, profundo, en Chiclayo y Trujillo — no competir como
-  ERP genérico contra Bsale, INVY y OKFAC, que ya tienen offline, IA, Yape y
-  SIRE en la banda de S/140–380.
-- **El argumento de venta es el margen**, no el control de inventario. Un
-  estudio USAT 2025 sobre 264 comerciantes de prendas en Chiclayo encontró que
-  la estrategia dominante es liderazgo en costos (97 de 264) — compiten bajando
-  precios. Y otro estudio local halló que **66.67% ya cree que controla bien su
-  inventario**. Vender "mejor inventario" es cuesta arriba; vender "cuánto ganas
-  por prenda" no.
-- La arquitectura se mantiene **agnóstica al rubro** (atributos genéricos por
-  SKU) para poder expandirse después, pero **no se construye multi-vertical
-  ahora**.
+**Lectura corta:** el sistema ya vende, calcula margen y factura. Lo que falta
+no son módulos nuevos — es que lo construido sea confiable con datos reales.
 
 ---
 
-## 2. Estado verificado (no supuesto)
+## 2. Lo que falta, por orden de daño
 
-### Lo que está hecho y funcionando
+### 🔴 A. Cambio de talla (no funciona)
 
-| Área | Estado |
-|---|---|
-| Variantes SKU | Sólido. `producto_sku` (1686), `sku_atributo_valor` (3337), `inventario_stock` (3103) con `stock` y `reservado`. La tabla vieja `inventario` quedó en 0 filas: la migración se completó bien. |
-| Facturación electrónica (CPE) | Emisión desde servidor, idempotente, persiste XML + CDR. Estado derivado del ResponseCode, no del HTTP. Pantalla "Comprobantes electrónicos". |
-| Pantalla Integraciones | Diagnostica credenciales SUNAT y certificado sin exponer secretos. |
-| Modelo de costo | Cálculo puro + migración + capa de datos + origen configurable por empresa. **Commiteado y empujado.** |
-| Tests backend | 112, corren en ~1.5 s sin BD ni red (`npm test`). Antes eran cero. |
+Es *la* operación posventa de una tienda de ropa. `exchangeProducto`
+(`src/controllers/ventas.controller.js`) cambia el producto en `detalle_venta`
+pero **no toca stock**: no devuelve la prenda vieja ni descuenta la nueva. Y
+solo recibe `id_producto_nuevo`, sin talla ni color, así que cambiar una M por
+una L del mismo polo es inexpresable.
 
-### Lo que está a medias — atención
+*Terminado cuando:* recibe SKU origen y destino, mueve stock en ambos sentidos
+dentro de una transacción y deja bitácora. `devoluciones.controller.js` ya lo
+hace bien y sirve de plantilla.
 
-**`src/controllers/notaingreso.controller.js`**: el insert ya guarda
-`costo_unitario` y `origen_costo` en `detalle_nota`, pero **falta el paso que
-recalcula el costo promedio del SKU**. Sin eso el costo se registra pero no se
-propaga. Es el punto 3.1 de abajo.
+### 🔴 B. Saneamiento del catálogo de SKU
 
-**`src/controllers/ventas.controller.js`**: tiene cambios sin commitear del CEO.
-**Nadie más debe tocar ese archivo** hasta que se commiteen. Ahí va la captura
-del costo al vender (punto 3.2).
+1306 de 1687 variantes en formato legado, 31 grupos duplicados, 17 huérfanas.
+Mientras siga así, el POS con variantes y las anulaciones históricas son
+frágiles: `resolveSku` no encuentra la variante y **crea una nueva**, dispersando
+el stock.
 
-### Lo que falta y es grande
+Es el **único trabajo con fases irreversibles** — pide ventana y respaldo. En
+orden: normalizar `attrs_key` desde `sku_atributo_valor` → fusionar duplicados
+con `estado = 0` (nunca borrar) → resolver las 17 huérfanas → endurecer
+`resolveSku`, que hoy no filtra por tenant y compara nombres sin normalizar
+tildes.
 
-- **No existe ciclo de compra.** Cero tablas de compras, cuentas por pagar,
-  anticipos o impuestos especiales. La mercadería entra por nota de almacén, que
-  no registra dinero.
-- **No hay SIRE.** Bsale y OKFAC sí lo tienen. `exportarRegistroVentas` genera un
-  Excel, no el formato que SUNAT exige.
-- **No hay modo offline.** Cero service worker, cero cola local. INVY y OKFAC lo
-  tienen. Si se cae internet, la caja muere.
-- **`producto_sku.cod_barras` está en NULL.** Sin código por talla×color el POS
-  no distingue una M de una L al escanear.
-- **Faltan documentos**: nota de débito y liquidación de compra. El builder UBL
-  solo arma operaciones gravadas (nada exonerado ni inafecto).
-- **Permisos sin aprovisionamiento.** Agregar una capacidad nueva exige sembrar
-  ~60 filas a mano (5 roles × 12 tenants) y no existe ningún script que lo haga.
-  Por eso hay 89 chequeos de rol developer hardcodeados en el backend.
+### 🟠 C. Costos reales cargados
 
-### Bloqueo externo (no es código)
+El modelo funciona de punta a punta, pero **0 de 1687 SKU tienen costo**, así
+que Margen sale vacío. No es código: hay que sentarse con los números del
+negocio y cargarlos en `/products/costos`. La lista viene ordenada por unidades
+en juego, así que los primeros 20 productos cubren la mayor parte del inventario.
 
-La emisión SUNAT **nunca completó en verde**. Las 9 filas de `clave` de la
-empresa 2 están cifradas con el esquema anterior a `v1:` y no se pueden leer.
-**Hay que reingresar desde el panel**: usuario y clave SOL, certificado `.p12`
-con su contraseña, y el entorno (`beta`). Hasta entonces no se puede medir
-cuánto tarda SUNAT de verdad.
+### 🟠 D. Los 9 módulos fuera de plan
 
----
+`/compras`, `/contabilidad`, `/devoluciones`, `/gestor-contenidos`,
+`/guia_remision`, `/inventario`, `/libro_ventas`, `/logs` y `/nota_almacen`
+tienen permiso de administrador pero no figuran en ningún
+`plan_entitlement_modulo`.
 
-## 3. Trabajo en orden de prioridad
+Hoy no molesta porque el middleware corre en modo *shadow* (decide el SQL
+legado y el resolver nuevo solo compara). El día que se active `AUTHZ_UNIFIED`,
+los nueve responden `PLAN_NOT_INCLUDED` a todo el mundo.
 
-### 3.1 Cerrar el costo en la nota de ingreso — **primero**
+**Es decisión de negocio, no técnica:** hay que definir qué plan incluye qué.
+Es la lista de precios del producto.
 
-**Archivo**: `src/controllers/notaingreso.controller.js`
+### 🟠 E. Importador que sirva para migrar
 
-Falta aplicar el costo al promedio del SKU. Reglas que no se pueden saltar:
+`ImportProductsDialog.tsx` ya resuelve marca y subcategoría por nombre — eso
+estaba bien resuelto. Pero exige una plantilla fija de 6 columnas y crea
+productos **pelados**: sin variantes, sin stock y sin costo. Después de
+importar, el cliente no puede vender ni ver margen.
 
-1. Llamar a `aplicarIngresoAlCosto` (`src/services/costos/costoRepository.js`)
-   **ANTES** de incrementar el stock. El promedio pondera contra el stock previo;
-   si se llama después, la cantidad entrante se cuenta dos veces.
-2. **Solo en ingresos reales**: si `almacenO` viene con valor es un traslado
-   entre almacenes — esa mercadería ya tiene costo y recalcularlo lo duplicaría.
-   Aplicar costo únicamente cuando `!almacenO`.
-3. **Agrupar por SKU antes de aplicar.** Si el mismo SKU aparece en dos líneas
-   de la misma nota, hay que sumar cantidades y ponderar sus costos, y aplicar
-   una sola vez. Aplicar línea por línea pondera contra un stock desactualizado.
-4. Todo dentro de la transacción que ya existe.
+Falta: mapeo flexible de columnas, detección de curva de tallas, vista previa
+que no escriba nada, y que la confirmación cree producto + SKU + stock + costo
+en una sola transacción.
 
-**Terminado cuando**: se registra una nota con costos y `producto_sku.costo_promedio`
-queda con el valor ponderado correcto; un traslado entre almacenes no lo altera.
+### 🟡 F. `ALLOW_REMOTE_MIGRATE` en migraciones destructivas
 
-### 3.2 Captura del costo al vender — **bloqueado por el WIP del CEO**
+La guardia de host local tiene una puerta trasera por variable de entorno en 20
+migraciones, tres de ellas destructivas (`limpiar_tablas_muertas`,
+`drop_indices_redundantes`, `unicos_por_tenant`). Una variable olvidada en un
+perfil de shell convierte cualquier script en apto para producción.
 
-**Archivo**: `src/controllers/ventas.controller.js` (esperar a que se commitee)
+**Propuesta:** dejar la puerta solo en las aditivas y exigir confirmación
+interactiva —no una variable— en las destructivas.
 
-Al insertar `detalle_venta`, guardar `costo_unitario` con el costo vigente del
-SKU. Usar `obtenerCostosVigentes` (una consulta para todos los SKUs, no una por
-línea).
+### ⚫ G. Bloqueos externos (no se resuelven escribiendo código)
 
-**Por qué importa**: es una **foto**. Si el margen se calculara contra el costo
-actual del SKU, cada cambio de costo reescribiría el margen de todas las ventas
-pasadas y los informes del mes anterior dejarían de cuadrar. Es la pieza cara de
-retrofitear después.
-
-### 3.3 UI de captura de costo
-
-**Dónde**: formulario de nota de ingreso en `client-v2`.
-
-Agregar el campo de costo por línea. **Las etiquetas las manda el backend**:
-`GET /api/negocio` devuelve `origen_vocabulario` con `campoCosto` y `ayudaCosto`
-según el negocio sea de compra, fabricación o mixto. No duplicar esos textos en
-el frontend — se desincronizan.
-
-Si `origen_elegible_por_linea` es `true` (empresa MIXTO), mostrar el selector de
-origen; si no, no preguntar nada.
-
-### 3.4 Pantalla de márgenes
-
-`costoRepository.js` ya tiene `obtenerMargenPorPeriodo` y `valorizarInventario`.
-Falta endpoint + vista.
-
-**Importante**: ambas funciones informan **cobertura** — qué porcentaje del stock
-o de las ventas tiene costo conocido. Hay que mostrarla. Con 0.3% de cobertura
-hoy, presentar un margen sin ese contexto sería engañar al usuario.
-
-### 3.5 Ciclo de compra
-
-El hueco estructural. Documento de compra con importes, cuenta corriente de
-proveedor, anticipos, y que la entrada a almacén nazca de la compra. Esto es
-alcance estándar de ERP que los competidores tienen y nosotros no.
-
-**Diseñar antes de codear.** Vale una sesión de diseño aparte.
-
-### 3.6 SIRE y modo offline
-
-Paridad competitiva, no diferenciación. Van después del costo porque el dolor
-que el dueño **siente** es el margen; SIRE lo sufre su contador.
+- **Credenciales SUNAT**: las de la empresa 2 están cifradas con un esquema
+  retirado cuya clave se eliminó del código a propósito. Ninguna
+  `CREDENTIALS_ENCRYPTION_KEY` las recupera — **hay que reingresarlas**
+  (usuario y clave SOL, `.p12` con su contraseña, entorno).
+- Antes de asumir nada, mirar el diagnóstico en `/settings/integrations` de
+  producción: ya clasifica cada credencial sin exponer valores.
 
 ---
 
-## 4. Convenciones que hay que respetar
+## 3. Reparto propuesto
 
-Salieron de errores reales de esta semana. No son preferencias.
+La regla que evita choques: **un módulo, un dueño**. Estas semanas hubo
+colisiones en `ventas.controller.js` y en el POS por trabajar los dos encima.
 
-**`id_tenant` en todo WHERE de negocio**, tomado de `req.id_tenant` (del JWT),
-nunca del body. Regla de Oro Nº1 de `CLAUDE.md`.
-
-**Los nombres de acción difieren entre capas.** El backend usa el español porque
-es una columna SQL: `requireCapability("ventas", "generar")`. El frontend usa el
-inglés: `capability="ventas.generate"`. `ACTION_COLUMNS` en `authz.service.js`
-traduce. **Mezclarlos falla en silencio**: el botón simplemente no aparece, sin
-error ni 403. Costó una hora encontrarlo.
-
-**Cuidado con `Number(null)`, que es `0`.** Mordió dos veces esta semana: un CDR
-ilegible se clasificaba como ACEPTADO, y una venta sin costo mostraba 100% de
-margen. Descartar null y vacío **antes** de convertir.
-
-**Lógica pura → módulo aparte + test.** `npm test` corre en 1.5 s sin BD ni red.
-Si un test necesita conexión, es señal de que la lógica debe salir del
-controlador. Ver `src/services/costos/` y `src/services/sunat/` como referencia.
-
-**Las migraciones llevan guard de host local, son idempotentes y se corren dos
-veces** para comprobarlo. Patrón en `scripts/migrations/`.
-
-**Commit y push en el mismo paso.** Un commit sin empujar no existe para el
-resto del equipo.
-
-**Antes de empujar**: `npm test` y `node scripts/validate-authz.js` (debe dar 0
-críticos, 0 advertencias).
+| Área | Dueño | Por qué |
+|---|---|---|
+| **A.** Cambio de talla | Socio | Ya construyó devoluciones; conoce el flujo |
+| **B.** Saneamiento de SKU | Claude | Trabajo de datos, irreversible, pide verificación paso a paso |
+| **E.** Importador | Claude | Continúa el plan aprobado; el socio ya dejó la base |
+| **C.** Carga de costos | Marco | Requiere los números reales del negocio |
+| **D.** Planes y precios | Marco | Decisión comercial |
+| **G.** Credenciales SUNAT | Marco | Solo el dueño puede reingresarlas |
+| **F.** Migraciones destructivas | Los tres | Es política, no código |
 
 ---
 
-## 5. Cómo repartirse
+## 4. Convenciones que no se negocian
 
-**CEO** — el trabajo que nadie más puede hacer:
+Están en `CLAUDE.md`. Se repiten las tres que más se rompieron:
 
-- Salir a hablar con **15–20 tiendas de ropa** en Chiclayo y Trujillo. Dos
-  preguntas centrales: *¿cómo decides el precio de una prenda?* y *¿qué haces
-  con lo que no se vendió de la temporada pasada?*
-- Leer **The Mom Test** antes de esas entrevistas (dos noches).
-- **Reingresar las credenciales SUNAT** — bloquea toda la verificación fiscal.
-- Decidir precio: el mercado paga S/300–400 por un vertical que resuelve el
-  problema (restaurant.pe cobraba S/350–450 desde 2016). No competir en el piso
-  de S/140.
+1. **Toda consulta filtra por `id_tenant`** tomado de `req.id_tenant`, nunca del
+   body. `scripts/validate-authz.js` audita las rutas — debe salir en 0.
+2. **Toda ruta mutante lleva `requireCapability`.** Y si la capacidad es nueva,
+   **la migración tiene que sembrar el módulo y subir `perm_version`**. Se
+   olvidó en Comprobantes, en cuentas por cobrar y en contabilidad: el síntoma
+   es un 403 para todos, sin ningún error que lo explique.
+3. **Cero SQL concatenado.** Siempre `?`.
 
-**Socio técnico** — la ejecución:
+Y una cuarta que salió cara esta semana:
 
-- Puntos 3.1 → 3.4 en ese orden.
-- No tocar `ventas.controller.js` hasta que el CEO commitee.
-- 3.5 (compras) requiere diseño previo, no empezar en caliente.
-
----
-
-## 6. Riesgos abiertos
-
-| Riesgo | Estado |
-|---|---|
-| Credenciales SUNAT ilegibles | Bloquea verificación fiscal. Solo el CEO puede resolverlo. |
-| El vertical no está validado con clientes | Todo el plan asume ropa. 20 entrevistas lo confirman o lo tumban en 2 semanas. |
-| Throttle de SUNAT global por proceso | 6 comprobantes/minuto para **todos** los tenants. Se resuelve con outbox + worker, misma pieza que offline. |
-| Permisos sin aprovisionamiento | Cada pantalla nueva nace invisible o se gatea por rol hardcodeado. ~1 semana arreglarlo. |
-| Cobertura de costo en 0.3% | Los márgenes no serán representativos hasta que entre mercadería con costo. |
+4. **`NODE_ENV` no va en el `.env` de la raíz.** Vite lo lee (`envDir: '..'`) y
+   compila el frontend en modo desarrollo sin avisar: React sale en versión de
+   desarrollo e `import.meta.env.PROD` queda en false. En local lo aporta
+   `nodemon.json`; en producción, el entorno.
 
 ---
 
-## 7. Calibración
+## 5. Cómo verificar antes de subir
 
-restaurant.pe — la referencia, nacida en Piura — se fundó en 2016, tuvo **70
-clientes a los dos años** y hoy, diez años después, tiene 2,600 en siete países.
+```bash
+npm test                       # backend
+npm --prefix client-v2 test    # frontend
+node scripts/validate-authz.js # debe decir 0 críticos, 0 advertencias
+npm --prefix client-v2 run build
+```
 
-Un plan realista a tres años para nosotros: 80–150 clientes de ropa en Chiclayo
-y Trujillo, S/30,000–50,000 mensuales recurrentes, equipo chico que se paga
-solo. Eso es un buen negocio. No es una salida millonaria a corto plazo, y
-conviene que ambos socios estén de acuerdo en ese horizonte antes de
-comprometer los próximos dos años.
+Y la foto de referencia, que ningún cambio que no sea una operación de negocio
+debe alterar:
+
+```sql
+SELECT SUM(stock) FROM inventario_stock WHERE id_tenant = 1;  -- 35368
+```

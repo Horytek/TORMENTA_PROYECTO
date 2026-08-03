@@ -9,6 +9,20 @@ import type {
 } from "../types";
 import { mapBackendVenta } from "../types";
 
+// ── Búsqueda liviana (⌘K) ─────────────────────────────────────
+export interface VentaBusqueda {
+  id_venta: number;
+  num_comprobante: string;
+  cliente: string | null;
+  fecha: string;
+  total: number | string;
+}
+
+export const buscarVentas = async (q: string): Promise<VentaBusqueda[]> => {
+  const response = await api.get("/ventas/buscar", { params: { q } });
+  return response.data?.data || [];
+};
+
 // ── Catálogo de productos para POS ───────────────────────────
 export const getProductosVentas = async (params?: {
   id_sucursal?: number | string;

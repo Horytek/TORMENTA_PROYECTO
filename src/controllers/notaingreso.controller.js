@@ -502,49 +502,15 @@ const getDestinatario = async (req, res) => {
   }
 };
 
-const insertNotaAndDetalle = async (req, res) => {
-  const {
-    almacenO = null,
-    almacenD,
-    destinatario,
-    glosa,
-    nota,
-    fecha,
-    producto,
-    numComprobante,
-    cantidad,
-    observacion,
-    usuario,
-    tonalidad,
-    talla,
-    estado_espera = 0,
-    costos = [],          // costo unitario por línea; opcional
-    origen_costo = null   // solo se respeta si la empresa es MIXTO
-  } = req.body;
-  const id_tenant = req.id_tenant;
-
-  if (
-    !almacenD ||
-    !destinatario ||
-    !glosa ||
-    !nota ||
-    !fecha ||
-    !producto ||
-    !numComprobante ||
-    !cantidad ||
-    !usuario
-  ) {
-    return res
-      .status(400)
-      .json({ message: "Bad Request. Please fill all fields correctly." });
-  }
-
-  let connection;
-  try {
-    connection = await getConnection();
-
-    await connection.beginTransaction();
-
+// Núcleo del ingreso (sin abrir/cerrar transacción ni responder HTTP): lo usa
+// tanto `insertNotaAndDetalle` (ingreso solo) como `insertTransferencia` (ver
+// transferenciaAlmacen.controller.js), que corre salida+ingreso en una sola
+// transacción para que el modo "Conjunto" del frontend deje de ser dos
+// llamadas HTTP independientes sin rollback compartido.
+const crearIngresoCore = async (connection, {
+  almacenO = null, almacenD, destinatario, glosa, nota, fecha, producto, numComprobante, cantidad, observacion, usuario,
+  tonalidad, talla, estado_espera = 0, costos = [], origen_costo = null, sku, skus: skusInput, atributos: atributosInput, id_tenant, id_empresa,
+}) => {
     const [usuarioResult] = await connection.query(
       "SELECT id_usuario FROM usuario WHERE usua = ? AND id_tenant = ?",
       [usuario, id_tenant]
@@ -622,7 +588,7 @@ const insertNotaAndDetalle = async (req, res) => {
     // negocio MIXTO puede elegirlo por línea (ver services/costos/origenCosto.js).
     const [[empresaCfg]] = await connection.query(
       "SELECT origen_productos FROM empresa WHERE id_empresa = ? AND id_tenant = ? LIMIT 1",
-      [req.id_empresa, id_tenant]
+      [id_empresa, id_tenant]
     );
     const origenLinea = resolverOrigenDeLinea(empresaCfg?.origen_productos, origen_costo);
 
@@ -630,11 +596,11 @@ const insertNotaAndDetalle = async (req, res) => {
     const detalleValues = [];
     const detalleParams = [];
 
-    const tonalidades = req.body.tonalidad || [];
-    const tallas = req.body.talla || [];
-    const skus = req.body.skus || req.body.sku || []; // Support both new 'skus' and legacy 'sku'
+    const tonalidades = tonalidad || [];
+    const tallas = talla || [];
+    const skus = skusInput || sku || []; // Support both new 'skus' and legacy 'sku'
     // New: Dynamic attributes support
-    const atributos = req.body.atributos || [];
+    const atributos = atributosInput || [];
 
     for (let i = 0; i < producto.length; i++) {
       const id_producto = producto[i];
@@ -726,6 +692,58 @@ const insertNotaAndDetalle = async (req, res) => {
       }
     }
 
+    return { id_nota, id_usuario: usuarioResult[0]?.id_usuario };
+};
+
+const insertNotaAndDetalle = async (req, res) => {
+  const {
+    almacenO = null,
+    almacenD,
+    destinatario,
+    glosa,
+    nota,
+    fecha,
+    producto,
+    numComprobante,
+    cantidad,
+    observacion,
+    usuario,
+    tonalidad,
+    talla,
+    estado_espera = 0,
+    costos = [],          // costo unitario por línea; opcional
+    origen_costo = null   // solo se respeta si la empresa es MIXTO
+  } = req.body;
+  const id_tenant = req.id_tenant;
+
+  if (
+    !almacenD ||
+    !destinatario ||
+    !glosa ||
+    !nota ||
+    !fecha ||
+    !producto ||
+    !numComprobante ||
+    !cantidad ||
+    !usuario
+  ) {
+    return res
+      .status(400)
+      .json({ message: "Bad Request. Please fill all fields correctly." });
+  }
+
+  let connection;
+  try {
+    connection = await getConnection();
+    await connection.beginTransaction();
+
+    const { id_nota, id_usuario } = await crearIngresoCore(connection, {
+      almacenO, almacenD, destinatario, glosa, nota, fecha, producto, numComprobante, cantidad, observacion, usuario,
+      tonalidad, talla, estado_espera, costos, origen_costo,
+      sku: req.body.sku, skus: req.body.skus, atributos: req.body.atributos,
+      id_tenant, id_empresa: req.id_empresa,
+    });
+
     await connection.commit();
 
     // Limpiar caché relacionado
@@ -735,8 +753,8 @@ const insertNotaAndDetalle = async (req, res) => {
     const ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress ||
       (req.connection.socket ? req.connection.socket.remoteAddress : null);
 
-    if (usuarioResult[0]?.id_usuario && id_tenant) {
-      await logInventario.notaIngreso(id_nota, usuarioResult[0].id_usuario, ip, id_tenant);
+    if (id_usuario && id_tenant) {
+      await logInventario.notaIngreso(id_nota, id_usuario, ip, id_tenant);
     }
 
     res.json({ code: 1, message: "Nota y detalle insertados correctamente" });
@@ -877,6 +895,8 @@ const anularNota = async (req, res) => {
     }
   }
 };
+
+export { crearIngresoCore };
 
 export const methods = {
   getIngresos,

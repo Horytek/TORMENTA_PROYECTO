@@ -20,6 +20,8 @@ router.get("/sucursales", reporteController.getSucursales);
 router.get("/ventas_sucursal", reporteController.getSucursalMayorRendimiento);
 router.get("/tendencia_ventas", reporteController.getTendenciaVentas);
 router.get("/top_productos_margen", reporteController.getTopProductosMargen);
+router.get("/stock_aging", reporteController.getStockAging);
+router.get("/ventas_heatmap", reporteController.getVentasHeatmap);
 
 
 export default router;

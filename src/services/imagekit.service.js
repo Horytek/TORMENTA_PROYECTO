@@ -1,11 +1,21 @@
-import ImageKit from 'imagekit';
+let imagekitClient = null;
 
-// Inicializar ImageKit con credenciales de entorno
-const imagekit = new ImageKit({
-    publicKey: process.env.IMAGEKIT_PUBLIC_KEY || '',
-    privateKey: process.env.IMAGEKIT_PRIVATE_KEY || '',
-    urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || ''
-});
+function getImageKitClient() {
+    if (!imagekitClient) {
+        const publicKey = process.env.IMAGEKIT_PUBLIC_KEY || 'public_FwaHDpc2jTrEc20uJ9cnKoypqJ0=';
+        const privateKey = process.env.IMAGEKIT_PRIVATE_KEY || 'private_a2P9Cijfwkx/u51BhiUvWMIbFTk=';
+        const urlEndpoint = process.env.IMAGEKIT_URL_ENDPOINT && !process.env.IMAGEKIT_URL_ENDPOINT.includes('tu_imagekit_id')
+            ? process.env.IMAGEKIT_URL_ENDPOINT
+            : 'https://ik.imagekit.io/tormenta';
+
+        imagekitClient = new ImageKit({
+            publicKey,
+            privateKey,
+            urlEndpoint
+        });
+    }
+    return imagekitClient;
+}
 
 /**
  * Subir imagen a ImageKit
@@ -16,12 +26,9 @@ const imagekit = new ImageKit({
  * @returns {Promise<Object>} Resultado con url, fileId, etc.
  */
 export async function uploadImage({ file, fileName, folder = '/uploads/' }) {
-    if (!process.env.IMAGEKIT_PRIVATE_KEY) {
-        throw new Error('ImageKit no está configurado. Revisa las variables IMAGEKIT_* en .env');
-    }
-
     try {
-        const result = await imagekit.upload({
+        const client = getImageKitClient();
+        const result = await client.upload({
             file, // Base64 o URL
             fileName,
             folder,
@@ -51,7 +58,7 @@ export async function deleteImage(fileId) {
     if (!fileId) return { success: false, message: 'fileId requerido' };
 
     try {
-        await imagekit.deleteFile(fileId);
+        await getImageKitClient().deleteFile(fileId);
         return { success: true };
     } catch (error) {
         console.error('Error eliminando imagen:', error);
@@ -65,7 +72,7 @@ export async function deleteImage(fileId) {
  * @param {Object} transformations - Transformaciones (width, height, quality, etc.)
  */
 export function getOptimizedUrl(path, transformations = {}) {
-    return imagekit.url({
+    return getImageKitClient().url({
         path,
         transformation: [
             {
@@ -82,7 +89,7 @@ export function getOptimizedUrl(path, transformations = {}) {
  * Generar token de autenticación para subida desde frontend (si se necesita)
  */
 export function getAuthenticationParameters() {
-    return imagekit.getAuthenticationParameters();
+    return getImageKitClient().getAuthenticationParameters();
 }
 
 export default {

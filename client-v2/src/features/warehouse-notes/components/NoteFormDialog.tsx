@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Trash2, PackageSearch } from "lucide-react";
+import { Loader2, Trash2, PackageSearch, BookmarkPlus, ClipboardCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import {
 import { FormField } from "@/components/shared/FormField";
 import { useUserStore } from "@/store/useUserStore";
 import { usePermissions } from "@/hooks/usePermissions";
+import { getNegocio } from "@/features/settings/api/settings";
 
 import { ProductPickerPanel } from "./ProductPickerPanel";
 import {
@@ -35,8 +36,11 @@ import {
   getDocumentosSalida,
   insertNotaIngreso,
   insertNotaSalida,
+  insertTransferenciaAlmacen,
 } from "../api/warehouseNotes";
 import type { NoteKind, NoteFormItem, NotaInsertPayload } from "../types";
+import { listarPlantillas, guardarPlantilla, eliminarPlantilla, type PlantillaNota } from "../lib/plantillas";
+import { costosIncompletos, costosParaPayload } from "../lib/costos";
 
 /** "conjunto" = registra una salida y un ingreso a la vez (traslado entre almacenes). */
 type Mode = NoteKind | "conjunto";
@@ -102,27 +106,58 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
   const [tipoNota, setTipoNota] = useState<Mode>(defaultTipo);
   const [items, setItems] = useState<NoteFormItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [plantillas, setPlantillas] = useState<PlantillaNota[]>([]);
+  const [origenCosto, setOrigenCosto] = useState("");
 
   useEffect(() => {
     if (isOpen) {
       setTipoNota(defaultTipo);
       setItems([]);
       setError(null);
+      setPlantillas(listarPlantillas());
+      setOrigenCosto("");
     }
   }, [isOpen, defaultTipo]);
 
-  const { control, register, handleSubmit, watch, reset } = useForm<HeaderValues>({ defaultValues: emptyHeader });
+  // Vocabulario ("costo de compra" vs "costo de producción") y si hay que
+  // preguntar el origen por nota: los manda el backend para no duplicar
+  // etiquetas que se desincronizarían (ver origenCosto.js).
+  const { data: negocio } = useQuery({
+    queryKey: ["negocio", "warehouse-notes"],
+    queryFn: getNegocio,
+    enabled: isOpen,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { control, register, handleSubmit, watch, reset, setValue } = useForm<HeaderValues>({ defaultValues: emptyHeader });
   const almacenOrigen = watch("almacenOrigen");
 
+  // Al cargar una plantilla, cambiar tipoNota dispara este mismo efecto — sin
+  // esta bandera, el reset borraría los datos que la plantilla acaba de poner.
+  const cargandoPlantillaRef = useRef(false);
   useEffect(() => {
+    if (cargandoPlantillaRef.current) {
+      cargandoPlantillaRef.current = false;
+      return;
+    }
     reset(emptyHeader);
     setItems([]);
+    setOrigenCosto("");
   }, [tipoNota, reset]);
 
   // El origen determina de dónde se lee el stock: si cambia, el carrito ya no es válido.
   useEffect(() => {
     setItems([]);
   }, [almacenOrigen]);
+
+  // Costo solo aplica a un ingreso real (no a un traslado entre almacenes):
+  // el backend lo ignora cuando almacenO viene con valor (esa mercadería ya
+  // tiene costo y recalcularlo lo duplicaría).
+  const esIngresoReal = tipoNota === "ingreso" && !almacenOrigen;
+  const vocabulario = negocio?.origen_vocabulario;
+  const mostrarSelectorOrigen = esIngresoReal && !!negocio?.origen_elegible_por_linea;
+  const opcionesOrigen = negocio?.origen_opciones_linea ?? [];
+  const faltanCostos = esIngresoReal && costosIncompletos(items);
 
   const { data: almacenes = [] } = useQuery({
     queryKey: ["nota-almacen-almacenes", tipoNota],
@@ -170,6 +205,33 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
 
   const removeItem = (uniqueKey: string) => setItems((prev) => prev.filter((p) => p.uniqueKey !== uniqueKey));
 
+  const handleGuardarPlantilla = () => {
+    if (items.length === 0) return;
+    const nombre = window.prompt("Nombre de la plantilla (ej. \"Reposición semanal tienda X\"):");
+    if (!nombre?.trim()) return;
+    const nueva = guardarPlantilla({
+      nombre: nombre.trim(), tipo: tipoNota, destinatario: watch("destinatario"), glosa: watch("glosa"), items,
+    });
+    setPlantillas((prev) => [...prev, nueva]);
+  };
+
+  const handleCargarPlantilla = (id: string) => {
+    const p = plantillas.find((pl) => pl.id === id);
+    if (!p) return;
+    cargandoPlantillaRef.current = true;
+    setTipoNota(p.tipo as Mode);
+    setValue("destinatario", p.destinatario);
+    setValue("glosa", p.glosa);
+    // El costo no se reusa de la plantilla: es una foto de lo que costó esa
+    // vez, no un dato que se repita de compra en compra (ver punto 3.2).
+    setItems(p.items.map((i) => ({ ...i, costo: null })));
+  };
+
+  const handleEliminarPlantilla = (id: string) => {
+    eliminarPlantilla(id);
+    setPlantillas((prev) => prev.filter((p) => p.id !== id));
+  };
+
   const mutation = useMutation({
     mutationFn: async (values: HeaderValues) => {
       const itemFields = {
@@ -189,34 +251,27 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
       };
 
       if (tipoNota === "conjunto") {
-        const salidaResult = await insertNotaSalida({
+        // Una sola transacción en el backend (transferenciaAlmacen.controller.js):
+        // si el ingreso falla, la salida también se revierte — antes eran dos
+        // POST independientes y un fallo a mitad de camino perdía el stock.
+        return insertTransferenciaAlmacen({
           ...common,
           almacenO: values.almacenOrigen,
-          numComprobante: numeroDocumentoSalida,
-          nom_usuario: user?.username,
-        });
-        if (!salidaResult.success) return salidaResult;
-
-        const ingresoResult = await insertNotaIngreso({
-          ...common,
           almacenD: values.almacenDestino,
-          numComprobante: numeroDocumentoIngreso,
-          usuario: user?.username,
+          numComprobanteSalida: numeroDocumentoSalida,
+          numComprobanteIngreso: numeroDocumentoIngreso,
+          usuario: user?.username ?? "",
         });
-        // ponytail: sin transacción entre los dos endpoints legacy; si el ingreso falla acá,
-        // la salida ya quedó registrada. Aceptable (no es ruta de facturación/pagos); se avisa.
-        if (!ingresoResult.success) {
-          return { success: false, message: `Salida registrada, pero el ingreso falló: ${ingresoResult.message || "error desconocido"}` };
-        }
-        return ingresoResult;
       }
 
+      const costos = esIngresoReal ? costosParaPayload(items) : undefined;
       const payload: NotaInsertPayload = {
         ...common,
         almacenO: tipoNota === "salida" ? values.almacenOrigen : values.almacenOrigen || null,
         almacenD: tipoNota === "ingreso" ? values.almacenDestino : values.almacenDestino || null,
         numComprobante: numeroDocumento,
         ...(tipoNota === "salida" ? { nom_usuario: user?.username } : { usuario: user?.username }),
+        ...(costos ? { costos, origen_costo: mostrarSelectorOrigen ? origenCosto || null : null } : {}),
       };
       return tipoNota === "salida" ? insertNotaSalida(payload) : insertNotaIngreso(payload);
     },
@@ -236,6 +291,8 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
     tipoNota === "conjunto" ? !!numeroDocumentoIngreso && !!numeroDocumentoSalida : !!numeroDocumento;
   const origenOk = tipoNota === "ingreso" || !!watch("almacenOrigen");
   const destinoOk = tipoNota === "salida" || !!watch("almacenDestino");
+  const costosCapturados = esIngresoReal ? costosParaPayload(items) : undefined;
+  const faltaOrigenCosto = mostrarSelectorOrigen && !!costosCapturados && !origenCosto;
 
   const isValid =
     !!user?.username &&
@@ -245,7 +302,9 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
     !!watch("destinatario") &&
     !!watch("glosa") &&
     !!watch("nota") &&
-    items.length > 0;
+    items.length > 0 &&
+    !faltanCostos &&
+    !faltaOrigenCosto;
 
   const onSubmit = (values: HeaderValues) => {
     setError(null);
@@ -274,6 +333,29 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
             </button>
           ))}
         </div>
+
+        {plantillas.length > 0 && (
+          <div className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2">
+            <ClipboardCheck className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <Select onValueChange={handleCargarPlantilla}>
+              <SelectTrigger className="h-8 flex-1 text-xs"><SelectValue placeholder="Cargar una plantilla…" /></SelectTrigger>
+              <SelectContent>
+                {plantillas.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between gap-2 pr-2">
+                    <SelectItem value={p.id} className="text-xs flex-1">{p.nombre}</SelectItem>
+                    <button
+                      type="button"
+                      className="text-muted-foreground hover:text-destructive cursor-pointer"
+                      onClick={(e) => { e.stopPropagation(); handleEliminarPlantilla(p.id); }}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -380,8 +462,15 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
           </FormField>
 
           <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <PackageSearch className="h-4 w-4" /> Productos
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <PackageSearch className="h-4 w-4" /> Productos
+              </div>
+              {items.length > 0 && (
+                <Button type="button" variant="outline" size="sm" className="h-7 gap-1.5 text-xs" onClick={handleGuardarPlantilla}>
+                  <BookmarkPlus className="h-3.5 w-3.5" /> Guardar como plantilla
+                </Button>
+              )}
             </div>
             <ProductPickerPanel
               tipo={tipoNota === "ingreso" ? "ingreso" : "salida"}
@@ -390,6 +479,19 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
               onAdd={addItem}
               disabled={tipoNota !== "ingreso" && !almacenOrigen}
             />
+
+            {esIngresoReal && mostrarSelectorOrigen && (
+              <FormField label="Origen de esta mercadería" hint="Tu negocio compra y también fabrica; dinos de cuál se trata esta vez.">
+                <Select value={origenCosto || undefined} onValueChange={setOrigenCosto}>
+                  <SelectTrigger><SelectValue placeholder="Selecciona un origen" /></SelectTrigger>
+                  <SelectContent>
+                    {opcionesOrigen.map((o) => (
+                      <SelectItem key={o.valor} value={o.valor}>{o.etiqueta}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </FormField>
+            )}
 
             {items.length > 0 && (
               <div className="rounded-xl border border-border">
@@ -404,6 +506,30 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
                         {item.marca} · Cant: {item.cantidad}
                       </p>
                     </div>
+                    {esIngresoReal && (
+                      <div className="shrink-0">
+                        <Input
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          placeholder={vocabulario?.campoCosto ?? "Costo"}
+                          title={vocabulario?.ayudaCosto}
+                          value={item.costo ?? ""}
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            const parsed = raw === "" ? null : Number(raw);
+                            setItems((prev) =>
+                              prev.map((p) =>
+                                p.uniqueKey === item.uniqueKey
+                                  ? { ...p, costo: parsed === null || Number.isNaN(parsed) ? null : parsed }
+                                  : p
+                              )
+                            );
+                          }}
+                          className="h-8 w-24 text-sm"
+                        />
+                      </div>
+                    )}
                     <Button
                       type="button"
                       variant="ghost"
@@ -418,6 +544,17 @@ export default function NoteFormDialog({ isOpen, onClose, defaultTipo = "ingreso
               </div>
             )}
           </div>
+
+          {faltanCostos && (
+            <p className="rounded-md border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+              Completa el {vocabulario?.campoCosto?.toLowerCase() ?? "costo"} de todos los productos, o de ninguno: un costo a medias no se puede guardar.
+            </p>
+          )}
+          {faltaOrigenCosto && !faltanCostos && (
+            <p className="rounded-md border border-amber-500/25 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-400">
+              Selecciona el origen de esta mercadería para registrar el costo.
+            </p>
+          )}
 
           {error && (
             <p className="rounded-md border border-destructive/25 bg-destructive/10 px-3 py-2 text-sm text-destructive">

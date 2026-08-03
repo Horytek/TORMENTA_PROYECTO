@@ -6,7 +6,10 @@ import { stockPorProducto, restarStockSku, descontarPorProducto, sumarStockSku }
 import { esErrorDeStock } from "../services/inventario/errores.js";
 import { obtenerCostosVigentes } from "../services/costos/costoRepository.js";
 import { costoDeLineaRepartida } from "../services/costos/costoPromedio.js";
+import { getComboItemsPorProductos, disponibilidadCombos } from "../services/combos/comboRepository.js";
+import { acumularPuntos, canjearPuntos, PuntosInsuficientesError } from "../services/loyalty/puntosRepository.js";
 import { resolveSku } from "../utils/skuHelper.js";
+import { saldoPendienteCliente } from "./cuentaPorCobrar.controller.js";
 
 // Cache para datos que no cambian frecuentemente
 const queryCache = new Map();
@@ -30,10 +33,42 @@ const normalizarNumero = (valor, campo, { minimo = 0, entero = false } = {}) => 
   return numero;
 };
 
+/**
+ * Costo unitario de UN combo: suma de (costo de cada componente × cuántas
+ * unidades de ese componente entran en un combo). No se puede usar
+ * `costoDeLineaRepartida` acá porque esa función promedia por unidad
+ * asumiendo que todos los movimientos son del MISMO producto — mezclar
+ * productos distintos en cantidades distintas daría un costo sin sentido.
+ */
+const costoDeCombo = ({ comboDetalle, costoPorSku }) => {
+  let total = 0;
+  for (const item of comboDetalle) {
+    const { costo } = costoDeLineaRepartida({ movimientos: item.movimientos, costoPorSku });
+    if (costo === null) return null; // costo incompleto: no se puede afirmar el costo del combo
+    total += costo * item.cantidadPorCombo;
+  }
+  return Math.round((total + Number.EPSILON) * 1e6) / 1e6;
+};
+
 const normalizarIdOpcional = (valor) => {
   if (valor === undefined || valor === null || valor === "") return null;
   const id = Number(valor);
   return Number.isInteger(id) && id > 0 ? id : null;
+};
+
+/**
+ * Fase B — atributos fijados de una variante colapsada (ej. { "5": "M" } =
+ * talla M, cualquier color). Solo se valida la FORMA (objeto plano de
+ * string→string) — si el cajero mandó ids/valores que no existen, el filtro
+ * de `descontarPorProducto` simplemente no encuentra candidatas y la venta
+ * falla con "sin stock", que es una falla segura.
+ */
+const normalizarAtributosFijados = (valor) => {
+  if (!valor || typeof valor !== "object" || Array.isArray(valor)) return null;
+  const entradas = Object.entries(valor).filter(
+    ([id, val]) => /^\d+$/.test(id) && typeof val === "string" && val.trim() !== ""
+  );
+  return entradas.length > 0 ? Object.fromEntries(entradas) : null;
 };
 
 const normalizarDetalleVenta = (detalle) => {
@@ -56,7 +91,10 @@ const normalizarDetalleVenta = (detalle) => {
     total,
     id_tonalidad: normalizarIdOpcional(detalle.id_tonalidad),
     id_talla: normalizarIdOpcional(detalle.id_talla),
-    id_sku: normalizarIdOpcional(detalle.id_sku)
+    id_sku: normalizarIdOpcional(detalle.id_sku),
+    // Mutuamente excluyente con id_sku: si el cajero eligió un SKU exacto, un
+    // atributos_fijados que haya viajado junto (residual del cliente) se ignora.
+    atributos_fijados: normalizarIdOpcional(detalle.id_sku) ? null : normalizarAtributosFijados(detalle.atributos_fijados),
   };
 };
 
@@ -297,7 +335,8 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
   const {
     id_sucursal, id_almacen, id_comprobante, id_cliente, estado_venta,
     f_venta, igv, detalles, fecha_iso, metodo_pago, fecha,
-    descuento_venta, vuelto, recibido, observacion, estado_sunat, idempotency_key
+    descuento_venta, vuelto, recibido, observacion, estado_sunat, idempotency_key,
+    id_usuario, dni_vendedor, motivo_descuento, referencia_pago, puntos_canjeados
   } = saleData;
 
   const fechaVenta = f_venta || fecha;
@@ -308,6 +347,23 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
   const recibidoVenta = normalizarNumero(recibido ?? 0, "recibido");
   const vueltoVenta = normalizarNumero(vuelto ?? 0, "vuelto");
   const descuentoVenta = normalizarNumero(descuento_venta ?? 0, "descuento_venta");
+  // Control anti-fuga de margen: un descuento sin motivo queda invisible en
+  // cualquier auditoría posterior. La autorización es implícita — el usuario
+  // que registra la venta ya queda asociado por `id_usuario`/`dni_vendedor`.
+  const motivoDescuentoVenta = String(motivo_descuento ?? "").trim() || null;
+  if (descuentoVenta > 0 && !motivoDescuentoVenta) {
+    throw new VentaValidationError("Debes indicar el motivo del descuento aplicado.");
+  }
+
+  // N° de operación de pagos digitales (Yape/Plin/tarjeta/depósito): objeto
+  // plano { METODO: referencia }, se descartan claves vacías antes de guardar.
+  let referenciaPagoVenta = null;
+  if (referencia_pago && typeof referencia_pago === "object") {
+    const limpio = Object.fromEntries(
+      Object.entries(referencia_pago).filter(([, v]) => String(v ?? "").trim() !== "")
+    );
+    if (Object.keys(limpio).length > 0) referenciaPagoVenta = JSON.stringify(limpio);
+  }
   const igvVenta = normalizarNumero(igv ?? 0, "igv");
   const detallesNormalizados = detalles
     .map(normalizarDetalleVenta)
@@ -318,6 +374,28 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
     ));
   const totalVenta = detallesNormalizados.reduce((suma, detalle) => suma + detalle.total, 0);
   const idempotencyKey = normalizarIdempotencyKey(idempotency_key);
+  const esVentaACredito = String(metodo_pago).toUpperCase() === "CREDITO";
+
+  // 0. Venta a crédito: requiere cliente y respeta su límite (si tiene uno configurado).
+  if (esVentaACredito) {
+    if (!id_cliente) {
+      throw new VentaValidationError("Una venta a crédito requiere seleccionar un cliente.");
+    }
+    const [[cliente]] = await connection.query(
+      "SELECT limite_credito FROM cliente WHERE id_cliente = ? AND id_tenant = ?",
+      [id_cliente, id_tenant]
+    );
+    if (!cliente) throw new VentaValidationError("Cliente no encontrado.", 404);
+    if (cliente.limite_credito != null) {
+      const saldoActual = await saldoPendienteCliente(connection, { id_cliente, id_tenant });
+      if (saldoActual + totalVenta > Number(cliente.limite_credito)) {
+        throw new VentaValidationError(
+          `Esta venta supera el límite de crédito del cliente (disponible: S/ ${(Number(cliente.limite_credito) - saldoActual).toFixed(2)}).`,
+          409
+        );
+      }
+    }
+  }
 
   // 1. Generar Correlativo
   const [comprobanteResult] = await connection.query(
@@ -344,13 +422,42 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
   );
   const id_comprobante_final = nuevoComprobanteResult.insertId;
 
+  // 2.5. Resolver quién atendió (para comisión). Por defecto es quien cobra en
+  // caja (id_usuario), pero el cajero puede atribuirla a otro vendedor de piso
+  // — típico en retail cuando quien vende no es quien cobra. Se valida contra
+  // `vendedor` del mismo tenant: nunca se confía en el DNI tal cual llega.
+  let dniVendedor = null;
+  if (dni_vendedor) {
+    const [[vendedorElegido]] = await connection.query(
+      "SELECT dni FROM vendedor WHERE dni = ? AND id_tenant = ? AND estado_vendedor = 1",
+      [dni_vendedor, id_tenant]
+    );
+    dniVendedor = vendedorElegido?.dni ?? null;
+  }
+  if (!dniVendedor && id_usuario) {
+    const [[vendedorRow]] = await connection.query(
+      "SELECT dni FROM vendedor WHERE id_usuario = ? AND id_tenant = ?",
+      [id_usuario, id_tenant]
+    );
+    dniVendedor = vendedorRow?.dni ?? null;
+  }
+
   // 3. Insertar Venta
   // id_anular / id_anular_b removed/ignored.
   const [ventaResult] = await connection.query(
-    "INSERT INTO venta (id_comprobante, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, observacion, estado_sunat, id_tenant, idempotency_key, recibido, vuelto, descuento_global) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [id_comprobante_final, id_cliente, id_sucursal, estadoVenta, fechaVenta, igvVenta, fechaIsoVenta, metodo_pago, observacionVenta, estadoSunat, id_tenant, idempotencyKey, recibidoVenta, vueltoVenta, descuentoVenta]
+    "INSERT INTO venta (id_comprobante, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, observacion, estado_sunat, id_tenant, idempotency_key, recibido, vuelto, descuento_global, dni_vendedor, motivo_descuento, referencia_pago) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [id_comprobante_final, id_cliente, id_sucursal, estadoVenta, fechaVenta, igvVenta, fechaIsoVenta, metodo_pago, observacionVenta, estadoSunat, id_tenant, idempotencyKey, recibidoVenta, vueltoVenta, descuentoVenta, dniVendedor, motivoDescuentoVenta, referenciaPagoVenta]
   );
   const id_venta = ventaResult.insertId;
+
+  // 3.1. Venta a crédito: registrar la cuenta por cobrar (vencimiento a 30 días).
+  if (esVentaACredito) {
+    await connection.query(
+      `INSERT INTO cuenta_por_cobrar (id_venta, id_cliente, id_tenant, monto_total, saldo, fecha_vencimiento, estado)
+       VALUES (?, ?, ?, ?, ?, DATE_ADD(?, INTERVAL 30 DAY), 'pendiente')`,
+      [id_venta, id_cliente, id_tenant, totalVenta, totalVenta, fechaVenta]
+    );
+  }
 
   // 3.5. Validar los id_sku que mandó el cliente.
   // `restarStockSku` filtra por (id_tenant, id_sku, id_almacen) y nunca por
@@ -379,6 +486,20 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
     }
   }
 
+  // 3.6. Combos: qué productos de la venta son combos y de qué se componen.
+  // Un combo no tiene stock propio — al venderlo se descuenta cada componente.
+  const idsProductoVenta = [...new Set(detallesNormalizados.map((d) => d.id_producto))];
+  const [combosDeLaVenta] = idsProductoVenta.length > 0
+    ? await connection.query(
+        `SELECT id_producto FROM producto WHERE id_tenant = ? AND es_combo = 1 AND id_producto IN (${idsProductoVenta.map(() => "?").join(",")})`,
+        [id_tenant, ...idsProductoVenta]
+      )
+    : [[]];
+  const idsCombo = new Set(combosDeLaVenta.map((c) => c.id_producto));
+  const comboItemsMap = await getComboItemsPorProductos(connection, {
+    id_tenant, ids_producto_combo: [...idsCombo],
+  });
+
   // 4. Insertar Detalles y Actualizar Stock
   const detalleVentaValues = [];
   const detalleVentaParams = [];
@@ -388,22 +509,54 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
   const lineas = [];
 
   for (const detalle of detallesNormalizados) {
-    const { id_producto, cantidad, precio, descuento, total, id_tonalidad, id_talla, id_sku } = detalle;
+    const { id_producto, cantidad, precio, descuento, total, id_tonalidad, id_talla, id_sku, atributos_fijados } = detalle;
     const id_ton = id_tonalidad || null;
     const id_tal = id_talla || null;
+    const esCombo = idsCombo.has(id_producto);
 
-    // Si el POS mandó un id_sku (producto con variante elegida), se descuenta
-    // exactamente ese SKU. Si no, se reparte entre los SKU del producto —
-    // mismo camino que ya usan notas/guías. Ambos lanzan un error tipado
-    // (capturado más abajo) si no alcanza el stock, sin dejarlo negativo.
     let movimientos;
+    let comboDetalle = null; // solo para combos: movimientos agrupados por componente, para el costo ponderado
     try {
-      movimientos = id_sku
-        ? [{ ...(await restarStockSku(connection, { id_tenant, id_sku, id_almacen, cantidad })), cantidad }]
-        : await descontarPorProducto(connection, {
-            id_tenant, id_producto, id_almacen, cantidad,
-            descripcion: `producto ${id_producto}`,
+      if (esCombo) {
+        const items = comboItemsMap.get(id_producto) || [];
+        if (items.length === 0) {
+          throw new VentaValidationError(`El combo ${id_producto} no tiene componentes configurados.`, 409);
+        }
+        comboDetalle = [];
+        movimientos = [];
+        for (const item of items) {
+          const movsComponente = await descontarPorProducto(connection, {
+            id_tenant, id_producto: item.id_producto_componente, id_almacen,
+            cantidad: cantidad * item.cantidad,
+            descripcion: `combo ${id_producto} → componente ${item.id_producto_componente}`,
           });
+          // Se marca cada movimiento con el producto real que perdió stock:
+          // el kardex del combo debe verse en el componente, no en el combo.
+          const movsConProducto = movsComponente.map((m) => ({ ...m, id_producto: item.id_producto_componente }));
+          comboDetalle.push({ cantidadPorCombo: item.cantidad, movimientos: movsConProducto });
+          movimientos.push(...movsConProducto);
+        }
+      } else if (id_sku) {
+        // Si el POS mandó un id_sku (producto con variante elegida), se descuenta
+        // exactamente ese SKU.
+        movimientos = [{ ...(await restarStockSku(connection, { id_tenant, id_sku, id_almacen, cantidad })), cantidad }];
+      } else if (atributos_fijados) {
+        // Fase B: el cajero vendió sobre una "variante colapsada" (ej. talla M,
+        // cualquier color) en vez de un SKU exacto. Se reparte solo entre los
+        // SKU que matchean los atributos fijados — mismo motor de reparto que
+        // el pool completo, acotado.
+        movimientos = await descontarPorProducto(connection, {
+          id_tenant, id_producto, id_almacen, cantidad, atributosFijados: atributos_fijados,
+          descripcion: `producto ${id_producto} (variante colapsada)`,
+        });
+      } else {
+        // Si no, se reparte entre los SKU del producto — mismo camino que ya
+        // usan notas/guías.
+        movimientos = await descontarPorProducto(connection, {
+          id_tenant, id_producto, id_almacen, cantidad,
+          descripcion: `producto ${id_producto}`,
+        });
+      }
     } catch (error) {
       if (esErrorDeStock(error)) throw new VentaValidationError(error.message, 409);
       throw error;
@@ -413,14 +566,15 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
     // qué SKU tocó, y resolverlo acá dispararía una consulta por línea.
     // `id_sku` refleja lo que eligió el usuario; si no eligió variante queda
     // NULL aunque el reparto haya tocado uno o más SKU (igual que en notas).
-    lineas.push({ id_producto, cantidad, precio, descuento, total, id_ton, id_tal, id_sku, movimientos });
+    lineas.push({ id_producto, cantidad, precio, descuento, total, id_ton, id_tal, id_sku, movimientos, comboDetalle });
 
     // bitacora_nota: una fila por SKU realmente tocado, para que la anulación
-    // devuelva las unidades exactas a donde salieron.
+    // devuelva las unidades exactas a donde salieron. Un movimiento de combo
+    // trae su propio `id_producto` (el componente); el resto usa el de la línea.
     for (const mov of movimientos) {
       bitacoraValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
       bitacoraParams.push(
-        id_producto, mov.id_sku, id_almacen, mov.cantidad, mov.stockAnterior, mov.stockActual,
+        mov.id_producto ?? id_producto, mov.id_sku, id_almacen, mov.cantidad, mov.stockAnterior, mov.stockActual,
         fechaVenta, id_venta, id_tenant, id_ton, id_tal
       );
     }
@@ -434,18 +588,56 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
     idsSku: lineas.flatMap((l) => l.movimientos.map((m) => m.id_sku)),
   });
 
+  // Snapshot de atributos: copia literal de { id_atributo, nombre, valor } al
+  // momento de vender. `producto_sku.attributes_json` no se edita nunca después
+  // de crear el SKU, pero `atributo.nombre`/`atributo_valor.valor` SÍ se pueden
+  // renombrar más adelante — sin esta copia, una venta vieja mostraría el
+  // nombre nuevo en vez del que el cliente realmente vio al comprar.
+  const idsSkuConVariante = [...new Set(lineas.filter((l) => l.id_sku).map((l) => l.id_sku))];
+  const snapshotPorSku = new Map();
+  if (idsSkuConVariante.length > 0) {
+    const [skuRows] = await connection.query(
+      `SELECT id_sku, attributes_json FROM producto_sku WHERE id_sku IN (?) AND id_tenant = ?`,
+      [idsSkuConVariante, id_tenant]
+    );
+    const attrsPorSku = skuRows.map((r) => ({
+      id_sku: r.id_sku,
+      attrs: typeof r.attributes_json === "string" ? JSON.parse(r.attributes_json || "{}") : (r.attributes_json || {}),
+    }));
+    const idsAtributo = [...new Set(attrsPorSku.flatMap((r) => Object.keys(r.attrs).map(Number)))];
+    const [attrRows] = idsAtributo.length
+      ? await connection.query(`SELECT id_atributo, nombre FROM atributo WHERE id_atributo IN (?)`, [idsAtributo])
+      : [[]];
+    const nombrePorAtributo = new Map(attrRows.map((a) => [a.id_atributo, a.nombre]));
+
+    for (const { id_sku, attrs } of attrsPorSku) {
+      const snapshot = Object.entries(attrs).map(([idAtributo, valor]) => ({
+        id_atributo: Number(idAtributo),
+        nombre: nombrePorAtributo.get(Number(idAtributo)) ?? null,
+        valor,
+      }));
+      snapshotPorSku.set(id_sku, snapshot);
+    }
+  }
+
   for (const l of lineas) {
-    const { costo } = costoDeLineaRepartida({ movimientos: l.movimientos, costoPorSku });
-    detalleVentaValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    // Un combo no promedia como una línea normal (mezclaría el costo de
+    // productos distintos en distintas cantidades): su costo unitario es la
+    // suma de (costo de cada componente × cuántos entran en un combo).
+    const costo = l.comboDetalle
+      ? costoDeCombo({ comboDetalle: l.comboDetalle, costoPorSku })
+      : costoDeLineaRepartida({ movimientos: l.movimientos, costoPorSku }).costo;
+    const atributosSnapshot = l.id_sku ? JSON.stringify(snapshotPorSku.get(l.id_sku) ?? []) : null;
+    detalleVentaValues.push('(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
     detalleVentaParams.push(
       l.id_producto, id_venta, l.cantidad, l.precio, l.descuento, l.total,
-      id_tenant, l.id_ton, l.id_tal, l.id_sku, costo
+      id_tenant, l.id_ton, l.id_tal, l.id_sku, costo, atributosSnapshot
     );
   }
 
   if (detalleVentaValues.length > 0) {
     await connection.query(
-      `INSERT INTO detalle_venta (id_producto, id_venta, cantidad, precio, descuento, total, id_tenant, id_tonalidad, id_talla, id_sku, costo_unitario) VALUES ${detalleVentaValues.join(', ')}`,
+      `INSERT INTO detalle_venta (id_producto, id_venta, cantidad, precio, descuento, total, id_tenant, id_tonalidad, id_talla, id_sku, costo_unitario, atributos_snapshot) VALUES ${detalleVentaValues.join(', ')}`,
       detalleVentaParams
     );
   }
@@ -459,6 +651,24 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
 
   // 5. (Removed) Insertar Venta Boucher & Update
   // 6. (Removed) Insertar Detalles Boucher
+
+  // 7. Club de Puntos: el descuento del canje ya está aplicado al total (vía
+  // `descuento_global`, calculado en el frontend) — acá solo se mueve el
+  // saldo y se audita. Ganar puntos nunca puede tumbar la venta; canjear de
+  // más que el saldo disponible sí (mismo criterio que el stock).
+  try {
+    if (Number(puntos_canjeados) > 0) {
+      await canjearPuntos(connection, { id_tenant, id_cliente, id_venta, puntos: Math.floor(Number(puntos_canjeados)) });
+    }
+    if (id_cliente) {
+      await acumularPuntos(connection, { id_tenant, id_cliente, id_venta, totalVenta });
+    }
+  } catch (error) {
+    if (error instanceof PuntosInsuficientesError) {
+      throw new VentaValidationError(error.message, error.statusCode);
+    }
+    throw error;
+  }
 
   return { id_venta, num_comprobante: nuevoNumComprobante, total_venta: totalVenta };
 };
@@ -503,6 +713,10 @@ const getVentas = async (req, res) => {
       where.push("v.estado_venta = ?");
       params.push(parseInt(req.query.estado, 10));
     }
+    if (req.query.dni_vendedor) {
+      where.push("v.dni_vendedor = ?");
+      params.push(req.query.dni_vendedor);
+    }
 
     // Armar cláusula WHERE
     let whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
@@ -533,6 +747,8 @@ const getVentas = async (req, res) => {
         v.recibido,
         v.vuelto,
         v.descuento_global as descuento,
+        v.motivo_descuento,
+        v.referencia_pago,
         v.estado_sunat,
         usu.usua,
         v.observacion,
@@ -591,6 +807,45 @@ const getVentas = async (req, res) => {
     res.json({ code: 1, data: ventas });
   } catch (error) {
     console.error('Error en getVentas:', error);
+    res.status(500).json({ code: 0, message: "Error interno del servidor" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+// Búsqueda liviana por comprobante/cliente — para el buscador global (⌘K).
+// No usa los joins pesados de getVentas: solo lo mínimo para mostrar un resultado.
+const buscarVentas = async (req, res) => {
+  let connection;
+  try {
+    const id_tenant = req.id_tenant;
+    const q = String(req.query.q ?? "").trim();
+    if (q.length < 2) return res.json({ code: 1, data: [] });
+
+    connection = await getConnection();
+    const like = `%${q}%`;
+
+    const [rows] = await connection.query(
+      `SELECT
+         v.id_venta,
+         com.num_comprobante,
+         COALESCE(cl.razon_social, CONCAT(cl.nombres, ' ', cl.apellidos)) AS cliente,
+         DATE_FORMAT(v.f_venta, '%Y-%m-%d') AS fecha,
+         (SELECT COALESCE(SUM(dv.total), 0) FROM detalle_venta dv WHERE dv.id_venta = v.id_venta) AS total
+       FROM venta v
+       INNER JOIN comprobante com ON com.id_comprobante = v.id_comprobante AND com.id_tenant = v.id_tenant
+       LEFT JOIN cliente cl ON cl.id_cliente = v.id_cliente
+       WHERE v.id_tenant = ?
+         AND v.estado_venta != 0
+         AND (com.num_comprobante LIKE ? OR cl.nombres LIKE ? OR cl.apellidos LIKE ? OR cl.razon_social LIKE ?)
+       ORDER BY v.f_venta DESC
+       LIMIT 5`,
+      [id_tenant, like, like, like, like]
+    );
+
+    res.json({ code: 1, data: rows });
+  } catch (error) {
+    console.error('Error en buscarVentas:', error);
     res.status(500).json({ code: 0, message: "Error interno del servidor" });
   } finally {
     if (connection) connection.release();
@@ -753,6 +1008,9 @@ const getProductosVentas = async (req, res) => {
         MA.nom_marca,
         CA.nom_subcat         AS categoria_p,
         PR.cod_barras         AS codigo_barras,
+        PR.stock_min,
+        PR.tipo_afectacion_igv,
+        PR.es_combo,
         EXISTS(
           SELECT 1 FROM producto_sku sk
           WHERE sk.id_producto = PR.id_producto AND sk.id_tenant = PR.id_tenant AND sk.estado = 1
@@ -767,14 +1025,23 @@ const getProductosVentas = async (req, res) => {
       [id_tenant]
     );
 
-    const stockMap = await stockPorProducto(connection, {
-      id_tenant,
-      id_almacen: almacenFiltro,
-      ids_producto: productos.map((p) => p.codigo),
-    });
+    const combosIds = productos.filter((p) => p.es_combo).map((p) => p.codigo);
+    const idsProductosNormales = productos.filter((p) => !p.es_combo).map((p) => p.codigo);
+
+    // El stock de un combo no vive en `inventario_stock`: es el mínimo de
+    // "combos armables" según el stock disponible de sus componentes.
+    const [stockMap, comboStockMap] = await Promise.all([
+      stockPorProducto(connection, { id_tenant, id_almacen: almacenFiltro, ids_producto: idsProductosNormales }),
+      disponibilidadCombos(connection, { id_tenant, ids_producto_combo: combosIds, id_almacen: almacenFiltro }),
+    ]);
 
     const result = productos
-      .map((p) => ({ ...p, stock: stockMap.get(p.codigo) ?? 0, tiene_variantes: Boolean(p.tiene_variantes) }))
+      .map((p) => ({
+        ...p,
+        stock: p.es_combo ? (comboStockMap.get(p.codigo) ?? 0) : (stockMap.get(p.codigo) ?? 0),
+        tiene_variantes: Boolean(p.tiene_variantes),
+        es_combo: Boolean(p.es_combo),
+      }))
       .filter((p) => p.stock > 0);
 
     res.json({ code: 1, data: result, message: "Productos listados" });
@@ -1414,7 +1681,8 @@ const getVentaById = async (req, res) => {
         dv.cantidad,
         dv.precio,
         dv.descuento,
-        dv.total as sub_total
+        dv.total as sub_total,
+        dv.atributos_snapshot
        FROM detalle_venta dv
        INNER JOIN producto p ON p.id_producto = dv.id_producto
        WHERE dv.id_venta = ?`,
@@ -1428,6 +1696,9 @@ const getVentaById = async (req, res) => {
       precio: parseFloat(detalle.precio),
       descuento: parseFloat(detalle.descuento),
       sub_total: parseFloat(detalle.sub_total),
+      atributos_snapshot: typeof detalle.atributos_snapshot === "string"
+        ? JSON.parse(detalle.atributos_snapshot)
+        : detalle.atributos_snapshot,
     }));
 
     // Calcular total basado en detalles
@@ -1833,6 +2104,7 @@ const getVentasOnline = async (req, res) => {
 
 export const methods = {
   getVentas,
+  buscarVentas,
   getProductosVentas,
   addVenta,
   getClienteVentas,
