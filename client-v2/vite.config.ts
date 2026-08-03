@@ -17,21 +17,15 @@ import { resolve } from 'path'
  *
  * El modo lo decide el comando, no una variable del backend.
  */
-// https://vite.dev/config/
-export default defineConfig(({ command }) => {
-  const esBuild = command === 'build';
+// ⚠️ `envDir: '..'` hace que Vite lea el .env de la RAÍZ, que es del backend.
+// Si ese archivo define `NODE_ENV`, Vite lo usa para decidir el modo y un
+// `vite build` sale compilado en desarrollo: React en versión de desarrollo e
+// `import.meta.env.PROD` en false, sin ningún aviso. Por eso `NODE_ENV` no va
+// en el .env — el backend lo recibe de `nodemon.json` en local y del entorno
+// en producción. Si algún día vuelve a aparecer ahí, este es el síntoma.
 
-  return {
-  // Se fuerzan los valores en vez de dejar que Vite los infiera del NODE_ENV
-  // que trae el .env compartido. `command` es la verdad: `vite build` es
-  // producción y `vite dev` no, sin importar qué diga el archivo del backend.
-  define: esBuild
-    ? {
-        'process.env.NODE_ENV': '"production"',
-        'import.meta.env.PROD': 'true',
-        'import.meta.env.DEV': 'false',
-      }
-    : {},
+// https://vite.dev/config/
+export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
@@ -82,5 +76,4 @@ export default defineConfig(({ command }) => {
       }
     }
   }
-  };
 })
