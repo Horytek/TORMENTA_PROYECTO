@@ -54,6 +54,13 @@ export type CanalVenta = "tienda" | "ecommerce" | "movil" | "delivery" | "otro";
 // ── Producto nuevo en un cambio ─────────────────────────────────
 export interface ProductoCambio {
   id_producto: number;
+  /**
+   * Variante que se lleva el cliente. Es lo que hace expresable el caso real
+   * de una tienda de ropa —cambiar una M por una L es el MISMO producto— y sin
+   * ella el backend no sabe de qué talla descontar el stock, así que omite la
+   * salida y el inventario queda inflado.
+   */
+  id_sku?: number | null;
   descripcion: string;
   precio_unitario: number;
   cantidad: number;

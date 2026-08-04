@@ -1,5 +1,6 @@
 import { getConnection } from "../database/database.js";
-import { sumarStockSku } from "../services/inventario/stockRepository.js";
+import { sumarStockSku, restarStockSku } from "../services/inventario/stockRepository.js";
+import { esErrorDeStock } from "../services/inventario/errores.js";
 import {
   TRANSICIONES,
   puedeTransicionar,
@@ -263,6 +264,20 @@ const crearDevolucion = async (req, res) => {
       for (const p of productos) preciosCambio.set(p.id_producto, p);
     }
 
+    // Dueño de cada SKU de cambio, para no aceptar una variante que pertenece a
+    // otro producto: se cobraría el precio de uno y saldría del stock del otro.
+    const idsSkuCambio = resolucion === "cambio_producto"
+      ? [...new Set(itemsBody.map((r) => Number(r.producto_cambio?.id_sku)).filter(Boolean))]
+      : [];
+    const productoDelSkuCambio = new Map();
+    if (idsSkuCambio.length > 0) {
+      const [filas] = await connection.query(
+        `SELECT id_sku, id_producto FROM producto_sku WHERE id_tenant = ? AND id_sku IN (${idsSkuCambio.map(() => "?").join(",")})`,
+        [id_tenant, ...idsSkuCambio]
+      );
+      for (const f of filas) productoDelSkuCambio.set(Number(f.id_sku), Number(f.id_producto));
+    }
+
     const items = [];
     for (const raw of itemsBody) {
       const detalle = detallePorId.get(Number(raw.id_detalle));
@@ -287,8 +302,28 @@ const crearDevolucion = async (req, res) => {
           await connection.rollback();
           return res.status(400).json({ success: false, message: "Cantidad de cambio inválida" });
         }
+        // La variante es lo que hace expresable el caso real de una tienda de
+        // ropa: cambiar una M por una L es el MISMO producto. Sin `id_sku` no
+        // hay forma de saber qué prenda sale del almacén.
+        const idSkuCambio = Number(raw.producto_cambio.id_sku) || null;
+        if (idSkuCambio) {
+          const duenio = productoDelSkuCambio.get(idSkuCambio);
+          if (duenio === undefined) {
+            await connection.rollback();
+            return res.status(400).json({ success: false, message: `La variante ${idSkuCambio} no existe` });
+          }
+          if (duenio !== Number(productoReal.id_producto)) {
+            await connection.rollback();
+            return res.status(400).json({
+              success: false,
+              message: `La variante ${idSkuCambio} no pertenece al producto ${productoReal.id_producto}`,
+            });
+          }
+        }
+
         productoCambio = {
           id_producto: productoReal.id_producto,
+          id_sku: idSkuCambio,
           descripcion: productoReal.descripcion,
           precio_unitario: Number(productoReal.precio),
           cantidad: cantidadCambio,
@@ -404,7 +439,7 @@ async function completarDevolucion(connection, { id_tenant, id_devolucion, id_us
   }
 
   const [detalles] = await connection.query(
-    "SELECT id_producto, id_sku, id_tonalidad, id_talla, cantidad, destino FROM devolucion_detalle WHERE id_devolucion = ? AND id_tenant = ?",
+    "SELECT id_producto, id_sku, id_tonalidad, id_talla, cantidad, destino, producto_cambio FROM devolucion_detalle WHERE id_devolucion = ? AND id_tenant = ?",
     [id_devolucion, id_tenant]
   );
 
@@ -426,6 +461,43 @@ async function completarDevolucion(connection, { id_tenant, id_devolucion, id_us
        VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?)`,
       [d.id_producto, d.id_sku, id_almacen, cantidad, movimiento.stockAnterior, movimiento.stockActual, devolucion.id_venta, id_tenant, d.id_tonalidad, d.id_talla]
     );
+  }
+
+  // La prenda que el cliente SE LLEVA en un cambio también tiene que salir del
+  // almacén. Antes solo se reintegraba la devuelta: la tienda entregaba una
+  // prenda y el sistema seguía contándola, así que el inventario se inflaba en
+  // silencio con cada cambio — el peor error posible, porque hace creer que hay
+  // mercadería que ya no está.
+  if (id_almacen) {
+    for (const d of detalles) {
+      const cambio = typeof d.producto_cambio === "string" ? JSON.parse(d.producto_cambio) : d.producto_cambio;
+      const idSkuCambio = Number(cambio?.id_sku) || null;
+      const cantidadCambio = Math.round(Number(cambio?.cantidad));
+      // Sin `id_sku` no se sabe qué variante sale: se omite en vez de descontar
+      // de una talla al azar. Son las devoluciones creadas antes de este cambio.
+      if (!idSkuCambio || !Number.isFinite(cantidadCambio) || cantidadCambio <= 0) continue;
+
+      let salida;
+      try {
+        salida = await restarStockSku(connection, {
+          id_tenant, id_sku: idSkuCambio, id_almacen, cantidad: cantidadCambio,
+        });
+      } catch (error) {
+        // Sin stock de la talla que el cliente quiere: la devolución NO se
+        // completa. Es preferible que el cajero lo vea y elija otra variante a
+        // dejar el inventario en negativo o entregar sin registrar la salida.
+        if (esErrorDeStock(error)) {
+          return { ok: false, status: 409, message: `No hay stock de la variante de cambio: ${error.message}` };
+        }
+        throw error;
+      }
+
+      await connection.query(
+        `INSERT INTO bitacora_nota (id_producto, id_sku, id_almacen, sale, stock_anterior, stock_actual, fecha, id_venta, id_tenant)
+         VALUES (?, ?, ?, ?, ?, ?, NOW(), ?, ?)`,
+        [cambio.id_producto, idSkuCambio, id_almacen, cantidadCambio, salida.stockAnterior, salida.stockActual, devolucion.id_venta, id_tenant]
+      );
+    }
   }
 
   await connection.query("UPDATE devolucion SET estado = 'completada' WHERE id_devolucion = ? AND id_tenant = ?", [id_devolucion, id_tenant]);
