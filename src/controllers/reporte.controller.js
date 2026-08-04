@@ -1453,7 +1453,21 @@ const getTopProductosMargen = async (req, res) => {
                     CASE WHEN ton.nombre IS NOT NULL THEN CONCAT(' - ', ton.nombre) ELSE '' END
                 ))
         END AS nombre,
-        COALESCE(ROUND(AVG((dv.precio - p.precio) / NULLIF(dv.precio,0) * 100), 2), 0) AS margen,
+        -- Margen REAL: ingreso menos costo, y solo sobre las líneas cuyo costo
+        -- quedó fotografiado al vender. Antes esta fórmula era
+        -- (dv.precio - p.precio), o sea la diferencia contra el precio de
+        -- LISTA: eso es el descuento aplicado, no el margen. Un producto
+        -- vendido a precio pleno reportaba "margen 0%", que es exactamente lo
+        -- contrario de la verdad.
+        COALESCE(ROUND(
+          (SUM(CASE WHEN dv.costo_unitario IS NOT NULL THEN dv.total END)
+           - SUM(CASE WHEN dv.costo_unitario IS NOT NULL THEN dv.costo_unitario * dv.cantidad END))
+          / NULLIF(SUM(CASE WHEN dv.costo_unitario IS NOT NULL THEN dv.total END), 0) * 100
+        , 2), 0) AS margen,
+        -- Cuántas líneas quedaron fuera por no tener costo: sin esto, un
+        -- producto con 1 línea costeada de 50 se vería igual de confiable que
+        -- uno con todas.
+        SUM(dv.costo_unitario IS NULL) AS lineas_sin_costo,
         COALESCE(SUM(dv.total), 0) AS ventas
       FROM detalle_venta dv
       JOIN producto p ON dv.id_producto = p.id_producto
