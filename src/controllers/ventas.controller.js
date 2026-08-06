@@ -1741,7 +1741,10 @@ const exchangeProducto = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
-    const { id_venta, id_detalle, id_producto_nuevo, cantidad, id_sucursal, usuario } = req.body;
+    // `id_sku_nuevo` es opcional por compatibilidad: el cliente viejo solo
+    // manda `id_producto_nuevo`. Cuando viene, `createVentaInternal` valida que
+    // el SKU pertenezca a ese producto y descuenta esa variante exacta.
+    const { id_venta, id_detalle, id_producto_nuevo, id_sku_nuevo, cantidad, id_sucursal, usuario } = req.body;
     const id_tenant = req.id_tenant;
     const ip = req.ip || req.connection.remoteAddress;
 
@@ -1794,27 +1797,40 @@ const exchangeProducto = async (req, res) => {
     for (const det of detallesOriginales) {
       // Usar comparación flexible O estricta con casting. id_detalle es PK de detalle_venta.
       if (det.id_detalle === targetIdDetalle) {
-        // Este es el item a cambiar
+        // Este es el item a cambiar. `id_sku_nuevo` es lo que hace expresable
+        // el caso real de una tienda de ropa: cambiar una M por una L del
+        // MISMO producto. Con solo `id_producto_nuevo` no había forma de
+        // decirlo, porque el producto no cambia — cambia la variante.
         const subtotalNuevo = precioNuevo * cantidad;
         nuevosDetalles.push({
           id_producto: id_producto_nuevo,
           cantidad: cantidad,
           precio: precioNuevo,
           descuento: 0,
-          total: subtotalNuevo
+          total: subtotalNuevo,
+          id_sku: id_sku_nuevo ?? null,
         });
         totalNuevo += subtotalNuevo;
 
         // Info para observación
-        diferenciaTexto = `Cambio: Prod ID ${det.id_producto} -> ID ${id_producto_nuevo}.`;
+        diferenciaTexto = id_sku_nuevo
+          ? `Cambio: Prod ${det.id_producto}/SKU ${det.id_sku ?? "—"} -> Prod ${id_producto_nuevo}/SKU ${id_sku_nuevo}.`
+          : `Cambio: Prod ID ${det.id_producto} -> ID ${id_producto_nuevo}.`;
       } else {
-        // Mantener item original
+        // Mantener item original CON su variante. Antes se perdían `id_sku`,
+        // `id_tonalidad` y `id_talla` de las líneas que nadie tocó: cambiar un
+        // polo de un ticket de tres ítems dejaba a los otros dos sin variante,
+        // y al recrear la venta `descontarPorProducto` sacaba el stock de un
+        // SKU cualquiera del producto — de otra talla, por ejemplo.
         nuevosDetalles.push({
           id_producto: det.id_producto,
           cantidad: det.cantidad,
           precio: det.precio,
           descuento: det.descuento,
-          total: det.total
+          total: det.total,
+          id_sku: det.id_sku ?? null,
+          id_tonalidad: det.id_tonalidad ?? null,
+          id_talla: det.id_talla ?? null,
         });
         totalNuevo += Number(det.total);
       }
@@ -1823,10 +1839,36 @@ const exchangeProducto = async (req, res) => {
     // Recalcular IGV
     igvNuevo = totalNuevo - (totalNuevo / 1.18);
 
+    // Almacén de la sucursal. Sin fila vinculada no se puede recrear la venta,
+    // y conviene decirlo en vez de reventar leyendo `[0][0]` de un vacío.
+    const [almacenSucursal] = await connection.query(
+      "SELECT id_almacen FROM sucursal_almacen WHERE id_sucursal = ? AND id_tenant = ? LIMIT 1",
+      [oldSale.id_sucursal, id_tenant]
+    );
+    if (almacenSucursal.length === 0) {
+      throw new Error("La sucursal de la venta original no tiene un almacén vinculado");
+    }
+
+    // Datos del cliente para el boucher. Una venta puede NO tener cliente —es
+    // el caso normal en tienda, se vende al público— y antes las tres consultas
+    // hacían `[0][0].campo` sobre un resultado vacío: el intercambio reventaba
+    // con "Cannot read properties of undefined" en toda venta sin cliente.
+    let datosCliente = { n: null, d: null, direccion: null };
+    if (oldSale.id_cliente) {
+      const [filaCliente] = await connection.query(
+        `SELECT COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) AS n,
+                COALESCE(NULLIF(dni, ''), ruc) AS d,
+                direccion
+         FROM cliente WHERE id_cliente = ? AND id_tenant = ? LIMIT 1`,
+        [oldSale.id_cliente, id_tenant]
+      );
+      if (filaCliente.length > 0) datosCliente = filaCliente[0];
+    }
+
     // Datos de la nueva venta
     const newSaleData = {
       id_sucursal: oldSale.id_sucursal,
-      id_almacen: (await connection.query("SELECT id_almacen FROM sucursal_almacen WHERE id_sucursal=?", [oldSale.id_sucursal]))[0][0].id_almacen,
+      id_almacen: almacenSucursal[0].id_almacen,
       id_comprobante: oldSale.nom_tipocomp,
       id_cliente: oldSale.id_cliente,
       estado_venta: 1, // Aceptada
@@ -1837,9 +1879,9 @@ const exchangeProducto = async (req, res) => {
       metodo_pago: oldSale.metodo_pago,
       fecha: new Date().toISOString().split('T')[0],
       // Datos cliente para boucher
-      nombre_cliente: (await connection.query("SELECT COALESCE(NULLIF(CONCAT(nombres, ' ', apellidos), ' '), razon_social) as n FROM cliente WHERE id_cliente=?", [oldSale.id_cliente]))[0][0].n,
-      documento_cliente: (await connection.query("SELECT COALESCE(NULLIF(dni, ''), ruc) as d FROM cliente WHERE id_cliente=?", [oldSale.id_cliente]))[0][0].d,
-      direccion_cliente: (await connection.query("SELECT direccion FROM cliente WHERE id_cliente=?", [oldSale.id_cliente]))[0][0].direccion,
+      nombre_cliente: datosCliente.n,
+      documento_cliente: datosCliente.d,
+      direccion_cliente: datosCliente.direccion,
       igv_b: igvNuevo,
       total_t: totalNuevo,
       comprobante_pago: "Recibo",

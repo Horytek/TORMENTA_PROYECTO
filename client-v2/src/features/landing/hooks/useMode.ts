@@ -7,23 +7,20 @@ const STORAGE_KEY = "horytek-landing-mode";
 function readStored(): Mode | null {
   try {
     const stored = sessionStorage.getItem(STORAGE_KEY);
-    if (stored === "pocket" || stored === "standard") return stored;
+    if (stored === "pocket" || stored === "standard" || stored === "ecommerce") return stored;
   } catch {
     // sessionStorage puede no estar disponible — ignorar.
   }
   return null;
 }
 
+function parseMode(raw: string | null): Mode | null {
+  if (raw === "pocket" || raw === "standard" || raw === "ecommerce") return raw;
+  return null;
+}
+
 /**
- * Estado de modo de la landing: "standard" | "pocket".
- *
- * El modo se DERIVA de la URL en cada render (sin `useState`) para evitar
- * cascadas de render y mantener una sola fuente de verdad. La URL es lo
- * persistente y compartible; sessionStorage solo aporta una pista inicial
- * para que el modo sobreviva a navegaciones a `/login` y de vuelta.
- *
- * `setMode` actualiza URL + storage; `useSearchParams` dispara el re-render
- * y el modo se re-deriva.
+ * Estado de modo de la landing: "standard" | "pocket" | "ecommerce".
  */
 export function useMode(): {
   mode: Mode;
@@ -32,9 +29,8 @@ export function useMode(): {
 } {
   const [search, setSearch] = useSearchParams();
 
-  const fromUrl = search.get("mode");
-  const mode: Mode =
-    fromUrl === "pocket" || fromUrl === "standard" ? fromUrl : (readStored() ?? "standard");
+  const fromUrl = parseMode(search.get("mode"));
+  const mode: Mode = fromUrl ?? (readStored() ?? "standard");
 
   const setMode = useCallback(
     (next: Mode) => {
@@ -56,7 +52,9 @@ export function useMode(): {
   );
 
   const toggle = useCallback(() => {
-    setMode(mode === "standard" ? "pocket" : "standard");
+    const order: Mode[] = ["standard", "pocket", "ecommerce"];
+    const i = order.indexOf(mode);
+    setMode(order[(i + 1) % order.length]);
   }, [mode, setMode]);
 
   return { mode, setMode, toggle };

@@ -8,6 +8,7 @@ import {
   HERO_BADGES,
   HERO_STATS,
   POCKET_HERO,
+  ECOMMERCE_HERO,
   SECTORS,
   STANDARD_TRUST_INDICATORS,
   TAG_COLORS,
@@ -26,12 +27,22 @@ export function Hero({ mode }: HeroProps) {
       id="hero"
       className={cn(
         "relative overflow-hidden border-b border-border/60 transition-colors",
-        mode === "pocket" ? "bg-amber-500/[0.04]" : "bg-background",
+        mode === "pocket"
+          ? "bg-amber-500/[0.04]"
+          : mode === "ecommerce"
+            ? "bg-teal-700/[0.04]"
+            : "bg-background",
       )}
     >
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
-      {mode === "standard" ? <HeroStandard /> : <HeroPocket />}
+      {mode === "standard" ? (
+        <HeroStandard />
+      ) : mode === "pocket" ? (
+        <HeroPocket />
+      ) : (
+        <HeroEcommerce />
+      )}
     </section>
   );
 }
@@ -416,6 +427,98 @@ function HeroVisualPocket() {
               Stock por talla
             </p>
             <p className="text-[13px] font-semibold tracking-tight">Al día</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function HeroEcommerce() {
+  return (
+    <div className="mx-auto grid max-w-6xl gap-12 px-6 pb-20 pt-16 md:pt-24 lg:grid-cols-[1.2fr_1fr] lg:gap-16 lg:pb-28 lg:pt-32">
+      <div className="flex flex-col">
+        <span className="num w-fit rounded-full border border-teal-700/30 bg-teal-700/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.14em] text-teal-800">
+          {ECOMMERCE_HERO.badge}
+        </span>
+        <h1 className="mt-6 text-balance text-[clamp(2.25rem,5vw,3.5rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-foreground">
+          {ECOMMERCE_HERO.title}
+        </h1>
+        <p className="mt-5 max-w-xl text-[16px] leading-relaxed text-muted-foreground">
+          {ECOMMERCE_HERO.body}
+        </p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Button asChild size="lg" className="gap-2 bg-teal-700 hover:bg-teal-800">
+            <a href="#planes">
+              {ECOMMERCE_HERO.cta} <ArrowRight className="h-4 w-4" />
+            </a>
+          </Button>
+          <Button asChild size="lg" variant="outline">
+            <Link to="/login?mode=ecommerce">Ya tengo cuenta</Link>
+          </Button>
+        </div>
+        <ul className="mt-10 grid gap-3 text-[13px] text-muted-foreground sm:grid-cols-2">
+          <li>URL pública fácil: /tienda/tu-marca</li>
+          <li>Imágenes con ImageKit</li>
+          <li>MP del comerciante en el carrito</li>
+          <li>Aislamiento total por id_tenant</li>
+        </ul>
+      </div>
+      <div className="relative">
+        <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+          <div className="flex justify-between text-[10px] uppercase tracking-widest text-stone-400">
+            <span>Horytek · Tag</span>
+            <span>POL-0432</span>
+          </div>
+          <p className="mt-4 text-[11px] uppercase tracking-wider text-stone-400">Producto · Tienda de ropa</p>
+          <h3 className="text-2xl font-semibold tracking-tight">Polo Oversize</h3>
+          <p className="text-sm text-stone-500 mt-1">Algodón peinado 24/1 · 180 g</p>
+          <div className="mt-4">
+            <p className="text-[10px] uppercase text-stone-400 mb-2">Tonalidades</p>
+            <SwatchStrip colors={TAG_COLORS.slice(0, 5)} />
+          </div>
+          <div className="mt-4">
+            <p className="text-[10px] uppercase text-stone-400 mb-2">Curva de tallas</p>
+            <SizeCurve
+              sizes={[
+                { label: "S" },
+                { label: "M" },
+                { label: "L" },
+                { label: "XL", available: false },
+              ]}
+            />
+          </div>
+          <div className="mt-5 flex justify-between border-t border-dashed border-stone-200 pt-4">
+            <div>
+              <p className="text-[10px] uppercase text-stone-400">Stock</p>
+              <p className="text-xl font-semibold">128 uds</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] uppercase text-stone-400">Precio</p>
+              <p className="text-xl font-semibold text-teal-800">S/ 49.90</p>
+            </div>
+          </div>
+        </div>
+        <div className="absolute -right-2 -top-3 rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="flex size-7 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
+              <TrendingUp className="size-3.5" />
+            </span>
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-stone-400">Ventas semanales</p>
+              <p className="text-sm font-semibold">S/ 12,430</p>
+            </div>
+          </div>
+        </div>
+        <div className="absolute -bottom-3 -left-2 rounded-lg border border-stone-200 bg-white px-3 py-2 shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="flex size-7 items-center justify-center rounded-md bg-amber-50 text-amber-700">
+              <AlertTriangle className="size-3.5" />
+            </span>
+            <div>
+              <p className="text-[9px] uppercase tracking-wider text-stone-400">Stock crítico</p>
+              <p className="text-sm font-semibold">5 items</p>
+            </div>
           </div>
         </div>
       </div>

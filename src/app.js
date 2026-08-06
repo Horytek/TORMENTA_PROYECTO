@@ -52,6 +52,7 @@ import { getConnection } from "./database/database.js";
 import attributesRoutes from "./routes/attributes.routes.js";
 import emailRoutes from "./routes/email.routes.js";
 import expressRoutes from "./routes/express.routes.js";
+import ecommerceRoutes from "./routes/ecommerce.routes.js";
 
 const app = express();
 app.set('trust proxy', 1);
@@ -153,8 +154,8 @@ app.use(helmet({
   referrerPolicy: { policy: "strict-origin-when-cross-origin" }
 }));
 
-app.use(express.json({ limit: '2mb' })); // o más si lo necesitas
-app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+app.use(express.json({ limit: '10mb' })); // o más si lo necesitas
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 const norm = u => {
   try {
@@ -204,7 +205,6 @@ app.options(/.*/, cors({
   credentials: true
 }));
 
-app.use(express.json());
 app.use(cookieParser());
 // Auditoría (después de parseos, antes de rutas) - registra solo rutas autenticadas luego
 // app.use(auditLog()); // DESACTIVADO: genera acciones no válidas como "GET OK"
@@ -276,6 +276,7 @@ app.use("/api/landing", landingRoutes);
 app.use("/api/unidades", unidadesRoutes);
 app.use("/api/health", healthRoutes);
 app.use("/api/express", expressRoutes);
+app.use("/api/ecommerce", ecommerceRoutes);
 app.use("/api/gastos", gastosRoutes);
 app.use("/api/contabilidad/cuentas", cuentaContableRoutes);
 app.use("/api/contabilidad/centros-costo", centroCostoRoutes);

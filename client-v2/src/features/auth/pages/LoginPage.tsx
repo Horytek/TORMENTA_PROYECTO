@@ -12,6 +12,8 @@ import { Eye, EyeOff, Loader2, Check, Store } from "lucide-react";
 import { SwatchStrip } from "@/components/brand/Swatch";
 import { SizeCurve } from "@/components/brand/SizeCurve";
 import { expressLogin, expressRegister } from "@/features/express/api/express";
+import { loginEcommerce } from "@/features/ecommerce/api/ecommerce";
+import { useEcommerceAuthStore } from "@/features/ecommerce/store/useEcommerceAuthStore";
 import { createPreference } from "@/features/account/api/billing";
 import { setPendingPaymentFlow } from "@/features/landing/utils/paymentFlow";
 import { POCKET_PLANS } from "@/features/landing/data/landing.data";
@@ -19,10 +21,17 @@ import { POCKET_PLANS } from "@/features/landing/data/landing.data";
 // Tonalidades de muestra (colores reales de prenda), sobrias.
 const TAG_COLORS = ["#243645", "#3E6B89", "#0E7C7B", "#C9A227", "#B23A48", "#D6D3CD"];
 
+type LoginMode = "erp" | "express" | "ecommerce" | "validar";
+
 export default function LoginPage() {
   const [params] = useSearchParams();
-  const initialMode = params.get("mode") === "express" ? "express" : "erp";
-  const [mode, setMode] = useState<"erp" | "express" | "validar">(initialMode);
+  const initialMode: LoginMode =
+    params.get("mode") === "express"
+      ? "express"
+      : params.get("mode") === "ecommerce"
+        ? "ecommerce"
+        : "erp";
+  const [mode, setMode] = useState<LoginMode>(initialMode);
   const pocketPlan =
     POCKET_PLANS.find((p) => p.id === params.get("plan")) ||
     POCKET_PLANS.find((p) => p.highlight) ||
@@ -42,6 +51,14 @@ export default function LoginPage() {
   const [expressLoading, setExpressLoading] = useState(false);
   const [expressError, setExpressError] = useState("");
   const [expressPendingMessage, setExpressPendingMessage] = useState("");
+
+  // Ecommerce admin
+  const [ecomUser, setEcomUser] = useState("");
+  const [ecomPassword, setEcomPassword] = useState("");
+  const [ecomShowPassword, setEcomShowPassword] = useState(false);
+  const [ecomLoading, setEcomLoading] = useState(false);
+  const [ecomError, setEcomError] = useState("");
+  const setEcomSession = useEcommerceAuthStore((s) => s.setSession);
 
   // Autenticación / Verificación de cuenta (OTP)
   const [authUser, setAuthUser] = useState("");
@@ -118,6 +135,35 @@ export default function LoginPage() {
       setExpressError(errorData?.message || "Error de conexión con Pocket POS.");
     } finally {
       setExpressLoading(false);
+    }
+  };
+
+  const handleEcommerceSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEcomError("");
+    if (!ecomUser || !ecomPassword) {
+      setEcomError("Ingresa usuario y contraseña.");
+      return;
+    }
+    setEcomLoading(true);
+    try {
+      const res = await loginEcommerce(ecomUser, ecomPassword);
+      if (!res.success || !res.data?.token) {
+        setEcomError(res.message || "Credenciales inválidas.");
+        return;
+      }
+      setEcomSession(res.data.token, {
+        usuario: res.data.usuario,
+        email: res.data.email,
+        id_tenant: res.data.id_tenant,
+        slug: res.data.slug,
+        tienda: res.data.tienda,
+      });
+      navigate("/ecommerce-admin");
+    } catch (err: any) {
+      setEcomError(err.response?.data?.message || "Error al iniciar sesión en Ecommerce.");
+    } finally {
+      setEcomLoading(false);
     }
   };
 
@@ -301,24 +347,29 @@ export default function LoginPage() {
               {mode === "erp"
                 ? "Iniciar sesión"
                 : mode === "validar"
-                ? "Autenticar cuenta"
-                : expressIsRegistering
-                ? "Crear cuenta Pocket POS"
-                : "Pocket POS"}
+                  ? "Autenticar cuenta"
+                  : mode === "ecommerce"
+                    ? "Admin Ecommerce"
+                    : expressIsRegistering
+                      ? "Crear cuenta Pocket POS"
+                      : "Pocket POS"}
             </h1>
             <p className="mt-1.5 text-sm text-muted-foreground">
               {mode === "erp"
                 ? "Ingresa tus credenciales para acceder al sistema."
                 : mode === "validar"
-                ? "Ingrese el código de seguridad"
-                : "Modo ligero de punto de venta (beta)."}
+                  ? "Ingrese el código de seguridad"
+                  : mode === "ecommerce"
+                    ? "Accede al panel de tu tienda online."
+                    : "Modo ligero de punto de venta (beta)."}
             </p>
           </div>
 
-          <Tabs value={mode} onValueChange={(v) => setMode(v as "erp" | "express" | "validar")} className="mb-6">
-            <TabsList className="w-full">
-              <TabsTrigger value="erp" className="flex-1">Sistema ERP</TabsTrigger>
-              <TabsTrigger value="express" className="flex-1 gap-1.5"><Store className="h-3.5 w-3.5" /> Pocket POS</TabsTrigger>
+          <Tabs value={mode} onValueChange={(v) => setMode(v as LoginMode)} className="mb-6">
+            <TabsList className="w-full flex-wrap h-auto gap-1">
+              <TabsTrigger value="erp" className="flex-1">ERP</TabsTrigger>
+              <TabsTrigger value="express" className="flex-1 gap-1.5"><Store className="h-3.5 w-3.5" /> Pocket</TabsTrigger>
+              <TabsTrigger value="ecommerce" className="flex-1">Ecommerce</TabsTrigger>
               <TabsTrigger value="validar" className="flex-1">Validar</TabsTrigger>
             </TabsList>
           </Tabs>
@@ -502,6 +553,59 @@ export default function LoginPage() {
               >
                 {expressIsRegistering ? "¿Ya tienes cuenta? Inicia sesión" : "¿No tienes cuenta? Regístrate aquí"}
               </button>
+            </form>
+          ) : mode === "ecommerce" ? (
+            <form onSubmit={handleEcommerceSubmit} className="space-y-5">
+              {ecomError && (
+                <div
+                  role="alert"
+                  className="animate-shake rounded-md border border-destructive/25 bg-destructive/10 px-3 py-2.5 text-sm font-medium text-destructive"
+                >
+                  {ecomError}
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="ecom_user">Usuario o email</Label>
+                <Input
+                  id="ecom_user"
+                  value={ecomUser}
+                  onChange={(e) => setEcomUser(e.target.value)}
+                  disabled={ecomLoading}
+                  autoComplete="username"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="ecom_password">Contraseña</Label>
+                <div className="relative">
+                  <Input
+                    id="ecom_password"
+                    type={ecomShowPassword ? "text" : "password"}
+                    value={ecomPassword}
+                    onChange={(e) => setEcomPassword(e.target.value)}
+                    disabled={ecomLoading}
+                    autoComplete="current-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    onClick={() => setEcomShowPassword((v) => !v)}
+                    aria-label={ecomShowPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  >
+                    {ecomShowPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              <Button type="submit" className="w-full bg-teal-700 hover:bg-teal-800" disabled={ecomLoading}>
+                {ecomLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar al admin"}
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                ¿Nuevo?{" "}
+                <Link to="/registro-ecommerce" className="text-teal-700 underline-offset-4 hover:underline">
+                  Activar tienda
+                </Link>
+              </p>
             </form>
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-6">
