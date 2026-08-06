@@ -12,7 +12,6 @@ import {
   Wallet,
   BarChart3,
   Boxes,
-  ScanLine,
   ShieldAlert,
   CreditCard,
   Ban,
@@ -56,31 +55,83 @@ export const TAG_COLORS = ["#243645", "#3E6B89", "#0E7C7B", "#C9A227", "#B23A48"
 export type Mode = "standard" | "pocket" | "ecommerce";
 
 export const NAV_LINKS = [
-  { label: "Producto", href: "#producto" },
-  { label: "Funciones", href: "#funciones" },
-  { label: "Flujo", href: "#flujo" },
+  { label: "Ecommerce", href: "#ecommerce" },
+  { label: "Qué incluye", href: "#funciones" },
+  { label: "Cómo funciona", href: "#flujo" },
   { label: "Planes", href: "#planes" },
   { label: "Preguntas", href: "#preguntas" },
 ] as const;
 
-// Hero: una sola pieza, sin sector toggle (v2 es un solo producto).
-export const HERO_BADGES = ["Tallas y colores", "POS", "SUNAT", "Margen por prenda"] as const;
+export const HERO_BADGES = ["Vende en tu local", "Vende online", "Recibe pagos", "Emite comprobantes"] as const;
 
-export const HERO_STATS = [
-  { label: "Tickets por turno", value: "+200" },
-  { label: "Latencia de búsqueda", value: "<60ms" },
-  { label: "Almacenes por empresa", value: "ilimitados" },
+export const HERO_VALUE_POINTS = [
+  {
+    icon: ShoppingCart,
+    title: "Vende en tu local",
+    body: "Cobra rápido y entrega boletas o facturas.",
+  },
+  {
+    icon: Globe,
+    title: "Vende por internet",
+    body: "Tu propia tienda online lista para compartir.",
+  },
+  {
+    icon: Package,
+    title: "Controla todo",
+    body: "Un solo inventario para cada canal de venta.",
+  },
 ] as const;
 
 // Evidencia inmediata — solo datos verificables del producto.
 // No inventamos clientes ni métricas de marketing.
 export const EVIDENCE_MODULES = [
-  { icon: Boxes, label: "Catálogo" },
-  { icon: ShoppingCart, label: "POS" },
-  { icon: Package, label: "Kárdex" },
-  { icon: Truck, label: "Guías SUNAT" },
-  { icon: ClipboardList, label: "Notas de almacén" },
-  { icon: Wallet, label: "Contabilidad" },
+  { icon: ShoppingCart, label: "Caja y ventas" },
+  { icon: Globe, label: "Tienda online" },
+  { icon: CreditCard, label: "Cobros por internet" },
+  { icon: Package, label: "Control de stock" },
+  { icon: Truck, label: "Boletas y facturas" },
+  { icon: BarChart3, label: "Resultados del negocio" },
+] as const;
+
+export const ECOMMERCE_BENEFITS = [
+  {
+    icon: Globe,
+    title: "Tu tienda abierta 24/7",
+    body: "Tus clientes ven fotos, precios y productos disponibles sin escribirte por cada consulta.",
+  },
+  {
+    icon: CreditCard,
+    title: "El dinero llega a tu cuenta",
+    body: "Configuramos Mercado Pago para que tus clientes paguen en el carrito y tú recibas el dinero directamente.",
+  },
+  {
+    icon: Package,
+    title: "No vendas lo que ya se agotó",
+    body: "La venta online se descuenta del mismo stock que usas en tu tienda física.",
+  },
+  {
+    icon: Rocket,
+    title: "Te la entregamos lista",
+    body: "Ordenamos tu catálogo, optimizamos tus fotos y dejamos el enlace preparado para compartir.",
+  },
+] as const;
+
+export const BUSINESS_VALUE_POINTS = [
+  {
+    icon: Layers,
+    title: "Un catálogo, todos tus canales",
+    body: "Actualizas producto, precio y stock una vez. Tu equipo vende con la misma información en el local y en internet.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Menos errores al crecer",
+    body: "Ventas y movimientos quedan registrados para que mantengas el control aunque sumes personas o locales.",
+  },
+  {
+    icon: TrendingUp,
+    title: "Decisiones con el negocio completo",
+    body: "Revisa ventas, inventario y rentabilidad sin juntar reportes de sistemas separados al final del día.",
+  },
 ] as const;
 
 // Funcionalidades (8) — agrupadas en 3 categorías para progressive disclosure.
@@ -90,21 +141,19 @@ export const FEATURE_GROUPS = [
     blurb: "Todo lo que tu tienda necesita para atender al cliente sin fricciones.",
     items: [
       {
-        icon: Tags,
-        name: "Catálogo con tonalidades y tallas",
-        body: "Variantes por color, talla y SKU. Búsqueda instantánea del inventario.",
+        icon: Globe,
+        name: "Tu propia tienda online",
+        body: "Un enlace con tu marca, carrito y cobro por internet para vender incluso cuando tu local está cerrado.",
       },
       {
         icon: ShoppingCart,
-        name: "Punto de Venta con pago mixto",
+        name: "Caja rápida para tu local",
         body: "Efectivo, tarjeta, Yape/Plin. Descuentos y tickets en espera.",
       },
       {
-        icon: ScanLine,
-        // La ropa de Gamarra llega sin código de barras y la mayoría de tiendas
-        // no tiene pistola: buscar por nombre no es un parche, es el flujo real.
-        name: "Vende sin pistola lectora",
-        body: "Busca por nombre, marca o código y elige talla y color en dos toques.",
+        icon: Tags,
+        name: "Catálogo listo para vender",
+        body: "Productos, precios, fotos y variantes organizados para el mostrador y para internet.",
       },
     ],
   },
@@ -114,13 +163,13 @@ export const FEATURE_GROUPS = [
     items: [
       {
         icon: Package,
-        name: "Kárdex en tiempo real",
-        body: "Stock por talla y color en cada almacén, con el histórico de cada movimiento.",
+        name: "El stock se actualiza con cada venta",
+        body: "Controla desde un solo lugar lo que vendes en el local y lo que vendes por internet.",
       },
       {
         icon: Truck,
-        name: "Guías de Remisión SUNAT",
-        body: "Emisión integrada con transportistas y destinatarios desde el flujo de venta.",
+        name: "Despacha con la documentación correcta",
+        body: "Prepara guías de remisión electrónicas desde la misma venta cuando necesites trasladar un pedido.",
       },
       {
         icon: ClipboardList,
@@ -145,8 +194,8 @@ export const FEATURE_GROUPS = [
       },
       {
         icon: ShieldCheck,
-        name: "Roles y permisos granulares",
-        body: "Cada usuario solo ve y hace lo que su rol le autoriza. Auditoría completa.",
+        name: "Tu información protegida",
+        body: "Cada negocio trabaja con sus propios productos, ventas y clientes, separados de cualquier otra tienda.",
       },
     ],
   },
@@ -156,28 +205,28 @@ export const FEATURE_GROUPS = [
 export const FLOW_STEPS = [
   {
     n: "01",
-    title: "Cargas tu catálogo",
-    body: "Tu cuenta llega con las categorías, tallas y colores de ropa listos. Agregas la prenda con su precio y el sistema arma cada variante.",
+    title: "Ordenamos tu catálogo",
+    body: "Cargamos productos, precios, fotos y variantes para que tu negocio empiece con información clara.",
   },
   {
     n: "02",
-    title: "Tu vendedor abre caja",
-    body: "Elige almacén, busca la prenda por nombre, marca la talla y el color, cobra con pago mixto y emite boleta o factura.",
+    title: "Preparamos tu tienda online",
+    body: "Te entregamos un enlace fácil con catálogo, carrito y Mercado Pago configurado para tu negocio.",
   },
   {
     n: "03",
-    title: "El stock se mueve solo",
-    body: "Cada venta descuenta kárdex. Las transferencias entre almacenes quedan registradas.",
+    title: "Vendes en cualquier canal",
+    body: "Atiendes desde la caja en tu local y recibes compras online sin administrar dos catálogos distintos.",
   },
   {
     n: "04",
-    title: "Despachas con guía SUNAT",
-    body: "Cuando el cliente se lleva el pedido, la guía de remisión se emite desde la misma venta.",
+    title: "Horytek mantiene el control",
+    body: "Cada operación actualiza inventario y deja trazabilidad para preparar pedidos y emitir comprobantes.",
   },
   {
     n: "05",
-    title: "Cierras el día sabiendo cuánto ganaste",
-    body: "No solo cuánto facturaste: cuánto te quedó por prenda, calculado contra el costo que tenía cuando la vendiste.",
+    title: "Tú decides con datos",
+    body: "Cierras el día viendo ventas, stock y rentabilidad de tu negocio completo en un solo lugar.",
   },
 ] as const;
 
@@ -202,8 +251,8 @@ export const PLANS: Plan[] = [
     description: "Para tiendas que están empezando a digitalizarse.",
     features: [
       "Catálogo de productos",
-      "Punto de Venta (POS)",
-      "Inventario / Kárdex",
+      "Caja y ventas",
+      "Control de inventario",
       "1 almacén",
       "Hasta 5 usuarios",
     ],
@@ -216,17 +265,17 @@ export const PLANS: Plan[] = [
     description: "Para tiendas con varias sucursales o que ya facturan.",
     features: [
       "Todo lo del plan Básico",
-      "Guías de Remisión SUNAT",
+      "Guías de remisión electrónicas",
       "Notas de Almacén",
       "Multi-almacén",
-      "Roles y permisos dinámicos",
+      "Accesos para tu equipo",
       "Hasta 10 usuarios",
     ],
     highlight: true,
   },
   {
     id: "enterprise",
-    name: "Enterprise",
+    name: "Empresa",
     monthly: 240,
     yearly: 2400,
     description: "Para cadenas y operaciones con contabilidad propia.",
@@ -242,12 +291,16 @@ export const PLANS: Plan[] = [
 // FAQ — solo preguntas que un dueño de tienda real se haría.
 export const FAQS = [
   {
-    q: "¿Necesito instalar algo?",
-    a: "No. Horytek funciona en el navegador desde cualquier computador con conexión. También tienes Pocket POS, una versión ligera pensada para vender desde el celular.",
+    q: "¿Horytek también crea el ecommerce de mi negocio?",
+    a: "Sí. Es un servicio adicional: preparamos una tienda con tu marca, cargamos el catálogo y configuramos el cobro por internet. La cotización depende de la cantidad de productos y de lo que necesite tu negocio.",
   },
   {
-    q: "¿Necesito pistola lectora de códigos?",
-    a: "No. La ropa suele llegar sin código de barras, así que el punto de venta busca por nombre, marca o código y te deja elegir talla y color en dos toques. Si más adelante consigues una lectora, también funciona.",
+    q: "¿Qué valor agrega el ecommerce además de mostrar productos?",
+    a: "Tus clientes pueden ver fotos y precios, armar su compra y pagar sin esperar una respuesta por chat. Además, dejamos tus productos ordenados y el enlace listo para compartir.",
+  },
+  {
+    q: "¿Qué pasa si vendo el mismo producto en el local y por internet?",
+    a: "Horytek usa el mismo control de stock para ambos canales. Así reduces el riesgo de ofrecer por internet algo que ya se vendió en tu local.",
   },
   {
     q: "¿Emiten boletas y facturas electrónicas?",
@@ -258,12 +311,8 @@ export const FAQS = [
     a: "Sí. Al activar tu cuenta, el equipo de soporte te ayuda a importar tu catálogo y base de clientes desde Excel o desde el sistema que uses hoy.",
   },
   {
-    q: "¿Puedo cambiar de plan más adelante?",
-    a: "Sí, desde tu cuenta en cualquier momento. No pierdes información ni historial al subir o bajar de plan.",
-  },
-  {
-    q: "¿Los precios incluyen IGV?",
-    a: "Los precios mostrados son referenciales antes de impuestos. Se factura conforme a la normativa peruana vigente.",
+    q: "¿Necesito instalar algo?",
+    a: "No. Horytek funciona en el navegador desde cualquier computador con conexión. También tienes Pocket POS, una versión ligera pensada para vender desde el celular.",
   },
 ] as const;
 
@@ -273,6 +322,10 @@ export const LEGAL_CONTACT = {
   whatsapp: "51961797720",
   location: "Chiclayo, Perú",
 };
+
+export const SALES_WHATSAPP_URL = `https://wa.me/${LEGAL_CONTACT.whatsapp}?text=${encodeURIComponent(
+  "Hola, quiero una demo de Horytek y conocer la propuesta de ecommerce para mi negocio.",
+)}`;
 
 // Footer — todos los enlaces van a algo real: las páginas satélite migradas,
 // anclas de la landing, y las 2 páginas legales.
@@ -308,7 +361,7 @@ export const FOOTER_LINKS = [
 export const FOOTER_BRAND = {
   name: "Horytek",
   description:
-    "El ERP para tiendas de ropa del Perú. Cada prenda con su talla, su color y su margen — para que sepas qué te deja plata y qué solo ocupa espacio.",
+    "Horytek ayuda a emprendedores peruanos a vender en su local y por internet sin perder el control de sus productos, pagos y ventas.",
 };
 
 export const FOOTER_SOCIALS = [
@@ -540,12 +593,12 @@ export const ECOMMERCE_PLANS: EcommercePlan[] = [
     name: "Starter",
     price: 79,
     currency: "S/",
-    description: "Tu tienda online multi-tenant con catálogo, carrito y cobros a tu cuenta MP.",
+    description: "Tu tienda online lista para mostrar productos y recibir ventas.",
     features: [
-      "Storefront público /tienda/tu-slug",
-      "Admin de productos con ImageKit",
-      "Carrito con Mercado Pago del comerciante",
-      "Aislamiento por empresa (id_tenant)",
+      "Enlace público con el nombre de tu tienda",
+      "Fotos optimizadas para cargar rápido",
+      "Carrito con pagos directos a tu Mercado Pago",
+      "Productos, clientes y ventas protegidos",
     ],
     ctaLabel: "Activar Starter",
   },
@@ -557,9 +610,9 @@ export const ECOMMERCE_PLANS: EcommercePlan[] = [
     description: "Para marcas que venden online todos los días y necesitan más margen de operación.",
     features: [
       "Todo lo de Starter",
-      "Más capacidad de catálogo",
+      "Más espacio para tu catálogo",
       "Soporte prioritario",
-      "Credenciales por correo tras el pago",
+      "Acceso enviado por correo al activar el plan",
     ],
     highlight: true,
     ctaLabel: "Activar Pro",
@@ -569,23 +622,23 @@ export const ECOMMERCE_PLANS: EcommercePlan[] = [
 export const ECOMMERCE_FAQS = [
   {
     q: "¿El dinero de las ventas llega a Horytek?",
-    a: "No. Configuras tus propias credenciales de Mercado Pago en el admin; cada compra del carrito acredita en tu cuenta.",
+    a: "No. Conectas tu propia cuenta de Mercado Pago y cada compra del carrito se deposita directamente allí.",
   },
   {
     q: "¿Mis productos se mezclan con otras tiendas?",
-    a: "No. Cada tienda tiene su id_tenant. El catálogo público se resuelve solo por el slug de tu comercio.",
+    a: "No. Los productos, clientes y ventas de tu negocio están separados de la información de cualquier otra tienda.",
   },
   {
     q: "¿Cómo recibo el acceso?",
-    a: "Tras pagar el plan en la landing, el webhook activa tu tienda y Resend te envía usuario, contraseña y el link /tienda/tu-slug.",
+    a: "Después de activar el plan recibes por correo tu usuario, contraseña y el enlace público de tu tienda.",
   },
 ];
 
 export const ECOMMERCE_HERO = {
   badge: "Tienda online propia",
-  title: "Tu ecommerce, separado por empresa.",
-  body: "Catálogo con imágenes ImageKit, carrito con Mercado Pago de tu negocio y panel admin. Una URL fácil para tus clientes.",
-  cta: "Ver planes Ecommerce",
+  title: "Tu tienda online, lista para compartir y cobrar.",
+  body: "Publica tus productos, recibe compras desde el celular y cobra directamente en tu cuenta de Mercado Pago.",
+  cta: "Ver planes de tienda online",
 };
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -656,7 +709,7 @@ export const SECTORS: Sector[] = [
 export const STANDARD_TRUST_INDICATORS = [
   { label: "Implementación rápida", dot: "bg-emerald-500" },
   { label: "Soporte humano", dot: "bg-blue-500" },
-  { label: "Auditoría total", dot: "bg-purple-500" },
+  { label: "Datos protegidos", dot: "bg-purple-500" },
 ] as const;
 
 // ────────────────────────────────────────────────────────────────────────────

@@ -96,6 +96,24 @@ export async function ecommerceUpdateTienda(body: Record<string, unknown>) {
   return data;
 }
 
+export async function ecommerceUploadLogo(file: string, fileName?: string) {
+  const { data } = await api.post(
+    "/ecommerce/admin/tienda/logo",
+    { file, fileName },
+    { headers: authHeaders() }
+  );
+  return data;
+}
+
+export async function ecommerceUploadBanner(file: string, fileName?: string) {
+  const { data } = await api.post(
+    "/ecommerce/admin/tienda/banner",
+    { file, fileName },
+    { headers: authHeaders() }
+  );
+  return data;
+}
+
 export async function ecommerceListOrdenes() {
   const { data } = await api.get("/ecommerce/admin/ordenes", { headers: authHeaders() });
   return data;

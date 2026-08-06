@@ -81,6 +81,7 @@ const EcommerceProductsPage = lazy(() => import("@/features/ecommerce/pages/Ecom
 const EcommerceOrdersPage = lazy(() => import("@/features/ecommerce/pages/EcommerceOrdersPage"));
 const EcommerceSettingsPage = lazy(() => import("@/features/ecommerce/pages/EcommerceSettingsPage"));
 const StorefrontPage = lazy(() => import("@/features/ecommerce/pages/StorefrontPage"));
+const StoreProductPage = lazy(() => import("@/features/ecommerce/pages/StoreProductPage"));
 const StoreCartPage = lazy(() => import("@/features/ecommerce/pages/StoreCartPage"));
 const StorePaymentResultPage = lazy(() => import("@/features/ecommerce/pages/StorePaymentResultPage"));
 
@@ -188,6 +189,7 @@ export default function App() {
               <Route path="/registro" element={<RegisterPage />} />
               <Route path="/registro-ecommerce" element={<RegisterEcommercePage />} />
               <Route path="/tienda/:slug" element={<StorefrontPage />} />
+              <Route path="/tienda/:slug/producto/:id" element={<StoreProductPage />} />
               <Route path="/tienda/:slug/carrito" element={<StoreCartPage />} />
               <Route path="/tienda/:slug/pago/resultado" element={<StorePaymentResultPage />} />
               <Route path="/catalogo/:idTenant" element={<CatalogoPublicoPage />} />

@@ -7,12 +7,14 @@ import {
   EVIDENCE_MODULES,
   FEATURE_GROUPS,
   FLOW_STEPS,
+  SALES_WHATSAPP_URL,
   type Mode,
 } from "../data/landing.data";
 import { useMode } from "../hooks/useMode";
 import { InventoryRail } from "../components/InventoryRail";
 import { Header } from "../components/Header";
 import { Hero } from "../components/Hero";
+import { EcommerceSection } from "../components/EcommerceSection";
 import { BlueprintSection } from "../components/BlueprintSection";
 import { CaseStudy } from "../components/CaseStudy";
 import { Pricing } from "../components/Pricing";
@@ -25,6 +27,7 @@ import { cn } from "@/lib/utils";
 const SECTION_IDS = [
   "hero",
   "evidencia",
+  "ecommerce",
   "producto",
   "rendimiento",
   "funciones",
@@ -58,6 +61,7 @@ export default function LandingPage() {
       <main>
         <Hero mode={mode} />
         <Evidence />
+        <EcommerceSection />
         <BlueprintSection mode={mode} />
         <CaseStudy mode={mode} />
         <Funciones />
@@ -85,7 +89,7 @@ function Evidence() {
       <div className="mx-auto max-w-6xl px-6 py-8">
         <div className="flex flex-wrap items-center justify-between gap-x-10 gap-y-4">
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Módulos incluidos en cada plan
+            Todo lo que necesitas para vender sin complicarte
           </p>
           <ul className="flex flex-wrap items-center gap-x-6 gap-y-2">
             {EVIDENCE_MODULES.map(({ icon: Icon, label }) => (
@@ -119,10 +123,10 @@ function Funciones() {
               Las funciones · 03
             </span>
             <h2 className="mt-3 text-balance text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-foreground">
-              Tres oficios. Nueve piezas de software.
+              Todo lo que necesitas para vender y crecer.
             </h2>
             <p className="mt-5 max-w-sm text-[15px] leading-relaxed text-muted-foreground">
-              Agrupadas por lo que necesitas hacer: vender, operar tu inventario o decidir con datos.
+              Desde la primera venta hasta el cierre del día: tus canales, tu inventario y tus números trabajando juntos.
             </p>
           </div>
 
@@ -179,10 +183,10 @@ function Flujo() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="max-w-2xl">
           <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-            El flujo · 02
+            Puesta en marcha
           </span>
           <h2 className="mt-3 text-balance text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-foreground">
-            De abrir la tienda a cerrar el día — sin cambiar de sistema.
+            De tu catálogo actual a un negocio que vende en tienda y online.
           </h2>
         </div>
 
@@ -229,23 +233,37 @@ function CTA({ mode }: { mode: Mode }) {
               {isPocket
                 ? "Lleva tu tienda en el bolsillo."
                 : isEcommerce
-                  ? "Publica tu tienda online hoy."
-                  : "Empieza a gestionar tu tienda hoy."}
+                  ? "Tu tienda online puede empezar a vender hoy."
+                  : "Tu próximo cliente puede estar comprando en internet."}
             </h2>
             <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-primary-foreground/80">
               {isPocket
                 ? "Empieza con el Plan Diario por S/ 5 y prueba Pocket sin compromiso. Actívalo cuando lo necesites."
                 : isEcommerce
-                  ? "Elige Starter o Pro, paga con Mercado Pago y recibe tus credenciales por correo. Tus clientes entran por /tienda/tu-slug."
-                  : "Accede con tu cuenta o pide a tu administrador que active Horytek en tu empresa. La facturación SUNAT se configura en menos de una hora."}
+                  ? "Elige un plan, configura tu catálogo y recibe los pagos de tus clientes directamente en tu cuenta de Mercado Pago."
+                  : "Conversemos sobre tu negocio y te mostraremos cómo vender en tu local y por internet, recibir pagos y controlar tus productos desde un solo lugar."}
             </p>
           </div>
           <div className="flex flex-wrap gap-3 md:justify-end">
-            <Button asChild size="lg" variant="secondary" className="gap-2 px-5">
-              <Link to={isEcommerce ? "/login?mode=ecommerce" : "/login"}>
-                Iniciar sesión <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+            {isEcommerce ? (
+              <Button asChild size="lg" variant="secondary" className="gap-2 px-5">
+                <Link to="/registro-ecommerce?plan=starter">
+                  Crear mi tienda <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            ) : isPocket ? (
+              <Button asChild size="lg" variant="secondary" className="gap-2 px-5">
+                <Link to="/login">
+                  Probar Pocket <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild size="lg" variant="secondary" className="gap-2 px-5">
+                <a href={SALES_WHATSAPP_URL} target="_blank" rel="noreferrer">
+                  Solicitar una demo <ArrowRight className="h-4 w-4" />
+                </a>
+              </Button>
+            )}
             <Button
               asChild
               size="lg"

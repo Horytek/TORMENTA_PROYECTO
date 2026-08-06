@@ -1,6 +1,21 @@
-import { Database, Radio, LayoutDashboard, type LucideIcon } from "lucide-react";
+import {
+  ArrowRight,
+  BarChart3,
+  Database,
+  Globe2,
+  LayoutDashboard,
+  PackageCheck,
+  Radio,
+  ShoppingBag,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import { POCKET_CASE_STUDY, TECH_STACK, type Mode } from "../data/landing.data";
+import {
+  BUSINESS_VALUE_POINTS,
+  POCKET_CASE_STUDY,
+  TECH_STACK,
+  type Mode,
+} from "../data/landing.data";
 
 interface Props {
   mode: Mode;
@@ -8,6 +23,8 @@ interface Props {
 
 export function CaseStudy({ mode }: Props) {
   const isPocket = mode === "pocket";
+
+  if (!isPocket) return <BusinessValueSection />;
 
   return (
     <section
@@ -159,6 +176,110 @@ function StackCard({ tech }: { tech: StackTech }) {
       >
         {tech.status}
       </span>
+    </div>
+  );
+}
+
+function BusinessValueSection() {
+  return (
+    <section id="rendimiento" className="border-b border-border/60 bg-background py-24 md:py-32">
+      <div className="mx-auto grid max-w-6xl gap-14 px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-20">
+        <div>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand">
+            Valor para tu negocio
+          </span>
+          <h2 className="mt-3 text-balance text-[clamp(1.9rem,3.8vw,2.8rem)] font-semibold leading-[1.06] tracking-[-0.025em] text-foreground">
+            Vende en más lugares sin trabajar el doble.
+          </h2>
+          <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
+            Tu local y tu tienda online dejan de funcionar por separado. Horytek
+            reúne productos, ventas y stock para que tú puedas enfocarte en atender
+            y hacer crecer tu marca.
+          </p>
+
+          <div className="mt-8 space-y-6">
+            {BUSINESS_VALUE_POINTS.map(({ icon: Icon, title, body }) => (
+              <article key={title} className="flex gap-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
+                  <Icon className="h-4.5 w-4.5" aria-hidden />
+                </span>
+                <div>
+                  <h3 className="text-[14px] font-semibold text-foreground">{title}</h3>
+                  <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{body}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+
+        <ConnectedBusinessDiagram />
+      </div>
+    </section>
+  );
+}
+
+function ConnectedBusinessDiagram() {
+  return (
+    <div className="relative overflow-hidden rounded-3xl border border-border bg-secondary/30 p-6 sm:p-8">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.035]"
+        style={{
+          backgroundImage:
+            "linear-gradient(hsl(var(--foreground)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--foreground)) 1px, transparent 1px)",
+          backgroundSize: "30px 30px",
+        }}
+      />
+
+      <div className="relative">
+        <p className="text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+          Una operación conectada
+        </p>
+
+        <div className="mx-auto mt-6 max-w-xs rounded-2xl border border-primary/30 bg-card p-5 text-center shadow-sm">
+          <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Database className="h-5 w-5" aria-hidden />
+          </span>
+          <p className="mt-3 text-[14px] font-semibold text-foreground">Tus productos en Horytek</p>
+          <p className="mt-1 text-[11px] text-muted-foreground">Productos · precios · clientes</p>
+        </div>
+
+        <div className="my-4 flex justify-center text-muted-foreground">
+          <ArrowRight className="h-4 w-4 rotate-90" aria-hidden />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <DiagramCard icon={ShoppingBag} title="Caja de tu local" detail="Ventas presenciales" />
+          <DiagramCard icon={Globe2} title="Tu ecommerce" detail="Ventas online" />
+        </div>
+
+        <div className="my-4 flex justify-center text-muted-foreground">
+          <ArrowRight className="h-4 w-4 rotate-90" aria-hidden />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <DiagramCard icon={PackageCheck} title="Stock al día" detail="Menos quiebres" />
+          <DiagramCard icon={BarChart3} title="Visión completa" detail="Reportes del negocio" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DiagramCard({
+  icon: Icon,
+  title,
+  detail,
+}: {
+  icon: LucideIcon;
+  title: string;
+  detail: string;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <Icon className="h-4 w-4 text-brand" aria-hidden />
+      <p className="mt-3 text-[12px] font-semibold text-foreground">{title}</p>
+      <p className="mt-0.5 text-[10px] text-muted-foreground">{detail}</p>
     </div>
   );
 }

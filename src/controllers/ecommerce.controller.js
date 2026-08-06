@@ -30,6 +30,28 @@ function generateCredentials(slug) {
   return { usua, clave };
 }
 
+function parseThemeJson(raw) {
+  if (raw == null) return null;
+  if (typeof raw === "object") return raw;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function mapPublicTienda(tienda) {
+  return {
+    slug: tienda.slug,
+    nombre: tienda.nombre,
+    color_primario: tienda.color_primario,
+    logo_url: tienda.logo_url,
+    descripcion: tienda.descripcion,
+    telefono: tienda.telefono,
+    theme_json: parseThemeJson(tienda.theme_json),
+  };
+}
+
 function orderCode() {
   return `EC${Date.now().toString(36).toUpperCase()}${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
 }
@@ -353,10 +375,13 @@ export const meEcommerce = async (req, res) => {
   try {
     connection = await getConnection();
     const [[tienda]] = await connection.query(
-      `SELECT id_tienda, id_tenant, slug, nombre, email, telefono, estado, color_primario, logo_url, descripcion, id_plan
+      `SELECT id_tienda, id_tenant, slug, nombre, email, telefono, estado, color_primario, logo_url, descripcion, id_plan, theme_json
        FROM ecommerce_tienda WHERE id_tenant = ? LIMIT 1`,
       [req.id_tenant]
     );
+    if (tienda) {
+      tienda.theme_json = parseThemeJson(tienda.theme_json);
+    }
     const [[mp]] = await connection.query(
       `SELECT public_key, modo, conectado_en FROM ecommerce_mp_credenciales WHERE id_tenant = ? LIMIT 1`,
       [req.id_tenant]
@@ -382,19 +407,53 @@ export const meEcommerce = async (req, res) => {
 // ─── Admin: tienda / MP / productos / órdenes / dashboard ─────────────────
 
 export const updateTienda = async (req, res) => {
-  const { nombre, descripcion, color_primario, telefono } = req.body;
+  const { nombre, descripcion, color_primario, telefono, logo_url, theme_json } = req.body;
   let connection;
   try {
     connection = await getConnection();
-    await connection.query(
-      `UPDATE ecommerce_tienda SET
-        nombre = COALESCE(?, nombre),
-        descripcion = COALESCE(?, descripcion),
-        color_primario = COALESCE(?, color_primario),
-        telefono = COALESCE(?, telefono)
-       WHERE id_tenant = ?`,
-      [nombre ?? null, descripcion ?? null, color_primario ?? null, telefono ?? null, req.id_tenant]
-    );
+    const themeValue =
+      theme_json === undefined ? null : theme_json === null ? null : JSON.stringify(theme_json);
+
+    // theme_json: si viene en body, reemplaza; si no, COALESCE mantiene
+    if (theme_json !== undefined) {
+      await connection.query(
+        `UPDATE ecommerce_tienda SET
+          nombre = COALESCE(?, nombre),
+          descripcion = COALESCE(?, descripcion),
+          color_primario = COALESCE(?, color_primario),
+          telefono = COALESCE(?, telefono),
+          logo_url = COALESCE(?, logo_url),
+          theme_json = ?
+         WHERE id_tenant = ?`,
+        [
+          nombre ?? null,
+          descripcion ?? null,
+          color_primario ?? null,
+          telefono ?? null,
+          logo_url ?? null,
+          themeValue,
+          req.id_tenant,
+        ]
+      );
+    } else {
+      await connection.query(
+        `UPDATE ecommerce_tienda SET
+          nombre = COALESCE(?, nombre),
+          descripcion = COALESCE(?, descripcion),
+          color_primario = COALESCE(?, color_primario),
+          telefono = COALESCE(?, telefono),
+          logo_url = COALESCE(?, logo_url)
+         WHERE id_tenant = ?`,
+        [
+          nombre ?? null,
+          descripcion ?? null,
+          color_primario ?? null,
+          telefono ?? null,
+          logo_url ?? null,
+          req.id_tenant,
+        ]
+      );
+    }
     return res.json({ success: true });
   } catch (error) {
     console.error("[ecommerce.updateTienda]", error);
@@ -403,6 +462,68 @@ export const updateTienda = async (req, res) => {
     if (connection) connection.release();
   }
 };
+
+async function uploadBrandAsset(req, res, kind) {
+  const { file, fileName } = req.body || {};
+  if (!file) {
+    return res.status(400).json({ success: false, message: "Archivo requerido (base64)." });
+  }
+
+  const safeName = String(fileName || `ecom-brand-${kind}.jpg`).replace(/[^\w.\-]+/g, "_");
+  const extension = safeName.split(".").pop()?.toLowerCase() || "jpg";
+  const allowed = new Set(["png", "jpg", "jpeg", "webp", "gif"]);
+  if (!allowed.has(extension)) {
+    return res.status(400).json({
+      success: false,
+      message: `Tipo no permitido. Usa: ${[...allowed].join(", ")}`,
+    });
+  }
+
+  let connection;
+  try {
+    const uploaded = await subirAImageKit({
+      file,
+      fileName: `ecom_${kind}_${req.id_tenant}_${Date.now()}.${extension}`,
+      folder: `/ecommerce/${req.id_tenant}/brand/`,
+    });
+
+    connection = await getConnection();
+    if (kind === "logo") {
+      await connection.query(`UPDATE ecommerce_tienda SET logo_url = ? WHERE id_tenant = ?`, [
+        uploaded.url,
+        req.id_tenant,
+      ]);
+      return res.status(201).json({
+        success: true,
+        data: { url: uploaded.url, file_id: uploaded.fileId, kind: "logo" },
+      });
+    }
+
+    // banner → merge into theme_json.banner_url
+    const [[row]] = await connection.query(
+      `SELECT theme_json FROM ecommerce_tienda WHERE id_tenant = ? LIMIT 1`,
+      [req.id_tenant]
+    );
+    const theme = parseThemeJson(row?.theme_json) || {};
+    theme.banner_url = uploaded.url;
+    await connection.query(`UPDATE ecommerce_tienda SET theme_json = ? WHERE id_tenant = ?`, [
+      JSON.stringify(theme),
+      req.id_tenant,
+    ]);
+    return res.status(201).json({
+      success: true,
+      data: { url: uploaded.url, file_id: uploaded.fileId, kind: "banner", theme_json: theme },
+    });
+  } catch (error) {
+    console.error(`[ecommerce.uploadBrand.${kind}]`, error);
+    return res.status(500).json({ success: false, message: error.message || "Error al subir." });
+  } finally {
+    if (connection) connection.release();
+  }
+}
+
+export const uploadTiendaLogo = (req, res) => uploadBrandAsset(req, res, "logo");
+export const uploadTiendaBanner = (req, res) => uploadBrandAsset(req, res, "banner");
 
 export const saveMpCredentials = async (req, res) => {
   const { public_key, access_token, modo } = req.body;
@@ -696,7 +817,7 @@ export const getStoreBySlug = async (req, res) => {
   try {
     connection = await getConnection();
     const [[tienda]] = await connection.query(
-      `SELECT id_tienda, id_tenant, slug, nombre, color_primario, logo_url, descripcion, telefono, estado
+      `SELECT id_tienda, id_tenant, slug, nombre, color_primario, logo_url, descripcion, telefono, estado, theme_json
        FROM ecommerce_tienda WHERE slug = ? LIMIT 1`,
       [slug]
     );
@@ -723,14 +844,7 @@ export const getStoreBySlug = async (req, res) => {
     return res.json({
       success: true,
       data: {
-        tienda: {
-          slug: tienda.slug,
-          nombre: tienda.nombre,
-          color_primario: tienda.color_primario,
-          logo_url: tienda.logo_url,
-          descripcion: tienda.descripcion,
-          telefono: tienda.telefono,
-        },
+        tienda: mapPublicTienda(tienda),
         productos,
         mp_ready: Boolean(mp),
         mp_public_key: mp?.public_key || null,
@@ -750,7 +864,7 @@ export const getStoreProduct = async (req, res) => {
   try {
     connection = await getConnection();
     const [[tienda]] = await connection.query(
-      `SELECT id_tenant, slug, nombre, color_primario, estado FROM ecommerce_tienda WHERE slug = ? LIMIT 1`,
+      `SELECT id_tenant, slug, nombre, color_primario, logo_url, descripcion, telefono, estado, theme_json FROM ecommerce_tienda WHERE slug = ? LIMIT 1`,
       [slug]
     );
     if (!tienda || tienda.estado !== "active") {
@@ -770,7 +884,11 @@ export const getStoreProduct = async (req, res) => {
     );
     return res.json({
       success: true,
-      data: { tienda: { slug: tienda.slug, nombre: tienda.nombre, color_primario: tienda.color_primario }, producto, imagenes },
+      data: {
+        tienda: mapPublicTienda(tienda),
+        producto,
+        imagenes,
+      },
     });
   } catch (error) {
     console.error("[ecommerce.getStoreProduct]", error);

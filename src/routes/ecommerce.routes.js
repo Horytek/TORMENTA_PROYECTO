@@ -9,6 +9,7 @@ import {
   ecommerceMpCredentialsSchema,
   ecommerceCheckoutSchema,
   ecommerceTiendaUpdateSchema,
+  ecommerceBrandUploadSchema,
 } from "../schemas/ecommerce.schema.js";
 import {
   registerEcommerce,
@@ -17,6 +18,8 @@ import {
   loginEcommerce,
   meEcommerce,
   updateTienda,
+  uploadTiendaLogo,
+  uploadTiendaBanner,
   saveMpCredentials,
   getDashboard,
   listProductos,
@@ -62,6 +65,16 @@ router.use("/admin", ecommerceAuth);
 router.get("/admin/me", meEcommerce);
 router.get("/admin/dashboard", getDashboard);
 router.patch("/admin/tienda", validateSchema(ecommerceTiendaUpdateSchema), updateTienda);
+router.post(
+  "/admin/tienda/logo",
+  validateSchema(ecommerceBrandUploadSchema),
+  uploadTiendaLogo
+);
+router.post(
+  "/admin/tienda/banner",
+  validateSchema(ecommerceBrandUploadSchema),
+  uploadTiendaBanner
+);
 router.put(
   "/admin/mp-credentials",
   validateSchema(ecommerceMpCredentialsSchema),
