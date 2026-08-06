@@ -5,7 +5,7 @@ import { HorytekIcon } from "@/components/brand/HorytekIcon";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Mode } from "../data/landing.data";
-import { NAV_LINKS } from "../data/landing.data";
+import { NAV_LINKS, SALES_WHATSAPP_URL } from "../data/landing.data";
 
 interface HeaderProps {
   mode: Mode;
@@ -74,9 +74,19 @@ export function Header({ mode, onModeChange }: HeaderProps) {
               isEcommerce && "bg-teal-700 hover:bg-teal-800",
             )}
           >
-            <Link to={isEcommerce ? "/login?mode=ecommerce" : "/login"}>
-              Empezar <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            {isEcommerce ? (
+              <Link to="/login?mode=ecommerce">
+                Empezar <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            ) : isPocket ? (
+              <Link to="/login">
+                Empezar <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            ) : (
+              <a href={SALES_WHATSAPP_URL} target="_blank" rel="noreferrer">
+                Solicitar demo <ArrowRight className="h-3.5 w-3.5" />
+              </a>
+            )}
           </Button>
 
           <button

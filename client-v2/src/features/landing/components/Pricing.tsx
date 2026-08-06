@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, ArrowRight } from "lucide-react";
+import { Check, ArrowRight, CreditCard, Globe2, PackageCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   PLANS,
@@ -71,6 +71,8 @@ export function Pricing({ mode }: Props) {
             PLANS.map((plan) => <StandardPlanCard key={plan.id} plan={plan} annual={annual} />)
           )}
         </div>
+
+        {!isPocket && !isEcommerce && <EcommerceAddOn />}
       </div>
     </section>
   );
@@ -304,5 +306,35 @@ function EcommercePlanCard({ plan }: { plan: EcommercePlan }) {
         </Link>
       </Button>
     </article>
+  );
+}
+
+function EcommerceAddOn() {
+  return (
+    <div className="mt-8 grid gap-6 rounded-2xl border border-brand/25 bg-card p-6 shadow-[0_1px_0_0_hsl(var(--border))] md:grid-cols-[1fr_auto] md:items-center md:p-8">
+      <div>
+        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand">
+          Un nuevo canal de ventas para tu negocio
+        </span>
+        <h3 className="mt-2 text-[clamp(1.25rem,2.5vw,1.65rem)] font-semibold tracking-tight text-foreground">
+          ¿También quieres vender por internet?
+        </h3>
+        <p className="mt-2 max-w-2xl text-[13.5px] leading-relaxed text-muted-foreground">
+          Horytek Ecommerce incluye un enlace con tu marca, catálogo, carrito y
+          Mercado Pago configurado para recibir el dinero en tu cuenta. Los planes
+          empiezan desde S/ 79 al mes.
+        </p>
+        <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-[12px] font-medium text-foreground/80">
+          <li className="flex items-center gap-2"><Globe2 className="h-3.5 w-3.5 text-brand" /> Enlace fácil de compartir</li>
+          <li className="flex items-center gap-2"><CreditCard className="h-3.5 w-3.5 text-brand" /> Cobro con Mercado Pago</li>
+          <li className="flex items-center gap-2"><PackageCheck className="h-3.5 w-3.5 text-brand" /> Un solo control de stock</li>
+        </ul>
+      </div>
+      <Button asChild size="lg" className="gap-2 md:justify-self-end">
+        <Link to="/?mode=ecommerce#planes">
+          Ver planes de tienda online <ArrowRight className="h-4 w-4" />
+        </Link>
+      </Button>
+    </div>
   );
 }
