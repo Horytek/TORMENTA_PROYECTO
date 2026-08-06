@@ -53,7 +53,7 @@ export const TAG_COLORS = ["#243645", "#3E6B89", "#0E7C7B", "#C9A227", "#B23A48"
 // Modo (Standard / Pocket)
 // ────────────────────────────────────────────────────────────────────────────
 
-export type Mode = "standard" | "pocket";
+export type Mode = "standard" | "pocket" | "ecommerce";
 
 export const NAV_LINKS = [
   { label: "Producto", href: "#producto" },
@@ -282,6 +282,7 @@ export const FOOTER_LINKS = [
     links: [
       { label: "Horytek ERP", href: "/" },
       { label: "Pocket POS", href: "/?mode=pocket" },
+      { label: "Ecommerce", href: "/?mode=ecommerce" },
       { label: "Servicios", href: "/servicios" },
       { label: "Sobre nosotros", href: "/sobre-nosotros" },
     ],
@@ -520,6 +521,72 @@ export const POCKET_FAQS = [
     a: "Sí. Incluso en los planes Pocket, tienes acceso a nuestro centro de ayuda y soporte vía WhatsApp.",
   },
 ];
+
+export interface EcommercePlan {
+  id: "starter" | "pro";
+  name: string;
+  price: number;
+  currency: string;
+  description: string;
+  features: string[];
+  highlight?: boolean;
+  ctaLabel: string;
+}
+
+/** Planes SaaS Ecommerce — sincronizados con src/config/ecommercePlans.config.js */
+export const ECOMMERCE_PLANS: EcommercePlan[] = [
+  {
+    id: "starter",
+    name: "Starter",
+    price: 79,
+    currency: "S/",
+    description: "Tu tienda online multi-tenant con catálogo, carrito y cobros a tu cuenta MP.",
+    features: [
+      "Storefront público /tienda/tu-slug",
+      "Admin de productos con ImageKit",
+      "Carrito con Mercado Pago del comerciante",
+      "Aislamiento por empresa (id_tenant)",
+    ],
+    ctaLabel: "Activar Starter",
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    price: 129,
+    currency: "S/",
+    description: "Para marcas que venden online todos los días y necesitan más margen de operación.",
+    features: [
+      "Todo lo de Starter",
+      "Más capacidad de catálogo",
+      "Soporte prioritario",
+      "Credenciales por correo tras el pago",
+    ],
+    highlight: true,
+    ctaLabel: "Activar Pro",
+  },
+];
+
+export const ECOMMERCE_FAQS = [
+  {
+    q: "¿El dinero de las ventas llega a Horytek?",
+    a: "No. Configuras tus propias credenciales de Mercado Pago en el admin; cada compra del carrito acredita en tu cuenta.",
+  },
+  {
+    q: "¿Mis productos se mezclan con otras tiendas?",
+    a: "No. Cada tienda tiene su id_tenant. El catálogo público se resuelve solo por el slug de tu comercio.",
+  },
+  {
+    q: "¿Cómo recibo el acceso?",
+    a: "Tras pagar el plan en la landing, el webhook activa tu tienda y Resend te envía usuario, contraseña y el link /tienda/tu-slug.",
+  },
+];
+
+export const ECOMMERCE_HERO = {
+  badge: "Tienda online propia",
+  title: "Tu ecommerce, separado por empresa.",
+  body: "Catálogo con imágenes ImageKit, carrito con Mercado Pago de tu negocio y panel admin. Una URL fácil para tus clientes.",
+  cta: "Ver planes Ecommerce",
+};
 
 // ────────────────────────────────────────────────────────────────────────────
 // Standard (original) FAQ cards — formato grid de 3 columnas (no accordion)

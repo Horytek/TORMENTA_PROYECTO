@@ -15,6 +15,7 @@ interface HeaderProps {
 export function Header({ mode, onModeChange }: HeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const isPocket = mode === "pocket";
+  const isEcommerce = mode === "ecommerce";
 
   return (
     <header
@@ -22,7 +23,9 @@ export function Header({ mode, onModeChange }: HeaderProps) {
         "sticky top-0 z-40 border-b backdrop-blur-md transition-colors",
         isPocket
           ? "border-amber-500/30 bg-amber-500/5"
-          : "border-border/60 bg-background/80",
+          : isEcommerce
+            ? "border-teal-700/30 bg-teal-700/5"
+            : "border-border/60 bg-background/80",
       )}
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-6">
@@ -31,10 +34,16 @@ export function Header({ mode, onModeChange }: HeaderProps) {
           className="flex items-center gap-2 text-foreground"
           aria-label="Horytek — Inicio"
         >
-          <HorytekIcon size={22} className={isPocket ? "text-amber-600" : "text-primary"} />
+          <HorytekIcon
+            size={22}
+            className={
+              isPocket ? "text-amber-600" : isEcommerce ? "text-teal-700" : "text-primary"
+            }
+          />
           <span className="text-[15px] font-semibold tracking-tight">
             Horytek
             {isPocket && <span className="ml-1 text-amber-600">Pocket</span>}
+            {isEcommerce && <span className="ml-1 text-teal-700">Ecommerce</span>}
           </span>
         </Link>
 
@@ -59,9 +68,13 @@ export function Header({ mode, onModeChange }: HeaderProps) {
           <Button
             asChild
             size="sm"
-            className={cn("gap-1.5", isPocket && "bg-amber-600 hover:bg-amber-700")}
+            className={cn(
+              "gap-1.5",
+              isPocket && "bg-amber-600 hover:bg-amber-700",
+              isEcommerce && "bg-teal-700 hover:bg-teal-800",
+            )}
           >
-            <Link to="/login">
+            <Link to={isEcommerce ? "/login?mode=ecommerce" : "/login"}>
               Empezar <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </Button>
@@ -114,42 +127,33 @@ export function Header({ mode, onModeChange }: HeaderProps) {
 }
 
 function ModeToggle({ mode, onChange }: { mode: Mode; onChange: (m: Mode) => void }) {
-  const isPocket = mode === "pocket";
+  const tabs: { id: Mode; label: string; activeClass: string }[] = [
+    { id: "standard", label: "ERP", activeClass: "bg-background text-foreground shadow-sm" },
+    { id: "pocket", label: "Pocket", activeClass: "bg-amber-500 text-white shadow-sm" },
+    { id: "ecommerce", label: "Ecommerce", activeClass: "bg-teal-700 text-white shadow-sm" },
+  ];
 
   return (
     <div
       role="tablist"
-      aria-label="Cambiar entre Horytek y Horytek Pocket"
+      aria-label="Cambiar producto Horytek"
       className="hidden items-center gap-0.5 rounded-full border border-border bg-secondary/50 p-0.5 sm:inline-flex"
     >
-      <button
-        type="button"
-        role="tab"
-        aria-selected={!isPocket}
-        onClick={() => onChange("standard")}
-        className={cn(
-          "num rounded-full px-3 py-1 text-[11px] font-medium uppercase tracking-[0.08em] transition-colors",
-          !isPocket
-            ? "bg-background text-foreground shadow-sm"
-            : "text-muted-foreground hover:text-foreground",
-        )}
-      >
-        ERP
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={isPocket}
-        onClick={() => onChange("pocket")}
-        className={cn(
-          "num rounded-full px-3 py-1 text-[11px] font-medium uppercase tracking-[0.08em] transition-colors",
-          isPocket
-            ? "bg-amber-500 text-white shadow-sm"
-            : "text-muted-foreground hover:text-foreground",
-        )}
-      >
-        Pocket
-      </button>
+      {tabs.map((t) => (
+        <button
+          key={t.id}
+          type="button"
+          role="tab"
+          aria-selected={mode === t.id}
+          onClick={() => onChange(t.id)}
+          className={cn(
+            "num rounded-full px-2.5 py-1 text-[10px] font-medium uppercase tracking-[0.08em] transition-colors",
+            mode === t.id ? t.activeClass : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {t.label}
+        </button>
+      ))}
     </div>
   );
 }

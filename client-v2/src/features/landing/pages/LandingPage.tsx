@@ -7,6 +7,7 @@ import {
   EVIDENCE_MODULES,
   FEATURE_GROUPS,
   FLOW_STEPS,
+  type Mode,
 } from "../data/landing.data";
 import { useMode } from "../hooks/useMode";
 import { InventoryRail } from "../components/InventoryRail";
@@ -210,14 +211,15 @@ function Flujo() {
 
 // ─── CTA final ─────────────────────────────────────────────────────────────
 
-function CTA({ mode }: { mode: "standard" | "pocket" }) {
+function CTA({ mode }: { mode: Mode }) {
   const isPocket = mode === "pocket";
+  const isEcommerce = mode === "ecommerce";
 
   return (
     <section
       className={cn(
         "py-20 text-primary-foreground md:py-24",
-        isPocket ? "bg-amber-600" : "bg-primary",
+        isPocket ? "bg-amber-600" : isEcommerce ? "bg-teal-800" : "bg-primary",
       )}
     >
       <div className="mx-auto max-w-6xl px-6">
@@ -226,22 +228,21 @@ function CTA({ mode }: { mode: "standard" | "pocket" }) {
             <h2 className="text-balance text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em]">
               {isPocket
                 ? "Lleva tu tienda en el bolsillo."
-                : "Empieza a gestionar tu tienda hoy."}
+                : isEcommerce
+                  ? "Publica tu tienda online hoy."
+                  : "Empieza a gestionar tu tienda hoy."}
             </h2>
             <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-primary-foreground/80">
               {isPocket
                 ? "Empieza con el Plan Diario por S/ 5 y prueba Pocket sin compromiso. Actívalo cuando lo necesites."
-                : "Accede con tu cuenta o pide a tu administrador que active Horytek en tu empresa. La facturación SUNAT se configura en menos de una hora."}
+                : isEcommerce
+                  ? "Elige Starter o Pro, paga con Mercado Pago y recibe tus credenciales por correo. Tus clientes entran por /tienda/tu-slug."
+                  : "Accede con tu cuenta o pide a tu administrador que active Horytek en tu empresa. La facturación SUNAT se configura en menos de una hora."}
             </p>
           </div>
           <div className="flex flex-wrap gap-3 md:justify-end">
-            <Button
-              asChild
-              size="lg"
-              variant="secondary"
-              className="gap-2 px-5"
-            >
-              <Link to="/login">
+            <Button asChild size="lg" variant="secondary" className="gap-2 px-5">
+              <Link to={isEcommerce ? "/login?mode=ecommerce" : "/login"}>
                 Iniciar sesión <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>

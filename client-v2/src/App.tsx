@@ -70,6 +70,20 @@ const PurchaseOrdersPage = lazy(() => import("@/features/purchases/pages/Purchas
 const PurchaseInvoicesPage = lazy(() => import("@/features/purchases/pages/PurchaseInvoicesPage"));
 const AccountsPayablePage = lazy(() => import("@/features/purchases/pages/AccountsPayablePage"));
 const AdvancesPage = lazy(() => import("@/features/purchases/pages/AdvancesPage"));
+const RegisterEcommercePage = lazy(() => import("@/features/ecommerce/pages/RegisterEcommercePage"));
+const EcommerceAdminLayout = lazy(() =>
+  import("@/features/ecommerce/components/EcommerceAdminLayout").then((m) => ({
+    default: m.EcommerceAdminLayout,
+  }))
+);
+const EcommerceDashboardPage = lazy(() => import("@/features/ecommerce/pages/EcommerceDashboardPage"));
+const EcommerceProductsPage = lazy(() => import("@/features/ecommerce/pages/EcommerceProductsPage"));
+const EcommerceOrdersPage = lazy(() => import("@/features/ecommerce/pages/EcommerceOrdersPage"));
+const EcommerceSettingsPage = lazy(() => import("@/features/ecommerce/pages/EcommerceSettingsPage"));
+const StorefrontPage = lazy(() => import("@/features/ecommerce/pages/StorefrontPage"));
+const StoreCartPage = lazy(() => import("@/features/ecommerce/pages/StoreCartPage"));
+const StorePaymentResultPage = lazy(() => import("@/features/ecommerce/pages/StorePaymentResultPage"));
+
 const InventoryMovementsPage = lazy(() => import("@/features/inventory-movements/pages/InventoryMovementsPage"));
 
 // Initialize Query Client for TanStack Query
@@ -172,11 +186,22 @@ export default function App() {
               <Route path="/actualizaciones" element={<UpdatesPage />} />
               <Route path="/contactanos" element={<ContactPage />} />
               <Route path="/registro" element={<RegisterPage />} />
+              <Route path="/registro-ecommerce" element={<RegisterEcommercePage />} />
+              <Route path="/tienda/:slug" element={<StorefrontPage />} />
+              <Route path="/tienda/:slug/carrito" element={<StoreCartPage />} />
+              <Route path="/tienda/:slug/pago/resultado" element={<StorePaymentResultPage />} />
               <Route path="/catalogo/:idTenant" element={<CatalogoPublicoPage />} />
               <Route path="/status" element={<StatusPage />} />
               <Route path="/success" element={<PaymentResultPage />} />
               <Route path="/failure" element={<PaymentResultPage />} />
               <Route path="/pending" element={<PaymentResultPage />} />
+              {/* Ecommerce admin — auth propia (JWT audience horytek-ecommerce) */}
+              <Route path="/ecommerce-admin" element={<EcommerceAdminLayout />}>
+                <Route index element={<EcommerceDashboardPage />} />
+                <Route path="productos" element={<EcommerceProductsPage />} />
+                <Route path="ordenes" element={<EcommerceOrdersPage />} />
+                <Route path="configuracion" element={<EcommerceSettingsPage />} />
+              </Route>
               {/* Pocket POS (Express) tiene su propio sistema de auth, independiente del ERP */}
               <Route path="/express-pos">
                 <Route index element={<Navigate to="dashboard" replace />} />

@@ -6,6 +6,7 @@ import { getExpressConnection } from "../database/express_db.js";
 import { Resend } from "resend";
 import PDFDocument from "pdfkit";
 import { isDeveloperReq } from "../middlewares/authorize.middleware.js";
+import { activateEcommerceFromPayment } from "./ecommerce.controller.js";
 dotenv.config();
 
 const client = new MercadoPagoConfig({
@@ -303,6 +304,24 @@ export const paymentWebhook = async (req, res) => {
 
     if (String(payment.status).toLowerCase() === "approved") {
       connection = await getConnection();
+
+      // Ecommerce SaaS: external_reference = ecommerce:{id_tienda}
+      if (String(externalReference).startsWith("ecommerce:")) {
+        try {
+          await connection.beginTransaction();
+          const result = await activateEcommerceFromPayment({
+            connection,
+            externalReference,
+            payment,
+          });
+          await connection.commit();
+          if (result?.handled) return res.sendStatus(200);
+        } catch (err) {
+          console.error("Ecommerce webhook activation error:", err);
+          try { await connection.rollback(); } catch { /* noop */ }
+          return res.sendStatus(200);
+        }
+      }
 
       let empresa;
       let isExpress = false;

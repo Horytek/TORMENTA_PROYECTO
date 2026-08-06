@@ -1,3 +1,5 @@
+import ImageKit from "imagekit";
+
 let imagekitClient = null;
 
 function getImageKitClient() {

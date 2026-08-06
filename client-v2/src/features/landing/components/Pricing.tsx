@@ -6,9 +6,11 @@ import { cn } from "@/lib/utils";
 import {
   PLANS,
   POCKET_PLANS,
+  ECOMMERCE_PLANS,
   type Mode,
   type Plan,
   type PocketPlan,
+  type EcommercePlan,
 } from "../data/landing.data";
 
 interface Props {
@@ -17,6 +19,7 @@ interface Props {
 
 export function Pricing({ mode }: Props) {
   const isPocket = mode === "pocket";
+  const isEcommerce = mode === "ecommerce";
   const [annual, setAnnual] = useState(false);
 
   return (
@@ -24,31 +27,46 @@ export function Pricing({ mode }: Props) {
       id="planes"
       className={cn(
         "border-b border-border/60 py-24 md:py-32",
-        isPocket ? "bg-amber-500/[0.03]" : "bg-secondary/20",
+        isPocket
+          ? "bg-amber-500/[0.03]"
+          : isEcommerce
+            ? "bg-teal-700/[0.03]"
+            : "bg-secondary/20",
       )}
     >
       <div className="mx-auto max-w-6xl px-6">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Planes · {isPocket ? "Pocket" : "ERP"}
+            Planes · {isPocket ? "Pocket" : isEcommerce ? "Ecommerce" : "ERP"}
           </span>
           <h2 className="mt-3 text-balance text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-foreground">
-            {isPocket ? "Elige cómo quieres empezar." : "Precios simples, en soles, sin letra chica."}
+            {isPocket
+              ? "Elige cómo quieres empezar."
+              : isEcommerce
+                ? "Tu tienda online, cobrando a tu cuenta."
+                : "Precios simples, en soles, sin letra chica."}
           </h2>
           <p className="mt-3 text-[14px] text-muted-foreground">
             {isPocket
               ? "Sin contratos forzosos. Empieza hoy y termina cuando quieras."
-              : "Pago mensual o anual. Cancela cuando quieras."}
+              : isEcommerce
+                ? "Pagas el plan a Horytek. Las ventas del carrito van a tu Mercado Pago."
+                : "Pago mensual o anual. Cancela cuando quieras."}
           </p>
 
-          {!isPocket && <BillingToggle annual={annual} setAnnual={setAnnual} />}
+          {!isPocket && !isEcommerce && <BillingToggle annual={annual} setAnnual={setAnnual} />}
         </div>
 
-        <div className="mt-14 grid gap-5 lg:grid-cols-3">
+        <div
+          className={cn(
+            "mt-14 grid gap-5",
+            isEcommerce ? "lg:grid-cols-2 max-w-3xl mx-auto" : "lg:grid-cols-3",
+          )}
+        >
           {isPocket ? (
-            POCKET_PLANS.map((plan) => (
-              <PocketPlanCard key={plan.id} plan={plan} />
-            ))
+            POCKET_PLANS.map((plan) => <PocketPlanCard key={plan.id} plan={plan} />)
+          ) : isEcommerce ? (
+            ECOMMERCE_PLANS.map((plan) => <EcommercePlanCard key={plan.id} plan={plan} />)
           ) : (
             PLANS.map((plan) => <StandardPlanCard key={plan.id} plan={plan} annual={annual} />)
           )}
@@ -227,6 +245,61 @@ function PocketPlanCard({ plan }: { plan: PocketPlan }) {
         variant={plan.highlight ? "default" : "outline"}
       >
         <Link to={`/login?mode=express&register=1&plan=${plan.id}`}>
+          {plan.ctaLabel} <ArrowRight className="h-4 w-4" />
+        </Link>
+      </Button>
+    </article>
+  );
+}
+
+function EcommercePlanCard({ plan }: { plan: EcommercePlan }) {
+  return (
+    <article
+      className={cn(
+        "relative flex flex-col rounded-xl border bg-card p-7 transition-colors",
+        plan.highlight
+          ? "border-teal-700 lg:-mt-1 shadow-[0_2px_0_0_rgb(15_118_110)]"
+          : "border-border hover:border-teal-700/40",
+      )}
+    >
+      {plan.highlight && (
+        <span className="absolute -top-2.5 right-7 rounded-full bg-teal-700 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-white">
+          Recomendado
+        </span>
+      )}
+      <header>
+        <h3 className="text-[13px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          {plan.name}
+        </h3>
+        <p className="mt-2 min-h-[2.5rem] text-[13px] leading-snug text-muted-foreground">
+          {plan.description}
+        </p>
+      </header>
+      <div className="mt-6 border-t border-dashed border-border pt-5">
+        <div className="flex items-baseline gap-1">
+          <span className="num text-[2rem] font-semibold tracking-[-0.02em] text-foreground">
+            {plan.currency} {plan.price}
+          </span>
+          <span className="text-[13px] text-muted-foreground">/ mes</span>
+        </div>
+      </div>
+      <ul className="mt-6 flex-1 space-y-2.5">
+        {plan.features.map((f) => (
+          <li
+            key={f}
+            className="flex items-start gap-2.5 text-[13.5px] leading-snug text-foreground/90"
+          >
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-teal-700" aria-hidden />
+            {f}
+          </li>
+        ))}
+      </ul>
+      <Button
+        asChild
+        className={cn("mt-7 gap-1.5", plan.highlight && "bg-teal-700 text-white hover:bg-teal-800")}
+        variant={plan.highlight ? "default" : "outline"}
+      >
+        <Link to={`/registro-ecommerce?plan=${plan.id}`}>
           {plan.ctaLabel} <ArrowRight className="h-4 w-4" />
         </Link>
       </Button>

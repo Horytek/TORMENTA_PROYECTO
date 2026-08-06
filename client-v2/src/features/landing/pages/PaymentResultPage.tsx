@@ -73,7 +73,9 @@ export default function PaymentResultPage() {
       setDetail(
         flow === "erp"
           ? "Recibirás tus credenciales de acceso por correo apenas se confirme el pago."
-          : null
+          : flow === "ecommerce"
+            ? "Recibirás usuario, contraseña y el link de tu tienda (/tienda/…) por correo cuando se confirme el pago."
+            : null
       );
       return;
     }
