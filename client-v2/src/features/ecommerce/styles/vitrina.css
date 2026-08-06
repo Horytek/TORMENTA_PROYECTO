@@ -1,0 +1,61 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Syne:wght@500;600;700;800&display=swap");
+
+.vitrina {
+  --vitrina-ink: #0b1220;
+  --vitrina-fog: #e8eef5;
+  --vitrina-mist: #f4f7fb;
+  --vitrina-stage-from: #0f172a;
+  --vitrina-stage-to: #1e293b;
+  --vitrina-accent: #0e7c7b;
+  --vitrina-accent-soft: color-mix(in srgb, var(--vitrina-accent) 14%, transparent);
+  --vitrina-accent-glow: color-mix(in srgb, var(--vitrina-accent) 35%, transparent);
+  --font-vitrina-display: "Syne", ui-sans-serif, system-ui, sans-serif;
+  --font-vitrina-body: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+
+  font-family: var(--font-vitrina-body);
+  color: var(--vitrina-ink);
+  background: var(--vitrina-mist);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.vitrina * {
+  box-sizing: border-box;
+}
+
+.vitrina-display {
+  font-family: var(--font-vitrina-display);
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+}
+
+.vitrina-pill {
+  border-radius: 9999px;
+}
+
+.vitrina-card {
+  border-radius: 12px;
+}
+
+.vitrina-stage-bg {
+  background: linear-gradient(145deg, var(--vitrina-stage-from) 0%, var(--vitrina-stage-to) 55%, color-mix(in srgb, var(--vitrina-accent) 28%, #0f172a) 100%);
+}
+
+.vitrina-hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.vitrina-hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vitrina *,
+  .vitrina *::before,
+  .vitrina *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
