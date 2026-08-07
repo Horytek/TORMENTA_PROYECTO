@@ -82,6 +82,15 @@ export const ecommerceThemeSchema = z
     font_display: z.enum(["syne", "outfit", "sora"]).optional(),
     font_body: z.enum(["dm-sans", "manrope", "space-grotesk"]).optional(),
     header_style: z.enum(["dark", "light", "accent"]).optional(),
+    nav: z
+      .object({
+        show_categories: z.boolean().optional(),
+        style: z.enum(["text", "pill", "soft", "underline"]).optional(),
+        label_all: z.string().max(40).optional(),
+        max_items: z.number().int().min(2).max(12).optional(),
+        show_counts: z.boolean().optional(),
+      })
+      .optional(),
     hero_headline: z.string().max(120).optional().nullable(),
     hero_tagline: z.string().max(280).optional().nullable(),
     banner_url: z.string().max(512).optional().nullable(),

@@ -31,6 +31,7 @@ import {
   type FontBody,
   type FontDisplay,
   type HeaderStyle,
+  type NavStyle,
   type StoreModule,
   type StoreTheme,
   type ThemePreset,
@@ -160,6 +161,7 @@ export default function EcommerceSettingsPage() {
         ...partial,
         sections: { ...t.sections, ...partial.sections },
         trust: { ...t.trust, ...partial.trust },
+        nav: { ...t.nav, ...partial.nav },
         modules: partial.modules ?? t.modules,
         quick_actions: { ...t.quick_actions, ...partial.quick_actions },
       })
@@ -523,6 +525,87 @@ export default function EcommerceSettingsPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Navbar categorías */}
+            <div className="rounded-lg border border-stone-100 bg-stone-50/80 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">Navegación de categorías</p>
+                  <p className="text-xs text-stone-500 mt-0.5">
+                    Personaliza cómo se ven las categorías en el header de la tienda.
+                  </p>
+                </div>
+                <label className="inline-flex items-center gap-2 text-xs text-stone-600 shrink-0">
+                  <Switch
+                    checked={theme.nav.show_categories !== false}
+                    onCheckedChange={(v) => patchTheme({ nav: { ...theme.nav, show_categories: v } })}
+                  />
+                  Mostrar
+                </label>
+              </div>
+              {theme.nav.show_categories !== false && (
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label>Estilo de links</Label>
+                    <Select
+                      value={theme.nav.style}
+                      onValueChange={(v) => patchTheme({ nav: { ...theme.nav, style: v as NavStyle } })}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="text">Texto simple</SelectItem>
+                        <SelectItem value="soft">Suave (redondeado)</SelectItem>
+                        <SelectItem value="pill">Cápsula</SelectItem>
+                        <SelectItem value="underline">Subrayado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Etiqueta “todas”</Label>
+                    <Input
+                      className="mt-1"
+                      value={theme.nav.label_all}
+                      onChange={(e) =>
+                        patchTheme({ nav: { ...theme.nav, label_all: e.target.value.slice(0, 40) } })
+                      }
+                      placeholder="Todo"
+                    />
+                  </div>
+                  <div>
+                    <Label>Máx. categorías en header</Label>
+                    <Select
+                      value={String(theme.nav.max_items)}
+                      onValueChange={(v) =>
+                        patchTheme({ nav: { ...theme.nav, max_items: Number(v) } })
+                      }
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[3, 4, 5, 6, 8, 10, 12].map((n) => (
+                          <SelectItem key={n} value={String(n)}>
+                            {n}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-end pb-1">
+                    <label className="inline-flex items-center gap-2 text-sm">
+                      <Switch
+                        checked={theme.nav.show_counts === true}
+                        onCheckedChange={(v) => patchTheme({ nav: { ...theme.nav, show_counts: v } })}
+                      />
+                      Mostrar contador de productos
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div>
               <Label>Banner de fondo del Stage</Label>
               <div className="mt-2 flex items-center gap-3">
@@ -732,11 +815,63 @@ export default function EcommerceSettingsPage() {
                 </span>
               )}
               <span
-                className="font-semibold truncate"
+                className="font-semibold truncate shrink-0"
                 style={{ fontFamily: FONT_DISPLAY_STACK[theme.font_display] }}
               >
                 {nombre || "Tu tienda"}
               </span>
+              {theme.nav.show_categories !== false && (
+                <div className="hidden sm:flex items-center gap-1 ml-2 min-w-0 overflow-hidden">
+                  {[theme.nav.label_all || "Todo", "Moda", "Tech"].map((label, i) => {
+                    const active = i === 1;
+                    const style = theme.nav.style;
+                    const pill =
+                      style === "pill"
+                        ? {
+                            background: active
+                              ? theme.header_style === "accent"
+                                ? "rgba(0,0,0,0.28)"
+                                : color
+                              : "transparent",
+                            color: active && theme.header_style !== "accent" ? "#fff" : undefined,
+                            borderRadius: 999,
+                            padding: "2px 8px",
+                            fontWeight: active ? 600 : 400,
+                          }
+                        : style === "soft"
+                          ? {
+                              background: active
+                                ? theme.header_style === "accent"
+                                  ? "rgba(0,0,0,0.2)"
+                                  : `${color}22`
+                                : "transparent",
+                              color: active && theme.header_style !== "accent" ? color : undefined,
+                              borderRadius: 10,
+                              padding: "2px 8px",
+                              fontWeight: active ? 600 : 400,
+                            }
+                          : style === "underline"
+                            ? {
+                                borderBottom: active
+                                  ? `2px solid ${theme.header_style === "accent" ? "#fff" : color}`
+                                  : "2px solid transparent",
+                                color: active && theme.header_style !== "accent" ? color : undefined,
+                                fontWeight: active ? 600 : 400,
+                                padding: "2px 4px",
+                              }
+                            : {
+                                color: active && theme.header_style !== "accent" ? color : undefined,
+                                fontWeight: active ? 600 : 400,
+                                padding: "2px 4px",
+                              };
+                    return (
+                      <span key={label} className="truncate opacity-90" style={pill}>
+                        {label}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             <div
               className="relative h-36 p-4 flex flex-col justify-end text-white"

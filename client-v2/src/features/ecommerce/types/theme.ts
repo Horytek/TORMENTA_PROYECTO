@@ -4,6 +4,15 @@ export type FontBody = "dm-sans" | "manrope" | "space-grotesk";
 export type HeaderStyle = "dark" | "light" | "accent";
 export type ColorSchemePref = "system" | "light" | "dark";
 export type ResolvedScheme = "light" | "dark";
+export type NavStyle = "text" | "pill" | "soft" | "underline";
+
+export type NavConfig = {
+  show_categories: boolean;
+  style: NavStyle;
+  label_all: string;
+  max_items: number;
+  show_counts: boolean;
+};
 
 export type RowMode = "newest" | "category" | "ids" | "low_stock" | "price_asc";
 export type BrowseFacet = "category" | "price" | "stock" | "tags";
@@ -83,6 +92,7 @@ export type StoreTheme = {
   font_display: FontDisplay;
   font_body: FontBody;
   header_style: HeaderStyle;
+  nav: NavConfig;
   hero_headline: string | null;
   hero_tagline: string | null;
   banner_url: string | null;
@@ -228,11 +238,20 @@ export const DEFAULT_MODULES: StoreModule[] = [
   },
 ];
 
+export const DEFAULT_NAV: NavConfig = {
+  show_categories: true,
+  style: "soft",
+  label_all: "Todo",
+  max_items: 6,
+  show_counts: false,
+};
+
 export const DEFAULT_THEME: StoreTheme = {
   preset: "store",
   font_display: "outfit",
   font_body: "manrope",
   header_style: "dark",
+  nav: { ...DEFAULT_NAV },
   hero_headline: null,
   hero_tagline: null,
   banner_url: null,
@@ -321,6 +340,7 @@ export function resolveTheme(partial?: Partial<StoreTheme> | null): StoreTheme {
     ...DEFAULT_THEME,
     sections: { ...DEFAULT_THEME.sections },
     trust: { ...DEFAULT_THEME.trust },
+    nav: { ...DEFAULT_THEME.nav },
     quick_actions: { ...DEFAULT_THEME.quick_actions },
     modules: [...DEFAULT_THEME.modules],
   };
@@ -345,11 +365,24 @@ export function resolveTheme(partial?: Partial<StoreTheme> | null): StoreTheme {
 
   const preset = (partial.preset as ThemePreset) || DEFAULT_THEME.preset;
   const validPresets: ThemePreset[] = ["nocturna", "clara", "retail", "store"];
+  const navStyles: NavStyle[] = ["text", "pill", "soft", "underline"];
+  const navPartial = partial.nav || {};
+  const navStyle = navStyles.includes(navPartial.style as NavStyle)
+    ? (navPartial.style as NavStyle)
+    : DEFAULT_NAV.style;
+
   return {
     preset: validPresets.includes(preset) ? preset : "store",
     font_display: partial.font_display ?? DEFAULT_THEME.font_display,
     font_body: partial.font_body ?? DEFAULT_THEME.font_body,
     header_style: partial.header_style ?? DEFAULT_THEME.header_style,
+    nav: {
+      show_categories: navPartial.show_categories ?? DEFAULT_NAV.show_categories,
+      style: navStyle,
+      label_all: (navPartial.label_all?.trim() || DEFAULT_NAV.label_all).slice(0, 40),
+      max_items: Math.min(12, Math.max(2, Number(navPartial.max_items) || DEFAULT_NAV.max_items)),
+      show_counts: navPartial.show_counts ?? DEFAULT_NAV.show_counts,
+    },
     hero_headline: partial.hero_headline ?? null,
     hero_tagline: partial.hero_tagline ?? null,
     banner_url: partial.banner_url ?? null,
