@@ -30,6 +30,7 @@ export const ecommerceProductoSchema = z.object({
   stock_min: z.number().int().nonnegative().default(5),
   activo: z.boolean().optional().default(true),
   sku: z.string().max(64).optional().nullable(),
+  categoria: z.string().max(80).optional().nullable(),
   attrs_json: z.any().optional().nullable(),
 });
 
@@ -53,9 +54,31 @@ export const ecommerceCheckoutSchema = z.object({
   telefono_comprador: z.string().max(40).optional().nullable(),
 });
 
+const moduleSchema = z
+  .object({
+    id: z.string().max(64),
+    type: z.enum([
+      "spotlight",
+      "featured",
+      "rows",
+      "categories",
+      "trust",
+      "promo",
+      "browse",
+      "faq",
+      "stage",
+      "stories",
+      "rails",
+      "catalog",
+    ]),
+    enabled: z.boolean().optional(),
+    config: z.record(z.string(), z.any()).optional(),
+  })
+  .passthrough();
+
 export const ecommerceThemeSchema = z
   .object({
-    preset: z.enum(["nocturna", "clara", "retail"]).optional(),
+    preset: z.enum(["nocturna", "clara", "retail", "store"]).optional(),
     font_display: z.enum(["syne", "outfit", "sora"]).optional(),
     font_body: z.enum(["dm-sans", "manrope", "space-grotesk"]).optional(),
     header_style: z.enum(["dark", "light", "accent"]).optional(),
@@ -78,8 +101,27 @@ export const ecommerceThemeSchema = z
         soporte: z.string().max(80).optional(),
       })
       .optional(),
+    modules: z.array(moduleSchema).max(20).optional(),
+    color_scheme_default: z.enum(["system", "light", "dark"]).optional(),
+    allow_visitor_scheme_toggle: z.boolean().optional(),
+    quick_actions: z
+      .object({
+        cart_fab: z.boolean().optional(),
+        quick_add: z.boolean().optional(),
+        whatsapp: z.boolean().optional(),
+      })
+      .optional(),
+    surfaces: z
+      .object({
+        ink: z.string().max(32).optional(),
+        fog: z.string().max(32).optional(),
+        mist: z.string().max(32).optional(),
+        stageFrom: z.string().max(32).optional(),
+        stageTo: z.string().max(32).optional(),
+      })
+      .optional(),
   })
-  .strict();
+  .passthrough();
 
 export const ecommerceTiendaUpdateSchema = z.object({
   nombre: z.string().min(2).max(160).optional(),

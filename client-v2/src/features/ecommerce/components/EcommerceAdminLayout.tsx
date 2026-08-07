@@ -31,7 +31,7 @@ export function EcommerceAdminLayout() {
           setSession(t, {
             usuario: res.data.usua || res.data.usuario,
             email: res.data.tienda?.email || "",
-            id_tenant: res.data.id_tenant,
+            id_tienda: res.data.id_tienda ?? res.data.tienda?.id_tienda,
             slug: res.data.slug || res.data.tienda?.slug,
             tienda: res.data.tienda?.nombre || res.data.nombre,
           });
@@ -52,6 +52,11 @@ export function EcommerceAdminLayout() {
         <div className="p-4 border-b border-stone-100">
           <div className="text-[10px] uppercase tracking-widest text-stone-400">Horytek · Ecommerce</div>
           <div className="font-semibold truncate mt-0.5">{user?.tienda || "Admin"}</div>
+          {user?.slug && (
+            <div className="mt-1 text-[11px] text-stone-400 truncate">
+              {user.slug} · id {user.id_tienda}
+            </div>
+          )}
           {user?.slug && (
             <Link
               to={`/tienda/${user.slug}`}

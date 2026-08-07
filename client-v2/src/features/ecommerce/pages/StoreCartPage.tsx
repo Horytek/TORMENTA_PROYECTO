@@ -67,34 +67,29 @@ export default function StoreCartPage() {
   });
 
   return (
-    <StoreShell tienda={tienda}>
+    <StoreShell tienda={tienda} slug={slug}>
       <StoreHeader
         tienda={tienda}
         slug={slug}
         cartCount={count}
         categorias={catalog.categorias}
-        search=""
-        onSearchChange={() => {}}
-        onCategoria={() => {}}
+        onCategoria={catalog.setCategoria}
         categoriaActiva={null}
-        compactSearch
+        productos={productos}
       />
 
-      <div className="max-w-2xl mx-auto px-4 py-12 lg:py-16 flex-1 w-full">
-        <Link
-          to={`/tienda/${slug}`}
-          className="text-sm text-slate-500 hover:text-[var(--vitrina-accent)] transition-colors"
-        >
+      <div className="max-w-2xl mx-auto px-4 py-12 lg:py-16 flex-1 w-full pb-28 lg:pb-16">
+        <Link to={`/tienda/${slug}`} className="text-sm store-muted hover:text-[var(--vitrina-accent)] min-h-11 inline-flex items-center">
           ← Volver a la tienda
         </Link>
-        <h1 className="vitrina-display text-4xl sm:text-5xl mt-4">Tu carrito</h1>
+        <h1 className="text-3xl font-semibold tracking-tight mt-4">Tu carrito</h1>
 
         {items.length === 0 ? (
-          <div className="mt-12 text-center py-16 border border-dashed border-slate-200 rounded-2xl bg-white/60">
-            <p className="text-slate-400 mb-4">Tu carrito está vacío.</p>
+          <div className="mt-12 text-center py-16 border border-dashed store-hairline bg-[var(--vitrina-elevated)]">
+            <p className="store-muted mb-4">Tu carrito está vacío.</p>
             <Link
-              to={`/tienda/${slug}`}
-              className="vitrina-pill inline-flex px-6 py-2.5 text-sm font-semibold text-white"
+              to={`/tienda/${slug}#catalogo`}
+              className="inline-flex h-11 px-6 items-center text-sm font-semibold text-white"
               style={{ background: "var(--vitrina-accent)" }}
             >
               Explorar catálogo

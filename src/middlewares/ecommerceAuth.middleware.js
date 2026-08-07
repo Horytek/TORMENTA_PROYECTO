@@ -1,10 +1,9 @@
 import jwt from "jsonwebtoken";
 import { TOKEN_SECRET } from "../config.js";
-import { getConnection } from "../database/database.js";
+import { getEcommerceConnection } from "../database/database_ecommerce.js";
 
 /**
- * Auth del admin Ecommerce. JWT con aud=horytek-ecommerce y claim ten.
- * req.id_tenant / req.ecommerceUser solo desde el token — nunca del body.
+ * Auth admin Ecommerce. JWT aud=horytek-ecommerce; claim `ten` = id_tienda.
  */
 export const ecommerceAuth = async (req, res, next) => {
   try {
@@ -25,19 +24,27 @@ export const ecommerceAuth = async (req, res, next) => {
       return res.status(401).json({ success: false, message: "Token inválido." });
     }
 
-    const id_tenant = decoded.ten ?? decoded.id_tenant;
-    if (id_tenant == null) {
+    // ten = id_tienda (nuevo). Compat: tokens viejos con ten=legacy_tenant se resuelven abajo.
+    const ten = decoded.ten ?? decoded.id_tienda ?? decoded.id_tenant;
+    if (ten == null) {
       return res.status(403).json({ success: false, message: "Token no es de Ecommerce." });
     }
 
     let connection;
     try {
-      connection = await getConnection();
-      const [[tienda]] = await connection.query(
-        `SELECT id_tienda, id_tenant, estado, slug, nombre
-         FROM ecommerce_tienda WHERE id_tenant = ? LIMIT 1`,
-        [id_tenant]
+      connection = await getEcommerceConnection();
+      let [[tienda]] = await connection.query(
+        `SELECT id_tienda, estado, slug, nombre
+         FROM tienda WHERE id_tienda = ? LIMIT 1`,
+        [ten]
       );
+      if (!tienda) {
+        [[tienda]] = await connection.query(
+          `SELECT id_tienda, estado, slug, nombre
+           FROM tienda WHERE legacy_tenant_id = ? LIMIT 1`,
+          [ten]
+        );
+      }
       if (!tienda) {
         return res.status(403).json({ success: false, message: "Tienda no encontrada." });
       }
@@ -50,12 +57,13 @@ export const ecommerceAuth = async (req, res, next) => {
         });
       }
 
-      req.id_tenant = Number(tienda.id_tenant);
       req.id_tienda = Number(tienda.id_tienda);
+      // Alias temporal para código legado en el mismo request
+      req.id_tenant = req.id_tienda;
       req.ecommerceUser = {
         id_usuario: decoded.sub,
         usua: decoded.usr,
-        id_tenant: req.id_tenant,
+        id_tienda: req.id_tienda,
         slug: tienda.slug,
         nombre: tienda.nombre,
       };

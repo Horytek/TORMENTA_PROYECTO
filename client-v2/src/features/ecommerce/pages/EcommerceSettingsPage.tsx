@@ -27,9 +27,11 @@ import {
   FONT_DISPLAY_STACK,
   PRESET_SURFACES,
   resolveTheme,
+  type ColorSchemePref,
   type FontBody,
   type FontDisplay,
   type HeaderStyle,
+  type StoreModule,
   type StoreTheme,
   type ThemePreset,
 } from "../types/theme";
@@ -44,10 +46,15 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 const PRESETS: { id: ThemePreset; label: string; hint: string }[] = [
+  { id: "store", label: "Store", hint: "Epic/Steam digital storefront" },
   { id: "nocturna", label: "Nocturna", hint: "Stage oscuro, discovery cinemático" },
   { id: "clara", label: "Clara", hint: "Superficies claras, retail limpio" },
   { id: "retail", label: "Retail", hint: "Grises densos, look tienda" },
 ];
+
+function surf(preset: ThemePreset, scheme: "light" | "dark" = "dark") {
+  return PRESET_SURFACES[preset][scheme];
+}
 
 export default function EcommerceSettingsPage() {
   const qc = useQueryClient();
@@ -78,7 +85,30 @@ export default function EcommerceSettingsPage() {
   }, [tienda, hydrated]);
 
   const patchTheme = (partial: Partial<StoreTheme>) => {
-    setTheme((t) => resolveTheme({ ...t, ...partial, sections: { ...t.sections, ...partial.sections }, trust: { ...t.trust, ...partial.trust } }));
+    setTheme((t) =>
+      resolveTheme({
+        ...t,
+        ...partial,
+        sections: { ...t.sections, ...partial.sections },
+        trust: { ...t.trust, ...partial.trust },
+        modules: partial.modules ?? t.modules,
+        quick_actions: { ...t.quick_actions, ...partial.quick_actions },
+      })
+    );
+  };
+
+  const moveModule = (index: number, dir: -1 | 1) => {
+    const next = [...theme.modules];
+    const j = index + dir;
+    if (j < 0 || j >= next.length) return;
+    [next[index], next[j]] = [next[j], next[index]];
+    patchTheme({ modules: next });
+  };
+
+  const toggleModule = (id: string, enabled: boolean) => {
+    patchTheme({
+      modules: theme.modules.map((m) => (m.id === id ? ({ ...m, enabled } as StoreModule) : m)),
+    });
   };
 
   const saveBrand = useMutation({
@@ -141,7 +171,7 @@ export default function EcommerceSettingsPage() {
   });
 
   const previewStyle = useMemo(() => {
-    const surfaces = PRESET_SURFACES[theme.preset];
+    const surfaces = surf(theme.preset, "dark");
     return {
       "--vitrina-accent": color || "#0E7C7B",
       "--vitrina-ink": surfaces.ink,
@@ -159,8 +189,8 @@ export default function EcommerceSettingsPage() {
     theme.header_style === "accent"
       ? { background: color, color: "#fff" }
       : theme.header_style === "light"
-        ? { background: "#fff", color: PRESET_SURFACES[theme.preset].ink, borderBottom: "1px solid #e2e8f0" }
-        : { background: PRESET_SURFACES[theme.preset].ink, color: "#fff" };
+        ? { background: "#fff", color: surf(theme.preset, "light").ink, borderBottom: "1px solid #e2e8f0" }
+        : { background: surf(theme.preset, "dark").mist, color: surf(theme.preset, "dark").ink };
 
   if (isLoading && !tienda) {
     return <div className="text-stone-400 text-sm py-10">Cargando configuración…</div>;
@@ -258,7 +288,7 @@ export default function EcommerceSettingsPage() {
                 </div>
               </div>
             </div>
-            <div className="grid sm:grid-cols-3 gap-2">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
               {PRESETS.map((p) => (
                 <button
                   key={p.id}
@@ -273,13 +303,43 @@ export default function EcommerceSettingsPage() {
                   <div
                     className="h-8 rounded mb-2"
                     style={{
-                      background: `linear-gradient(135deg, ${PRESET_SURFACES[p.id].stageFrom}, ${PRESET_SURFACES[p.id].stageTo})`,
+                      background: `linear-gradient(135deg, ${surf(p.id).stageFrom}, ${surf(p.id).stageTo})`,
                     }}
                   />
                   <p className="text-sm font-medium">{p.label}</p>
                   <p className="text-[11px] text-stone-500">{p.hint}</p>
                 </button>
               ))}
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-stone-200 bg-white p-5 space-y-4">
+            <h2 className="font-medium text-sm">Modo oscuro del visitante</h2>
+            <p className="text-xs text-stone-500">
+              Independiente del preset de marca. El comprador puede cambiar claro/oscuro/sistema.
+            </p>
+            <div>
+              <Label>Default</Label>
+              <Select
+                value={theme.color_scheme_default}
+                onValueChange={(v) => patchTheme({ color_scheme_default: v as ColorSchemePref })}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="system">Sistema</SelectItem>
+                  <SelectItem value="light">Claro</SelectItem>
+                  <SelectItem value="dark">Oscuro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm">Permitir toggle en la vitrina</span>
+              <Switch
+                checked={theme.allow_visitor_scheme_toggle}
+                onCheckedChange={(v) => patchTheme({ allow_visitor_scheme_toggle: v })}
+              />
             </div>
           </section>
 
@@ -401,29 +461,63 @@ export default function EcommerceSettingsPage() {
             </div>
           </section>
 
-          {/* Secciones */}
+          {/* Módulos ordenables */}
           <section className="rounded-xl border border-stone-200 bg-white p-5 space-y-4">
-            <h2 className="font-medium text-sm">Secciones de la Vitrina</h2>
-            {(
-              [
-                ["stage", "Stage / Destacados"],
-                ["categories", "Categorías"],
-                ["trust", "Franja de confianza"],
-                ["stories", "Story tiles"],
-                ["rails", "Rails de productos"],
-              ] as const
-            ).map(([key, label]) => (
-              <div key={key} className="flex items-center justify-between gap-3">
-                <span className="text-sm">{label}</span>
+            <h2 className="font-medium text-sm">Arquitecto de vitrina (módulos)</h2>
+            <p className="text-xs text-stone-500">Activa, desactiva y reordena bloques. Browse = catálogo con filtros.</p>
+            <ul className="space-y-2">
+              {theme.modules.map((m, i) => (
+                <li
+                  key={m.id}
+                  className="flex items-center gap-2 rounded-lg border border-stone-100 px-3 py-2"
+                >
+                  <Switch checked={m.enabled} onCheckedChange={(v) => toggleModule(m.id, v)} />
+                  <span className="flex-1 text-sm font-medium capitalize">{m.type}</span>
+                  <span className="text-[10px] text-stone-400 font-mono">{m.id}</span>
+                  <Button type="button" size="sm" variant="ghost" disabled={i === 0} onClick={() => moveModule(i, -1)}>
+                    ↑
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={i === theme.modules.length - 1}
+                    onClick={() => moveModule(i, 1)}
+                  >
+                    ↓
+                  </Button>
+                </li>
+              ))}
+            </ul>
+            <div className="flex flex-wrap gap-4 text-sm pt-2 border-t border-stone-100">
+              <label className="inline-flex items-center gap-2">
                 <Switch
-                  checked={theme.sections[key]}
+                  checked={theme.quick_actions.cart_fab !== false}
                   onCheckedChange={(v) =>
-                    patchTheme({ sections: { ...theme.sections, [key]: v } })
+                    patchTheme({ quick_actions: { ...theme.quick_actions, cart_fab: v } })
                   }
                 />
-              </div>
-            ))}
-            <p className="text-[11px] text-stone-400">El catálogo completo siempre está visible.</p>
+                Cart FAB
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <Switch
+                  checked={theme.quick_actions.quick_add !== false}
+                  onCheckedChange={(v) =>
+                    patchTheme({ quick_actions: { ...theme.quick_actions, quick_add: v } })
+                  }
+                />
+                Quick add
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <Switch
+                  checked={theme.quick_actions.whatsapp !== false}
+                  onCheckedChange={(v) =>
+                    patchTheme({ quick_actions: { ...theme.quick_actions, whatsapp: v } })
+                  }
+                />
+                WhatsApp
+              </label>
+            </div>
           </section>
 
           {/* Trust texts */}
@@ -550,7 +644,7 @@ export default function EcommerceSettingsPage() {
             <div
               className="relative h-36 p-4 flex flex-col justify-end text-white"
               style={{
-                background: `linear-gradient(145deg, ${PRESET_SURFACES[theme.preset].stageFrom}, ${PRESET_SURFACES[theme.preset].stageTo})`,
+                background: `linear-gradient(145deg, ${surf(theme.preset).stageFrom}, ${surf(theme.preset).stageTo})`,
               }}
             >
               {theme.banner_url && (
@@ -575,22 +669,22 @@ export default function EcommerceSettingsPage() {
               </div>
             </div>
             <div className="bg-[var(--vitrina-mist)] p-3 grid grid-cols-3 gap-1.5">
-              {theme.sections.trust &&
+              {theme.modules.some((m) => m.type === "trust" && m.enabled) &&
                 [theme.trust.envio, theme.trust.pago, theme.trust.soporte].map((t) => (
                   <div key={t} className="rounded bg-white border border-stone-100 p-1.5 text-[9px] text-stone-600 truncate">
                     {t}
                   </div>
                 ))}
-              {!theme.sections.trust && (
+              {!theme.modules.some((m) => m.type === "trust" && m.enabled) && (
                 <p className="col-span-3 text-[10px] text-stone-400 text-center py-2">Trust oculto</p>
               )}
             </div>
             <div className="px-3 py-2 bg-white border-t border-stone-100 text-[10px] text-stone-400 flex flex-wrap gap-1">
-              {Object.entries(theme.sections)
-                .filter(([, v]) => v)
-                .map(([k]) => (
-                  <span key={k} className="px-1.5 py-0.5 rounded bg-stone-100">
-                    {k}
+              {theme.modules
+                .filter((m) => m.enabled)
+                .map((m) => (
+                  <span key={m.id} className="px-1.5 py-0.5 rounded bg-stone-100">
+                    {m.type}
                   </span>
                 ))}
             </div>

@@ -8,9 +8,11 @@ type Props = {
   tienda: StoreTienda;
   slug: string;
   productos: StoreProducto[];
+  ctaLabel?: string;
+  autoplayMs?: number;
 };
 
-export function FeaturedStage({ tienda, slug, productos }: Props) {
+export function FeaturedStage({ tienda, slug, productos, ctaLabel, autoplayMs = 6000 }: Props) {
   const reduce = useReducedMotion();
   const [active, setActive] = useState(0);
   const featured = productos.slice(0, 5);
@@ -27,9 +29,9 @@ export function FeaturedStage({ tienda, slug, productos }: Props) {
     if (reduce || featured.length < 2) return;
     const id = window.setInterval(() => {
       setActive((i) => (i + 1) % featured.length);
-    }, 6000);
+    }, autoplayMs);
     return () => window.clearInterval(id);
-  }, [featured.length, reduce]);
+  }, [featured.length, reduce, autoplayMs]);
 
   const scrollCatalogo = () => {
     document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" });
@@ -51,7 +53,7 @@ export function FeaturedStage({ tienda, slug, productos }: Props) {
             className="vitrina-pill mt-10 inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white"
             style={{ background: "var(--vitrina-accent)" }}
           >
-            Explorar catálogo <ArrowRight className="size-4" />
+            {ctaLabel || "Explorar catálogo"} <ArrowRight className="size-4" />
           </button>
         </div>
       </section>
@@ -107,7 +109,7 @@ export function FeaturedStage({ tienda, slug, productos }: Props) {
                   className="vitrina-pill inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white"
                   style={{ background: "var(--vitrina-accent)" }}
                 >
-                  Explorar catálogo
+                  {ctaLabel || "Explorar catálogo"}
                   <ArrowRight className="size-4" />
                 </button>
                 {current && (

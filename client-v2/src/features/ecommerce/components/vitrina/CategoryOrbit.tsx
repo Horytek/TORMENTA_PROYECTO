@@ -13,24 +13,15 @@ export function CategoryOrbit({ categorias, activa, onSelect }: Props) {
   };
 
   return (
-    <section className="bg-[var(--vitrina-fog)] border-b border-slate-200/70">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-10">
-        <div className="flex items-end justify-between gap-4 mb-6">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Orientación</p>
-            <h2 className="vitrina-display text-3xl sm:text-4xl mt-1 text-[var(--vitrina-ink)]">
-              Explora por categoría
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={() => pick(null)}
-            className="text-sm text-slate-500 hover:text-[var(--vitrina-accent)] transition-colors shrink-0"
-          >
+    <section className="border-b store-hairline bg-[var(--vitrina-fog)]">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
+        <div className="flex items-end justify-between gap-4 mb-4">
+          <h2 className="text-xl font-semibold tracking-tight">Categorías</h2>
+          <button type="button" onClick={() => pick(null)} className="text-sm store-muted min-h-11">
             Ver todo
           </button>
         </div>
-        <div className="flex gap-3 overflow-x-auto vitrina-hide-scrollbar pb-1">
+        <div className="store-row-scroll">
           {categorias.map((c) => {
             const on = activa === c.nombre;
             return (
@@ -38,15 +29,13 @@ export function CategoryOrbit({ categorias, activa, onSelect }: Props) {
                 key={c.nombre}
                 type="button"
                 onClick={() => pick(c.nombre)}
-                className={`vitrina-pill shrink-0 px-5 py-3 text-sm font-semibold border transition-all ${
-                  on
-                    ? "text-white border-transparent shadow-md"
-                    : "bg-white text-[var(--vitrina-ink)] border-slate-200 hover:border-[var(--vitrina-accent)]"
+                className={`shrink-0 px-4 py-3 text-sm font-medium border min-h-11 ${
+                  on ? "text-white border-transparent" : "bg-[var(--vitrina-elevated)] store-hairline"
                 }`}
                 style={on ? { background: "var(--vitrina-accent)" } : undefined}
               >
                 {c.nombre}
-                <span className={`ml-2 text-xs ${on ? "text-white/80" : "text-slate-400"}`}>{c.count}</span>
+                <span className={`ml-2 text-xs ${on ? "text-white/80" : "store-muted"}`}>{c.count}</span>
               </button>
             );
           })}

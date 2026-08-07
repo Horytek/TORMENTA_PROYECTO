@@ -38,7 +38,7 @@ Prioridades del negocio, en orden: **1) no romper facturación/cobros, 2) no fil
 │   ├── repositories/     # BaseRepository (patrón query() con release en finally)
 │   ├── schemas/          # Validación Zod (usadas por validator.middleware)
 │   ├── services/         # Lógica de negocio reutilizable (sunat/, PlanSynchronizer, limites…)
-│   ├── database/         # Pools: database.js (db_tormenta), express_db.js, database_tesis.js
+│   ├── database/         # Pools: database.js, database_ecommerce.js, express_db.js, database_tesis.js
 │   ├── cron/             # subscriptionCron.js (node-cron)
 │   ├── libs/ utils/      # jwt, passwordUtil, logActions, helpers
 │   └── scripts/          # Migraciones y utilidades
@@ -52,16 +52,17 @@ Prioridades del negocio, en orden: **1) no romper facturación/cobros, 2) no fil
 └── scripts/sunat/        # Pruebas/certificados SUNAT
 ```
 
-## 4. Modelo de datos: 3 bases + multi-tenancy (LO MÁS IMPORTANTE)
+## 4. Modelo de datos: 4 bases + multi-tenancy (LO MÁS IMPORTANTE)
 
-Hay **tres bases MySQL** en el mismo servidor, con pools separados:
+Hay **cuatro bases MySQL** en el mismo servidor (mismo host/user/pass/port; distinto `DATABASE`), con pools separados:
 - **`db_tormenta`** — principal (ERP: usuario, venta, producto, inventario, empresa, plan…). Pool en `database.js`.
+- **`db_ecommerce`** — módulo tienda online SaaS (plan, tienda, usuario, producto, orden, mp_cuenta…). Pool en `database_ecommerce.js` (`ECOMMERCE_DB_DATABASE`, default `db_ecommerce`). Aislamiento por **`id_tienda`** (JWT claim `ten`).
 - **`express_db`** — POS Express (base lateral). Pool en `express_db.js`.
-- **`tesis_db`** — eCommerce. Pool en `database_tesis.js`.
+- **`tesis_db`** — eCommerce legacy/tesis. Pool en `database_tesis.js`.
 
-**Multi-tenant:** casi todo se aísla por **`id_tenant`** (y a menudo `id_empresa`). El middleware `auth` pone `req.user`, `req.id_tenant`, `req.id_empresa` desde el JWT.
+**Multi-tenant (ERP):** casi todo se aísla por **`id_tenant`** (y a menudo `id_empresa`). El middleware `auth` pone `req.user`, `req.id_tenant`, `req.id_empresa` desde el JWT.
 
-> 🔴 **REGLA DE ORO Nº1 — Aislamiento de tenant.** Toda query que lea o escriba datos de negocio **DEBE** filtrar por `id_tenant` (y `id_empresa` cuando aplique), tomándolos de `req.id_tenant`/`req.id_empresa`, **nunca** del body/query del cliente. Un `WHERE` sin `id_tenant` es un bug de seguridad que expone datos de un cliente a otro. Si dudas, filtra.
+> 🔴 **REGLA DE ORO Nº1 — Aislamiento de tenant.** Toda query que lea o escriba datos de negocio **DEBE** filtrar por `id_tenant` / `id_empresa` (ERP) o por `id_tienda` (ecommerce en `db_ecommerce`), tomándolos de `req.*` del JWT/middleware, **nunca** del body/query del cliente. Un `WHERE` sin ese filtro es un bug de seguridad. Si dudas, filtra.
 
 ## 5. Cómo correr (local)
 

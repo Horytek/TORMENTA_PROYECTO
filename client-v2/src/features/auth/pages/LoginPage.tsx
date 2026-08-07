@@ -155,7 +155,7 @@ export default function LoginPage() {
       setEcomSession(res.data.token, {
         usuario: res.data.usuario,
         email: res.data.email,
-        id_tenant: res.data.id_tenant,
+        id_tienda: res.data.id_tienda,
         slug: res.data.slug,
         tienda: res.data.tienda,
       });

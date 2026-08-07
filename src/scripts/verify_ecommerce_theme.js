@@ -1,8 +1,8 @@
 /**
- * Verifica que theme_json se puede leer/escribir en demo-horytek.
+ * Verifica theme_json en db_ecommerce.
  * Uso: node src/scripts/verify_ecommerce_theme.js
  */
-import { getConnection } from "../database/database.js";
+import { getEcommerceConnection } from "../database/database_ecommerce.js";
 
 const theme = {
   preset: "clara",
@@ -16,16 +16,15 @@ const theme = {
   trust: { envio: "Envío Lima", pago: "Mercado Pago", soporte: "WhatsApp tienda" },
 };
 
-const c = await getConnection();
+const c = await getEcommerceConnection();
 try {
-  await c.query(
-    `UPDATE ecommerce_tienda SET theme_json = ? WHERE slug = 'demo-horytek'`,
-    [JSON.stringify(theme)]
-  );
+  await c.query(`UPDATE tienda SET theme_json = ? WHERE slug = 'demo-horytek'`, [
+    JSON.stringify(theme),
+  ]);
   const [[row]] = await c.query(
     `SELECT slug, JSON_EXTRACT(theme_json, '$.preset') AS preset,
             JSON_EXTRACT(theme_json, '$.sections.stories') AS stories
-     FROM ecommerce_tienda WHERE slug = 'demo-horytek' LIMIT 1`
+     FROM tienda WHERE slug = 'demo-horytek' LIMIT 1`
   );
   console.log(JSON.stringify({ ok: true, row }, null, 2));
 } catch (e) {
