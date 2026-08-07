@@ -5,6 +5,18 @@ export type HeaderStyle = "dark" | "light" | "accent";
 export type ColorSchemePref = "system" | "light" | "dark";
 export type ResolvedScheme = "light" | "dark";
 export type NavStyle = "text" | "pill" | "soft" | "underline";
+export type NavItemKind = "all" | "category" | "link";
+
+export type NavItem = {
+  id: string;
+  label: string;
+  kind: NavItemKind;
+  /** Filtra productos por esta categoría (kind=category) */
+  category?: string | null;
+  /** Ruta interna (#catalogo, /tienda/…) o URL externa (kind=link) */
+  href?: string | null;
+  enabled: boolean;
+};
 
 export type NavConfig = {
   show_categories: boolean;
@@ -12,6 +24,20 @@ export type NavConfig = {
   label_all: string;
   max_items: number;
   show_counts: boolean;
+  /**
+   * Menú personalizado. Vacío = automático desde categorías del catálogo.
+   * Si hay ítems, solo se muestran los enabled (en ese orden).
+   */
+  items: NavItem[];
+};
+
+export type ResolvedNavEntry = {
+  id: string;
+  label: string;
+  kind: NavItemKind;
+  category: string | null;
+  href: string | null;
+  count?: number;
 };
 
 export type RowMode = "newest" | "category" | "ids" | "low_stock" | "price_asc";
@@ -244,7 +270,93 @@ export const DEFAULT_NAV: NavConfig = {
   label_all: "Todo",
   max_items: 6,
   show_counts: false,
+  items: [],
 };
+
+function newNavId() {
+  return `nav_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export function buildNavItemsFromCatalog(
+  categorias: { nombre: string }[],
+  labelAll = "Todo"
+): NavItem[] {
+  const all: NavItem = {
+    id: newNavId(),
+    label: labelAll,
+    kind: "all",
+    category: null,
+    href: null,
+    enabled: true,
+  };
+  const cats = categorias.map((c) => ({
+    id: newNavId(),
+    label: c.nombre,
+    kind: "category" as const,
+    category: c.nombre,
+    href: null,
+    enabled: true,
+  }));
+  return [all, ...cats];
+}
+
+function normalizeNavItem(raw: Record<string, unknown>): NavItem | null {
+  const kinds: NavItemKind[] = ["all", "category", "link"];
+  const kind = kinds.includes(raw.kind as NavItemKind) ? (raw.kind as NavItemKind) : "category";
+  const label = typeof raw.label === "string" ? raw.label.trim().slice(0, 40) : "";
+  if (!label) return null;
+  const id = typeof raw.id === "string" && raw.id ? raw.id : newNavId();
+  return {
+    id,
+    label,
+    kind,
+    category: typeof raw.category === "string" ? raw.category.trim().slice(0, 80) || null : null,
+    href: typeof raw.href === "string" ? raw.href.trim().slice(0, 512) || null : null,
+    enabled: raw.enabled !== false,
+  };
+}
+
+/** Resuelve qué se muestra en el header: menú custom o auto desde catálogo. */
+export function resolveNavEntries(
+  nav: NavConfig,
+  categorias: { nombre: string; count: number }[]
+): ResolvedNavEntry[] {
+  const max = Math.min(12, Math.max(1, nav.max_items || 6));
+  const countOf = (nombre: string | null) => {
+    if (!nombre) return categorias.reduce((s, c) => s + c.count, 0);
+    return categorias.find((c) => c.nombre === nombre)?.count;
+  };
+
+  const custom = (nav.items || []).filter((i) => i.enabled !== false);
+  if (custom.length > 0) {
+    return custom.slice(0, max).map((i) => ({
+      id: i.id,
+      label: i.label,
+      kind: i.kind,
+      category: i.kind === "category" ? i.category || null : null,
+      href: i.kind === "link" ? i.href || null : null,
+      count: i.kind === "category" ? countOf(i.category || null) : i.kind === "all" ? countOf(null) : undefined,
+    }));
+  }
+
+  const all: ResolvedNavEntry = {
+    id: "auto-all",
+    label: nav.label_all || "Todo",
+    kind: "all",
+    category: null,
+    href: null,
+    count: countOf(null),
+  };
+  const cats = categorias.slice(0, max).map((c) => ({
+    id: `auto-${c.nombre}`,
+    label: c.nombre,
+    kind: "category" as const,
+    category: c.nombre,
+    href: null,
+    count: c.count,
+  }));
+  return [all, ...cats];
+}
 
 export const DEFAULT_THEME: StoreTheme = {
   preset: "store",
@@ -370,6 +482,11 @@ export function resolveTheme(partial?: Partial<StoreTheme> | null): StoreTheme {
   const navStyle = navStyles.includes(navPartial.style as NavStyle)
     ? (navPartial.style as NavStyle)
     : DEFAULT_NAV.style;
+  const rawItems = Array.isArray(navPartial.items) ? navPartial.items : DEFAULT_NAV.items;
+  const navItems = rawItems
+    .map((it) => normalizeNavItem(it as unknown as Record<string, unknown>))
+    .filter((it): it is NavItem => Boolean(it))
+    .slice(0, 20);
 
   return {
     preset: validPresets.includes(preset) ? preset : "store",
@@ -382,6 +499,7 @@ export function resolveTheme(partial?: Partial<StoreTheme> | null): StoreTheme {
       label_all: (navPartial.label_all?.trim() || DEFAULT_NAV.label_all).slice(0, 40),
       max_items: Math.min(12, Math.max(2, Number(navPartial.max_items) || DEFAULT_NAV.max_items)),
       show_counts: navPartial.show_counts ?? DEFAULT_NAV.show_counts,
+      items: navItems,
     },
     hero_headline: partial.hero_headline ?? null,
     hero_tagline: partial.hero_tagline ?? null,

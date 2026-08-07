@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { Search, ShoppingBag, Menu, Moon, Sun, Monitor } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -7,7 +7,7 @@ import { useStoreColorScheme } from "./StoreShell";
 import { SearchSheet } from "./quick/SearchSheet";
 import { ContactQuick } from "./quick/ContactQuick";
 import type { StoreProducto } from "../../types/storefront";
-import type { NavStyle } from "../../types/theme";
+import { resolveNavEntries, type NavStyle, type ResolvedNavEntry } from "../../types/theme";
 
 type Props = {
   tienda: StoreTienda;
@@ -50,6 +50,12 @@ function navItemClass(style: NavStyle, active: boolean, isLightHeader: boolean) 
   }
 }
 
+function isEntryActive(entry: ResolvedNavEntry, categoriaActiva: string | null) {
+  if (entry.kind === "all") return !categoriaActiva;
+  if (entry.kind === "category") return categoriaActiva === entry.category;
+  return false;
+}
+
 export function StoreHeader({
   tienda,
   slug,
@@ -65,9 +71,24 @@ export function StoreHeader({
   const headerStyle = theme.header_style;
   const nav = theme.nav;
 
-  const goCategoria = (cat: string | null) => {
-    onCategoria(cat);
+  const entries = useMemo(() => resolveNavEntries(nav, categorias), [nav, categorias]);
+
+  const activateEntry = (entry: ResolvedNavEntry) => {
     setSheetOpen(false);
+    if (entry.kind === "link" && entry.href) {
+      const href = entry.href.trim();
+      if (href.startsWith("http://") || href.startsWith("https://")) {
+        window.open(href, "_blank", "noopener,noreferrer");
+        return;
+      }
+      if (href.startsWith("#")) {
+        document.getElementById(href.slice(1))?.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+      window.location.assign(href.startsWith("/") ? href : `/${href}`);
+      return;
+    }
+    onCategoria(entry.kind === "category" ? entry.category : null);
     document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -81,8 +102,6 @@ export function StoreHeader({
       : "bg-[color-mix(in_srgb,var(--vitrina-mist)_92%,transparent)] text-[var(--vitrina-ink)] border-b store-hairline backdrop-blur-md";
 
   const SchemeIcon = pref === "dark" ? Moon : pref === "light" ? Sun : Monitor;
-  const labelAll = nav.label_all || "Todo";
-  const visibleCats = categorias.slice(0, nav.max_items || 6);
   const showNav = nav.show_categories !== false;
 
   const activeStyle = (active: boolean): CSSProperties | undefined => {
@@ -96,6 +115,40 @@ export function StoreHeader({
     if (nav.style === "underline")
       return { borderBottomColor: isAccent ? "#fff" : "var(--vitrina-accent)", color: isAccent ? "#fff" : "var(--vitrina-accent)" };
     return { color: isAccent ? "#fff" : "var(--vitrina-accent)" };
+  };
+
+  const renderEntry = (entry: ResolvedNavEntry, layout: "desktop" | "mobile") => {
+    const active = isEntryActive(entry, categoriaActiva);
+    if (layout === "mobile") {
+      return (
+        <button
+          key={entry.id}
+          type="button"
+          onClick={() => activateEntry(entry)}
+          className="store-nav-btn w-full text-left px-3 py-3 min-h-11 text-sm flex justify-between"
+          style={activeStyle(active)}
+        >
+          <span>{entry.label}</span>
+          {nav.show_counts && entry.count != null ? (
+            <span className="store-muted">{entry.count}</span>
+          ) : null}
+        </button>
+      );
+    }
+    return (
+      <button
+        key={entry.id}
+        type="button"
+        onClick={() => activateEntry(entry)}
+        className={navItemClass(nav.style, active, isLight)}
+        style={activeStyle(active)}
+      >
+        {entry.label}
+        {nav.show_counts && entry.count != null ? (
+          <span className="ml-1.5 text-[10px] opacity-60">{entry.count}</span>
+        ) : null}
+      </button>
+    );
   };
 
   return (
@@ -115,27 +168,8 @@ export function StoreHeader({
               <div className="mt-6 space-y-1">
                 {showNav && (
                   <>
-                    <p className="text-[11px] uppercase tracking-wider store-muted mb-2">Categorías</p>
-                    <button
-                      type="button"
-                      onClick={() => goCategoria(null)}
-                      className="store-nav-btn w-full text-left px-3 py-3 min-h-11 text-sm"
-                      style={activeStyle(!categoriaActiva)}
-                    >
-                      {labelAll}
-                    </button>
-                    {visibleCats.map((c) => (
-                      <button
-                        key={c.nombre}
-                        type="button"
-                        onClick={() => goCategoria(c.nombre)}
-                        className="store-nav-btn w-full text-left px-3 py-3 min-h-11 text-sm flex justify-between"
-                        style={activeStyle(categoriaActiva === c.nombre)}
-                      >
-                        <span>{c.nombre}</span>
-                        {nav.show_counts && <span className="store-muted">{c.count}</span>}
-                      </button>
-                    ))}
+                    <p className="text-[11px] uppercase tracking-wider store-muted mb-2">Menú</p>
+                    {entries.map((e) => renderEntry(e, "mobile"))}
                   </>
                 )}
                 {theme.quick_actions?.whatsapp !== false && (
@@ -165,28 +199,7 @@ export function StoreHeader({
 
           {showNav && (
             <nav className="hidden lg:flex items-center gap-1 flex-1 min-w-0 mx-4 overflow-x-auto">
-              <button
-                type="button"
-                onClick={() => goCategoria(null)}
-                className={navItemClass(nav.style, !categoriaActiva, isLight)}
-                style={activeStyle(!categoriaActiva)}
-              >
-                {labelAll}
-              </button>
-              {visibleCats.map((c) => (
-                <button
-                  key={c.nombre}
-                  type="button"
-                  onClick={() => goCategoria(c.nombre)}
-                  className={navItemClass(nav.style, categoriaActiva === c.nombre, isLight)}
-                  style={activeStyle(categoriaActiva === c.nombre)}
-                >
-                  {c.nombre}
-                  {nav.show_counts ? (
-                    <span className="ml-1.5 text-[10px] opacity-60">{c.count}</span>
-                  ) : null}
-                </button>
-              ))}
+              {entries.map((e) => renderEntry(e, "desktop"))}
             </nav>
           )}
 

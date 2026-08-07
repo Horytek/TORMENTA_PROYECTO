@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, ExternalLink } from "lucide-react";
 import {
   ecommerceMe,
+  ecommerceListProductos,
   ecommerceSaveMpCredentials,
   ecommerceUpdateTienda,
   ecommerceUploadBanner,
@@ -26,16 +27,20 @@ import {
   FONT_BODY_STACK,
   FONT_DISPLAY_STACK,
   PRESET_SURFACES,
+  buildNavItemsFromCatalog,
   resolveTheme,
   type ColorSchemePref,
   type FontBody,
   type FontDisplay,
   type HeaderStyle,
+  type NavItem,
+  type NavItemKind,
   type NavStyle,
   type StoreModule,
   type StoreTheme,
   type ThemePreset,
 } from "../types/theme";
+import { getCategoria } from "../types/storefront";
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -129,7 +134,24 @@ function PresetCard({
 export default function EcommerceSettingsPage() {
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ["ecom-me"], queryFn: ecommerceMe });
+  const { data: productosData } = useQuery({
+    queryKey: ["ecom-productos"],
+    queryFn: ecommerceListProductos,
+  });
   const tienda = data?.data?.tienda;
+
+  const catalogCategorias = useMemo(() => {
+    const list = (productosData?.data || []) as { categoria?: string | null; attrs_json?: unknown }[];
+    const map = new Map<string, number>();
+    for (const p of list) {
+      const cat = getCategoria(p as Parameters<typeof getCategoria>[0]);
+      if (!cat) continue;
+      map.set(cat, (map.get(cat) || 0) + 1);
+    }
+    return [...map.entries()]
+      .map(([nombre, count]) => ({ nombre, count }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+  }, [productosData]);
 
   const [mp, setMp] = useState({ public_key: "", access_token: "", modo: "test" as "test" | "prod" });
   const [nombre, setNombre] = useState("");
@@ -161,7 +183,11 @@ export default function EcommerceSettingsPage() {
         ...partial,
         sections: { ...t.sections, ...partial.sections },
         trust: { ...t.trust, ...partial.trust },
-        nav: { ...t.nav, ...partial.nav },
+        nav: {
+          ...t.nav,
+          ...partial.nav,
+          items: partial.nav?.items !== undefined ? partial.nav.items : t.nav.items,
+        },
         modules: partial.modules ?? t.modules,
         quick_actions: { ...t.quick_actions, ...partial.quick_actions },
       })
@@ -530,9 +556,12 @@ export default function EcommerceSettingsPage() {
             <div className="rounded-lg border border-stone-100 bg-stone-50/80 p-4 space-y-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-medium">Navegación de categorías</p>
+                  <p className="text-sm font-medium">Menú del header</p>
                   <p className="text-xs text-stone-500 mt-0.5">
-                    Personaliza cómo se ven las categorías en el header de la tienda.
+                    Estilo y contenido: etiquetas, orden, categorías o links.
+                    {theme.nav.items.length === 0
+                      ? " Ahora usa el menú automático del catálogo."
+                      : ` Menú personalizado (${theme.nav.items.filter((i) => i.enabled).length} ítems).`}
                   </p>
                 </div>
                 <label className="inline-flex items-center gap-2 text-xs text-stone-600 shrink-0">
@@ -544,65 +573,286 @@ export default function EcommerceSettingsPage() {
                 </label>
               </div>
               {theme.nav.show_categories !== false && (
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <div>
-                    <Label>Estilo de links</Label>
-                    <Select
-                      value={theme.nav.style}
-                      onValueChange={(v) => patchTheme({ nav: { ...theme.nav, style: v as NavStyle } })}
+                <>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label>Estilo de links</Label>
+                      <Select
+                        value={theme.nav.style}
+                        onValueChange={(v) => patchTheme({ nav: { ...theme.nav, style: v as NavStyle } })}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="text">Texto simple</SelectItem>
+                          <SelectItem value="soft">Suave (redondeado)</SelectItem>
+                          <SelectItem value="pill">Cápsula</SelectItem>
+                          <SelectItem value="underline">Subrayado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Máx. ítems visibles</Label>
+                      <Select
+                        value={String(theme.nav.max_items)}
+                        onValueChange={(v) =>
+                          patchTheme({ nav: { ...theme.nav, max_items: Number(v) } })
+                        }
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[3, 4, 5, 6, 8, 10, 12].map((n) => (
+                            <SelectItem key={n} value={String(n)}>
+                              {n}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {theme.nav.items.length === 0 && (
+                      <div>
+                        <Label>Etiqueta “todas” (modo auto)</Label>
+                        <Input
+                          className="mt-1"
+                          value={theme.nav.label_all}
+                          onChange={(e) =>
+                            patchTheme({ nav: { ...theme.nav, label_all: e.target.value.slice(0, 40) } })
+                          }
+                          placeholder="Todo"
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-end pb-1">
+                      <label className="inline-flex items-center gap-2 text-sm">
+                        <Switch
+                          checked={theme.nav.show_counts === true}
+                          onCheckedChange={(v) => patchTheme({ nav: { ...theme.nav, show_counts: v } })}
+                        />
+                        Mostrar contador
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const items = buildNavItemsFromCatalog(
+                          catalogCategorias,
+                          theme.nav.label_all || "Todo"
+                        );
+                        patchTheme({ nav: { ...theme.nav, items } });
+                        toast.success(
+                          catalogCategorias.length
+                            ? `Menú cargado con ${catalogCategorias.length} categorías`
+                            : "Menú base creado (sin categorías aún)"
+                        );
+                      }}
                     >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="text">Texto simple</SelectItem>
-                        <SelectItem value="soft">Suave (redondeado)</SelectItem>
-                        <SelectItem value="pill">Cápsula</SelectItem>
-                        <SelectItem value="underline">Subrayado</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      Personalizar desde catálogo
+                    </Button>
+                    {theme.nav.items.length > 0 && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => patchTheme({ nav: { ...theme.nav, items: [] } })}
+                      >
+                        Volver a automático
+                      </Button>
+                    )}
+                    {theme.nav.items.length > 0 && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const id = `nav_${Date.now().toString(36)}`;
+                          const next: NavItem[] = [
+                            ...theme.nav.items,
+                            {
+                              id,
+                              label: "Nuevo",
+                              kind: "category",
+                              category: catalogCategorias[0]?.nombre || "",
+                              href: null,
+                              enabled: true,
+                            },
+                          ];
+                          patchTheme({ nav: { ...theme.nav, items: next } });
+                        }}
+                      >
+                        + Ítem
+                      </Button>
+                    )}
                   </div>
-                  <div>
-                    <Label>Etiqueta “todas”</Label>
-                    <Input
-                      className="mt-1"
-                      value={theme.nav.label_all}
-                      onChange={(e) =>
-                        patchTheme({ nav: { ...theme.nav, label_all: e.target.value.slice(0, 40) } })
-                      }
-                      placeholder="Todo"
-                    />
-                  </div>
-                  <div>
-                    <Label>Máx. categorías en header</Label>
-                    <Select
-                      value={String(theme.nav.max_items)}
-                      onValueChange={(v) =>
-                        patchTheme({ nav: { ...theme.nav, max_items: Number(v) } })
-                      }
-                    >
-                      <SelectTrigger className="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[3, 4, 5, 6, 8, 10, 12].map((n) => (
-                          <SelectItem key={n} value={String(n)}>
-                            {n}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="flex items-end pb-1">
-                    <label className="inline-flex items-center gap-2 text-sm">
-                      <Switch
-                        checked={theme.nav.show_counts === true}
-                        onCheckedChange={(v) => patchTheme({ nav: { ...theme.nav, show_counts: v } })}
-                      />
-                      Mostrar contador de productos
-                    </label>
-                  </div>
-                </div>
+
+                  {theme.nav.items.length > 0 && (
+                    <ul className="space-y-2 pt-1">
+                      {theme.nav.items.map((item, index) => (
+                        <li
+                          key={item.id}
+                          className="rounded-lg border border-stone-200 bg-white p-3 space-y-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={item.enabled !== false}
+                              onCheckedChange={(v) => {
+                                const items = theme.nav.items.map((it, i) =>
+                                  i === index ? { ...it, enabled: v } : it
+                                );
+                                patchTheme({ nav: { ...theme.nav, items } });
+                              }}
+                            />
+                            <Input
+                              value={item.label}
+                              onChange={(e) => {
+                                const items = theme.nav.items.map((it, i) =>
+                                  i === index ? { ...it, label: e.target.value.slice(0, 40) } : it
+                                );
+                                patchTheme({ nav: { ...theme.nav, items } });
+                              }}
+                              placeholder="Etiqueta visible"
+                              className="h-8 text-sm flex-1"
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              disabled={index === 0}
+                              onClick={() => {
+                                const items = [...theme.nav.items];
+                                [items[index - 1], items[index]] = [items[index], items[index - 1]];
+                                patchTheme({ nav: { ...theme.nav, items } });
+                              }}
+                            >
+                              ↑
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              disabled={index === theme.nav.items.length - 1}
+                              onClick={() => {
+                                const items = [...theme.nav.items];
+                                [items[index], items[index + 1]] = [items[index + 1], items[index]];
+                                patchTheme({ nav: { ...theme.nav, items } });
+                              }}
+                            >
+                              ↓
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-600"
+                              onClick={() => {
+                                const items = theme.nav.items.filter((_, i) => i !== index);
+                                patchTheme({ nav: { ...theme.nav, items } });
+                              }}
+                            >
+                              ✕
+                            </Button>
+                          </div>
+                          <div className="grid sm:grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-[11px]">Tipo</Label>
+                              <Select
+                                value={item.kind}
+                                onValueChange={(v) => {
+                                  const kind = v as NavItemKind;
+                                  const items = theme.nav.items.map((it, i) => {
+                                    if (i !== index) return it;
+                                    if (kind === "all")
+                                      return { ...it, kind, category: null, href: null };
+                                    if (kind === "link")
+                                      return { ...it, kind, category: null, href: it.href || "#catalogo" };
+                                    return {
+                                      ...it,
+                                      kind,
+                                      category: it.category || catalogCategorias[0]?.nombre || "",
+                                      href: null,
+                                    };
+                                  });
+                                  patchTheme({ nav: { ...theme.nav, items } });
+                                }}
+                              >
+                                <SelectTrigger className="mt-1 h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="all">Ver todo</SelectItem>
+                                  <SelectItem value="category">Categoría</SelectItem>
+                                  <SelectItem value="link">Link / ancla</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            {item.kind === "category" && (
+                              <div>
+                                <Label className="text-[11px]">Categoría del catálogo</Label>
+                                {catalogCategorias.length > 0 ? (
+                                  <Select
+                                    value={item.category || catalogCategorias[0]?.nombre || ""}
+                                    onValueChange={(v) => {
+                                      const items = theme.nav.items.map((it, i) =>
+                                        i === index ? { ...it, category: v } : it
+                                      );
+                                      patchTheme({ nav: { ...theme.nav, items } });
+                                    }}
+                                  >
+                                    <SelectTrigger className="mt-1 h-8">
+                                      <SelectValue placeholder="Elegir" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {catalogCategorias.map((c) => (
+                                        <SelectItem key={c.nombre} value={c.nombre}>
+                                          {c.nombre} ({c.count})
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                ) : (
+                                  <Input
+                                    className="mt-1 h-8"
+                                    value={item.category || ""}
+                                    onChange={(e) => {
+                                      const items = theme.nav.items.map((it, i) =>
+                                        i === index ? { ...it, category: e.target.value } : it
+                                      );
+                                      patchTheme({ nav: { ...theme.nav, items } });
+                                    }}
+                                    placeholder="Nombre exacto de categoría"
+                                  />
+                                )}
+                              </div>
+                            )}
+                            {item.kind === "link" && (
+                              <div>
+                                <Label className="text-[11px]">URL o ancla</Label>
+                                <Input
+                                  className="mt-1 h-8"
+                                  value={item.href || ""}
+                                  onChange={(e) => {
+                                    const items = theme.nav.items.map((it, i) =>
+                                      i === index ? { ...it, href: e.target.value } : it
+                                    );
+                                    patchTheme({ nav: { ...theme.nav, items } });
+                                  }}
+                                  placeholder="#catalogo o https://…"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
               )}
             </div>
 
@@ -822,8 +1072,11 @@ export default function EcommerceSettingsPage() {
               </span>
               {theme.nav.show_categories !== false && (
                 <div className="hidden sm:flex items-center gap-1 ml-2 min-w-0 overflow-hidden">
-                  {[theme.nav.label_all || "Todo", "Moda", "Tech"].map((label, i) => {
-                    const active = i === 1;
+                  {(theme.nav.items.length > 0
+                    ? theme.nav.items.filter((i) => i.enabled).slice(0, 3).map((i) => i.label)
+                    : [theme.nav.label_all || "Todo", "Moda", "Tech"]
+                  ).map((label, i) => {
+                    const active = i === (theme.nav.items.length > 0 ? 0 : 1);
                     const style = theme.nav.style;
                     const pill =
                       style === "pill"
@@ -865,7 +1118,7 @@ export default function EcommerceSettingsPage() {
                                 padding: "2px 4px",
                               };
                     return (
-                      <span key={label} className="truncate opacity-90" style={pill}>
+                      <span key={`${label}-${i}`} className="truncate opacity-90" style={pill}>
                         {label}
                       </span>
                     );

@@ -89,6 +89,19 @@ export const ecommerceThemeSchema = z
         label_all: z.string().max(40).optional(),
         max_items: z.number().int().min(2).max(12).optional(),
         show_counts: z.boolean().optional(),
+        items: z
+          .array(
+            z.object({
+              id: z.string().max(64).optional(),
+              label: z.string().min(1).max(40),
+              kind: z.enum(["all", "category", "link"]),
+              category: z.string().max(80).optional().nullable(),
+              href: z.string().max(512).optional().nullable(),
+              enabled: z.boolean().optional(),
+            })
+          )
+          .max(20)
+          .optional(),
       })
       .optional(),
     hero_headline: z.string().max(120).optional().nullable(),
