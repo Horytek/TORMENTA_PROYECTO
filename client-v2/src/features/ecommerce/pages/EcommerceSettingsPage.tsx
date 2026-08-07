@@ -45,15 +45,84 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-const PRESETS: { id: ThemePreset; label: string; hint: string }[] = [
-  { id: "store", label: "Store", hint: "Epic/Steam digital storefront" },
-  { id: "nocturna", label: "Nocturna", hint: "Stage oscuro, discovery cinemático" },
-  { id: "clara", label: "Clara", hint: "Superficies claras, retail limpio" },
-  { id: "retail", label: "Retail", hint: "Grises densos, look tienda" },
+const PRESETS: {
+  id: ThemePreset;
+  label: string;
+  hint: string;
+  /** Caracter visual de la tarjeta (no es el color-scheme del visitante) */
+  preview: "light" | "dark";
+}[] = [
+  { id: "store", label: "Store", hint: "Storefront digital tipo Epic/Steam", preview: "dark" },
+  { id: "nocturna", label: "Nocturna", hint: "Stage oscuro, discovery cinematográfico", preview: "dark" },
+  { id: "clara", label: "Clara", hint: "Superficies claras, retail limpio", preview: "light" },
+  { id: "retail", label: "Retail", hint: "Grises densos, look tienda", preview: "dark" },
 ];
 
 function surf(preset: ThemePreset, scheme: "light" | "dark" = "dark") {
-  return PRESET_SURFACES[preset][scheme];
+  return PRESET_SURFACES[preset]?.[scheme] ?? PRESET_SURFACES.store.dark;
+}
+
+function PresetCard({
+  preset,
+  label,
+  hint,
+  preview,
+  selected,
+  accent,
+  onSelect,
+}: {
+  preset: ThemePreset;
+  label: string;
+  hint: string;
+  preview: "light" | "dark";
+  selected: boolean;
+  accent: string;
+  onSelect: () => void;
+}) {
+  const s = surf(preset, preview);
+  const safeAccent = /^#[0-9A-Fa-f]{6}$/.test(accent) ? accent : "#0E7C7B";
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className={`text-left rounded-xl border-2 overflow-hidden transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600/40 ${
+        selected
+          ? "border-teal-600 ring-2 ring-teal-600/15 shadow-sm"
+          : "border-stone-200 hover:border-stone-300"
+      }`}
+    >
+      <div className="relative h-16" style={{ background: s.mist }}>
+        <div
+          className="absolute inset-x-0 top-0 h-3"
+          style={{ background: s.elevated, borderBottom: `1px solid ${s.border}` }}
+        />
+        <div
+          className="absolute inset-x-2 bottom-2 top-5 rounded-sm"
+          style={{
+            background: `linear-gradient(135deg, ${s.stageFrom}, ${s.stageTo})`,
+          }}
+        />
+        <div
+          className="absolute left-2 bottom-2 w-1.5 h-6 rounded-full"
+          style={{ background: safeAccent }}
+        />
+        {selected && (
+          <span className="absolute top-1.5 right-1.5 size-5 rounded-full bg-teal-600 text-white text-[10px] font-bold flex items-center justify-center">
+            ✓
+          </span>
+        )}
+      </div>
+      <div className="p-3 bg-white">
+        <p className="text-sm font-semibold text-stone-900">{label}</p>
+        <p className="text-[11px] text-stone-500 leading-snug mt-0.5">{hint}</p>
+        <p className="text-[10px] uppercase tracking-wider text-stone-400 mt-2">
+          Preview {preview === "light" ? "claro" : "oscuro"}
+        </p>
+      </div>
+    </button>
+  );
 }
 
 export default function EcommerceSettingsPage() {
@@ -171,26 +240,41 @@ export default function EcommerceSettingsPage() {
   });
 
   const previewStyle = useMemo(() => {
-    const surfaces = surf(theme.preset, "dark");
+    const scheme = theme.preset === "clara" ? "light" : "dark";
+    const surfaces = surf(theme.preset, scheme);
+    const accent = /^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#0E7C7B";
     return {
-      "--vitrina-accent": color || "#0E7C7B",
+      "--vitrina-accent": accent,
       "--vitrina-ink": surfaces.ink,
       "--vitrina-fog": surfaces.fog,
       "--vitrina-mist": surfaces.mist,
+      "--vitrina-elevated": surfaces.elevated,
+      "--vitrina-border": surfaces.border,
+      "--vitrina-muted": surfaces.muted,
       "--vitrina-stage-from": surfaces.stageFrom,
       "--vitrina-stage-to": surfaces.stageTo,
       "--font-vitrina-display": FONT_DISPLAY_STACK[theme.font_display],
       "--font-vitrina-body": FONT_BODY_STACK[theme.font_body],
       fontFamily: FONT_BODY_STACK[theme.font_body],
+      background: surfaces.mist,
+      color: surfaces.ink,
     } as CSSProperties;
   }, [theme, color]);
 
   const headerPreview =
     theme.header_style === "accent"
-      ? { background: color, color: "#fff" }
+      ? { background: /^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#0E7C7B", color: "#fff" }
       : theme.header_style === "light"
-        ? { background: "#fff", color: surf(theme.preset, "light").ink, borderBottom: "1px solid #e2e8f0" }
-        : { background: surf(theme.preset, "dark").mist, color: surf(theme.preset, "dark").ink };
+        ? {
+            background: surf(theme.preset, "light").elevated,
+            color: surf(theme.preset, "light").ink,
+            borderBottom: `1px solid ${surf(theme.preset, "light").border}`,
+          }
+        : {
+            background: surf(theme.preset, theme.preset === "clara" ? "light" : "dark").mist,
+            color: surf(theme.preset, theme.preset === "clara" ? "light" : "dark").ink,
+            borderBottom: `1px solid ${surf(theme.preset, theme.preset === "clara" ? "light" : "dark").border}`,
+          };
 
   if (isLoading && !tienda) {
     return <div className="text-stone-400 text-sm py-10">Cargando configuración…</div>;
@@ -272,44 +356,57 @@ export default function EcommerceSettingsPage() {
           </section>
 
           {/* Color + preset */}
-          <section className="rounded-xl border border-stone-200 bg-white p-5 space-y-4">
-            <h2 className="font-medium text-sm">Color y ambiente</h2>
-            <div className="flex items-end gap-3">
-              <div>
-                <Label>Color primario</Label>
-                <div className="flex gap-2 mt-1">
-                  <input
-                    type="color"
-                    value={/^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#0E7C7B"}
-                    onChange={(e) => setColor(e.target.value)}
-                    className="size-10 rounded-md border border-stone-200 cursor-pointer p-0.5"
-                  />
-                  <Input value={color} onChange={(e) => setColor(e.target.value)} className="w-32 font-mono" />
-                </div>
+          <section className="rounded-xl border border-stone-200 bg-white p-5 space-y-5">
+            <div>
+              <h2 className="font-medium text-sm">Color y ambiente</h2>
+              <p className="text-xs text-stone-500 mt-1">
+                El color primario es tu marca. El preset define el look de la vitrina (independiente del modo claro/oscuro del visitante).
+              </p>
+            </div>
+            <div>
+              <Label>Color primario</Label>
+              <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                <input
+                  type="color"
+                  value={/^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#0E7C7B"}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="size-11 rounded-md border border-stone-200 cursor-pointer p-0.5 shrink-0"
+                  aria-label="Selector de color"
+                />
+                <Input
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="w-36 font-mono"
+                  placeholder="#0E7C7B"
+                />
+                <div
+                  className="h-11 flex-1 min-w-[6rem] max-w-[12rem] rounded-md border border-stone-200"
+                  style={{ background: /^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#0E7C7B" }}
+                  title="Vista previa del acento"
+                />
               </div>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
-              {PRESETS.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => patchTheme({ preset: p.id })}
-                  className={`text-left rounded-lg border p-3 transition ${
-                    theme.preset === p.id
-                      ? "border-teal-600 ring-2 ring-teal-600/20"
-                      : "border-stone-200 hover:border-stone-300"
-                  }`}
-                >
-                  <div
-                    className="h-8 rounded mb-2"
-                    style={{
-                      background: `linear-gradient(135deg, ${surf(p.id).stageFrom}, ${surf(p.id).stageTo})`,
-                    }}
+            <div>
+              <Label className="mb-2 block">Preset de marca</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {PRESETS.map((p) => (
+                  <PresetCard
+                    key={p.id}
+                    preset={p.id}
+                    label={p.label}
+                    hint={p.hint}
+                    preview={p.preview}
+                    selected={theme.preset === p.id}
+                    accent={color}
+                    onSelect={() => patchTheme({ preset: p.id })}
                   />
-                  <p className="text-sm font-medium">{p.label}</p>
-                  <p className="text-[11px] text-stone-500">{p.hint}</p>
-                </button>
-              ))}
+                ))}
+              </div>
+              <p className="text-[11px] text-stone-400 mt-2">
+                Activo: <span className="font-medium text-stone-600">{theme.preset}</span>
+                {" · "}
+                Guarda con el botón de abajo para aplicar en la tienda pública.
+              </p>
             </div>
           </section>
 
@@ -644,7 +741,8 @@ export default function EcommerceSettingsPage() {
             <div
               className="relative h-36 p-4 flex flex-col justify-end text-white"
               style={{
-                background: `linear-gradient(145deg, ${surf(theme.preset).stageFrom}, ${surf(theme.preset).stageTo})`,
+                background: `linear-gradient(145deg, ${surf(theme.preset, theme.preset === "clara" ? "light" : "dark").stageFrom}, ${surf(theme.preset, theme.preset === "clara" ? "light" : "dark").stageTo})`,
+                color: theme.preset === "clara" ? surf(theme.preset, "light").ink : "#fff",
               }}
             >
               {theme.banner_url && (
@@ -657,12 +755,15 @@ export default function EcommerceSettingsPage() {
                 >
                   {theme.hero_headline || nombre || "Headline"}
                 </p>
-                <p className="text-[10px] text-white/70 mt-2 line-clamp-2">
+                <p
+                  className="text-[10px] mt-2 line-clamp-2"
+                  style={{ opacity: 0.7 }}
+                >
                   {theme.hero_tagline || descripcion || "Tu tagline aparece aquí"}
                 </p>
                 <span
-                  className="inline-block mt-3 text-[10px] font-semibold px-2.5 py-1 rounded-full"
-                  style={{ background: color }}
+                  className="inline-block mt-3 text-[10px] font-semibold px-2.5 py-1 rounded-full text-white"
+                  style={{ background: /^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#0E7C7B" }}
                 >
                   Explorar
                 </span>
