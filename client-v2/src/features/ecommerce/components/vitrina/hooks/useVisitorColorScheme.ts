@@ -5,7 +5,7 @@ import {
   type ColorSchemePref,
   type ResolvedScheme,
   type StoreTheme,
-} from "../../types/theme";
+} from "../../../types/theme";
 
 export function useVisitorColorScheme(slug: string, theme: StoreTheme) {
   const [pref, setPrefState] = useState<ColorSchemePref>(() => {

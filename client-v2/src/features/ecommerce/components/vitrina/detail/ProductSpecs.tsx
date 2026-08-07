@@ -1,4 +1,4 @@
-import { getCategoria, getTags, formatPen, type StoreProducto } from "../../types/storefront";
+import { getCategoria, getTags, formatPen, type StoreProducto } from "../../../types/storefront";
 
 export function ProductSpecs({ producto }: { producto: StoreProducto }) {
   const cat = getCategoria(producto);
