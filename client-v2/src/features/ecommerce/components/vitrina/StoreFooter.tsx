@@ -14,10 +14,10 @@ export function StoreFooter({ tienda, slug }: Props) {
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-10 flex flex-col sm:flex-row gap-8 sm:items-center sm:justify-between">
         <div className="flex items-center gap-3 min-w-0">
           {tienda.logo_url ? (
-            <img src={tienda.logo_url} alt="" className="size-9 object-cover" />
+            <img src={tienda.logo_url} alt="" className="store-logo size-9 object-cover" />
           ) : (
             <span
-              className="size-9 flex items-center justify-center text-xs font-bold text-white"
+              className="store-logo size-9 flex items-center justify-center text-xs font-bold text-white"
               style={{ background: "var(--vitrina-accent)" }}
             >
               {monograma(tienda.nombre)}
@@ -28,15 +28,15 @@ export function StoreFooter({ tienda, slug }: Props) {
             <p className="text-xs store-muted">Pago seguro · Mercado Pago</p>
           </div>
         </div>
-        <nav className="flex flex-wrap gap-4 text-sm">
-          <Link to={`/tienda/${slug}`} className="hover:text-[var(--vitrina-accent)]">
+        <nav className="flex flex-wrap gap-2 text-sm">
+          <Link to={`/tienda/${slug}`} className="store-nav-btn px-2.5 py-1.5 hover:text-[var(--vitrina-accent)]">
             Catálogo
           </Link>
-          <Link to={`/tienda/${slug}/carrito`} className="hover:text-[var(--vitrina-accent)]">
+          <Link to={`/tienda/${slug}/carrito`} className="store-nav-btn px-2.5 py-1.5 hover:text-[var(--vitrina-accent)]">
             Carrito
           </Link>
           {tienda.telefono && (
-            <a href={`tel:${tienda.telefono}`} className="inline-flex items-center gap-1 hover:text-[var(--vitrina-accent)]">
+            <a href={`tel:${tienda.telefono}`} className="store-nav-btn inline-flex items-center gap-1 px-2.5 py-1.5 hover:text-[var(--vitrina-accent)]">
               <Phone className="size-3.5" />
               {tienda.telefono}
             </a>

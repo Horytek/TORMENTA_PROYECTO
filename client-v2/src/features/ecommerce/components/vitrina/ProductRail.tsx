@@ -28,13 +28,13 @@ export function ProductRail({ title, eyebrow, productos, slug, onAdd, quickAdd =
         <div className="flex items-end justify-between gap-4 mb-4">
           <div>
             {eyebrow && <p className="text-[11px] uppercase tracking-[0.18em] store-muted">{eyebrow}</p>}
-            <h2 className="text-xl sm:text-2xl font-semibold tracking-tight mt-0.5">{title}</h2>
+            <h2 className="vitrina-section-title text-xl sm:text-2xl mt-0.5">{title}</h2>
           </div>
-          <div className="hidden lg:flex gap-1">
+          <div className="hidden lg:flex gap-1.5">
             <button
               type="button"
               onClick={() => scroll(-1)}
-              className="size-10 border store-hairline bg-[var(--vitrina-elevated)] flex items-center justify-center"
+              className="store-icon-btn size-10 border store-hairline bg-[var(--vitrina-elevated)] flex items-center justify-center"
               aria-label="Anterior"
             >
               <ChevronLeft className="size-5" />
@@ -42,7 +42,7 @@ export function ProductRail({ title, eyebrow, productos, slug, onAdd, quickAdd =
             <button
               type="button"
               onClick={() => scroll(1)}
-              className="size-10 border store-hairline bg-[var(--vitrina-elevated)] flex items-center justify-center"
+              className="store-icon-btn size-10 border store-hairline bg-[var(--vitrina-elevated)] flex items-center justify-center"
               aria-label="Siguiente"
             >
               <ChevronRight className="size-5" />

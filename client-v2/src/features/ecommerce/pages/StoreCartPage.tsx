@@ -102,7 +102,7 @@ export default function StoreCartPage() {
                 key={i.id_producto}
                 className="vitrina-card border border-slate-200 bg-white p-4 flex gap-4"
               >
-                <div className="size-20 bg-slate-100 overflow-hidden shrink-0">
+                <div className="store-thumb size-20 bg-slate-100 shrink-0">
                   {i.imagen_url && <img src={i.imagen_url} alt="" className="size-full object-cover" />}
                 </div>
                 <div className="flex-1 min-w-0">

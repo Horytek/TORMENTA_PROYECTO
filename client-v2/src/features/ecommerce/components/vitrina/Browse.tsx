@@ -49,7 +49,7 @@ function FacetPanel(props: Omit<Props, "slug" | "filtrados" | "totalCatalogo" | 
             <li>
               <button
                 type="button"
-                className={`w-full text-left px-2 py-2 min-h-11 ${!props.categoria ? "font-semibold text-[var(--vitrina-accent)]" : ""}`}
+                className={`store-nav-btn w-full text-left px-2 py-2 min-h-11 ${!props.categoria ? "font-semibold text-[var(--vitrina-accent)]" : ""}`}
                 onClick={() => props.onCategoria(null)}
               >
                 Todas
@@ -59,7 +59,7 @@ function FacetPanel(props: Omit<Props, "slug" | "filtrados" | "totalCatalogo" | 
               <li key={c.nombre}>
                 <button
                   type="button"
-                  className={`w-full text-left px-2 py-2 min-h-11 flex justify-between ${
+                  className={`store-nav-btn w-full text-left px-2 py-2 min-h-11 flex justify-between ${
                     props.categoria === c.nombre ? "font-semibold text-[var(--vitrina-accent)]" : ""
                   }`}
                   onClick={() => props.onCategoria(c.nombre)}
@@ -81,14 +81,14 @@ function FacetPanel(props: Omit<Props, "slug" | "filtrados" | "totalCatalogo" | 
               placeholder={String(props.priceBounds.min)}
               value={props.minPrice}
               onChange={(e) => props.onMinPrice(e.target.value)}
-              className="w-full h-11 px-2 border store-hairline bg-[var(--vitrina-elevated)] text-sm"
+              className="store-input w-full h-11 px-2 border store-hairline bg-[var(--vitrina-elevated)] text-sm"
             />
             <input
               type="number"
               placeholder={String(props.priceBounds.max)}
               value={props.maxPrice}
               onChange={(e) => props.onMaxPrice(e.target.value)}
-              className="w-full h-11 px-2 border store-hairline bg-[var(--vitrina-elevated)] text-sm"
+              className="store-input w-full h-11 px-2 border store-hairline bg-[var(--vitrina-elevated)] text-sm"
             />
           </div>
         </div>
@@ -106,7 +106,7 @@ function FacetPanel(props: Omit<Props, "slug" | "filtrados" | "totalCatalogo" | 
               <button
                 key={v}
                 type="button"
-                className={`text-left px-2 py-2 min-h-11 ${props.stockFilter === v ? "font-semibold text-[var(--vitrina-accent)]" : ""}`}
+                className={`store-nav-btn text-left px-2 py-2 min-h-11 ${props.stockFilter === v ? "font-semibold text-[var(--vitrina-accent)]" : ""}`}
                 onClick={() => props.onStockFilter(v)}
               >
                 {label}
@@ -124,7 +124,7 @@ function FacetPanel(props: Omit<Props, "slug" | "filtrados" | "totalCatalogo" | 
                 key={t.nombre}
                 type="button"
                 onClick={() => props.onTag(props.tag === t.nombre ? null : t.nombre)}
-                className={`px-2.5 py-1.5 text-xs border store-hairline min-h-9 ${
+                className={`store-chip px-2.5 py-1.5 text-xs border store-hairline min-h-9 ${
                   props.tag === t.nombre ? "bg-[var(--vitrina-accent)] text-white border-transparent" : ""
                 }`}
               >
@@ -170,7 +170,7 @@ export function Browse(props: Props) {
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
         <div className="mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
           <div>
-            <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">{title}</h2>
+            <h2 className="vitrina-section-title text-xl sm:text-2xl">{title}</h2>
             <p className="text-sm store-muted mt-1">
               {props.filtrados.length} de {props.totalCatalogo} productos
             </p>
@@ -182,13 +182,13 @@ export function Browse(props: Props) {
                 value={props.busqueda}
                 onChange={(e) => props.onBusqueda(e.target.value)}
                 placeholder="Buscar…"
-                className="w-full h-11 pl-9 pr-3 border store-hairline bg-[var(--vitrina-elevated)] text-sm"
+                className="store-input w-full h-11 pl-9 pr-3 border store-hairline bg-[var(--vitrina-elevated)] text-sm"
               />
             </div>
             <select
               value={props.orden}
               onChange={(e) => props.onOrden(e.target.value as OrdenOption)}
-              className="h-11 px-3 border store-hairline bg-[var(--vitrina-elevated)] text-sm min-w-[9rem]"
+              className="store-input h-11 px-3 border store-hairline bg-[var(--vitrina-elevated)] text-sm min-w-[9rem]"
             >
               <option value="relevancia">Relevancia</option>
               <option value="recientes">Recientes</option>
@@ -199,18 +199,18 @@ export function Browse(props: Props) {
             </select>
             <button
               type="button"
-              className="lg:hidden h-11 px-3 border store-hairline inline-flex items-center gap-2 text-sm min-h-11"
+              className="store-btn lg:hidden h-11 px-3 border store-hairline inline-flex items-center gap-2 text-sm min-h-11"
               onClick={() => setSheetOpen(true)}
             >
               <SlidersHorizontal className="size-4" />
               Filtros
               {props.appliedCount > 0 && (
-                <span className="text-[10px] px-1.5 py-0.5 bg-[var(--vitrina-accent)] text-white">
+                <span className="store-badge text-[10px] px-1.5 py-0.5 bg-[var(--vitrina-accent)] text-white">
                   {props.appliedCount}
                 </span>
               )}
             </button>
-            <div className="hidden sm:flex border store-hairline">
+            <div className="hidden sm:flex border store-hairline overflow-hidden rounded-[var(--store-radius-sm)]">
               <button
                 type="button"
                 className={`size-11 flex items-center justify-center ${props.dense ? "bg-[var(--vitrina-fog)]" : ""}`}
@@ -238,7 +238,7 @@ export function Browse(props: Props) {
                 key={c.key}
                 type="button"
                 onClick={c.clear}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs border store-hairline bg-[var(--vitrina-elevated)] min-h-9"
+                className="store-chip inline-flex items-center gap-1 px-2.5 py-1.5 text-xs border store-hairline bg-[var(--vitrina-elevated)] min-h-9"
               >
                 {c.label}
                 <X className="size-3" />
@@ -249,7 +249,7 @@ export function Browse(props: Props) {
 
         <div className={sidebar ? "lg:grid lg:grid-cols-[220px_1fr] lg:gap-8" : ""}>
           {sidebar && (
-            <aside className="hidden lg:block sticky top-24 self-start border store-hairline bg-[var(--vitrina-elevated)] p-4">
+            <aside className="hidden lg:block sticky top-24 self-start store-panel p-4">
               <FacetPanel {...props} />
             </aside>
           )}

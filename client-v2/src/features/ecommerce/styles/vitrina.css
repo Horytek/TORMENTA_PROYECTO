@@ -14,8 +14,10 @@
   --vitrina-accent-glow: color-mix(in srgb, var(--vitrina-accent) 28%, transparent);
   --font-vitrina-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
   --font-vitrina-body: "Manrope", ui-sans-serif, system-ui, sans-serif;
-  --store-radius: 6px;
-  --store-radius-lg: 10px;
+  --store-radius: 14px;
+  --store-radius-lg: 20px;
+  --store-radius-sm: 10px;
+  --store-radius-pill: 999px;
 
   font-family: var(--font-vitrina-body);
   color: var(--vitrina-ink);
@@ -42,6 +44,12 @@
   line-height: 0.95;
 }
 
+.vitrina-section-title {
+  font-family: var(--font-vitrina-display);
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
 .vitrina-card {
   border-radius: var(--store-radius);
   background: var(--vitrina-elevated);
@@ -50,6 +58,78 @@
 
 .vitrina-stage-bg {
   background: linear-gradient(135deg, var(--vitrina-stage-from), var(--vitrina-stage-to));
+}
+
+/* —— Botones / CTAs —— */
+.vitrina-pill {
+  border-radius: var(--store-radius-pill);
+  transition: transform 0.18s ease, opacity 0.18s ease, background-color 0.18s ease;
+}
+
+.vitrina-pill:hover:not(:disabled) {
+  transform: scale(1.02);
+  opacity: 0.94;
+}
+
+.vitrina-pill:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.store-btn {
+  border-radius: var(--store-radius-sm);
+  transition: transform 0.18s ease, opacity 0.18s ease, background-color 0.18s ease;
+}
+
+.store-btn:hover:not(:disabled) {
+  transform: scale(1.02);
+  opacity: 0.94;
+}
+
+.store-btn-soft {
+  border-radius: var(--store-radius);
+  transition: transform 0.18s ease, opacity 0.18s ease, background-color 0.18s ease;
+}
+
+.store-btn-soft:hover:not(:disabled) {
+  transform: scale(1.015);
+  opacity: 0.95;
+}
+
+.store-chip {
+  border-radius: var(--store-radius-sm);
+  transition: background-color 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
+}
+
+.store-chip:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.store-icon-btn {
+  border-radius: var(--store-radius-sm);
+  transition: background-color 0.18s ease, opacity 0.18s ease;
+}
+
+.store-icon-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--vitrina-ink) 6%, transparent);
+}
+
+.store-nav-btn {
+  border-radius: var(--store-radius-sm);
+  transition: background-color 0.18s ease, color 0.18s ease;
+}
+
+.store-nav-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--vitrina-ink) 5%, transparent);
+}
+
+.store-focus-ring:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--vitrina-accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.vitrina :where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--vitrina-accent) 55%, transparent);
+  outline-offset: 2px;
 }
 
 .store-cover {
@@ -70,6 +150,41 @@
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.store-badge {
+  border-radius: var(--store-radius-sm);
+  letter-spacing: 0.02em;
+}
+
+.store-thumb {
+  border-radius: var(--store-radius-sm);
+  overflow: hidden;
+}
+
+.store-panel {
+  border-radius: var(--store-radius-lg);
+  background: var(--vitrina-elevated);
+  border: 1px solid var(--vitrina-border);
+}
+
+.store-input {
+  border-radius: var(--store-radius-sm);
+}
+
+.store-stage-frame {
+  border-radius: var(--store-radius-lg);
+  overflow: hidden;
+}
+
+.store-stage-item {
+  border-radius: var(--store-radius);
+  border-left-width: 0;
+  transition: background-color 0.25s ease, opacity 0.25s ease, box-shadow 0.25s ease;
+}
+
+.store-stage-item.is-active {
+  box-shadow: inset 3px 0 0 var(--vitrina-accent);
 }
 
 .store-row-scroll {
@@ -112,6 +227,7 @@
   z-index: 50;
   min-height: 44px;
   min-width: 44px;
+  border-radius: var(--store-radius-pill);
 }
 
 .store-sheet {
@@ -129,9 +245,14 @@
   overflow: auto;
   background: var(--vitrina-elevated);
   color: var(--vitrina-ink);
-  border-radius: 12px 12px 0 0;
+  border-radius: var(--store-radius-lg) var(--store-radius-lg) 0 0;
   padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
   border: 1px solid var(--vitrina-border);
+}
+
+.store-logo {
+  border-radius: var(--store-radius-sm);
+  overflow: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -144,6 +265,13 @@
   }
 
   .store-cover-hover:hover .store-cover {
+    transform: none;
+  }
+
+  .vitrina-pill:hover:not(:disabled),
+  .vitrina-pill:active:not(:disabled),
+  .store-btn:hover:not(:disabled),
+  .store-btn-soft:hover:not(:disabled) {
     transform: none;
   }
 }

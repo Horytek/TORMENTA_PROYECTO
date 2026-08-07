@@ -23,7 +23,7 @@ export function ProductSpecs({ producto }: { producto: StoreProducto }) {
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 pt-1">
           {tags.map((t) => (
-            <span key={t} className="text-[11px] px-2 py-1 border store-hairline store-muted">
+            <span key={t} className="store-chip text-[11px] px-2 py-1 border store-hairline store-muted">
               {t}
             </span>
           ))}
@@ -47,7 +47,7 @@ export function StoreSkeleton() {
       <div className="h-[50vh] bg-[var(--vitrina-fog,#161b22)] opacity-60" />
       <div className="max-w-7xl mx-auto px-4 py-8 grid grid-cols-2 md:grid-cols-4 gap-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="aspect-[3/4] bg-[var(--vitrina-fog,#161b22)] opacity-40" />
+          <div key={i} className="aspect-[3/4] bg-[var(--vitrina-fog,#161b22)] opacity-40 rounded-[var(--store-radius,14px)]" />
         ))}
       </div>
     </div>

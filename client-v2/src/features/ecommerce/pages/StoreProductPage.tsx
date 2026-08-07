@@ -131,7 +131,7 @@ export default function StoreProductPage() {
                     key={url + i}
                     type="button"
                     onClick={() => setImgIdx(i)}
-                    className={`aspect-square overflow-hidden border ${
+                    className={`store-thumb aspect-square overflow-hidden border ${
                       i === imgIdx ? "border-[var(--vitrina-accent)]" : "store-hairline opacity-70"
                     }`}
                   >
@@ -140,7 +140,7 @@ export default function StoreProductPage() {
                 ))}
               </div>
             )}
-            <div className="flex-1 aspect-square bg-[var(--vitrina-fog)] overflow-hidden">
+            <div className="flex-1 aspect-square bg-[var(--vitrina-fog)] overflow-hidden rounded-[var(--store-radius-lg)]">
               {activeImg ? (
                 <img src={activeImg} alt={producto.nombre} className="size-full object-cover" />
               ) : (
@@ -162,7 +162,7 @@ export default function StoreProductPage() {
             <ProductSpecs producto={producto} />
 
             <div className="hidden lg:flex flex-wrap items-center gap-4 mt-4">
-              <div className="inline-flex items-center border store-hairline bg-[var(--vitrina-elevated)]">
+              <div className="inline-flex items-center border store-hairline bg-[var(--vitrina-elevated)] rounded-[var(--store-radius-pill)] overflow-hidden">
                 <button type="button" className="size-11 flex items-center justify-center" onClick={() => setQty((q) => Math.max(1, q - 1))}>
                   <Minus className="size-4" />
                 </button>
@@ -179,7 +179,7 @@ export default function StoreProductPage() {
                 type="button"
                 disabled={producto.stock <= 0}
                 onClick={() => onAdd(producto, qty)}
-                className="inline-flex items-center gap-2 h-11 px-8 text-sm font-semibold text-white disabled:opacity-40"
+                className="vitrina-pill inline-flex items-center gap-2 h-11 px-8 text-sm font-semibold text-white disabled:opacity-40"
                 style={{ background: "var(--vitrina-accent)" }}
               >
                 <ShoppingBag className="size-4" />

@@ -10,7 +10,7 @@ export function ContactQuick({ telefono, className = "" }: { telefono?: string |
       href={`https://wa.me/${wa}`}
       target="_blank"
       rel="noreferrer"
-      className={`inline-flex items-center gap-1.5 text-sm min-h-11 ${className}`}
+      className={`store-nav-btn inline-flex items-center gap-1.5 text-sm min-h-11 px-2 ${className}`}
       style={{ color: "var(--vitrina-accent)" }}
     >
       <MessageCircle className="size-4" />

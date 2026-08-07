@@ -47,7 +47,7 @@ export function StoryTiles({ slug, productos }: Props) {
                 <div className="mt-8 flex flex-wrap gap-3">
                   <Link
                     to={`/tienda/${slug}/producto/${p.id_producto}`}
-                    className="vitrina-pill inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white"
+                    className="vitrina-pill store-focus-ring inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white"
                     style={{ background: "var(--vitrina-accent)" }}
                   >
                     Comprar
@@ -55,7 +55,7 @@ export function StoryTiles({ slug, productos }: Props) {
                   </Link>
                   <Link
                     to={`/tienda/${slug}/producto/${p.id_producto}`}
-                    className={`vitrina-pill inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold border transition ${
+                    className={`vitrina-pill store-focus-ring inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold border transition ${
                       dark
                         ? "border-white/30 text-white hover:bg-white/10"
                         : "border-slate-300 text-[var(--vitrina-ink)] hover:bg-white"
@@ -77,10 +77,10 @@ export function StoryTiles({ slug, productos }: Props) {
                   <img
                     src={p.imagen_url}
                     alt={p.nombre}
-                    className="w-full max-h-[420px] object-contain drop-shadow-[0_18px_40px_rgba(0,0,0,0.28)]"
+                    className="w-full max-h-[420px] object-contain drop-shadow-[0_18px_40px_rgba(0,0,0,0.28)] rounded-[var(--store-radius-lg)]"
                   />
                 ) : (
-                  <div className={`aspect-square max-h-[420px] ${dark ? "bg-white/5" : "bg-white"}`} />
+                  <div className={`aspect-square max-h-[420px] rounded-[var(--store-radius-lg)] ${dark ? "bg-white/5" : "bg-white"}`} />
                 )}
               </motion.div>
             </div>

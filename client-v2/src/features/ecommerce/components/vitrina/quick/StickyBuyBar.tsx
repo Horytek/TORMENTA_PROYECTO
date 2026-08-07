@@ -21,7 +21,7 @@ export function StickyBuyBar({ precio, disabled, onAdd, inCart, slug }: Props) {
       {inCart ? (
         <Link
           to={`/tienda/${slug}/carrito`}
-          className="h-11 px-4 inline-flex items-center justify-center text-sm font-semibold text-white"
+          className="vitrina-pill h-11 px-5 inline-flex items-center justify-center text-sm font-semibold text-white"
           style={{ background: "var(--vitrina-accent)" }}
         >
           Ir al carrito
@@ -31,7 +31,7 @@ export function StickyBuyBar({ precio, disabled, onAdd, inCart, slug }: Props) {
           type="button"
           disabled={disabled}
           onClick={onAdd}
-          className="h-11 px-4 text-sm font-semibold text-white disabled:opacity-40"
+          className="vitrina-pill h-11 px-5 text-sm font-semibold text-white disabled:opacity-40"
           style={{ background: "var(--vitrina-accent)" }}
         >
           Agregar

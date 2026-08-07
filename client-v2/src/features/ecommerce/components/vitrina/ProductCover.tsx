@@ -40,7 +40,7 @@ export function ProductCover({
           <div className="size-full flex items-center justify-center store-muted text-sm">Sin foto</div>
         )}
         {lowStock && (
-          <span className="absolute top-2 left-2 text-[10px] font-semibold px-2 py-1 bg-[var(--vitrina-ink)] text-[var(--vitrina-mist)]">
+          <span className="store-badge absolute top-2 left-2 text-[10px] font-semibold px-2.5 py-1 bg-[var(--vitrina-ink)] text-[var(--vitrina-mist)]">
             Últimas
           </span>
         )}
@@ -52,7 +52,7 @@ export function ProductCover({
               e.stopPropagation();
               onAdd(producto);
             }}
-            className="absolute bottom-2 right-2 size-11 min-h-11 min-w-11 flex items-center justify-center text-white opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition"
+            className="vitrina-pill absolute bottom-2 right-2 size-11 min-h-11 min-w-11 flex items-center justify-center text-white opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
             style={{ background: "var(--vitrina-accent)" }}
             aria-label={`Agregar ${producto.nombre}`}
           >

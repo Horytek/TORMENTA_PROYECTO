@@ -50,7 +50,7 @@ export function FeaturedStage({ tienda, slug, productos, ctaLabel, autoplayMs = 
           <button
             type="button"
             onClick={scrollCatalogo}
-            className="vitrina-pill mt-10 inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white"
+            className="vitrina-pill store-focus-ring mt-10 inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white"
             style={{ background: "var(--vitrina-accent)" }}
           >
             {ctaLabel || "Explorar catálogo"} <ArrowRight className="size-4" />
@@ -70,7 +70,7 @@ export function FeaturedStage({ tienda, slug, productos, ctaLabel, autoplayMs = 
         />
       )}
       <div className="relative max-w-7xl mx-auto px-4 lg:px-8 min-h-[min(92vh,820px)] grid lg:grid-cols-[1.65fr_1fr] gap-6 lg:gap-10 py-10 lg:py-14 items-stretch">
-        <div className="relative min-h-[320px] lg:min-h-0 rounded-none lg:overflow-hidden">
+        <div className="relative min-h-[320px] lg:min-h-0 store-stage-frame">
           <AnimatePresence mode="wait">
             <motion.div
               key={current?.id_producto}
@@ -106,7 +106,7 @@ export function FeaturedStage({ tienda, slug, productos, ctaLabel, autoplayMs = 
                 <button
                   type="button"
                   onClick={scrollCatalogo}
-                  className="vitrina-pill inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white"
+                  className="vitrina-pill store-focus-ring inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white"
                   style={{ background: "var(--vitrina-accent)" }}
                 >
                   {ctaLabel || "Explorar catálogo"}
@@ -115,7 +115,7 @@ export function FeaturedStage({ tienda, slug, productos, ctaLabel, autoplayMs = 
                 {current && (
                   <Link
                     to={`/tienda/${slug}/producto/${current.id_producto}`}
-                    className="vitrina-pill inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold border border-white/30 text-white hover:bg-white/10 transition"
+                    className="vitrina-pill store-focus-ring inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold border border-white/30 text-white hover:bg-white/10 transition"
                   >
                     Ver {current.nombre}
                   </Link>
@@ -125,7 +125,7 @@ export function FeaturedStage({ tienda, slug, productos, ctaLabel, autoplayMs = 
           </div>
         </div>
 
-        <div className="flex flex-col justify-center gap-1 py-2">
+        <div className="flex flex-col justify-center gap-1.5 py-2">
           <p className={`text-[11px] uppercase tracking-[0.22em] ${textSoft} mb-3 px-1`}>Destacados</p>
           {featured.map((p, i) => {
             const isActive = i === active;
@@ -135,15 +135,13 @@ export function FeaturedStage({ tienda, slug, productos, ctaLabel, autoplayMs = 
                 type="button"
                 onClick={() => setActive(i)}
                 onMouseEnter={() => setActive(i)}
-                className={`flex items-center gap-3 p-3 text-left transition-all duration-300 border-l-2 ${
+                className={`store-stage-item store-focus-ring flex items-center gap-3 p-3 text-left ${
                   isActive
-                    ? isClara
-                      ? "bg-black/5 border-[var(--vitrina-accent)]"
-                      : "bg-white/10 border-[var(--vitrina-accent)]"
-                    : "border-transparent hover:bg-black/5 opacity-70 hover:opacity-100"
+                    ? `is-active ${isClara ? "bg-black/5" : "bg-white/10"}`
+                    : "opacity-70 hover:opacity-100 hover:bg-black/5"
                 }`}
               >
-                <div className="size-14 sm:size-16 shrink-0 overflow-hidden bg-black/5">
+                <div className="store-thumb size-14 sm:size-16 shrink-0 bg-black/5">
                   {p.imagen_url ? (
                     <img src={p.imagen_url} alt="" className="size-full object-cover" />
                   ) : (

@@ -16,8 +16,8 @@ export function CategoryOrbit({ categorias, activa, onSelect }: Props) {
     <section className="border-b store-hairline bg-[var(--vitrina-fog)]">
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
         <div className="flex items-end justify-between gap-4 mb-4">
-          <h2 className="text-xl font-semibold tracking-tight">Categorías</h2>
-          <button type="button" onClick={() => pick(null)} className="text-sm store-muted min-h-11">
+          <h2 className="vitrina-section-title text-xl sm:text-2xl">Categorías</h2>
+          <button type="button" onClick={() => pick(null)} className="store-nav-btn text-sm store-muted min-h-11 px-2">
             Ver todo
           </button>
         </div>
@@ -29,7 +29,7 @@ export function CategoryOrbit({ categorias, activa, onSelect }: Props) {
                 key={c.nombre}
                 type="button"
                 onClick={() => pick(c.nombre)}
-                className={`shrink-0 px-4 py-3 text-sm font-medium border min-h-11 ${
+                className={`store-chip shrink-0 px-4 py-3 text-sm font-medium border min-h-11 ${
                   on ? "text-white border-transparent" : "bg-[var(--vitrina-elevated)] store-hairline"
                 }`}
                 style={on ? { background: "var(--vitrina-accent)" } : undefined}

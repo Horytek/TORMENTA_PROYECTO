@@ -55,7 +55,7 @@ export function StoreHeader({
         <div className="flex items-center gap-2 px-4 lg:px-8 h-14">
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
-              <button type="button" className="lg:hidden size-11 flex items-center justify-center" aria-label="Menú">
+              <button type="button" className="store-icon-btn lg:hidden size-11 flex items-center justify-center" aria-label="Menú">
                 <Menu className="size-5" />
               </button>
             </SheetTrigger>
@@ -65,7 +65,7 @@ export function StoreHeader({
               </SheetHeader>
               <div className="mt-6 space-y-1">
                 <p className="text-[11px] uppercase tracking-wider store-muted mb-2">Categorías</p>
-                <button type="button" onClick={() => goCategoria(null)} className="w-full text-left px-3 py-3 min-h-11 text-sm">
+                <button type="button" onClick={() => goCategoria(null)} className="store-nav-btn w-full text-left px-3 py-3 min-h-11 text-sm">
                   Todas
                 </button>
                 {categorias.map((c) => (
@@ -73,7 +73,7 @@ export function StoreHeader({
                     key={c.nombre}
                     type="button"
                     onClick={() => goCategoria(c.nombre)}
-                    className={`w-full text-left px-3 py-3 min-h-11 text-sm flex justify-between ${
+                    className={`store-nav-btn w-full text-left px-3 py-3 min-h-11 text-sm flex justify-between ${
                       categoriaActiva === c.nombre ? "font-semibold text-[var(--vitrina-accent)]" : ""
                     }`}
                   >
@@ -92,10 +92,10 @@ export function StoreHeader({
 
           <Link to={`/tienda/${slug}`} className="flex items-center gap-2.5 min-w-0 shrink-0">
             {tienda.logo_url ? (
-              <img src={tienda.logo_url} alt="" className="size-8 object-cover" />
+              <img src={tienda.logo_url} alt="" className="store-logo size-8 object-cover" />
             ) : (
               <span
-                className="size-8 flex items-center justify-center text-[10px] font-bold text-white"
+                className="store-logo size-8 flex items-center justify-center text-[10px] font-bold text-white"
                 style={{ background: "var(--vitrina-accent)" }}
               >
                 {monograma(tienda.nombre)}
@@ -107,7 +107,7 @@ export function StoreHeader({
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1 flex-1 min-w-0 mx-4 overflow-x-auto">
-            <button type="button" onClick={() => goCategoria(null)} className="px-3 py-2 text-sm whitespace-nowrap min-h-11">
+            <button type="button" onClick={() => goCategoria(null)} className="store-nav-btn px-3 py-2 text-sm whitespace-nowrap min-h-11">
               Todo
             </button>
             {categorias.slice(0, 6).map((c) => (
@@ -115,7 +115,7 @@ export function StoreHeader({
                 key={c.nombre}
                 type="button"
                 onClick={() => goCategoria(c.nombre)}
-                className={`px-3 py-2 text-sm whitespace-nowrap min-h-11 ${
+                className={`store-nav-btn px-3 py-2 text-sm whitespace-nowrap min-h-11 ${
                   categoriaActiva === c.nombre ? "font-semibold text-[var(--vitrina-accent)]" : "store-muted"
                 }`}
               >
@@ -127,22 +127,22 @@ export function StoreHeader({
           <div className="ml-auto flex items-center gap-0.5">
             <button
               type="button"
-              className="size-11 flex items-center justify-center"
+              className="store-icon-btn size-11 flex items-center justify-center"
               onClick={() => setSearchOpen(true)}
               aria-label="Buscar"
             >
               <Search className="size-5" />
             </button>
             {allowToggle && (
-              <button type="button" className="size-11 flex items-center justify-center" onClick={cycle} aria-label={`Tema: ${pref}`}>
+              <button type="button" className="store-icon-btn size-11 flex items-center justify-center" onClick={cycle} aria-label={`Tema: ${pref}`}>
                 <SchemeIcon className="size-4" />
               </button>
             )}
-            <Link to={`/tienda/${slug}/carrito`} className="relative size-11 flex items-center justify-center" aria-label="Carrito">
+            <Link to={`/tienda/${slug}/carrito`} className="store-icon-btn relative size-11 flex items-center justify-center" aria-label="Carrito">
               <ShoppingBag className="size-5" />
               {cartCount > 0 && (
                 <span
-                  className="absolute top-1.5 right-1.5 min-w-4 h-4 px-1 text-[10px] font-bold flex items-center justify-center text-white"
+                  className="absolute top-1.5 right-1.5 min-w-4 h-4 px-1 text-[10px] font-bold flex items-center justify-center text-white rounded-full"
                   style={{ background: "var(--vitrina-accent)" }}
                 >
                   {cartCount > 99 ? "99+" : cartCount}

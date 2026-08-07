@@ -18,7 +18,7 @@ export function PromoBanner({ headline, body, imageUrl, ctaLabel, ctaHref }: Pro
         {body && <p className="mt-4 text-white/70 max-w-lg text-base">{body}</p>}
         <a
           href={href}
-          className="mt-8 inline-flex h-11 items-center px-5 text-sm font-semibold text-white"
+          className="vitrina-pill mt-8 inline-flex h-11 items-center px-5 text-sm font-semibold text-white"
           style={{ background: "var(--vitrina-accent)" }}
         >
           {ctaLabel || "Explorar"}
