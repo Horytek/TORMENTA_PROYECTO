@@ -336,6 +336,7 @@ export const FOOTER_LINKS = [
       { label: "Horytek ERP", href: "/" },
       { label: "Pocket POS", href: "/?mode=pocket" },
       { label: "Ecommerce", href: "/?mode=ecommerce" },
+      { label: "Soluciones", href: "/soluciones" },
       { label: "Servicios", href: "/servicios" },
       { label: "Sobre nosotros", href: "/sobre-nosotros" },
     ],

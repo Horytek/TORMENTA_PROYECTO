@@ -31,6 +31,40 @@ const PaymentResultPage = lazy(() => import("@/features/landing/pages/PaymentRes
 const RegisterPage = lazy(() => import("@/features/registration/pages/RegisterPage"));
 const CatalogoPublicoPage = lazy(() => import("@/features/catalog-express/pages/CatalogoPublicoPage"));
 const CatalogExpressManagePage = lazy(() => import("@/features/catalog-express/pages/CatalogExpressManagePage"));
+const SolucionesPage = lazy(() => import("@/features/landing/pages/SolucionesPage"));
+const SolucionProductoPage = lazy(() => import("@/features/landing/pages/SolucionProductoPage"));
+const SolucionBundlePage = lazy(() => import("@/features/landing/pages/SolucionBundlePage"));
+const SyncStockAdminPage = lazy(() => import("@/features/platform/pages/SyncStockAdminPage"));
+const MayoristaAdminPage = lazy(() => import("@/features/platform/pages/MayoristaAdminPage"));
+const MayoristaPortalPage = lazy(() => import("@/features/platform/pages/MayoristaPortalPage"));
+const TallerAdminPage = lazy(() => import("@/features/platform/pages/TallerAdminPage"));
+const TallerPlantaPage = lazy(() => import("@/features/platform/pages/TallerPlantaPage"));
+const PreventaAdminPage = lazy(() => import("@/features/platform/pages/PreventaAdminPage"));
+const PreventaPublicPage = lazy(() => import("@/features/platform/pages/PreventaPublicPage"));
+const CrmAdminPage = lazy(() => import("@/features/platform/pages/CrmAdminPage"));
+const EnviosAdminPage = lazy(() => import("@/features/platform/pages/EnviosAdminPage"));
+const TrackingPublicPage = lazy(() => import("@/features/platform/pages/TrackingPublicPage"));
+const WmsAdminPage = lazy(() => import("@/features/platform/pages/WmsAdminPage"));
+const WmsOperarioPage = lazy(() => import("@/features/platform/pages/WmsOperarioPage"));
+const DespachoAdminPage = lazy(() => import("@/features/platform/pages/DespachoAdminPage"));
+const DespachoChoferPage = lazy(() => import("@/features/platform/pages/DespachoChoferPage"));
+const TaxiAdminPage = lazy(() => import("@/features/platform/pages/TaxiAdminPage"));
+const TaxiPasajeroPage = lazy(() => import("@/features/platform/pages/TaxiPasajeroPage"));
+const TaxiConductorPage = lazy(() => import("@/features/platform/pages/TaxiConductorPage"));
+const DeliveryAdminPage = lazy(() => import("@/features/platform/pages/DeliveryAdminPage"));
+const DeliveryClientePage = lazy(() => import("@/features/platform/pages/DeliveryClientePage"));
+const DeliveryRepartidorPage = lazy(() => import("@/features/platform/pages/DeliveryRepartidorPage"));
+const FlotasAdminPage = lazy(() => import("@/features/platform/pages/FlotasAdminPage"));
+const CampoAdminPage = lazy(() => import("@/features/platform/pages/CampoAdminPage"));
+const CampoVendedorPage = lazy(() => import("@/features/platform/pages/CampoVendedorPage"));
+const AcademiaAdminPage = lazy(() => import("@/features/platform/pages/AcademiaAdminPage"));
+const AcademiaAlumnoPage = lazy(() => import("@/features/platform/pages/AcademiaAlumnoPage"));
+const AgendaAdminPage = lazy(() => import("@/features/platform/pages/AgendaAdminPage"));
+const AgendaPublicPage = lazy(() => import("@/features/platform/pages/AgendaPublicPage"));
+const MantenimientoAdminPage = lazy(() => import("@/features/platform/pages/MantenimientoAdminPage"));
+const ManttoTecnicoPage = lazy(() => import("@/features/platform/pages/ManttoTecnicoPage"));
+const ReclutaAdminPage = lazy(() => import("@/features/platform/pages/ReclutaAdminPage"));
+const ReclutaPortalPage = lazy(() => import("@/features/platform/pages/ReclutaPortalPage"));
 
 const ProductsPage = lazy(() => import("@/features/products/pages/ProductsPage"));
 const CostosInicialesPage = lazy(() => import("@/features/costos/pages/CostosInicialesPage"));
@@ -182,6 +216,24 @@ export default function App() {
               <Route path="/terminos" element={<LegalPage kind="terms" />} />
               <Route path="/privacidad" element={<LegalPage kind="privacy" />} />
               <Route path="/servicios" element={<ServiciosPage />} />
+              <Route path="/soluciones" element={<SolucionesPage />} />
+              <Route path="/soluciones/bundle/:id" element={<SolucionBundlePage />} />
+              <Route path="/soluciones/:slug" element={<SolucionProductoPage />} />
+              <Route path="/b2b/:slug" element={<MayoristaPortalPage />} />
+              <Route path="/preventa/:slug" element={<PreventaPublicPage />} />
+              <Route path="/tracking/:codigo" element={<TrackingPublicPage />} />
+              <Route path="/recluta/:slug" element={<ReclutaPortalPage />} />
+              <Route path="/taxi/:slug" element={<TaxiPasajeroPage />} />
+              <Route path="/taxi/:slug/conductor" element={<TaxiConductorPage />} />
+              <Route path="/delivery/:slug" element={<DeliveryClientePage />} />
+              <Route path="/delivery/:slug/repartidor" element={<DeliveryRepartidorPage />} />
+              <Route path="/academia/:slug" element={<AcademiaAlumnoPage />} />
+              <Route path="/agenda/:slug" element={<AgendaPublicPage />} />
+              <Route path="/campo/vendedor" element={<CampoVendedorPage />} />
+              <Route path="/taller/planta" element={<TallerPlantaPage />} />
+              <Route path="/wms/operario" element={<WmsOperarioPage />} />
+              <Route path="/despacho/chofer" element={<DespachoChoferPage />} />
+              <Route path="/mantenimiento/tecnico" element={<ManttoTecnicoPage />} />
               <Route path="/sobre-nosotros" element={<AboutPage />} />
               <Route path="/equipo" element={<TeamPage />} />
               <Route path="/actualizaciones" element={<UpdatesPage />} />
@@ -239,6 +291,22 @@ export default function App() {
                     path="/catalog-express"
                     element={<CatalogExpressManagePage />}
                   />
+                  <Route path="/platform/sync" element={<SyncStockAdminPage />} />
+                  <Route path="/platform/mayorista" element={<MayoristaAdminPage />} />
+                  <Route path="/platform/taller" element={<TallerAdminPage />} />
+                  <Route path="/platform/preventa" element={<PreventaAdminPage />} />
+                  <Route path="/platform/crm" element={<CrmAdminPage />} />
+                  <Route path="/platform/envios" element={<EnviosAdminPage />} />
+                  <Route path="/platform/wms" element={<WmsAdminPage />} />
+                  <Route path="/platform/despacho" element={<DespachoAdminPage />} />
+                  <Route path="/platform/campo" element={<CampoAdminPage />} />
+                  <Route path="/platform/mantenimiento" element={<MantenimientoAdminPage />} />
+                  <Route path="/platform/recluta" element={<ReclutaAdminPage />} />
+                  <Route path="/taxi-admin" element={<TaxiAdminPage />} />
+                  <Route path="/delivery-admin" element={<DeliveryAdminPage />} />
+                  <Route path="/flotas-admin" element={<FlotasAdminPage />} />
+                  <Route path="/academia-admin" element={<AcademiaAdminPage />} />
+                  <Route path="/agenda-admin" element={<AgendaAdminPage />} />
                   <Route
                     path="/products/costos"
                     element={<RequireCapability capability="productos.view"><CostosInicialesPage /></RequireCapability>}

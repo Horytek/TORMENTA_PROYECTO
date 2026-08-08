@@ -53,6 +53,25 @@ import attributesRoutes from "./routes/attributes.routes.js";
 import emailRoutes from "./routes/email.routes.js";
 import expressRoutes from "./routes/express.routes.js";
 import ecommerceRoutes from "./routes/ecommerce.routes.js";
+import stockSyncRoutes from "./routes/stockSync.routes.js";
+import mayoristaRoutes from "./routes/mayorista.routes.js";
+import {
+  tallerRouter,
+  crmRouter,
+  enviosRouter,
+  wmsRouter,
+  despachoRouter,
+  campoRouter,
+  mantenimientoRouter,
+  reclutaRouter,
+  preventaRouter,
+  taxiRouter,
+  deliveryRouter,
+  flotasRouter,
+  academiaRouter,
+  agendaRouter,
+} from "./routes/platformWaves.routes.js";
+import horytekProductsRoutes from "./routes/horytekProducts.routes.js";
 
 const app = express();
 app.set('trust proxy', 1);
@@ -277,6 +296,23 @@ app.use("/api/unidades", unidadesRoutes);
 app.use("/api/health", healthRoutes);
 app.use("/api/express", expressRoutes);
 app.use("/api/ecommerce", ecommerceRoutes);
+app.use("/api/stock-sync", stockSyncRoutes);
+app.use("/api/mayorista", mayoristaRoutes);
+app.use("/api/taller", tallerRouter);
+app.use("/api/crm", crmRouter);
+app.use("/api/envios", enviosRouter);
+app.use("/api/wms", wmsRouter);
+app.use("/api/despacho", despachoRouter);
+app.use("/api/campo", campoRouter);
+app.use("/api/mantenimiento", mantenimientoRouter);
+app.use("/api/recluta", reclutaRouter);
+app.use("/api/preventa", preventaRouter);
+app.use("/api/taxi", taxiRouter);
+app.use("/api/delivery", deliveryRouter);
+app.use("/api/flotas", flotasRouter);
+app.use("/api/academia", academiaRouter);
+app.use("/api/agenda", agendaRouter);
+app.use("/api/horytek-products", horytekProductsRoutes);
 app.use("/api/gastos", gastosRoutes);
 app.use("/api/contabilidad/cuentas", cuentaContableRoutes);
 app.use("/api/contabilidad/centros-costo", centroCostoRoutes);

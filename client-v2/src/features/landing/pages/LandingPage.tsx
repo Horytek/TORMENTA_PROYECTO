@@ -10,7 +10,8 @@ import {
   SALES_WHATSAPP_URL,
   type Mode,
 } from "../data/landing.data";
-import { useMode } from "../hooks/useMode";
+import { useLandingProduct } from "../hooks/useLandingProduct";
+import { getLandingModule } from "../modules/landingModules.registry";
 import { InventoryRail } from "../components/InventoryRail";
 import { Header } from "../components/Header";
 import { Hero } from "../components/Hero";
@@ -19,12 +20,12 @@ import { BlueprintSection } from "../components/BlueprintSection";
 import { CaseStudy } from "../components/CaseStudy";
 import { Pricing } from "../components/Pricing";
 import { FAQ } from "../components/FAQ";
+import { ExperienceLanding } from "../components/ExperienceLanding";
 import { Footer } from "../components/Footer";
 import { ScrollUpButton } from "../components/ScrollUpButton";
 import { cn } from "@/lib/utils";
 
-// IDs de sección en orden de aparición — los usa InventoryRail para los checkpoints.
-const SECTION_IDS = [
+const LEGACY_SECTION_IDS = [
   "hero",
   "evidencia",
   "ecommerce",
@@ -39,7 +40,18 @@ const SECTION_IDS = [
 export default function LandingPage() {
   const isAuthenticated = useUserStore((s) => s.isAuthenticated);
   const navigate = useNavigate();
-  const { mode, setMode } = useMode();
+  const { productId, setProductId, legacyMode, isLegacy } = useLandingProduct();
+  const landingModule = getLandingModule(productId);
+  /** Checkpoints DOM de los layout kits (story/scenario/notFor…), no el sectionOrder legacy. */
+  const experienceCheckpoints = [
+    "hero",
+    "story",
+    "scenario",
+    "notFor",
+    "pricing",
+    "faq",
+    "cta",
+  ] as const;
 
   useEffect(() => {
     if (isAuthenticated) navigate("/dashboard", { replace: true });
@@ -47,7 +59,9 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen w-full bg-background">
-      <InventoryRail checkpoints={SECTION_IDS} />
+      <InventoryRail
+        checkpoints={isLegacy ? LEGACY_SECTION_IDS : experienceCheckpoints}
+      />
 
       <a
         href="#hero"
@@ -56,19 +70,25 @@ export default function LandingPage() {
         Saltar al contenido
       </a>
 
-      <Header mode={mode} onModeChange={setMode} />
+      <Header productId={productId} onProductChange={setProductId} />
 
-      <main>
-        <Hero mode={mode} />
-        <Evidence />
-        <EcommerceSection />
-        <BlueprintSection mode={mode} />
-        <CaseStudy mode={mode} />
-        <Funciones />
-        <Flujo />
-        <Pricing mode={mode} />
-        <FAQ mode={mode} />
-        <CTA mode={mode} />
+      <main key={productId} className="transition-opacity duration-300">
+        {isLegacy || landingModule.renderer === "legacy" ? (
+          <>
+            <Hero mode={legacyMode} />
+            <Evidence />
+            <EcommerceSection />
+            <BlueprintSection mode={legacyMode} />
+            <CaseStudy mode={legacyMode} />
+            <Funciones />
+            <Flujo />
+            <Pricing mode={legacyMode} />
+            <FAQ mode={legacyMode} />
+            <CTA mode={legacyMode} />
+          </>
+        ) : (
+          <ExperienceLanding module={landingModule} />
+        )}
       </main>
 
       <Footer />

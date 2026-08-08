@@ -1,0 +1,97 @@
+/* Scope: solo landings experience (wrapper .experience-landing) */
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap");
+
+.experience-landing {
+  --lp-radius: 1.25rem;
+  --lp-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --lp-shadow: 0 20px 50px -28px var(--lp-accent);
+  --font-lp-sans: "DM Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-lp-serif: "Fraunces", Georgia, "Times New Roman", serif;
+  font-family: var(--font-lp-sans);
+  color: var(--lp-ink, inherit);
+}
+
+.experience-landing .lp-display {
+  font-family: var(--font-lp-sans);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+}
+
+.experience-landing .lp-display-serif {
+  font-family: var(--font-lp-serif);
+  font-weight: 550;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+}
+
+.experience-landing .lp-display-mono {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  line-height: 0.98;
+}
+
+.experience-landing .lp-hero-wash {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(125deg, var(--lp-surface) 0%, transparent 52%),
+    radial-gradient(ellipse 70% 55% at 92% 8%, color-mix(in srgb, var(--lp-accent) 14%, transparent), transparent 58%);
+}
+
+.experience-landing .lp-soft-card {
+  border-radius: var(--lp-radius);
+  border: 1px solid rgb(0 0 0 / 0.05);
+  box-shadow: var(--lp-shadow);
+  background: color-mix(in srgb, var(--lp-surface) 55%, white);
+}
+
+.experience-landing .lp-rise {
+  animation: lp-rise 720ms var(--lp-ease) both;
+}
+
+.experience-landing .lp-fade {
+  animation: lp-fade 880ms var(--lp-ease) both;
+}
+
+@keyframes lp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lp-fade {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes lp-soft-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .experience-landing .lp-rise,
+  .experience-landing .lp-fade {
+    animation: none;
+  }
+}

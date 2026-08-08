@@ -5,7 +5,6 @@ import { loginRequest, sendAuthCodeRequest } from "@/api/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { setToken } from "@/utils/authStorage";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Eye, EyeOff, Loader2, Check, Store } from "lucide-react";
@@ -17,20 +16,25 @@ import { useEcommerceAuthStore } from "@/features/ecommerce/store/useEcommerceAu
 import { createPreference } from "@/features/account/api/billing";
 import { setPendingPaymentFlow } from "@/features/landing/utils/paymentFlow";
 import { POCKET_PLANS } from "@/features/landing/data/landing.data";
+import { ProductPicker, type ProductPickerMode } from "@/features/auth/components/ProductPicker";
+import { buildLoginProductOptions, HORYTEK_PRODUCTS } from "@/features/platform/catalog/horytekProducts";
 
 // Tonalidades de muestra (colores reales de prenda), sobrias.
 const TAG_COLORS = ["#243645", "#3E6B89", "#0E7C7B", "#C9A227", "#B23A48", "#D6D3CD"];
 
-type LoginMode = "erp" | "express" | "ecommerce" | "validar";
+const KNOWN_LOGIN_MODES = new Set([
+  ...buildLoginProductOptions().map((o) => o.mode),
+  "validar",
+]);
+
+const PORTAL_BRIDGE_MODES = new Set(["taxi", "delivery", "flotas", "academia", "agenda", "recluta"]);
+
+type LoginMode = ProductPickerMode;
 
 export default function LoginPage() {
   const [params] = useSearchParams();
-  const initialMode: LoginMode =
-    params.get("mode") === "express"
-      ? "express"
-      : params.get("mode") === "ecommerce"
-        ? "ecommerce"
-        : "erp";
+  const modeParam = params.get("mode") || "erp";
+  const initialMode: LoginMode = KNOWN_LOGIN_MODES.has(modeParam) ? modeParam : "erp";
   const [mode, setMode] = useState<LoginMode>(initialMode);
   const pocketPlan =
     POCKET_PLANS.find((p) => p.id === params.get("plan")) ||
@@ -59,6 +63,10 @@ export default function LoginPage() {
   const [ecomLoading, setEcomLoading] = useState(false);
   const [ecomError, setEcomError] = useState("");
   const setEcomSession = useEcommerceAuthStore((s) => s.setSession);
+
+  // Mayorista B2B — redirige al portal por slug
+  const [mayoristaSlug, setMayoristaSlug] = useState("");
+  const [portalSlug, setPortalSlug] = useState("");
 
   // Autenticación / Verificación de cuenta (OTP)
   const [authUser, setAuthUser] = useState("");
@@ -350,9 +358,15 @@ export default function LoginPage() {
                   ? "Autenticar cuenta"
                   : mode === "ecommerce"
                     ? "Admin Ecommerce"
-                    : expressIsRegistering
-                      ? "Crear cuenta Pocket POS"
-                      : "Pocket POS"}
+                    : mode === "mayorista"
+                      ? "Portal Mayorista"
+                      : mode === "express"
+                        ? expressIsRegistering
+                          ? "Crear cuenta Pocket POS"
+                          : "Pocket POS"
+                        : PORTAL_BRIDGE_MODES.has(mode)
+                          ? buildLoginProductOptions().find((o) => o.mode === mode)?.label || mode
+                          : "Iniciar sesión"}
             </h1>
             <p className="mt-1.5 text-sm text-muted-foreground">
               {mode === "erp"
@@ -361,18 +375,17 @@ export default function LoginPage() {
                   ? "Ingrese el código de seguridad"
                   : mode === "ecommerce"
                     ? "Accede al panel de tu tienda online."
-                    : "Modo ligero de punto de venta (beta)."}
+                    : mode === "mayorista"
+                      ? "Indica el slug de tu distribuidor para abrir el portal B2B."
+                      : mode === "express"
+                        ? "Modo ligero de punto de venta (beta)."
+                        : PORTAL_BRIDGE_MODES.has(mode)
+                          ? "Indica el slug u operador para abrir el portal del producto."
+                          : "Elige un producto e ingresa."}
             </p>
           </div>
 
-          <Tabs value={mode} onValueChange={(v) => setMode(v as LoginMode)} className="mb-6">
-            <TabsList className="w-full flex-wrap h-auto gap-1">
-              <TabsTrigger value="erp" className="flex-1">ERP</TabsTrigger>
-              <TabsTrigger value="express" className="flex-1 gap-1.5"><Store className="h-3.5 w-3.5" /> Pocket</TabsTrigger>
-              <TabsTrigger value="ecommerce" className="flex-1">Ecommerce</TabsTrigger>
-              <TabsTrigger value="validar" className="flex-1">Validar</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <ProductPicker value={mode} onChange={setMode} />
 
           {mode === "erp" ? (
             <form onSubmit={handleLogin} className="space-y-5">
@@ -605,6 +618,74 @@ export default function LoginPage() {
                 <Link to="/registro-ecommerce" className="text-teal-700 underline-offset-4 hover:underline">
                   Activar tienda
                 </Link>
+              </p>
+            </form>
+          ) : mode === "mayorista" ? (
+            <form
+              className="space-y-5"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const s = mayoristaSlug.trim().toLowerCase();
+                if (!s) return;
+                navigate(`/b2b/${s}`);
+              }}
+            >
+              <div className="space-y-2">
+                <Label htmlFor="mayorista_slug">Slug del portal</Label>
+                <Input
+                  id="mayorista_slug"
+                  value={mayoristaSlug}
+                  onChange={(e) => setMayoristaSlug(e.target.value)}
+                  placeholder="distribuidora-norte"
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                Ir al portal B2B
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                El administrador del ERP te crea usuario y te da el slug.{" "}
+                <Link to="/soluciones/mayorista" className="underline-offset-4 hover:underline">
+                  Ver producto
+                </Link>
+              </p>
+            </form>
+          ) : PORTAL_BRIDGE_MODES.has(mode) ? (
+            <form
+              className="space-y-5"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const s = portalSlug.trim().toLowerCase();
+                if (!s) return;
+                const product = HORYTEK_PRODUCTS.find((p) => p.loginMode === mode);
+                const path = (product?.clientPath || product?.adminPath || `/soluciones/${product?.slug || mode}`)
+                  .replace(":slug", s)
+                  .replace(":codigo", s);
+                navigate(path.startsWith("/") ? path : `/${path}`);
+              }}
+            >
+              <div className="space-y-2">
+                <Label htmlFor="portal_slug">Slug / operador</Label>
+                <Input
+                  id="portal_slug"
+                  value={portalSlug}
+                  onChange={(e) => setPortalSlug(e.target.value)}
+                  placeholder="mi-operador"
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                Ir al portal
+              </Button>
+              <p className="text-center text-xs text-muted-foreground">
+                También puedes{" "}
+                <Link
+                  to={`/soluciones/${HORYTEK_PRODUCTS.find((p) => p.loginMode === mode)?.slug || mode}`}
+                  className="underline-offset-4 hover:underline"
+                >
+                  ver la ficha del producto
+                </Link>
+                .
               </p>
             </form>
           ) : (
