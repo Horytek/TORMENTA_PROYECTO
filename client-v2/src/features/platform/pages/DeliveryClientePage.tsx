@@ -1,18 +1,22 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  createDeliveryPedido,
+  createDeliveryClientePedido,
   getDeliveryPortal,
-  getDeliveryToken,
-  listDeliveryPedidos,
+  getDeliveryClienteToken,
+  listDeliveryClientePedidos,
   loginDeliveryCliente,
-  setDeliveryToken,
+  setDeliveryClienteToken,
 } from "@/features/platform/api/delivery";
+import { getDemoPortalCreds, isDemoSlug } from "@/features/platform/demo/demoPortalCreds";
+import { useDemoAutoEnter } from "@/features/platform/demo/useDemoAutoEnter";
 import { PlatformMapPanel, LIMA_POINTS } from "@/features/platform/maps/PlatformMapPanel";
+import { OpsShell } from "@/features/platform/ui/OpsShell";
+import { EmptyState } from "@/features/platform/ui/EmptyState";
+import { portalButtonClass, portalInputClass } from "@/features/platform/ui/portalTouch";
 
 type Portal = { slug: string; nombre: string };
 type Pedido = { id_pedido: number; recojo: string; entrega: string; estado: string };
@@ -27,16 +31,27 @@ function errMsg(e: unknown, fallback: string) {
 
 export default function DeliveryClientePage() {
   const { slug = "" } = useParams();
+  const demo = isDemoSlug(slug) ? getDemoPortalCreds("delivery", "cliente") : null;
   const [portal, setPortal] = useState<Portal | null>(null);
   const [loadError, setLoadError] = useState("");
-  const [session, setSession] = useState(Boolean(getDeliveryToken()));
-  const [telefono, setTelefono] = useState("");
-  const [password, setPassword] = useState("");
-  const [nombre, setNombre] = useState("");
+  const [hadToken] = useState(() => Boolean(getDeliveryClienteToken()));
+  const [session, setSession] = useState(hadToken);
   const [recojo, setRecojo] = useState("");
   const [entrega, setEntrega] = useState("");
   const [detalle, setDetalle] = useState("");
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
+
+  const autoPhase = useDemoAutoEnter(Boolean(demo) && !hadToken, async () => {
+    if (!demo?.telefono || !demo.password) throw new Error("Sin credenciales demo");
+    const res = await loginDeliveryCliente({
+      slug,
+      telefono: demo.telefono,
+      password: demo.password,
+      nombre: demo.nombre,
+    });
+    if (!res.success) throw new Error(res.message || "Demo no disponible");
+    setSession(true);
+  });
 
   useEffect(() => {
     (async () => {
@@ -52,100 +67,40 @@ export default function DeliveryClientePage() {
 
   useEffect(() => {
     if (!session) return;
-    listDeliveryPedidos()
+    listDeliveryClientePedidos()
       .then((res) => {
         if (res.success) setPedidos(res.data || []);
       })
       .catch(() => {
-        setDeliveryToken(null);
+        setDeliveryClienteToken(null);
         setSession(false);
       });
   }, [session]);
 
-  if (loadError) {
-    return (
-      <div className="mx-auto max-w-lg px-6 py-24 text-center">
-        <h1 className="text-xl font-semibold">Delivery</h1>
-        <p className="mt-3 text-sm text-destructive">{loadError}</p>
-        <Link to="/soluciones/delivery" className="mt-6 inline-block text-sm underline">
-          Ver producto
-        </Link>
-      </div>
-    );
+  if (loadError || (!session && autoPhase !== "entering") || (!session && autoPhase === "failed")) {
+    return <Navigate to="/login?mode=delivery" replace />;
   }
 
-  if (!portal) {
-    return <div className="p-12 text-center text-sm text-muted-foreground">Cargando…</div>;
-  }
-
-  if (!session) {
+  if (!portal || autoPhase === "entering") {
     return (
-      <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
-        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Delivery · Cliente
-        </p>
-        <h1 className="mt-2 text-xl font-semibold">{portal.nombre}</h1>
-        <form
-          className="mt-6 space-y-3"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            try {
-              const res = await loginDeliveryCliente({
-                slug,
-                telefono,
-                password,
-                nombre: nombre || undefined,
-              });
-              if (!res.success) throw new Error(res.message);
-              setSession(true);
-            } catch (err: unknown) {
-              toast.error(errMsg(err, "Error"));
-            }
-          }}
-        >
-          <Label>Nombre (nuevo)</Label>
-          <Input value={nombre} onChange={(e) => setNombre(e.target.value)} />
-          <Label>Teléfono</Label>
-          <Input value={telefono} onChange={(e) => setTelefono(e.target.value)} required />
-          <Label>Contraseña</Label>
-          <Input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <Button type="submit" className="w-full">
-            Entrar / Registrarse
-          </Button>
-        </form>
-        <Link to={`/delivery/${slug}/repartidor`} className="mt-6 text-center text-sm underline">
-          Soy repartidor
-        </Link>
+      <div className="flex min-h-dvh items-center justify-center p-12 text-center text-sm text-muted-foreground">
+        {autoPhase === "entering" ? "Entrando a la demo…" : "Cargando…"}
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-sm space-y-8 p-6">
-      <header className="flex justify-between">
-        <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Delivery
-          </p>
-          <h1 className="mt-1 text-xl font-semibold">Nuevo encargo</h1>
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            setDeliveryToken(null);
-            setSession(false);
-          }}
-        >
-          Salir
-        </Button>
-      </header>
-
+    <OpsShell
+      productId="delivery"
+      companyName={portal.nombre}
+      roleLabel="Cliente"
+      title="Nuevo encargo"
+      width="narrow"
+      onLogout={() => {
+        setDeliveryClienteToken(null);
+        setSession(false);
+      }}
+    >
       <PlatformMapPanel
         title="Tracking del encargo"
         footnote="Demo geo Lima"
@@ -175,7 +130,7 @@ export default function DeliveryClientePage() {
         onSubmit={async (e) => {
           e.preventDefault();
           try {
-            const res = await createDeliveryPedido({
+            const res = await createDeliveryClientePedido({
               recojo,
               entrega,
               detalle: detalle || undefined,
@@ -185,22 +140,34 @@ export default function DeliveryClientePage() {
             setRecojo("");
             setEntrega("");
             setDetalle("");
-            const list = await listDeliveryPedidos();
+            const list = await listDeliveryClientePedidos();
             if (list.success) setPedidos(list.data || []);
           } catch (err: unknown) {
             toast.error(errMsg(err, "Error"));
           }
         }}
       >
-        <Input placeholder="Recojo" value={recojo} onChange={(e) => setRecojo(e.target.value)} required />
         <Input
+          className={portalInputClass}
+          placeholder="Recojo"
+          value={recojo}
+          onChange={(e) => setRecojo(e.target.value)}
+          required
+        />
+        <Input
+          className={portalInputClass}
           placeholder="Entrega"
           value={entrega}
           onChange={(e) => setEntrega(e.target.value)}
           required
         />
-        <Input placeholder="Detalle" value={detalle} onChange={(e) => setDetalle(e.target.value)} />
-        <Button type="submit" className="w-full">
+        <Input
+          className={portalInputClass}
+          placeholder="Detalle"
+          value={detalle}
+          onChange={(e) => setDetalle(e.target.value)}
+        />
+        <Button type="submit" className={portalButtonClass}>
           Solicitar
         </Button>
       </form>
@@ -208,20 +175,20 @@ export default function DeliveryClientePage() {
       <section>
         <h2 className="text-sm font-semibold">Mis pedidos</h2>
         {pedidos.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Sin pedidos.</p>
+          <EmptyState title="Sin pedidos" body="Cuando solicites un encargo, aparece aquí." />
         ) : (
-          <ul className="mt-3 divide-y divide-border/60 text-sm">
+          <ul className="mt-3 divide-y divide-black/8 text-sm">
             {pedidos.map((p) => (
               <li key={p.id_pedido} className="flex justify-between py-2">
                 <span>
                   {p.recojo} → {p.entrega}
                 </span>
-                <span className="text-xs uppercase text-muted-foreground">{p.estado}</span>
+                <span className="text-xs uppercase text-black/45">{p.estado}</span>
               </li>
             ))}
           </ul>
         )}
       </section>
-    </div>
+    </OpsShell>
   );
 }

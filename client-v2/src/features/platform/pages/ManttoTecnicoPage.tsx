@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Navigate } from "react-router-dom";
 import { listManttoOrdenes } from "@/features/platform/api/platformProducts";
+import { getDemoPortalCreds } from "@/features/platform/demo/demoPortalCreds";
+import { useDemoAutoEnter } from "@/features/platform/demo/useDemoAutoEnter";
+import { OpsShell } from "@/features/platform/ui/OpsShell";
+import { EmptyState } from "@/features/platform/ui/EmptyState";
 
 type Orden = {
   id_ot: number;
@@ -24,11 +25,18 @@ function errMsg(e: unknown, fallback: string) {
 }
 
 export default function ManttoTecnicoPage() {
-  const [unlocked, setUnlocked] = useState(Boolean(sessionStorage.getItem(PIN_KEY)));
-  const [pinInput, setPinInput] = useState("");
+  const demo = getDemoPortalCreds("mantenimiento", "tecnico");
+  const [hadUnlock] = useState(() => Boolean(sessionStorage.getItem(PIN_KEY)));
+  const [unlocked, setUnlocked] = useState(hadUnlock);
   const [ordenes, setOrdenes] = useState<Orden[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const autoPhase = useDemoAutoEnter(Boolean(demo) && !hadUnlock, async () => {
+    if (!demo?.pin || demo.pin.length < 4) throw new Error("Sin PIN demo");
+    sessionStorage.setItem(PIN_KEY, demo.pin);
+    setUnlocked(true);
+  });
 
   const load = async () => {
     setLoading(true);
@@ -48,87 +56,51 @@ export default function ManttoTecnicoPage() {
     if (unlocked) load();
   }, [unlocked]);
 
-  if (!unlocked) {
-    return (
-      <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
-        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Mantenimiento · Técnico
-        </p>
-        <h1 className="mt-2 text-xl font-semibold">Ingreso</h1>
-        <form
-          className="mt-6 space-y-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (pinInput.length < 4) {
-              toast.error("PIN de al menos 4 dígitos");
-              return;
-            }
-            sessionStorage.setItem(PIN_KEY, pinInput);
-            setUnlocked(true);
-          }}
-        >
-          <Label>PIN</Label>
-          <Input
-            type="password"
-            inputMode="numeric"
-            value={pinInput}
-            onChange={(e) => setPinInput(e.target.value)}
-            required
-          />
-          <Button type="submit" className="w-full">
-            Entrar
-          </Button>
-        </form>
-      </div>
-    );
+  if ((!unlocked && autoPhase !== "entering") || (!unlocked && autoPhase === "failed")) {
+    return <Navigate to="/login?mode=mantenimiento" replace />;
   }
 
-  if (loading) return <div className="p-8 text-sm text-muted-foreground">Cargando…</div>;
-  if (error) {
+  if (autoPhase === "entering") {
     return (
-      <div className="p-8">
-        <h1 className="text-xl font-semibold">Técnico</h1>
-        <p className="mt-3 text-sm text-destructive">{error}</p>
+      <div className="flex min-h-dvh items-center justify-center p-12 text-center text-sm text-muted-foreground">
+        Entrando a la demo…
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-8 p-6">
-      <header className="flex justify-between">
-        <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Mantenimiento
-          </p>
-          <h1 className="mt-1 text-xl font-semibold">Órdenes asignadas</h1>
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            sessionStorage.removeItem(PIN_KEY);
-            setUnlocked(false);
-          }}
-        >
-          Salir
-        </Button>
-      </header>
-
-      {ordenes.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No hay OT abiertas.</p>
+    <OpsShell
+      productId="mantenimiento"
+      companyName="Operador Demo Mantenimiento"
+      roleLabel="Técnico"
+      title="Órdenes asignadas"
+      width="default"
+      onLogout={() => {
+        sessionStorage.removeItem(PIN_KEY);
+        setUnlocked(false);
+      }}
+    >
+      {loading ? (
+        <p className="text-sm text-black/50">Cargando…</p>
+      ) : error ? (
+        <p className="text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      ) : ordenes.length === 0 ? (
+        <EmptyState title="Sin OT" body="No hay órdenes de trabajo abiertas." />
       ) : (
-        <ul className="divide-y divide-border/60 text-sm">
+        <ul className="divide-y divide-black/8 text-sm">
           {ordenes.map((o) => (
             <li key={o.id_ot} className="flex justify-between py-3">
               <span>
                 {o.titulo}
-                <span className="text-muted-foreground"> · {o.tipo}</span>
+                <span className="text-black/45"> · {o.tipo}</span>
               </span>
-              <span className="text-xs uppercase text-muted-foreground">{o.estado}</span>
+              <span className="text-xs uppercase text-black/45">{o.estado}</span>
             </li>
           ))}
         </ul>
       )}
-    </div>
+    </OpsShell>
   );
 }

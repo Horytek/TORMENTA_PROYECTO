@@ -1,18 +1,9 @@
-import { Link } from "react-router-dom";
-import { ArrowRight, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SALES_WHATSAPP_URL } from "../data/landing.data";
 import type { LandingProductModule } from "../modules/landingModule.types";
 import { TaxiMapHero } from "../maps/TaxiMapHero";
 import { DeliveryMapHero } from "../maps/DeliveryMapHero";
-import {
-  AntiConfusionBlock,
-  LayoutShell,
-  PricingAndFaqCta,
-  ScenarioBlock,
-  StoryBlock,
-  useLayoutChrome,
-} from "./layoutShared";
+import { ExperienceHeroCtas, LayoutShell, useLayoutChrome } from "./layoutShared";
+import { ExperienceBody } from "./ExperienceBody";
 
 /** Hero mapa full-bleed + panel — Taxi / Delivery */
 export function MapMobilityLayout({ module }: { module: LandingProductModule }) {
@@ -30,8 +21,14 @@ export function MapMobilityLayout({ module }: { module: LandingProductModule }) 
         />
         <div className="relative mx-auto max-w-6xl px-6 pb-10 pt-16 md:pt-20">
           <div className="max-w-xl lp-rise">
+            <p
+              className="text-[11px] font-semibold uppercase tracking-[0.2em]"
+              style={{ color: accent.accent }}
+            >
+              {module.name}
+            </p>
             <span
-              className="inline-flex rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]"
+              className="mt-2 inline-flex rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]"
               style={{ borderColor: `${accent.accent}33`, color: accent.accent, background: `${accent.accent}12` }}
             >
               {copy.badge}
@@ -41,23 +38,10 @@ export function MapMobilityLayout({ module }: { module: LandingProductModule }) 
               <span className="text-muted-foreground">{copy.titleAccent}</span>
             </h1>
             <p className="mt-4 text-[15px] text-muted-foreground">{copy.body}</p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                to={module.loginHref}
-                className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-[13px] font-semibold text-white"
-                style={{ backgroundColor: accent.accent }}
-              >
-                Empezar <ArrowRight className="h-4 w-4" />
-              </Link>
-              <a
-                href={SALES_WHATSAPP_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl border border-black/10 bg-white/80 px-5 py-3 text-[13px] font-semibold"
-              >
-                <MessageCircle className="h-4 w-4" /> WhatsApp
-              </a>
-            </div>
+            <ExperienceHeroCtas
+              module={module}
+              primaryLabel={isTaxi ? "Probar portal pasajero" : "Probar portal cliente"}
+            />
           </div>
           <div className="mt-10 lp-fade">
             {isTaxi ? (
@@ -81,11 +65,7 @@ export function MapMobilityLayout({ module }: { module: LandingProductModule }) 
           ))}
         </div>
       </section>
-
-      <StoryBlock module={module} />
-      <ScenarioBlock module={module} />
-      <AntiConfusionBlock module={module} />
-      <PricingAndFaqCta module={module} />
+      <ExperienceBody module={module} />
     </LayoutShell>
   );
 }

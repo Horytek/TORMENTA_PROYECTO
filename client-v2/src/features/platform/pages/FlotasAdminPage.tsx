@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  bootstrapFlotas,
   createFlotasCombustible,
   createFlotasConductor,
   createFlotasVehiculo,
@@ -12,10 +11,11 @@ import {
   listFlotasCombustible,
   listFlotasConductores,
   listFlotasVehiculos,
-  loginFlotasAdmin,
   setFlotasToken,
 } from "@/features/platform/api/flotas";
 import { PlatformMapPanel, LIMA_POINTS } from "@/features/platform/maps/PlatformMapPanel";
+import { PlatformShell } from "@/features/platform/ui/PlatformShell";
+import { EmptyState } from "@/features/platform/ui/EmptyState";
 
 type Vehiculo = {
   id_vehiculo: number;
@@ -37,11 +37,6 @@ function errMsg(e: unknown, fallback: string) {
 
 export default function FlotasAdminPage() {
   const [session, setSession] = useState(Boolean(getFlotasToken()));
-  const [mode, setMode] = useState<"login" | "bootstrap">("login");
-  const [slug, setSlug] = useState("");
-  const [nombre, setNombre] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [conductores, setConductores] = useState<Conductor[]>([]);
   const [combustible, setCombustible] = useState<Comb[]>([]);
@@ -84,96 +79,33 @@ export default function FlotasAdminPage() {
   }, [session]);
 
   if (!session) {
-    return (
-      <div className="mx-auto max-w-md space-y-6 p-6 md:p-8">
-        <header>
-          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Flotas · Admin
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold">
-            {mode === "login" ? "Iniciar sesión" : "Crear empresa flota"}
-          </h1>
-        </header>
-        <form
-          className="space-y-3"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            try {
-              const res =
-                mode === "bootstrap"
-                  ? await bootstrapFlotas({ slug, nombre, email, password })
-                  : await loginFlotasAdmin({ slug, email, password });
-              if (!res.success) throw new Error(res.message);
-              if (res.data?.token) setFlotasToken(res.data.token);
-              setSession(true);
-            } catch (err: unknown) {
-              toast.error(errMsg(err, "Error"));
-            }
-          }}
-        >
-          <Label>Slug</Label>
-          <Input value={slug} onChange={(e) => setSlug(e.target.value)} required />
-          {mode === "bootstrap" && (
-            <>
-              <Label>Nombre</Label>
-              <Input value={nombre} onChange={(e) => setNombre(e.target.value)} required />
-            </>
-          )}
-          <Label>Email</Label>
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <Label>Contraseña</Label>
-          <Input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <Button type="submit" className="w-full">
-            {mode === "bootstrap" ? "Crear" : "Entrar"}
-          </Button>
-        </form>
-        <button
-          type="button"
-          className="text-sm text-muted-foreground underline"
-          onClick={() => setMode(mode === "login" ? "bootstrap" : "login")}
-        >
-          {mode === "login" ? "¿Primera vez? Crear empresa" : "Ya tengo cuenta"}
-        </button>
-      </div>
-    );
+    return <Navigate to="/login?mode=flotas" replace />;
   }
 
-  if (loading) return <div className="p-8 text-sm text-muted-foreground">Cargando Flotas…</div>;
+  if (loading && vehiculos.length === 0 && !error) {
+    return (
+      <PlatformShell productId="flotas" title="Flotas">
+        <p className="text-sm text-black/50">Cargando…</p>
+      </PlatformShell>
+    );
+  }
   if (error) {
     return (
-      <div className="p-8">
-        <h1 className="text-xl font-semibold">Flotas</h1>
-        <p className="mt-3 text-sm text-destructive">{error}</p>
-      </div>
+      <PlatformShell productId="flotas" title="Flotas">
+        <p className="text-sm text-destructive">{error}</p>
+      </PlatformShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 p-6 md:p-8">
-      <header className="flex justify-between">
-        <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Plataforma · Oleada D
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">Flotas</h1>
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            setFlotasToken(null);
-            setSession(false);
-          }}
-        >
-          Salir
-        </Button>
-      </header>
-
+    <PlatformShell
+      productId="flotas"
+      title="Flotas"
+      onLogout={() => {
+        setFlotasToken(null);
+        setSession(false);
+      }}
+    >
       <PlatformMapPanel
         title="Patio · unidades (demo geo)"
         footnote="Pins etiquetados con placa — sin lat/lng en BD"
@@ -315,7 +247,7 @@ export default function FlotasAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Vehículos</h2>
         {vehiculos.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Sin vehículos.</p>
+          <EmptyState title="Sin vehículos" />
         ) : (
           <ul className="mt-3 divide-y divide-border/60 text-sm">
             {vehiculos.map((v) => (
@@ -331,7 +263,7 @@ export default function FlotasAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Conductores</h2>
         {conductores.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Sin conductores.</p>
+          <EmptyState title="Sin conductores" />
         ) : (
           <ul className="mt-3 divide-y divide-border/60 text-sm">
             {conductores.map((c) => (
@@ -347,7 +279,7 @@ export default function FlotasAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Combustible reciente</h2>
         {combustible.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Sin registros.</p>
+          <EmptyState title="Sin registros" />
         ) : (
           <ul className="mt-3 divide-y divide-border/60 text-sm">
             {combustible.slice(0, 20).map((c) => (
@@ -363,6 +295,6 @@ export default function FlotasAdminPage() {
           </ul>
         )}
       </section>
-    </div>
+    </PlatformShell>
   );
 }

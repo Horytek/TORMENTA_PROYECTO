@@ -217,30 +217,76 @@ taxiRouter.post(
   validateSchema(schema.operatorActorLoginSchema),
   ctrl.taxiPasajeroLogin
 );
-taxiRouter.get("/admin/viajes", ctrl.authTaxiAdmin, ctrl.taxiListViajes);
+taxiRouter.post(
+  "/auth/pasajero/registro",
+  validateSchema(schema.taxiPasajeroRegisterSchema),
+  ctrl.taxiPasajeroRegister
+);
+taxiRouter.get(
+  "/admin/viajes",
+  ctrl.authTaxiAdmin,
+  ctrl.requireTaxiAdmin,
+  ctrl.taxiListViajes
+);
 taxiRouter.post(
   "/admin/viajes",
   ctrl.authTaxiAdmin,
+  ctrl.requireTaxiAdmin,
   validateSchema(schema.taxiViajeSchema),
   ctrl.taxiCreateViaje
 );
 taxiRouter.patch(
   "/admin/viajes/:id_viaje/asignar",
   ctrl.authTaxiAdmin,
+  ctrl.requireTaxiAdmin,
   validateSchema(schema.taxiAssignSchema),
   ctrl.taxiAssignConductor
+);
+taxiRouter.get(
+  "/admin/conductores",
+  ctrl.authTaxiAdmin,
+  ctrl.requireTaxiAdmin,
+  ctrl.taxiListConductores
 );
 taxiRouter.post(
   "/admin/conductores",
   ctrl.authTaxiAdmin,
+  ctrl.requireTaxiAdmin,
   validateSchema(schema.taxiConductorSchema),
   ctrl.taxiCreateConductor
 );
 taxiRouter.post(
   "/admin/pasajeros",
   ctrl.authTaxiAdmin,
+  ctrl.requireTaxiAdmin,
   validateSchema(schema.taxiPasajeroSchema),
   ctrl.taxiCreatePasajero
+);
+taxiRouter.get(
+  "/pasajero/viajes",
+  ctrl.authTaxiAdmin,
+  ctrl.requireTaxiPasajero,
+  ctrl.taxiPasajeroListViajes
+);
+taxiRouter.post(
+  "/pasajero/viajes",
+  ctrl.authTaxiAdmin,
+  ctrl.requireTaxiPasajero,
+  validateSchema(schema.taxiViajeSchema),
+  ctrl.taxiPasajeroCreateViaje
+);
+taxiRouter.get(
+  "/conductor/viajes",
+  ctrl.authTaxiAdmin,
+  ctrl.requireTaxiConductor,
+  ctrl.taxiConductorListViajes
+);
+taxiRouter.patch(
+  "/conductor/viajes/:id_viaje",
+  ctrl.authTaxiAdmin,
+  ctrl.requireTaxiConductor,
+  validateSchema(schema.taxiConductorPatchSchema),
+  ctrl.taxiConductorPatchViaje
 );
 
 /* ——— Delivery ——— */
@@ -280,17 +326,51 @@ deliveryRouter.patch(
   validateSchema(schema.deliveryAssignSchema),
   ctrl.deliveryAssignRepartidor
 );
+deliveryRouter.get(
+  "/admin/repartidores",
+  ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryAdmin,
+  ctrl.deliveryListRepartidores
+);
 deliveryRouter.post(
   "/admin/repartidores",
   ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryAdmin,
   validateSchema(schema.deliveryRepartidorSchema),
   ctrl.deliveryCreateRepartidor
 );
 deliveryRouter.post(
   "/admin/clientes",
   ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryAdmin,
   validateSchema(schema.deliveryClienteSchema),
   ctrl.deliveryCreateCliente
+);
+deliveryRouter.get(
+  "/cliente/pedidos",
+  ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryCliente,
+  ctrl.deliveryClienteListPedidos
+);
+deliveryRouter.post(
+  "/cliente/pedidos",
+  ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryCliente,
+  validateSchema(schema.deliveryPedidoSchema),
+  ctrl.deliveryClienteCreatePedido
+);
+deliveryRouter.get(
+  "/repartidor/pedidos",
+  ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryRepartidor,
+  ctrl.deliveryRepartidorListPedidos
+);
+deliveryRouter.patch(
+  "/repartidor/pedidos/:id_pedido",
+  ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryRepartidor,
+  validateSchema(schema.deliveryRepartidorPatchSchema),
+  ctrl.deliveryRepartidorPatchPedido
 );
 
 /* ——— Flotas ——— */

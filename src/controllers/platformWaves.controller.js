@@ -75,6 +75,23 @@ export const authFlotasAdmin = makeOperatorAuth("horytek-flotas");
 export const authAcademiaAdmin = makeOperatorAuth("horytek-academia");
 export const authAgendaAdmin = makeOperatorAuth("horytek-agenda");
 
+function requireOperatorRole(...roles) {
+  return function guardRole(req, res, next) {
+    const role = req.operator?.role;
+    if (!role || !roles.includes(role)) {
+      return res.status(403).json({ success: false, message: "Sin permiso para este rol" });
+    }
+    return next();
+  };
+}
+
+export const requireTaxiAdmin = requireOperatorRole("admin");
+export const requireTaxiPasajero = requireOperatorRole("pasajero");
+export const requireTaxiConductor = requireOperatorRole("conductor");
+export const requireDeliveryAdmin = requireOperatorRole("admin");
+export const requireDeliveryCliente = requireOperatorRole("cliente");
+export const requireDeliveryRepartidor = requireOperatorRole("repartidor");
+
 async function nextOwnerId(connection, table, pk) {
   const [[row]] = await connection.query(
     `SELECT COALESCE(MAX(\`${pk}\`), 0) + 1 AS next_id FROM \`${table}\``
@@ -92,6 +109,8 @@ async function bootstrapOperator({
   email,
   password,
   preferredId,
+  planFlag = "pending",
+  activo = 0,
 }) {
   const [[existing]] = await connection.query(
     `SELECT \`${pk}\` AS id FROM \`${entitlementTable}\` WHERE slug = ? LIMIT 1`,
@@ -106,8 +125,8 @@ async function bootstrapOperator({
   const ownerId = preferredId || (await nextOwnerId(connection, entitlementTable, pk));
   await connection.query(
     `INSERT INTO \`${entitlementTable}\` (\`${pk}\`, activo, plan_flag, slug, nombre)
-     VALUES (?, 1, 'platform', ?, ?)`,
-    [ownerId, slug, nombre]
+     VALUES (?, ?, ?, ?, ?)`,
+    [ownerId, activo ? 1 : 0, planFlag || "pending", slug, nombre]
   );
   const password_hash = await hashPassword(password);
   const [adminRes] = await connection.query(
@@ -115,6 +134,98 @@ async function bootstrapOperator({
     [ownerId, email.toLowerCase(), password_hash]
   );
   return { ownerId, id_admin: adminRes.insertId };
+}
+
+const PLATFORM_OPERATOR_PRODUCTS = {
+  taxi: {
+    getConnection: () => getTaxi(),
+    entitlementTable: "taxi_entitlement",
+    pk: "id_operador",
+  },
+  delivery: {
+    getConnection: () => getDelivery(),
+    entitlementTable: "delivery_entitlement",
+    pk: "id_operador",
+  },
+  flotas: {
+    getConnection: () => getFlotas(),
+    entitlementTable: "flotas_entitlement",
+    pk: "id_empresa_flota",
+  },
+  academia: {
+    getConnection: () => getAcademia(),
+    entitlementTable: "academia_entitlement",
+    pk: "id_org",
+  },
+  agenda: {
+    getConnection: () => getAgenda(),
+    entitlementTable: "agenda_entitlement",
+    pk: "id_profesional",
+  },
+};
+
+/**
+ * Activa operador platform tras pago MP.
+ * external_reference = "{product}:{id_operador}" (ej. taxi:12).
+ */
+export async function activatePlatformOperatorFromPayment({
+  externalReference,
+  payment,
+  planFlag,
+}) {
+  const raw = String(externalReference || "");
+  const m = raw.match(/^(taxi|delivery|flotas|academia|agenda):(\d+)$/i);
+  if (!m) return { handled: false };
+
+  const product = m[1].toLowerCase();
+  const ownerId = Number(m[2]);
+  const cfg = PLATFORM_OPERATOR_PRODUCTS[product];
+  if (!cfg || !Number.isFinite(ownerId) || ownerId <= 0) {
+    return { handled: true, activated: false };
+  }
+
+  let connection;
+  try {
+    connection = await cfg.getConnection();
+    await connection.beginTransaction();
+
+    const [[ent]] = await connection.query(
+      `SELECT \`${cfg.pk}\` AS id, activo, plan_flag FROM \`${cfg.entitlementTable}\`
+       WHERE \`${cfg.pk}\` = ? LIMIT 1 FOR UPDATE`,
+      [ownerId]
+    );
+    if (!ent) {
+      await connection.rollback();
+      return { handled: true, activated: false };
+    }
+
+    if (Number(ent.activo) === 1) {
+      await connection.commit();
+      return { handled: true, activated: false, already: true };
+    }
+
+    const flag =
+      planFlag ||
+      payment?.metadata?.plan_flag ||
+      payment?.additional_info?.plan ||
+      "platform";
+
+    await connection.query(
+      `UPDATE \`${cfg.entitlementTable}\` SET activo = 1, plan_flag = ? WHERE \`${cfg.pk}\` = ?`,
+      [String(flag).slice(0, 64), ownerId]
+    );
+    await connection.commit();
+    return { handled: true, activated: true, product, ownerId };
+  } catch (err) {
+    try {
+      await connection?.rollback();
+    } catch {
+      /* noop */
+    }
+    throw err;
+  } finally {
+    connection?.release();
+  }
 }
 
 async function loginOperatorAdmin({
@@ -1874,7 +1985,7 @@ export async function taxiGetPublic(req, res) {
 export async function taxiBootstrap(req, res) {
   let connection;
   try {
-    const { slug, nombre, email, password } = req.body;
+    const { slug, nombre, email, password, plan } = req.body;
     connection = await getTaxi();
     const preferredId = req.id_tenant || null;
     const result = await bootstrapOperator({
@@ -1887,6 +1998,8 @@ export async function taxiBootstrap(req, res) {
       email,
       password,
       preferredId,
+      planFlag: plan || "pending",
+      activo: 0,
     });
     return res.status(201).json({
       success: true,
@@ -1894,6 +2007,8 @@ export async function taxiBootstrap(req, res) {
         id_operador: result.ownerId,
         id_admin: result.id_admin,
         slug: String(slug).toLowerCase(),
+        email: String(email).toLowerCase(),
+        pending: true,
         portal: `/taxi/${slug}`,
       },
     });
@@ -2006,6 +2121,25 @@ export async function taxiAssignConductor(req, res) {
   }
 }
 
+export async function taxiListConductores(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    connection = await getTaxi();
+    const [rows] = await connection.query(
+      `SELECT id_conductor, nombre, telefono, activo
+       FROM taxi_conductor WHERE id_operador = ? ORDER BY id_conductor DESC LIMIT 200`,
+      [id_operador]
+    );
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("taxi.listConductores", error.message);
+    return res.status(500).json({ success: false, message: "Error al listar conductores" });
+  } finally {
+    connection?.release();
+  }
+}
+
 export async function taxiCreateConductor(req, res) {
   let connection;
   try {
@@ -2034,6 +2168,9 @@ export async function taxiConductorLogin(req, res) {
   let connection;
   try {
     const { slug, telefono, password } = req.body;
+    if (!telefono) {
+      return res.status(400).json({ success: false, message: "Teléfono requerido" });
+    }
     connection = await getTaxi();
     const [[op]] = await connection.query(
       `SELECT id_operador FROM taxi_entitlement WHERE slug = ? AND activo = 1 LIMIT 1`,
@@ -2046,10 +2183,18 @@ export async function taxiConductorLogin(req, res) {
       [op.id_operador, telefono]
     );
     if (!cond || !cond.activo) {
-      return res.status(401).json({ success: false, message: "Credenciales inválidas" });
+      return res.status(401).json({
+        success: false,
+        message: "Teléfono o contraseña incorrectos. Pide acceso a tu operador.",
+      });
     }
     const ok = await verifyPassword(password, cond.password_hash);
-    if (!ok) return res.status(401).json({ success: false, message: "Credenciales inválidas" });
+    if (!ok) {
+      return res.status(401).json({
+        success: false,
+        message: "Teléfono o contraseña incorrectos. Pide acceso a tu operador.",
+      });
+    }
     const token = signOperatorToken({
       sub: cond.id_conductor,
       ownerId: op.id_operador,
@@ -2073,6 +2218,9 @@ export async function taxiPasajeroLogin(req, res) {
   let connection;
   try {
     const { slug, telefono, password } = req.body;
+    if (!telefono) {
+      return res.status(400).json({ success: false, message: "Teléfono requerido" });
+    }
     connection = await getTaxi();
     const [[op]] = await connection.query(
       `SELECT id_operador FROM taxi_entitlement WHERE slug = ? AND activo = 1 LIMIT 1`,
@@ -2085,10 +2233,18 @@ export async function taxiPasajeroLogin(req, res) {
       [op.id_operador, telefono]
     );
     if (!pas) {
-      return res.status(401).json({ success: false, message: "Credenciales inválidas" });
+      return res.status(401).json({
+        success: false,
+        message: "Teléfono o contraseña incorrectos. Si eres nuevo, crea tu cuenta.",
+      });
     }
     const ok = await verifyPassword(password, pas.password_hash);
-    if (!ok) return res.status(401).json({ success: false, message: "Credenciales inválidas" });
+    if (!ok) {
+      return res.status(401).json({
+        success: false,
+        message: "Teléfono o contraseña incorrectos. Si eres nuevo, crea tu cuenta.",
+      });
+    }
     const token = signOperatorToken({
       sub: pas.id_pasajero,
       ownerId: op.id_operador,
@@ -2103,6 +2259,64 @@ export async function taxiPasajeroLogin(req, res) {
   } catch (error) {
     console.error("taxi.pasajeroLogin", error.message);
     return res.status(500).json({ success: false, message: "Error al iniciar sesión" });
+  } finally {
+    connection?.release();
+  }
+}
+
+/** Autoregistro de pasajero en el portal (público). */
+export async function taxiPasajeroRegister(req, res) {
+  let connection;
+  try {
+    const { slug, telefono, password, nombre } = req.body;
+    if (!telefono || !password || !nombre) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Nombre, teléfono y contraseña son obligatorios" });
+    }
+    connection = await getTaxi();
+    const [[op]] = await connection.query(
+      `SELECT id_operador, nombre AS operador FROM taxi_entitlement
+       WHERE slug = ? AND activo = 1 LIMIT 1`,
+      [String(slug).toLowerCase()]
+    );
+    if (!op) return res.status(404).json({ success: false, message: "Operador no encontrado" });
+
+    const [[existing]] = await connection.query(
+      `SELECT id_pasajero FROM taxi_pasajero
+       WHERE id_operador = ? AND telefono = ? LIMIT 1`,
+      [op.id_operador, telefono]
+    );
+    if (existing) {
+      return res.status(409).json({
+        success: false,
+        message: "Ya existe una cuenta con ese teléfono. Inicia sesión.",
+      });
+    }
+
+    const password_hash = await hashPassword(password);
+    const [result] = await connection.query(
+      `INSERT INTO taxi_pasajero (id_operador, nombre, telefono, password_hash)
+       VALUES (?, ?, ?, ?)`,
+      [op.id_operador, nombre, telefono, password_hash]
+    );
+    const token = signOperatorToken({
+      sub: result.insertId,
+      ownerId: op.id_operador,
+      aud: "horytek-taxi",
+      role: "pasajero",
+      extra: { nombre },
+    });
+    return res.status(201).json({
+      success: true,
+      data: {
+        token,
+        pasajero: { id_pasajero: result.insertId, nombre },
+      },
+    });
+  } catch (error) {
+    console.error("taxi.pasajeroRegister", error.message);
+    return res.status(500).json({ success: false, message: "Error al crear cuenta" });
   } finally {
     connection?.release();
   }
@@ -2127,6 +2341,121 @@ export async function taxiCreatePasajero(req, res) {
   } catch (error) {
     console.error("taxi.createPasajero", error.message);
     return res.status(500).json({ success: false, message: "Error al crear pasajero" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function taxiPasajeroListViajes(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_pasajero = req.operator.id;
+    connection = await getTaxi();
+    const [rows] = await connection.query(
+      `SELECT id_viaje, id_pasajero, id_conductor, origen, destino, estado, creado_en
+       FROM taxi_viaje
+       WHERE id_operador = ? AND id_pasajero = ?
+       ORDER BY id_viaje DESC LIMIT 100`,
+      [id_operador, id_pasajero]
+    );
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("taxi.pasajeroListViajes", error.message);
+    return res.status(500).json({ success: false, message: "Error al listar viajes" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function taxiPasajeroCreateViaje(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_pasajero = req.operator.id;
+    const { origen, destino } = req.body;
+    connection = await getTaxi();
+    const [result] = await connection.query(
+      `INSERT INTO taxi_viaje (id_operador, id_pasajero, origen, destino, estado)
+       VALUES (?, ?, ?, ?, 'solicitado')`,
+      [id_operador, id_pasajero, origen, destino]
+    );
+    return res.status(201).json({ success: true, data: { id_viaje: result.insertId } });
+  } catch (error) {
+    console.error("taxi.pasajeroCreateViaje", error.message);
+    return res.status(500).json({ success: false, message: "Error al solicitar viaje" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function taxiConductorListViajes(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_conductor = req.operator.id;
+    connection = await getTaxi();
+    const [rows] = await connection.query(
+      `SELECT id_viaje, id_pasajero, id_conductor, origen, destino, estado, creado_en
+       FROM taxi_viaje
+       WHERE id_operador = ?
+         AND (id_conductor = ? OR (estado = 'solicitado' AND id_conductor IS NULL))
+       ORDER BY id_viaje DESC LIMIT 100`,
+      [id_operador, id_conductor]
+    );
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("taxi.conductorListViajes", error.message);
+    return res.status(500).json({ success: false, message: "Error al listar viajes" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function taxiConductorPatchViaje(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_conductor = req.operator.id;
+    const id_viaje = Number(req.params.id_viaje);
+    const { estado } = req.body;
+    const allowed = ["asignado", "en_curso", "finalizado", "cancelado"];
+    if (!allowed.includes(estado)) {
+      return res.status(400).json({ success: false, message: "Estado no permitido" });
+    }
+    connection = await getTaxi();
+    const [[viaje]] = await connection.query(
+      `SELECT id_viaje, id_conductor, estado FROM taxi_viaje
+       WHERE id_viaje = ? AND id_operador = ? LIMIT 1`,
+      [id_viaje, id_operador]
+    );
+    if (!viaje) {
+      return res.status(404).json({ success: false, message: "Viaje no encontrado" });
+    }
+
+    if (estado === "asignado") {
+      if (viaje.estado !== "solicitado" || viaje.id_conductor) {
+        return res.status(409).json({ success: false, message: "El viaje ya no está disponible" });
+      }
+      await connection.query(
+        `UPDATE taxi_viaje SET id_conductor = ?, estado = 'asignado'
+         WHERE id_viaje = ? AND id_operador = ? AND estado = 'solicitado'`,
+        [id_conductor, id_viaje, id_operador]
+      );
+      return res.json({ success: true, data: { id_viaje, estado: "asignado", id_conductor } });
+    }
+
+    if (Number(viaje.id_conductor) !== Number(id_conductor)) {
+      return res.status(403).json({ success: false, message: "No es tu viaje asignado" });
+    }
+    await connection.query(
+      `UPDATE taxi_viaje SET estado = ? WHERE id_viaje = ? AND id_operador = ? AND id_conductor = ?`,
+      [estado, id_viaje, id_operador, id_conductor]
+    );
+    return res.json({ success: true, data: { id_viaje, estado } });
+  } catch (error) {
+    console.error("taxi.conductorPatchViaje", error.message);
+    return res.status(500).json({ success: false, message: "Error al actualizar viaje" });
   } finally {
     connection?.release();
   }
@@ -2162,7 +2491,7 @@ export async function deliveryGetPublic(req, res) {
 export async function deliveryBootstrap(req, res) {
   let connection;
   try {
-    const { slug, nombre, email, password } = req.body;
+    const { slug, nombre, email, password, plan } = req.body;
     connection = await getDelivery();
     const result = await bootstrapOperator({
       connection,
@@ -2174,6 +2503,8 @@ export async function deliveryBootstrap(req, res) {
       email,
       password,
       preferredId: req.id_tenant || null,
+      planFlag: plan || "pending",
+      activo: 0,
     });
     return res.status(201).json({
       success: true,
@@ -2181,6 +2512,8 @@ export async function deliveryBootstrap(req, res) {
         id_operador: result.ownerId,
         id_admin: result.id_admin,
         slug: String(slug).toLowerCase(),
+        email: String(email).toLowerCase(),
+        pending: true,
         portal: `/delivery/${slug}`,
       },
     });
@@ -2291,6 +2624,140 @@ export async function deliveryAssignRepartidor(req, res) {
   } catch (error) {
     console.error("delivery.assign", error.message);
     return res.status(500).json({ success: false, message: "Error al asignar repartidor" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function deliveryListRepartidores(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    connection = await getDelivery();
+    const [rows] = await connection.query(
+      `SELECT id_repartidor, nombre, telefono, activo
+       FROM delivery_repartidor WHERE id_operador = ? ORDER BY id_repartidor DESC LIMIT 200`,
+      [id_operador]
+    );
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("delivery.listRepartidores", error.message);
+    return res.status(500).json({ success: false, message: "Error al listar repartidores" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function deliveryRepartidorListPedidos(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_repartidor = req.operator.id;
+    connection = await getDelivery();
+    const [rows] = await connection.query(
+      `SELECT id_pedido, id_cliente, id_repartidor, recojo, entrega, detalle, estado, creado_en
+       FROM delivery_pedido
+       WHERE id_operador = ?
+         AND (id_repartidor = ? OR (estado = 'solicitado' AND id_repartidor IS NULL))
+       ORDER BY id_pedido DESC LIMIT 100`,
+      [id_operador, id_repartidor]
+    );
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("delivery.repartidorList", error.message);
+    return res.status(500).json({ success: false, message: "Error al listar pedidos" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function deliveryRepartidorPatchPedido(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_repartidor = req.operator.id;
+    const id_pedido = Number(req.params.id_pedido);
+    const { estado } = req.body;
+    const allowed = ["asignado", "en_camino", "entregado", "cancelado"];
+    if (!allowed.includes(estado)) {
+      return res.status(400).json({ success: false, message: "Estado no permitido" });
+    }
+    connection = await getDelivery();
+    const [[ped]] = await connection.query(
+      `SELECT id_pedido, id_repartidor, estado FROM delivery_pedido
+       WHERE id_pedido = ? AND id_operador = ? LIMIT 1`,
+      [id_pedido, id_operador]
+    );
+    if (!ped) return res.status(404).json({ success: false, message: "Pedido no encontrado" });
+
+    if (estado === "asignado") {
+      if (ped.estado !== "solicitado" || ped.id_repartidor) {
+        return res.status(409).json({ success: false, message: "Pedido no disponible" });
+      }
+      await connection.query(
+        `UPDATE delivery_pedido SET id_repartidor = ?, estado = 'asignado'
+         WHERE id_pedido = ? AND id_operador = ? AND estado = 'solicitado'`,
+        [id_repartidor, id_pedido, id_operador]
+      );
+      return res.json({ success: true, data: { id_pedido, estado: "asignado" } });
+    }
+
+    if (Number(ped.id_repartidor) !== Number(id_repartidor)) {
+      return res.status(403).json({ success: false, message: "No es tu pedido" });
+    }
+    await connection.query(
+      `UPDATE delivery_pedido SET estado = ?
+       WHERE id_pedido = ? AND id_operador = ? AND id_repartidor = ?`,
+      [estado, id_pedido, id_operador, id_repartidor]
+    );
+    return res.json({ success: true, data: { id_pedido, estado } });
+  } catch (error) {
+    console.error("delivery.repartidorPatch", error.message);
+    return res.status(500).json({ success: false, message: "Error al actualizar pedido" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function deliveryClienteListPedidos(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_cliente = req.operator.id;
+    connection = await getDelivery();
+    const [rows] = await connection.query(
+      `SELECT id_pedido, recojo, entrega, detalle, estado, creado_en
+       FROM delivery_pedido
+       WHERE id_operador = ? AND id_cliente = ?
+       ORDER BY id_pedido DESC LIMIT 100`,
+      [id_operador, id_cliente]
+    );
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("delivery.clienteList", error.message);
+    return res.status(500).json({ success: false, message: "Error al listar pedidos" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function deliveryClienteCreatePedido(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_cliente = req.operator.id;
+    const { recojo, entrega, detalle } = req.body;
+    connection = await getDelivery();
+    const [result] = await connection.query(
+      `INSERT INTO delivery_pedido
+       (id_operador, id_cliente, recojo, entrega, detalle, estado)
+       VALUES (?, ?, ?, ?, ?, 'solicitado')`,
+      [id_operador, id_cliente, recojo, entrega, detalle ?? null]
+    );
+    return res.status(201).json({ success: true, data: { id_pedido: result.insertId } });
+  } catch (error) {
+    console.error("delivery.clienteCreate", error.message);
+    return res.status(500).json({ success: false, message: "Error al crear pedido" });
   } finally {
     connection?.release();
   }
@@ -2454,7 +2921,7 @@ export async function flotasGetPublic(req, res) {
 export async function flotasBootstrap(req, res) {
   let connection;
   try {
-    const { slug, nombre, email, password } = req.body;
+    const { slug, nombre, email, password, plan } = req.body;
     connection = await getFlotas();
     const result = await bootstrapOperator({
       connection,
@@ -2466,6 +2933,8 @@ export async function flotasBootstrap(req, res) {
       email,
       password,
       preferredId: req.id_tenant || null,
+      planFlag: plan || "pending",
+      activo: 0,
     });
     return res.status(201).json({
       success: true,
@@ -2473,6 +2942,8 @@ export async function flotasBootstrap(req, res) {
         id_empresa_flota: result.ownerId,
         id_admin: result.id_admin,
         slug: String(slug).toLowerCase(),
+        email: String(email).toLowerCase(),
+        pending: true,
       },
     });
   } catch (error) {
@@ -2684,7 +3155,7 @@ export async function academiaGetPublic(req, res) {
 export async function academiaBootstrap(req, res) {
   let connection;
   try {
-    const { slug, nombre, email, password } = req.body;
+    const { slug, nombre, email, password, plan } = req.body;
     connection = await getAcademia();
     const result = await bootstrapOperator({
       connection,
@@ -2696,6 +3167,8 @@ export async function academiaBootstrap(req, res) {
       email,
       password,
       preferredId: req.id_tenant || null,
+      planFlag: plan || "pending",
+      activo: 0,
     });
     return res.status(201).json({
       success: true,
@@ -2703,6 +3176,8 @@ export async function academiaBootstrap(req, res) {
         id_org: result.ownerId,
         id_admin: result.id_admin,
         slug: String(slug).toLowerCase(),
+        email: String(email).toLowerCase(),
+        pending: true,
       },
     });
   } catch (error) {
@@ -2970,7 +3445,7 @@ export async function agendaGetPublic(req, res) {
 export async function agendaBootstrap(req, res) {
   let connection;
   try {
-    const { slug, nombre, email, password } = req.body;
+    const { slug, nombre, email, password, plan } = req.body;
     connection = await getAgenda();
     const result = await bootstrapOperator({
       connection,
@@ -2982,6 +3457,8 @@ export async function agendaBootstrap(req, res) {
       email,
       password,
       preferredId: req.id_tenant || null,
+      planFlag: plan || "pending",
+      activo: 0,
     });
     return res.status(201).json({
       success: true,
@@ -2989,6 +3466,8 @@ export async function agendaBootstrap(req, res) {
         id_profesional: result.ownerId,
         id_admin: result.id_admin,
         slug: String(slug).toLowerCase(),
+        email: String(email).toLowerCase(),
+        pending: true,
       },
     });
   } catch (error) {

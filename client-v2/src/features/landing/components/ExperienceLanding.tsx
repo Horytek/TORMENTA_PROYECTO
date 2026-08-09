@@ -7,6 +7,7 @@ import { CommerceLayout } from "../layouts/CommerceLayout";
 import { PipelineLayout } from "../layouts/PipelineLayout";
 import { LearnBookLayout } from "../layouts/LearnBookLayout";
 import { ShipLayout } from "../layouts/ShipLayout";
+import { ExperienceDemoCta } from "./ExperienceDemoCta";
 
 export interface ExperienceLandingProps {
   module: LandingProductModule;
@@ -16,24 +17,40 @@ export interface ExperienceLandingProps {
  * Switch por layoutKitId — cada familia tiene compositor propio (no plantilla tintada).
  */
 export function ExperienceLanding({ module }: ExperienceLandingProps) {
+  let body;
   switch (module.layoutKitId) {
     case "map-mobility":
-      return <MapMobilityLayout module={module} />;
+      body = <MapMobilityLayout module={module} />;
+      break;
     case "map-fleet":
-      return <MapFleetLayout module={module} />;
+      body = <MapFleetLayout module={module} />;
+      break;
     case "rail-ops":
-      return <RailOpsLayout module={module} />;
+      body = <RailOpsLayout module={module} />;
+      break;
     case "plant":
-      return <PlantLayout module={module} />;
+      body = <PlantLayout module={module} />;
+      break;
     case "commerce":
-      return <CommerceLayout module={module} />;
+      body = <CommerceLayout module={module} />;
+      break;
     case "pipeline":
-      return <PipelineLayout module={module} />;
+      body = <PipelineLayout module={module} />;
+      break;
     case "learn-book":
-      return <LearnBookLayout module={module} />;
+      body = <LearnBookLayout module={module} />;
+      break;
     case "ship":
-      return <ShipLayout module={module} />;
+      body = <ShipLayout module={module} />;
+      break;
     default:
-      return <CommerceLayout module={module} />;
+      body = <CommerceLayout module={module} />;
   }
+
+  return (
+    <>
+      {body}
+      <ExperienceDemoCta productId={module.productId} />
+    </>
+  );
 }

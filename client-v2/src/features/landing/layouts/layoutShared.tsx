@@ -5,7 +5,31 @@ import { cn } from "@/lib/utils";
 import { SALES_WHATSAPP_URL } from "../data/landing.data";
 import type { LandingProductModule } from "../modules/landingModule.types";
 import { PricingModular } from "../components/PricingModular";
+import { DemoSurfacesDropdown } from "../components/DemoSurfacesDropdown";
 import "../styles/experience-landing.css";
+
+/** CTAs del hero experience: dropdown con todas las superficies demo. */
+export function ExperienceHeroCtas({
+  module,
+  primaryLabel,
+}: {
+  module: LandingProductModule;
+  primaryLabel?: string;
+}) {
+  const { accent } = useLayoutChrome(module);
+
+  return (
+    <div className="mt-6 flex flex-wrap gap-3">
+      <DemoSurfacesDropdown
+        productId={module.productId}
+        accent={accent.accent}
+        size="lg"
+        label={primaryLabel || "Probar demo"}
+        fallbackHref="#planes"
+      />
+    </div>
+  );
+}
 
 export function useLayoutChrome(module: LandingProductModule) {
   const { accent, typography } = module;
@@ -298,9 +322,10 @@ export function PricingAndFaqCta({ module }: { module: LandingProductModule }) {
         accent={accent.accent}
         sectionTint={accent.sectionTint}
         titleClassName={displayClass}
+        productId={module.productId}
       />
       <section
-        id="faq"
+        id="preguntas"
         className="border-b border-black/5 py-24 md:py-28"
         style={{ backgroundColor: accent.surface }}
       >
@@ -364,14 +389,22 @@ export function PricingAndFaqCta({ module }: { module: LandingProductModule }) {
             {copy.sectionTitles.cta ?? `Prueba ${module.name}`}
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-white/80">
-            Entra con tu cuenta o escríbenos por WhatsApp. Configuración guiada, límites claros, sin letra chica.
+            Abre la demo con datos seed o entra a tu operador. Sin métricas inventadas: el flujo es el producto real.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <DemoSurfacesDropdown
+              productId={module.productId}
+              accent="#ffffff"
+              size="lg"
+              label="Probar demo"
+              className="!text-foreground shadow-sm"
+              fallbackHref="#planes"
+            />
             <Link
               to={module.loginHref}
-              className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-[13px] font-semibold text-foreground transition-transform hover:scale-[1.02]"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-white/45 px-6 py-3.5 text-[13px] font-semibold text-white"
             >
-              Ir al login <ArrowRight className="h-4 w-4" />
+              Ir al login
             </Link>
             <a
               href={SALES_WHATSAPP_URL}

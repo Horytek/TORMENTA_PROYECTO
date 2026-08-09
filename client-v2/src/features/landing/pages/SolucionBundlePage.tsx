@@ -47,7 +47,7 @@ export default function SolucionBundlePage() {
             <li key={p.id} className="flex items-start justify-between gap-4 border-b border-border/50 pb-4">
               <div>
                 <Link
-                  to={`/soluciones/${p.slug}`}
+                  to={`/?product=${p.id}`}
                   className="text-[16px] font-semibold text-foreground underline-offset-4 hover:underline"
                 >
                   {p.name}

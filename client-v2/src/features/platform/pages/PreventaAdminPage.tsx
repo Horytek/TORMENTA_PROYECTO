@@ -7,7 +7,11 @@ import {
   addPreventaItem,
   createPreventaCampania,
   listPreventaCampanias,
+  listPreventaReservas,
 } from "@/features/platform/api/platformProducts";
+import { PlatformShell } from "@/features/platform/ui/PlatformShell";
+import { StatusChip } from "@/features/platform/ui/StatusChip";
+import { EmptyState } from "@/features/platform/ui/EmptyState";
 
 type Campania = {
   id_campania: number;
@@ -15,6 +19,16 @@ type Campania = {
   nombre: string;
   anticipo_pct: number;
   activo: number;
+};
+
+type Reserva = {
+  id_reserva: number;
+  id_campania?: number;
+  cliente_nombre?: string;
+  cliente_email?: string;
+  cantidad?: number;
+  estado?: string;
+  sku?: string;
 };
 
 function errMsg(e: unknown, fallback: string) {
@@ -27,6 +41,7 @@ function errMsg(e: unknown, fallback: string) {
 
 export default function PreventaAdminPage() {
   const [campanias, setCampanias] = useState<Campania[]>([]);
+  const [reservas, setReservas] = useState<Reserva[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [slug, setSlug] = useState("");
@@ -42,9 +57,10 @@ export default function PreventaAdminPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await listPreventaCampanias();
-      if (!res.success) throw new Error(res.message || "Sin acceso");
-      setCampanias(res.data || []);
+      const [camp, res] = await Promise.all([listPreventaCampanias(), listPreventaReservas()]);
+      if (!camp.success) throw new Error(camp.message || "Sin acceso");
+      setCampanias(camp.data || []);
+      setReservas(res.success ? res.data || [] : []);
     } catch (e: unknown) {
       setError(errMsg(e, "Error al cargar Preventa"));
     } finally {
@@ -56,30 +72,29 @@ export default function PreventaAdminPage() {
     load();
   }, []);
 
-  if (loading) return <div className="p-8 text-sm text-muted-foreground">Cargando Preventa…</div>;
+  if (loading) {
+    return (
+      <PlatformShell productId="preventa" title="Preventa">
+        <p className="text-sm text-black/50">Cargando…</p>
+      </PlatformShell>
+    );
+  }
   if (error) {
     return (
-      <div className="p-8">
-        <h1 className="text-xl font-semibold">Preventa</h1>
-        <p className="mt-3 text-sm text-destructive" role="alert">
+      <PlatformShell productId="preventa" title="Preventa">
+        <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
-      </div>
+      </PlatformShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 p-6 md:p-8">
-      <header>
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          Plataforma · Oleada B
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Preventa</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Campañas de edición limitada. Público: <code>/preventa/&#123;slug&#125;</code>.
-        </p>
-      </header>
-
+    <PlatformShell
+      productId="preventa"
+      title="Preventa"
+      subtitle="Campañas de edición limitada. Público: /preventa/{slug}"
+    >
       <section className="grid gap-8 md:grid-cols-2">
         <form
           className="space-y-3 border-b border-border/60 pb-6"
@@ -183,7 +198,7 @@ export default function PreventaAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Campañas</h2>
         {campanias.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Aún no hay campañas.</p>
+          <EmptyState title="Aún no hay campañas" />
         ) : (
           <ul className="mt-3 divide-y divide-border/60 text-sm">
             {campanias.map((c) => (
@@ -192,12 +207,38 @@ export default function PreventaAdminPage() {
                   {c.nombre}{" "}
                   <span className="text-muted-foreground">(/preventa/{c.slug})</span>
                 </span>
-                <span className="text-xs text-muted-foreground">{c.anticipo_pct}% anticipo</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">{c.anticipo_pct}% anticipo</span>
+                  <StatusChip status={c.activo ? "ok" : "cancelado"} />
+                </div>
               </li>
             ))}
           </ul>
         )}
       </section>
-    </div>
+
+      <section>
+        <h2 className="text-sm font-semibold">Reservas</h2>
+        {reservas.length === 0 ? (
+          <EmptyState title="Sin reservas" body="Las reservas públicas aparecen aquí." />
+        ) : (
+          <ul className="mt-3 divide-y divide-border/60 text-sm">
+            {reservas.map((r) => (
+              <li key={r.id_reserva} className="flex justify-between gap-4 py-2">
+                <span>
+                  {r.cliente_nombre || "Cliente"}{" "}
+                  <span className="text-muted-foreground">
+                    ({r.cliente_email || "—"})
+                    {r.sku ? ` · ${r.sku}` : ""}
+                    {r.cantidad != null ? ` × ${r.cantidad}` : ""}
+                  </span>
+                </span>
+                {r.estado ? <StatusChip status={r.estado} /> : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </PlatformShell>
   );
 }

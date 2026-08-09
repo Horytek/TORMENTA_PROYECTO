@@ -8,21 +8,63 @@ export interface PricingModularProps {
   accent: string;
   sectionTint?: string;
   titleClassName?: string;
+  /** Producto de la landing — reescribe CTAs login → registro/MP */
+  productId?: string;
 }
+
+const PLATFORM_OPERATOR_PRODUCTS = new Set([
+  "taxi",
+  "delivery",
+  "flotas",
+  "academia",
+  "agenda",
+]);
+
+/** Productos experience que cobran vía registro ERP (tenant). */
+const ERP_PLAN_PRODUCTS = new Set([
+  "sync",
+  "mayorista",
+  "taller",
+  "preventa",
+  "crm",
+  "envios",
+  "wms",
+  "despacho",
+  "campo",
+  "mantenimiento",
+  "recluta",
+  "catalogo-wa",
+]);
 
 function isExternal(href: string) {
   return /^(https?:|wa\.me)/i.test(href);
+}
+
+function resolvePlanHref(productId: string | undefined, plan: LandingPricingPlan): string {
+  const href = plan.cta.href;
+  if (!productId || isExternal(href)) return href;
+  if (!/\/login\?mode=/i.test(href)) return href;
+  if (PLATFORM_OPERATOR_PRODUCTS.has(productId)) {
+    return `/registro-plataforma?product=${productId}&plan=${encodeURIComponent(plan.id)}`;
+  }
+  if (ERP_PLAN_PRODUCTS.has(productId)) {
+    return `/registro?plan=${encodeURIComponent(plan.id)}`;
+  }
+  return href;
 }
 
 function PlanCta({
   plan,
   accent,
   className,
+  productId,
 }: {
   plan: LandingPricingPlan;
   accent: string;
   className?: string;
+  productId?: string;
 }) {
+  const href = resolvePlanHref(productId, plan);
   const classes = cn(
     "mt-5 inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-[13px] font-semibold transition-all duration-300 hover:brightness-110 active:scale-[0.98]",
     className,
@@ -33,9 +75,9 @@ function PlanCta({
     border: plan.highlight ? "none" : `1px solid ${accent}55`,
   } as const;
 
-  if (isExternal(plan.cta.href)) {
+  if (isExternal(href)) {
     return (
-      <a href={plan.cta.href} target="_blank" rel="noreferrer" className={classes} style={style}>
+      <a href={href} target="_blank" rel="noreferrer" className={classes} style={style}>
         {plan.cta.label}
         <ArrowRight className="h-3.5 w-3.5" />
       </a>
@@ -43,7 +85,7 @@ function PlanCta({
   }
 
   return (
-    <Link to={plan.cta.href} className={classes} style={style}>
+    <Link to={href} className={classes} style={style}>
       {plan.cta.label}
       <ArrowRight className="h-3.5 w-3.5" />
     </Link>
@@ -54,10 +96,12 @@ function PlanCard({
   plan,
   accent,
   compact,
+  productId,
 }: {
   plan: LandingPricingPlan;
   accent: string;
   compact?: boolean;
+  productId?: string;
 }) {
   return (
     <article
@@ -100,13 +144,13 @@ function PlanCard({
         ))}
       </ul>
       <div className="mt-auto">
-        <PlanCta plan={plan} accent={accent} />
+        <PlanCta plan={plan} accent={accent} productId={productId} />
       </div>
     </article>
   );
 }
 
-function TierList({ pricing, accent }: PricingModularProps) {
+function TierList({ pricing, accent, productId }: PricingModularProps) {
   return (
     <div className="mx-auto max-w-3xl overflow-hidden rounded-2xl border border-black/5 bg-white/70 divide-y divide-border/50">
       {pricing.plans.map((plan) => (
@@ -126,14 +170,19 @@ function TierList({ pricing, accent }: PricingModularProps) {
             <p className="mt-1 text-[13px] text-muted-foreground">{plan.description}</p>
             <p className="mt-2 text-[12px] text-muted-foreground">{plan.features.join(" · ")}</p>
           </div>
-          <PlanCta plan={plan} accent={accent} className="sm:w-auto sm:min-w-[160px]" />
+          <PlanCta
+            plan={plan}
+            accent={accent}
+            productId={productId}
+            className="sm:w-auto sm:min-w-[160px]"
+          />
         </div>
       ))}
     </div>
   );
 }
 
-function UsageMeter({ pricing, accent }: PricingModularProps) {
+function UsageMeter({ pricing, accent, productId }: PricingModularProps) {
   const max = Math.max(...pricing.plans.map((p) => p.price), 1);
   return (
     <div className="mx-auto max-w-3xl space-y-4">
@@ -168,7 +217,7 @@ function UsageMeter({ pricing, accent }: PricingModularProps) {
                 </li>
               ))}
             </ul>
-            <PlanCta plan={plan} accent={accent} className="mt-4 sm:w-auto" />
+            <PlanCta plan={plan} accent={accent} productId={productId} className="mt-4 sm:w-auto" />
           </div>
         );
       })}
@@ -181,6 +230,7 @@ export function PricingModular({
   accent,
   sectionTint,
   titleClassName,
+  productId,
 }: PricingModularProps) {
   const cols =
     pricing.layout === "cards-2"
@@ -191,7 +241,7 @@ export function PricingModular({
 
   return (
     <section
-      id="pricing"
+      id="planes"
       className="border-b border-border/40 py-24 md:py-32"
       style={sectionTint ? { backgroundColor: sectionTint } : undefined}
     >
@@ -213,9 +263,9 @@ export function PricingModular({
 
         <div className="mt-14">
           {pricing.layout === "tier-list" ? (
-            <TierList pricing={pricing} accent={accent} />
+            <TierList pricing={pricing} accent={accent} productId={productId} />
           ) : pricing.layout === "usage-meter" ? (
-            <UsageMeter pricing={pricing} accent={accent} />
+            <UsageMeter pricing={pricing} accent={accent} productId={productId} />
           ) : (
             <div className={cn("grid gap-5", cols)}>
               {pricing.plans.map((plan) => (
@@ -223,6 +273,7 @@ export function PricingModular({
                   key={plan.id}
                   plan={plan}
                   accent={accent}
+                  productId={productId}
                   compact={pricing.layout === "cards-2"}
                 />
               ))}

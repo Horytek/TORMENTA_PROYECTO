@@ -223,17 +223,17 @@ export const PRODUCT_NARRATIVES: Record<string, ProductNarrative> = {
   taxi: {
     layoutKitId: "map-mobility",
     story: [
-      "Un operador de taxis no necesita un ERP: necesita que el pasajero pida, el conductor acepte y el admin vea el viaje.",
-      "Taxi Horytek corre en su propia base. El mapa no es decoración: es el escenario del viaje (origen, ruta, asignación).",
-      "Delivery es paquetes. Flotas es el patio. Aquí se mueven personas.",
+      "Un operador de taxis no necesita un ERP: necesita que el pasajero pida, el conductor acepte y el admin vea el viaje en vivo.",
+      "Taxi Horytek corre en su propia base. El mapa no es decoración: es el escenario del viaje (origen, ruta, asignación) — Lima como demo, tu ciudad en producción.",
+      "Delivery es paquetes. Flotas es el patio de vehículos. Aquí se mueven personas con matching y estados de viaje.",
     ],
     scenario: {
       title: "Base en San Isidro · hora punta",
-      body: "El pasajero solicita Miraflores. En segundos hay conductor asignado; el admin ve el estado sin Excel de radio.",
+      body: "El pasajero solicita Miraflores. En segundos hay conductor asignado; el admin ve el estado sin Excel de radio ni grupo de WhatsApp caótico.",
       metrics: [
         { label: "Superficies", value: "3" },
-        { label: "ETA demo", value: "4 min" },
-        { label: "BD", value: "db_taxi" },
+        { label: "ETA demo", value: "~4 min" },
+        { label: "Base", value: "db_taxi" },
       ],
     },
     antiConfusion: [
@@ -335,17 +335,17 @@ export const PRODUCT_NARRATIVES: Record<string, ProductNarrative> = {
   academia: {
     layoutKitId: "learn-book",
     story: [
-      "Capacitar al equipo no es un PDF en Drive. Es una ruta con progreso visible.",
-      "Academia publica módulos, invita alumnos y mide avance. Sin pretender ser un LMS de los 2000.",
-      "Contratar es Recluta; vender es CRM.",
+      "Capacitar al equipo no es un PDF en Drive. Es una ruta con progreso visible en el portal del alumno.",
+      "Academia publica cursos, inscribe con email y muestra avance — el mismo flujo que abre /academia/demo con datos seed.",
+      "Contratar es Recluta; vender es CRM. Aquí solo se forma.",
     ],
     scenario: {
-      title: "Onboarding de 40 vendedores",
-      body: "Tres módulos obligatorios. El admin filtra quién está bajo 50% y empuja un recordatorio — sin Excel de asistencia.",
+      title: "Onboarding de vendedores en campo",
+      body: "El admin publica módulos; el alumno entra con su teléfono/email y ve el % en Mis cursos. Sin Excel de asistencia.",
       metrics: [
-        { label: "Alumnos", value: "40" },
-        { label: "Módulos", value: "3" },
-        { label: "Progreso medio", value: "72%" },
+        { label: "Portal alumno", value: "vivo" },
+        { label: "Cursos demo", value: "4" },
+        { label: "Progreso", value: "visible" },
       ],
     },
     antiConfusion: [

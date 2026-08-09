@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useUserStore } from "@/store/useUserStore";
 import { loginRequest, sendAuthCodeRequest } from "@/api/auth";
@@ -8,8 +8,6 @@ import { Label } from "@/components/ui/label";
 import { setToken } from "@/utils/authStorage";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Eye, EyeOff, Loader2, Check, Store } from "lucide-react";
-import { SwatchStrip } from "@/components/brand/Swatch";
-import { SizeCurve } from "@/components/brand/SizeCurve";
 import { expressLogin, expressRegister } from "@/features/express/api/express";
 import { loginEcommerce } from "@/features/ecommerce/api/ecommerce";
 import { useEcommerceAuthStore } from "@/features/ecommerce/store/useEcommerceAuthStore";
@@ -17,19 +15,64 @@ import { createPreference } from "@/features/account/api/billing";
 import { setPendingPaymentFlow } from "@/features/landing/utils/paymentFlow";
 import { POCKET_PLANS } from "@/features/landing/data/landing.data";
 import { ProductPicker, type ProductPickerMode } from "@/features/auth/components/ProductPicker";
+import { DemoAccessCard } from "@/features/auth/components/DemoAccessCard";
+import { LoginRoleTabs } from "@/features/auth/components/LoginRoleTabs";
+import { LoginBrandPanel } from "@/features/auth/components/LoginBrandPanel";
+import { portalInputClass } from "@/features/platform/ui/portalTouch";
 import { buildLoginProductOptions, HORYTEK_PRODUCTS } from "@/features/platform/catalog/horytekProducts";
-
-// Tonalidades de muestra (colores reales de prenda), sobrias.
-const TAG_COLORS = ["#243645", "#3E6B89", "#0E7C7B", "#C9A227", "#B23A48", "#D6D3CD"];
+import {
+  getLoginAccent,
+  PORTAL_SLUG_LOGIN_MODES,
+  PRODUCT_AUTH_LOGIN_MODES,
+} from "@/features/auth/loginAccents";
+import {
+  adminPathForLoginMode,
+  clientPathTemplateForLoginMode,
+  loginProductAdmin,
+} from "@/features/auth/productAdminAuth";
+import { TaxiLoginPanel } from "@/features/auth/components/TaxiLoginPanel";
+import { DeliveryLoginPanel } from "@/features/auth/components/DeliveryLoginPanel";
+import {
+  ERP_SESSION_LOGIN_MODES,
+  getLoginDemoBundle,
+} from "@/features/platform/demo/loginDemoBundles";
 
 const KNOWN_LOGIN_MODES = new Set([
   ...buildLoginProductOptions().map((o) => o.mode),
   "validar",
 ]);
 
-const PORTAL_BRIDGE_MODES = new Set(["taxi", "delivery", "flotas", "academia", "agenda", "recluta"]);
-
 type LoginMode = ProductPickerMode;
+
+function AccentSubmitButton({
+  accent,
+  loading,
+  children,
+  disabled,
+}: {
+  accent: string;
+  loading?: boolean;
+  children: React.ReactNode;
+  disabled?: boolean;
+}) {
+  return (
+    <Button
+      type="submit"
+      disabled={disabled || loading}
+      className="w-full border-0 text-white hover:opacity-90"
+      style={{ backgroundColor: accent }}
+    >
+      {loading ? (
+        <>
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Ingresando…
+        </>
+      ) : (
+        children
+      )}
+    </Button>
+  );
+}
 
 export default function LoginPage() {
   const [params] = useSearchParams();
@@ -67,6 +110,186 @@ export default function LoginPage() {
   // Mayorista B2B — redirige al portal por slug
   const [mayoristaSlug, setMayoristaSlug] = useState("");
   const [portalSlug, setPortalSlug] = useState("");
+  /** Admin (creds) vs portal público (slug) en productos con ambas superficies */
+  const [surfaceTab, setSurfaceTab] = useState<"admin" | "portal">("admin");
+  const [productEmail, setProductEmail] = useState("");
+  const [productPassword, setProductPassword] = useState("");
+  const [productLoading, setProductLoading] = useState(false);
+  const [productError, setProductError] = useState("");
+
+  const loginAccent = getLoginAccent(mode);
+  const loginProductLabel = useMemo(() => {
+    if (mode === "validar") return "Cuenta";
+    if (mode === "express") return "Pocket";
+    if (mode === "ecommerce") return "Ecommerce";
+    return buildLoginProductOptions().find((o) => o.mode === mode)?.label || "ERP";
+  }, [mode]);
+  const loginSubtitle = useMemo(() => {
+    if (mode === "validar") return "Ingrese el código de seguridad.";
+    if (mode === "ecommerce") return "Accede al panel de tu tienda online.";
+    if (mode === "express") {
+      return expressIsRegistering
+        ? "Crea tu cuenta de punto de venta ligero."
+        : "Modo ligero de punto de venta (beta).";
+    }
+    if (mode === "taxi") return "Elige tu rol: operador, pasajero o conductor.";
+    if (mode === "delivery") return "Elige tu rol: operador, cliente o repartidor.";
+    if (PRODUCT_AUTH_LOGIN_MODES.has(mode)) {
+      return surfaceTab === "portal"
+        ? "Indica el slug u operador para abrir el portal del producto."
+        : "Accede al panel administrativo del producto.";
+    }
+    if (ERP_SESSION_LOGIN_MODES.has(mode)) {
+      return surfaceTab === "portal" && PORTAL_SLUG_LOGIN_MODES.has(mode)
+        ? "Abre el portal u ops demo del producto."
+        : "Entra con tu cuenta ERP al panel del producto.";
+    }
+    return "Elige un producto e ingresa.";
+  }, [mode, surfaceTab, expressIsRegistering]);
+  const demoBundle = useMemo(
+    () => getLoginDemoBundle(mode, surfaceTab),
+    [mode, surfaceTab]
+  );
+
+  const applyLoginDemo = () => {
+    const b = getLoginDemoBundle(mode, surfaceTab);
+    if (!b) return;
+    const { fill } = b;
+    if (fill.slug != null) {
+      setPortalSlug(fill.slug);
+      setMayoristaSlug(fill.slug);
+    }
+    if (fill.email != null) {
+      setProductEmail(fill.email);
+      setExpressEmail(fill.email);
+    }
+    if (fill.password != null) {
+      setPassword(fill.password);
+      setProductPassword(fill.password);
+      setEcomPassword(fill.password);
+      setExpressPassword(fill.password);
+    }
+    if (fill.usuario != null) {
+      setUsuario(fill.usuario);
+      setEcomUser(fill.usuario);
+    }
+    if (fill.codigo != null) setPortalSlug(fill.codigo);
+  };
+
+  const enterLoginDemo = async () => {
+    const b = getLoginDemoBundle(mode, surfaceTab);
+    if (!b) return;
+    applyLoginDemo();
+    if (b.openHref && surfaceTab === "portal") {
+      navigate(b.openHref);
+      return;
+    }
+    if (mode === "express" && b.fill.email && b.fill.password) {
+      setExpressEmail(b.fill.email);
+      setExpressPassword(b.fill.password);
+      setExpressLoading(true);
+      setExpressError("");
+      try {
+        await expressLogin({ email: b.fill.email, password: b.fill.password });
+        navigate("/express-pos");
+      } catch (err: unknown) {
+        setExpressError(
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+            "No se pudo entrar a la demo de Pocket. ¿Corriste npm run seed:express?"
+        );
+      } finally {
+        setExpressLoading(false);
+      }
+      return;
+    }
+    if (mode === "ecommerce" && b.fill.usuario && b.fill.password) {
+      setEcomUser(b.fill.usuario);
+      setEcomPassword(b.fill.password);
+      setEcomLoading(true);
+      setEcomError("");
+      try {
+        const res = await loginEcommerce(b.fill.usuario, b.fill.password);
+        if (!res.success || !res.data?.token) {
+          setEcomError(res.message || "Credenciales inválidas.");
+          return;
+        }
+        setEcomSession(res.data.token, {
+          usuario: res.data.usuario,
+          email: res.data.email,
+          id_tienda: res.data.id_tienda,
+          slug: res.data.slug,
+          tienda: res.data.tienda,
+        });
+        navigate("/ecommerce-admin");
+      } catch (err: unknown) {
+        setEcomError(
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+            "Error al iniciar sesión en Ecommerce."
+        );
+      } finally {
+        setEcomLoading(false);
+      }
+      return;
+    }
+    if (PRODUCT_AUTH_LOGIN_MODES.has(mode) && surfaceTab === "admin") {
+      const slug = b.fill.slug || "demo";
+      const email = b.fill.email || "";
+      const pass = b.fill.password || "";
+      setProductLoading(true);
+      setProductError("");
+      try {
+        const res = await loginProductAdmin(mode, { slug, email, password: pass });
+        if (!res.success) throw new Error(res.message || "No se pudo iniciar sesión.");
+        const dest = adminPathForLoginMode(mode);
+        if (!dest) throw new Error("Sin ruta admin para este producto.");
+        navigate(dest);
+      } catch (err: unknown) {
+        setProductError(
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+            (err as Error).message ||
+            "Error al iniciar sesión."
+        );
+      } finally {
+        setProductLoading(false);
+      }
+      return;
+    }
+    if (ERP_SESSION_LOGIN_MODES.has(mode) && b.fill.usuario && b.fill.password) {
+      setUsuario(b.fill.usuario);
+      setPassword(b.fill.password);
+      setLoading(true);
+      setError("");
+      try {
+        const response = await loginRequest({
+          usuario: b.fill.usuario,
+          password: b.fill.password,
+        });
+        const { success, token, data, message } = response.data;
+        if (success && token) {
+          await setToken(token);
+          setUserRaw(data);
+          const roleId = Number(data.rol || data.id_rol || data.roleId);
+          if (roleId) {
+            await useUserStore.getState().loadPermissionsAndCapabilities(roleId);
+          }
+          const dest =
+            adminPathForLoginMode(mode) ||
+            (mode === "erp" ? "/dashboard" : null) ||
+            "/dashboard";
+          navigate(dest);
+        } else {
+          setError(message || "Usuario o contraseña incorrectos.");
+        }
+      } catch (err: unknown) {
+        setError(
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+            "No pudimos conectar con el servidor. Intenta de nuevo."
+        );
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
 
   // Autenticación / Verificación de cuenta (OTP)
   const [authUser, setAuthUser] = useState("");
@@ -196,7 +419,11 @@ export default function LoginPage() {
         if (roleId) {
           await useUserStore.getState().loadPermissionsAndCapabilities(roleId);
         }
-        navigate("/dashboard");
+        const dest =
+          adminPathForLoginMode(mode) ||
+          (mode === "erp" ? "/dashboard" : null) ||
+          "/dashboard";
+        navigate(dest);
       } else {
         setError(message || "Usuario o contraseña incorrectos.");
       }
@@ -208,6 +435,35 @@ export default function LoginPage() {
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleProductAdminLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProductError("");
+    if (!portalSlug.trim() || !productEmail.trim() || !productPassword) {
+      setProductError("Completa slug, email y contraseña.");
+      return;
+    }
+    setProductLoading(true);
+    try {
+      const res = await loginProductAdmin(mode, {
+        slug: portalSlug.trim().toLowerCase(),
+        email: productEmail.trim(),
+        password: productPassword,
+      });
+      if (!res.success) throw new Error(res.message || "No se pudo iniciar sesión.");
+      const dest = adminPathForLoginMode(mode);
+      if (!dest) throw new Error("Sin ruta admin para este producto.");
+      navigate(dest);
+    } catch (err: unknown) {
+      setProductError(
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          (err as Error).message ||
+          "Error al iniciar sesión."
+      );
+    } finally {
+      setProductLoading(false);
     }
   };
 
@@ -250,83 +506,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen w-full bg-background lg:grid lg:grid-cols-[1.05fr_1fr]">
-      {/* ── Panel de marca con carácter de taller ─────────────── */}
-      <aside className="relative hidden overflow-hidden bg-[#243645] text-slate-100 lg:flex lg:min-h-screen lg:flex-col lg:justify-between lg:p-12">
-        {/* costura tenue */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.05]"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(135deg, #ffffff 0 1px, transparent 1px 24px)",
-          }}
-        />
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-[hsl(205_55%_46%)]" />
-
-        {/* Marca */}
-        <div className="relative flex items-center gap-3">
-          <img
-            src="/horycore.svg"
-            alt="Horytek"
-            className="h-10 w-10 shrink-0 object-contain"
-          />
-          <div className="leading-tight">
-            <p className="text-lg font-semibold tracking-tight">Horytek ERP</p>
-            <p className="text-xs text-slate-400">Sistema de gestión</p>
-          </div>
-        </div>
-
-        {/* Etiqueta de prenda: el objeto característico del negocio */}
-        <div className="relative flex flex-1 items-center">
-          <div className="relative w-[19rem] -rotate-2 rounded-xl border border-black/10 bg-[#F4F4F2] p-5 text-[#20303C] shadow-2xl">
-            {/* ojal + hilo */}
-            <div className="absolute -top-3 left-8 h-6 w-6 rounded-full border-4 border-[#243645] bg-[#F4F4F2]" />
-            <div className="absolute -top-9 left-[2.6rem] h-6 w-px rotate-12 bg-white/25" />
-
-            <p className="num text-[11px] font-medium uppercase tracking-[0.18em] text-brand">
-              TAG · POL-0432
-            </p>
-            <h2 className="mt-1 text-xl font-semibold leading-tight">Polo Oversize</h2>
-
-            <div className="mt-4 flex items-center justify-between">
-              <div>
-                <p className="text-[10px] uppercase tracking-widest text-slate-500">Tonalidades</p>
-                <SwatchStrip colors={TAG_COLORS} size="md" className="mt-1.5" />
-              </div>
-              <div className="text-right">
-                <p className="text-[10px] uppercase tracking-widest text-slate-500">Precio</p>
-                <p className="num mt-1 text-xl font-semibold">S/ 49.90</p>
-              </div>
-            </div>
-
-            <div className="mt-4 border-t border-dashed border-slate-300 pt-3">
-              <p className="text-[10px] uppercase tracking-widest text-slate-500">Curva de tallas</p>
-              <SizeCurve
-                className="mt-1.5"
-                sizes={[
-                  { label: "S", available: true },
-                  { label: "M", available: true },
-                  { label: "L", available: true },
-                  { label: "XL", available: false },
-                ]}
-              />
-              <p className="num mt-3 text-xs text-slate-500">
-                stock <span className="font-semibold text-[#0E7C7B]">128</span> · almacén central
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Línea de cierre (sobria) */}
-        <div className="relative max-w-sm">
-          <p className="text-base font-medium leading-snug text-slate-100">
-            Inventario, ventas y facturación — cada prenda bajo control.
-          </p>
-          <p className="num mt-3 text-[11px] uppercase tracking-[0.16em] text-slate-400">
-            © {new Date().getFullYear()} Horytek ERP
-          </p>
-        </div>
-      </aside>
+      <LoginBrandPanel mode={mode} />
 
       {/* ── Panel formulario ───────────────────────────────── */}
       <main className="relative flex min-h-screen items-center justify-center px-6 py-12">
@@ -337,58 +517,77 @@ export default function LoginPage() {
           ← Volver al inicio
         </Link>
         <div className="w-full max-w-sm">
-          {/* Marca compacta (móvil) */}
-          <div className="mb-10 flex items-center gap-3 lg:hidden">
-            <img
-              src="/horycore.svg"
-              alt="Horytek"
-              className="h-9 w-9 shrink-0 object-contain"
-            />
-            <div className="leading-tight">
-              <p className="text-base font-semibold text-foreground">Horytek ERP</p>
-              <p className="text-[11px] text-muted-foreground">Sistema de gestión</p>
-            </div>
-          </div>
-
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              {mode === "erp"
-                ? "Iniciar sesión"
-                : mode === "validar"
-                  ? "Autenticar cuenta"
-                  : mode === "ecommerce"
-                    ? "Admin Ecommerce"
-                    : mode === "mayorista"
-                      ? "Portal Mayorista"
-                      : mode === "express"
-                        ? expressIsRegistering
-                          ? "Crear cuenta Pocket POS"
-                          : "Pocket POS"
-                        : PORTAL_BRIDGE_MODES.has(mode)
-                          ? buildLoginProductOptions().find((o) => o.mode === mode)?.label || mode
-                          : "Iniciar sesión"}
-            </h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">
-              {mode === "erp"
-                ? "Ingresa tus credenciales para acceder al sistema."
-                : mode === "validar"
-                  ? "Ingrese el código de seguridad"
-                  : mode === "ecommerce"
-                    ? "Accede al panel de tu tienda online."
-                    : mode === "mayorista"
-                      ? "Indica el slug de tu distribuidor para abrir el portal B2B."
-                      : mode === "express"
-                        ? "Modo ligero de punto de venta (beta)."
-                        : PORTAL_BRIDGE_MODES.has(mode)
-                          ? "Indica el slug u operador para abrir el portal del producto."
-                          : "Elige un producto e ingresa."}
+            <p
+              className="text-[11px] font-semibold uppercase tracking-[0.16em]"
+              style={{ color: loginAccent }}
+            >
+              Iniciar sesión
             </p>
+            <h1 className="mt-1 flex items-center gap-2 text-2xl font-semibold tracking-tight text-foreground">
+              <img
+                src="/horycore.svg"
+                alt=""
+                className="h-8 w-8 shrink-0 object-contain lg:hidden"
+                aria-hidden
+              />
+              <span>
+                Horytek{" "}
+                <span style={{ color: loginAccent }}>{loginProductLabel}</span>
+              </span>
+            </h1>
+            <p className="mt-1.5 text-sm text-muted-foreground">{loginSubtitle}</p>
           </div>
 
-          <ProductPicker value={mode} onChange={setMode} />
+          <ProductPicker
+            value={mode}
+            onChange={(m) => {
+              setMode(m);
+              setSurfaceTab("admin");
+              setProductError("");
+              setError("");
+            }}
+          />
 
-          {mode === "erp" ? (
+          {mode === "taxi" ? <TaxiLoginPanel /> : null}
+          {mode === "delivery" ? <DeliveryLoginPanel /> : null}
+
+          {PORTAL_SLUG_LOGIN_MODES.has(mode) && mode !== "mayorista" ? (
+            <div className="mb-5">
+              <LoginRoleTabs
+                tabs={[
+                  { id: "admin" as const, label: "Administrador" },
+                  { id: "portal" as const, label: "Portal / Ops" },
+                ]}
+                value={surfaceTab}
+                accent={loginAccent}
+                onChange={setSurfaceTab}
+              />
+            </div>
+          ) : null}
+
+          {ERP_SESSION_LOGIN_MODES.has(mode) &&
+          (!PORTAL_SLUG_LOGIN_MODES.has(mode) || surfaceTab === "admin") ? (
             <form onSubmit={handleLogin} className="space-y-5">
+              {demoBundle ? (
+                <DemoAccessCard
+                  bundle={demoBundle}
+                  accent={loginAccent}
+                  onApply={applyLoginDemo}
+                  onEnter={() => void enterLoginDemo()}
+                />
+              ) : null}
+              {mode === "mayorista" ? (
+                <LoginRoleTabs
+                  tabs={[
+                    { id: "admin" as const, label: "Administrador" },
+                    { id: "portal" as const, label: "Portal" },
+                  ]}
+                  value={surfaceTab}
+                  accent={loginAccent}
+                  onChange={setSurfaceTab}
+                />
+              ) : null}
               {error && (
                 <div
                   role="alert"
@@ -399,10 +598,11 @@ export default function LoginPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="username">Usuario</Label>
+                <Label htmlFor="username">{mode === "erp" ? "Usuario" : "Usuario ERP"}</Label>
                 <Input
                   id="username"
                   type="text"
+                  className={portalInputClass}
                   placeholder="nombre.apellido"
                   value={usuario}
                   onChange={(e) => setUsuario(e.target.value)}
@@ -431,7 +631,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={loading}
                     autoComplete="current-password"
-                    className="pr-10"
+                    className={`${portalInputClass} pr-10`}
                     required
                   />
                   <button
@@ -445,22 +645,21 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <Button type="submit" disabled={loading} className="w-full">
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Ingresando…
-                  </>
-                ) : (
-                  <>
-                    <Check className="h-4 w-4" />
-                    Ingresar
-                  </>
-                )}
-              </Button>
+              <AccentSubmitButton accent={loginAccent} loading={loading}>
+                <Check className="h-4 w-4" />
+                Ingresar
+              </AccentSubmitButton>
             </form>
           ) : mode === "express" ? (
             <form onSubmit={handleExpressSubmit} className="space-y-5">
+              {demoBundle ? (
+                <DemoAccessCard
+                  bundle={demoBundle}
+                  accent={loginAccent}
+                  onApply={applyLoginDemo}
+                  onEnter={enterLoginDemo}
+                />
+              ) : null}
               {expressError && (
                 <div role="alert" className="rounded-md border border-destructive/25 bg-destructive/10 px-3 py-2.5 text-sm font-medium text-destructive">
                   {expressError}
@@ -540,7 +739,8 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={expressLoading || pocketPaymentMutation.isPending}
-                className="w-full bg-amber-500 text-white hover:bg-amber-600"
+                className="w-full border-0 text-white hover:opacity-90"
+                style={{ backgroundColor: loginAccent }}
               >
                 {expressLoading || pocketPaymentMutation.isPending ? (
                   <>
@@ -569,6 +769,14 @@ export default function LoginPage() {
             </form>
           ) : mode === "ecommerce" ? (
             <form onSubmit={handleEcommerceSubmit} className="space-y-5">
+              {demoBundle ? (
+                <DemoAccessCard
+                  bundle={demoBundle}
+                  accent={loginAccent}
+                  onApply={applyLoginDemo}
+                  onEnter={() => void enterLoginDemo()}
+                />
+              ) : null}
               {ecomError && (
                 <div
                   role="alert"
@@ -610,17 +818,26 @@ export default function LoginPage() {
                   </button>
                 </div>
               </div>
-              <Button type="submit" className="w-full bg-teal-700 hover:bg-teal-800" disabled={ecomLoading}>
+              <Button
+                type="submit"
+                className="w-full border-0 text-white hover:opacity-90"
+                style={{ backgroundColor: loginAccent }}
+                disabled={ecomLoading}
+              >
                 {ecomLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar al admin"}
               </Button>
               <p className="text-center text-xs text-muted-foreground">
                 ¿Nuevo?{" "}
-                <Link to="/registro-ecommerce" className="text-teal-700 underline-offset-4 hover:underline">
+                <Link
+                  to="/registro-ecommerce"
+                  className="underline-offset-4 hover:underline"
+                  style={{ color: loginAccent }}
+                >
                   Activar tienda
                 </Link>
               </p>
             </form>
-          ) : mode === "mayorista" ? (
+          ) : mode === "mayorista" && surfaceTab === "portal" ? (
             <form
               className="space-y-5"
               onSubmit={(e) => {
@@ -630,60 +847,161 @@ export default function LoginPage() {
                 navigate(`/b2b/${s}`);
               }}
             >
+              <LoginRoleTabs
+                tabs={[
+                  { id: "admin" as const, label: "Administrador" },
+                  { id: "portal" as const, label: "Portal" },
+                ]}
+                value={surfaceTab}
+                accent={loginAccent}
+                onChange={setSurfaceTab}
+              />
+              {demoBundle ? (
+                <DemoAccessCard
+                  bundle={demoBundle}
+                  accent={loginAccent}
+                  onApply={applyLoginDemo}
+                  onEnter={() => void enterLoginDemo()}
+                />
+              ) : null}
               <div className="space-y-2">
                 <Label htmlFor="mayorista_slug">Slug del portal</Label>
                 <Input
                   id="mayorista_slug"
+                  className={portalInputClass}
                   value={mayoristaSlug}
                   onChange={(e) => setMayoristaSlug(e.target.value)}
                   placeholder="distribuidora-norte"
                   required
                 />
               </div>
-              <Button type="submit" className="w-full">
-                Ir al portal B2B
-              </Button>
+              <AccentSubmitButton accent={loginAccent}>Ir al portal B2B</AccentSubmitButton>
               <p className="text-center text-xs text-muted-foreground">
                 El administrador del ERP te crea usuario y te da el slug.{" "}
-                <Link to="/soluciones/mayorista" className="underline-offset-4 hover:underline">
+                <Link to="/?product=mayorista" className="underline-offset-4 hover:underline">
                   Ver producto
                 </Link>
               </p>
             </form>
-          ) : PORTAL_BRIDGE_MODES.has(mode) ? (
-            <form
-              className="space-y-5"
-              onSubmit={(e) => {
-                e.preventDefault();
-                const s = portalSlug.trim().toLowerCase();
-                if (!s) return;
-                const product = HORYTEK_PRODUCTS.find((p) => p.loginMode === mode);
-                const path = (product?.clientPath || product?.adminPath || `/soluciones/${product?.slug || mode}`)
-                  .replace(":slug", s)
-                  .replace(":codigo", s);
-                navigate(path.startsWith("/") ? path : `/${path}`);
-              }}
-            >
+          ) : mode === "taxi" || mode === "delivery" ? null : PRODUCT_AUTH_LOGIN_MODES.has(mode) && surfaceTab === "admin" ? (
+            <form onSubmit={handleProductAdminLogin} className="space-y-5">
+              {demoBundle ? (
+                <DemoAccessCard
+                  bundle={demoBundle}
+                  accent={loginAccent}
+                  onApply={applyLoginDemo}
+                  onEnter={() => void enterLoginDemo()}
+                />
+              ) : null}
+              {productError && (
+                <div
+                  role="alert"
+                  className="animate-shake rounded-md border border-destructive/25 bg-destructive/10 px-3 py-2.5 text-sm font-medium text-destructive"
+                >
+                  {productError}
+                </div>
+              )}
               <div className="space-y-2">
-                <Label htmlFor="portal_slug">Slug / operador</Label>
+                <Label htmlFor="prod_slug">Código del operador</Label>
                 <Input
-                  id="portal_slug"
+                  id="prod_slug"
+                  className={portalInputClass}
                   value={portalSlug}
                   onChange={(e) => setPortalSlug(e.target.value)}
                   placeholder="mi-operador"
                   required
                 />
               </div>
-              <Button type="submit" className="w-full">
-                Ir al portal
-              </Button>
+              <div className="space-y-2">
+                <Label htmlFor="prod_email">Email</Label>
+                <Input
+                  id="prod_email"
+                  type="email"
+                  className={portalInputClass}
+                  value={productEmail}
+                  onChange={(e) => setProductEmail(e.target.value)}
+                  placeholder="admin@operador.com"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="prod_password">Contraseña</Label>
+                <Input
+                  id="prod_password"
+                  type="password"
+                  className={portalInputClass}
+                  value={productPassword}
+                  onChange={(e) => setProductPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+              <AccentSubmitButton accent={loginAccent} loading={productLoading}>
+                <Check className="h-4 w-4" />
+                Ingresar
+              </AccentSubmitButton>
+              <p className="text-center text-xs text-muted-foreground">
+                ¿Primera vez?{" "}
+                <Link
+                  to={`/?product=${HORYTEK_PRODUCTS.find((p) => p.loginMode === mode)?.id || mode}#planes`}
+                  className="underline-offset-4 hover:underline"
+                >
+                  Elige un plan
+                </Link>{" "}
+                para crear el operador.
+              </p>
+            </form>
+          ) : PORTAL_SLUG_LOGIN_MODES.has(mode) && surfaceTab === "portal" ? (
+            <form
+              className="space-y-5"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const demo = getLoginDemoBundle(mode, "portal");
+                if (demo?.openHref && (!portalSlug.trim() || portalSlug === demo.fill.slug || portalSlug === demo.fill.codigo)) {
+                  navigate(demo.openHref);
+                  return;
+                }
+                const s = portalSlug.trim().toLowerCase();
+                if (!s) return;
+                const tpl = clientPathTemplateForLoginMode(mode);
+                if (!tpl && demo?.openHref) {
+                  navigate(demo.openHref);
+                  return;
+                }
+                const path = (tpl || `/?product=${mode}`)
+                  .replace(":slug", s)
+                  .replace(":codigo", s)
+                  .replace(":idTenant", s);
+                navigate(path.startsWith("/") ? path : `/${path}`);
+              }}
+            >
+              {demoBundle ? (
+                <DemoAccessCard
+                  bundle={demoBundle}
+                  accent={loginAccent}
+                  onApply={applyLoginDemo}
+                  onEnter={() => void enterLoginDemo()}
+                />
+              ) : null}
+              <div className="space-y-2">
+                <Label htmlFor="portal_slug">Slug / código</Label>
+                <Input
+                  id="portal_slug"
+                  className={portalInputClass}
+                  value={portalSlug}
+                  onChange={(e) => setPortalSlug(e.target.value)}
+                  placeholder="demo"
+                  required
+                />
+              </div>
+              <AccentSubmitButton accent={loginAccent}>Ir al portal / ops</AccentSubmitButton>
               <p className="text-center text-xs text-muted-foreground">
                 También puedes{" "}
                 <Link
-                  to={`/soluciones/${HORYTEK_PRODUCTS.find((p) => p.loginMode === mode)?.slug || mode}`}
+                  to={`/?product=${HORYTEK_PRODUCTS.find((p) => p.loginMode === mode)?.id || mode}`}
                   className="underline-offset-4 hover:underline"
                 >
-                  ver la ficha del producto
+                  ver la landing del producto
                 </Link>
                 .
               </p>

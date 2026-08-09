@@ -6,7 +6,7 @@ export async function getTallerStatus() {
   return data;
 }
 export async function listTallerOrdenes() {
-  const { data } = await api.get("/taller/ordenes");
+  const { data } = await api.get("/taller/ots");
   return data;
 }
 export async function createTallerOrden(body: {
@@ -15,7 +15,7 @@ export async function createTallerOrden(body: {
   merma_pct?: number;
   notas?: string;
 }) {
-  const { data } = await api.post("/taller/ordenes", body);
+  const { data } = await api.post("/taller/ots", body);
   return data;
 }
 export async function addTallerInsumo(body: {
@@ -45,6 +45,10 @@ export async function createCrmDeal(body: {
   id_cliente_erp?: number;
 }) {
   const { data } = await api.post("/crm/deals", body);
+  return data;
+}
+export async function moveCrmDeal(id: number, body: { id_etapa: number; estado?: string }) {
+  const { data } = await api.patch(`/crm/deals/${id}`, body);
   return data;
 }
 export async function addCrmActividad(body: {
@@ -166,7 +170,7 @@ export async function createManttoActivo(body: {
   return data;
 }
 export async function listManttoOrdenes() {
-  const { data } = await api.get("/mantenimiento/ordenes");
+  const { data } = await api.get("/mantenimiento/ots");
   return data;
 }
 export async function createManttoOrden(body: {
@@ -174,7 +178,7 @@ export async function createManttoOrden(body: {
   tipo: "preventivo" | "correctivo";
   titulo: string;
 }) {
-  const { data } = await api.post("/mantenimiento/ordenes", body);
+  const { data } = await api.post("/mantenimiento/ots", body);
   return data;
 }
 
@@ -226,7 +230,7 @@ export async function postularRecluta(
 
 /* ─── Preventa ─── */
 export async function listPreventaCampanias() {
-  const { data } = await api.get("/preventa/campanias");
+  const { data } = await api.get("/preventa/admin/campanias");
   return data;
 }
 export async function createPreventaCampania(body: {
@@ -234,7 +238,7 @@ export async function createPreventaCampania(body: {
   nombre: string;
   anticipo_pct?: number;
 }) {
-  const { data } = await api.post("/preventa/campanias", body);
+  const { data } = await api.post("/preventa/admin/campanias", body);
   return data;
 }
 export async function addPreventaItem(body: {
@@ -244,11 +248,16 @@ export async function addPreventaItem(body: {
   precio: number;
   cupo?: number;
 }) {
-  const { data } = await api.post("/preventa/items", body);
+  const { data } = await api.post("/preventa/admin/items", body);
+  return data;
+}
+export async function listPreventaReservas(id_campania?: number) {
+  const q = id_campania ? `?id_campania=${id_campania}` : "";
+  const { data } = await api.get(`/preventa/admin/reservas${q}`);
   return data;
 }
 export async function getPreventaPublic(slug: string) {
-  const { data } = await api.get(`/preventa/public/${encodeURIComponent(slug)}`);
+  const { data } = await api.get(`/preventa/campanias/${encodeURIComponent(slug)}`);
   return data;
 }
 export async function reservarPreventa(
@@ -260,6 +269,9 @@ export async function reservarPreventa(
     cantidad?: number;
   }
 ) {
-  const { data } = await api.post(`/preventa/public/${encodeURIComponent(slug)}/reservar`, body);
+  const { data } = await api.post(
+    `/preventa/campanias/${encodeURIComponent(slug)}/reservas`,
+    body
+  );
   return data;
 }

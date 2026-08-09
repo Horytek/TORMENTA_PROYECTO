@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Navigate, useParams } from "react-router-dom";
 import {
   getAcademiaPortal,
-  getAcademiaToken,
+  getAcademiaAlumnoToken,
   loginAcademiaAlumno,
   misCursosAcademia,
-  setAcademiaToken,
+  setAcademiaAlumnoToken,
 } from "@/features/platform/api/academia";
+import { getDemoPortalCreds, isDemoSlug } from "@/features/platform/demo/demoPortalCreds";
+import { useDemoAutoEnter } from "@/features/platform/demo/useDemoAutoEnter";
+import { OpsShell } from "@/features/platform/ui/OpsShell";
+import { EmptyState } from "@/features/platform/ui/EmptyState";
 
 type Portal = { slug: string; nombre: string };
 type Curso = { id_curso: number; titulo: string; progreso_pct?: number };
@@ -25,13 +25,24 @@ function errMsg(e: unknown, fallback: string) {
 
 export default function AcademiaAlumnoPage() {
   const { slug = "" } = useParams();
+  const demo = isDemoSlug(slug) ? getDemoPortalCreds("academia", "alumno") : null;
   const [portal, setPortal] = useState<Portal | null>(null);
   const [loadError, setLoadError] = useState("");
-  const [session, setSession] = useState(Boolean(getAcademiaToken()));
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [nombre, setNombre] = useState("");
+  const [hadToken] = useState(() => Boolean(getAcademiaAlumnoToken()));
+  const [session, setSession] = useState(hadToken);
   const [cursos, setCursos] = useState<Curso[]>([]);
+
+  const autoPhase = useDemoAutoEnter(Boolean(demo) && !hadToken, async () => {
+    if (!demo?.email || !demo.password) throw new Error("Sin credenciales demo");
+    const res = await loginAcademiaAlumno({
+      slug,
+      email: demo.email,
+      password: demo.password,
+      nombre: demo.nombre,
+    });
+    if (!res.success) throw new Error(res.message || "Demo no disponible");
+    setSession(true);
+  });
 
   useEffect(() => {
     (async () => {
@@ -47,111 +58,52 @@ export default function AcademiaAlumnoPage() {
 
   useEffect(() => {
     if (!session) return;
-    misCursosAcademia()
+    misCursosAcademia(slug)
       .then((res) => {
-        if (res.success) setCursos(res.data || []);
+        if (res.success) setCursos(res.data?.cursos || res.data || []);
       })
       .catch(() => {
-        setAcademiaToken(null);
+        setAcademiaAlumnoToken(null);
         setSession(false);
       });
-  }, [session]);
+  }, [session, slug]);
 
-  if (loadError) {
-    return (
-      <div className="mx-auto max-w-lg px-6 py-24 text-center">
-        <h1 className="text-xl font-semibold">Academia</h1>
-        <p className="mt-3 text-sm text-destructive">{loadError}</p>
-        <Link to="/soluciones/academia" className="mt-6 inline-block text-sm underline">
-          Ver producto
-        </Link>
-      </div>
-    );
+  if (loadError || (!session && autoPhase !== "entering") || (!session && autoPhase === "failed")) {
+    return <Navigate to="/login?mode=academia" replace />;
   }
 
-  if (!portal) {
-    return <div className="p-12 text-center text-sm text-muted-foreground">Cargando…</div>;
-  }
-
-  if (!session) {
+  if (!portal || autoPhase === "entering") {
     return (
-      <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
-        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Academia · Alumno
-        </p>
-        <h1 className="mt-2 text-xl font-semibold">{portal.nombre}</h1>
-        <form
-          className="mt-6 space-y-3"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            try {
-              const res = await loginAcademiaAlumno({
-                slug,
-                email,
-                password,
-                nombre: nombre || undefined,
-              });
-              if (!res.success) throw new Error(res.message);
-              setSession(true);
-            } catch (err: unknown) {
-              toast.error(errMsg(err, "Error"));
-            }
-          }}
-        >
-          <Label>Nombre (nuevo)</Label>
-          <Input value={nombre} onChange={(e) => setNombre(e.target.value)} />
-          <Label>Email</Label>
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <Label>Contraseña</Label>
-          <Input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <Button type="submit" className="w-full">
-            Entrar
-          </Button>
-        </form>
+      <div className="flex min-h-dvh items-center justify-center p-12 text-center text-sm text-muted-foreground">
+        {autoPhase === "entering" ? "Entrando a la demo…" : "Cargando…"}
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-8 p-6">
-      <header className="flex justify-between">
-        <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Academia
-          </p>
-          <h1 className="mt-1 text-xl font-semibold">Mis cursos</h1>
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            setAcademiaToken(null);
-            setSession(false);
-          }}
-        >
-          Salir
-        </Button>
-      </header>
-
+    <OpsShell
+      productId="academia"
+      companyName={portal.nombre}
+      roleLabel="Alumno"
+      title="Mis cursos"
+      width="default"
+      onLogout={() => {
+        setAcademiaAlumnoToken(null);
+        setSession(false);
+      }}
+    >
       {cursos.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Aún no estás inscrito en cursos.</p>
+        <EmptyState title="Sin cursos" body="Aún no estás inscrito en cursos." />
       ) : (
-        <ul className="divide-y divide-border/60 text-sm">
+        <ul className="divide-y divide-black/8 text-sm">
           {cursos.map((c) => (
             <li key={c.id_curso} className="flex justify-between py-3">
               <span>{c.titulo}</span>
-              <span className="text-xs text-muted-foreground">
-                {c.progreso_pct ?? 0}%
-              </span>
+              <span className="text-xs text-black/45">{c.progreso_pct ?? 0}%</span>
             </li>
           ))}
         </ul>
       )}
-    </div>
+    </OpsShell>
   );
 }

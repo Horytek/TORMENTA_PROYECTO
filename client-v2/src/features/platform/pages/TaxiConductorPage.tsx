@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
+  getTaxiConductorToken,
   getTaxiPortal,
-  getTaxiToken,
-  listTaxiViajes,
+  listTaxiConductorViajes,
   loginTaxiConductor,
-  patchTaxiViaje,
-  setTaxiToken,
+  patchTaxiConductorViaje,
+  setTaxiConductorToken,
 } from "@/features/platform/api/taxi";
+import { getDemoPortalCreds, isDemoSlug } from "@/features/platform/demo/demoPortalCreds";
+import { useDemoAutoEnter } from "@/features/platform/demo/useDemoAutoEnter";
+import { OpsShell } from "@/features/platform/ui/OpsShell";
+import { EmptyState } from "@/features/platform/ui/EmptyState";
 
 type Portal = { slug: string; nombre: string };
 type Viaje = { id_viaje: number; origen: string; destino: string; estado: string };
@@ -26,12 +28,23 @@ function errMsg(e: unknown, fallback: string) {
 
 export default function TaxiConductorPage() {
   const { slug = "" } = useParams();
+  const demo = isDemoSlug(slug) ? getDemoPortalCreds("taxi", "conductor") : null;
   const [portal, setPortal] = useState<Portal | null>(null);
   const [loadError, setLoadError] = useState("");
-  const [session, setSession] = useState(Boolean(getTaxiToken()));
-  const [telefono, setTelefono] = useState("");
-  const [password, setPassword] = useState("");
+  const [hadToken] = useState(() => Boolean(getTaxiConductorToken()));
+  const [session, setSession] = useState(hadToken);
   const [viajes, setViajes] = useState<Viaje[]>([]);
+
+  const autoPhase = useDemoAutoEnter(Boolean(demo) && !hadToken, async () => {
+    if (!demo?.telefono || !demo.password) throw new Error("Sin credenciales demo");
+    const res = await loginTaxiConductor({
+      slug,
+      telefono: demo.telefono,
+      password: demo.password,
+    });
+    if (!res.success) throw new Error(res.message || "Demo no disponible");
+    setSession(true);
+  });
 
   useEffect(() => {
     (async () => {
@@ -46,112 +59,74 @@ export default function TaxiConductorPage() {
   }, [slug]);
 
   const refresh = async () => {
-    const res = await listTaxiViajes();
+    const res = await listTaxiConductorViajes();
     if (res.success) setViajes(res.data || []);
   };
 
   useEffect(() => {
     if (!session) return;
     refresh().catch(() => {
-      setTaxiToken(null);
+      setTaxiConductorToken(null);
       setSession(false);
     });
   }, [session]);
 
-  if (loadError) {
-    return (
-      <div className="mx-auto max-w-lg px-6 py-24 text-center">
-        <h1 className="text-xl font-semibold">Taxi Conductor</h1>
-        <p className="mt-3 text-sm text-destructive">{loadError}</p>
-      </div>
-    );
+  if (loadError || (!session && autoPhase !== "entering") || (!session && autoPhase === "failed")) {
+    return <Navigate to="/login?mode=taxi" replace />;
   }
 
-  if (!portal) {
-    return <div className="p-12 text-center text-sm text-muted-foreground">Cargando…</div>;
-  }
-
-  if (!session) {
+  if (!portal || autoPhase === "entering") {
     return (
-      <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
-        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Taxi · Conductor
-        </p>
-        <h1 className="mt-2 text-xl font-semibold">{portal.nombre}</h1>
-        <form
-          className="mt-6 space-y-3"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            try {
-              const res = await loginTaxiConductor({ slug, telefono, password });
-              if (!res.success) throw new Error(res.message);
-              setSession(true);
-            } catch (err: unknown) {
-              toast.error(errMsg(err, "Error de acceso"));
-            }
-          }}
-        >
-          <Label>Teléfono</Label>
-          <Input value={telefono} onChange={(e) => setTelefono(e.target.value)} required />
-          <Label>Contraseña</Label>
-          <Input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <Button type="submit" className="w-full">
-            Entrar
-          </Button>
-        </form>
-        <Link to={`/taxi/${slug}`} className="mt-6 text-center text-sm underline">
-          Soy pasajero
-        </Link>
+      <div className="flex min-h-dvh items-center justify-center p-12 text-center text-sm text-muted-foreground">
+        {autoPhase === "entering" ? "Entrando a la demo…" : "Cargando…"}
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-sm space-y-8 p-6">
-      <header className="flex justify-between">
-        <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Conductor
-          </p>
-          <h1 className="mt-1 text-xl font-semibold">Viajes</h1>
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            setTaxiToken(null);
-            setSession(false);
-          }}
-        >
-          Salir
-        </Button>
-      </header>
-
+    <OpsShell
+      productId="taxi"
+      companyName={portal.nombre}
+      roleLabel="Conductor"
+      title="Viajes"
+      width="narrow"
+      onLogout={() => {
+        setTaxiConductorToken(null);
+        setSession(false);
+      }}
+    >
       {viajes.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Sin viajes.</p>
+        <EmptyState title="Sin viajes disponibles" body="Cuando el operador asigne o haya solicitudes, aparecen aquí." />
       ) : (
         <ul className="space-y-3">
           {viajes.map((v) => (
-            <li
-              key={v.id_viaje}
-              className="rounded-md border border-border/60 px-3 py-3 text-sm"
-            >
+            <li key={v.id_viaje} className="rounded-lg border border-black/10 bg-white/80 px-4 py-4 text-sm">
               <p className="font-medium">
                 {v.origen} → {v.destino}
               </p>
-              <p className="text-xs uppercase text-muted-foreground">{v.estado}</p>
-              {v.estado === "asignado" && (
+              <p className="mt-1 text-xs uppercase tracking-wide text-black/45">{v.estado}</p>
+              {v.estado === "solicitado" && (
                 <Button
-                  size="sm"
-                  className="mt-2"
+                  className="mt-3 min-h-11"
                   onClick={async () => {
                     try {
-                      const res = await patchTaxiViaje(v.id_viaje, { estado: "en_curso" });
+                      const res = await patchTaxiConductorViaje(v.id_viaje, { estado: "asignado" });
+                      if (!res.success) throw new Error(res.message);
+                      await refresh();
+                    } catch (err: unknown) {
+                      toast.error(errMsg(err, "Error"));
+                    }
+                  }}
+                >
+                  Aceptar
+                </Button>
+              )}
+              {v.estado === "asignado" && (
+                <Button
+                  className="mt-3 min-h-11"
+                  onClick={async () => {
+                    try {
+                      const res = await patchTaxiConductorViaje(v.id_viaje, { estado: "en_curso" });
                       if (!res.success) throw new Error(res.message);
                       await refresh();
                     } catch (err: unknown) {
@@ -164,11 +139,10 @@ export default function TaxiConductorPage() {
               )}
               {v.estado === "en_curso" && (
                 <Button
-                  size="sm"
-                  className="mt-2"
+                  className="mt-3 min-h-11"
                   onClick={async () => {
                     try {
-                      const res = await patchTaxiViaje(v.id_viaje, { estado: "finalizado" });
+                      const res = await patchTaxiConductorViaje(v.id_viaje, { estado: "finalizado" });
                       if (!res.success) throw new Error(res.message);
                       await refresh();
                     } catch (err: unknown) {
@@ -183,6 +157,6 @@ export default function TaxiConductorPage() {
           ))}
         </ul>
       )}
-    </div>
+    </OpsShell>
   );
 }

@@ -9,6 +9,9 @@ import {
   listManttoActivos,
   listManttoOrdenes,
 } from "@/features/platform/api/platformProducts";
+import { PlatformShell } from "@/features/platform/ui/PlatformShell";
+import { StatusChip } from "@/features/platform/ui/StatusChip";
+import { EmptyState } from "@/features/platform/ui/EmptyState";
 
 type Activo = { id_activo: number; codigo: string; nombre: string; ubicacion?: string };
 type Orden = {
@@ -58,30 +61,29 @@ export default function MantenimientoAdminPage() {
     load();
   }, []);
 
-  if (loading) return <div className="p-8 text-sm text-muted-foreground">Cargando Mantenimiento…</div>;
+  if (loading) {
+    return (
+      <PlatformShell productId="mantenimiento" title="Mantenimiento">
+        <p className="text-sm text-black/50">Cargando…</p>
+      </PlatformShell>
+    );
+  }
   if (error) {
     return (
-      <div className="p-8">
-        <h1 className="text-xl font-semibold">Mantenimiento</h1>
-        <p className="mt-3 text-sm text-destructive" role="alert">
+      <PlatformShell productId="mantenimiento" title="Mantenimiento">
+        <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
-      </div>
+      </PlatformShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 p-6 md:p-8">
-      <header>
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          Plataforma · Oleada E
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Mantenimiento</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Activos y OT preventivo/correctivo. Técnico: <code>/mantenimiento/tecnico</code>.
-        </p>
-      </header>
-
+    <PlatformShell
+      productId="mantenimiento"
+      title="Mantenimiento"
+      subtitle="Activos y OT preventivo/correctivo. Técnico: /mantenimiento/tecnico"
+    >
       <section className="grid gap-8 md:grid-cols-2">
         <form
           className="space-y-3 border-b border-border/60 pb-6"
@@ -167,7 +169,7 @@ export default function MantenimientoAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Activos</h2>
         {activos.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Sin activos.</p>
+          <EmptyState title="Sin activos" />
         ) : (
           <ul className="mt-3 divide-y divide-border/60 text-sm">
             {activos.map((a) => (
@@ -183,7 +185,7 @@ export default function MantenimientoAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Órdenes</h2>
         {ordenes.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Sin OT.</p>
+          <EmptyState title="Sin OT" />
         ) : (
           <ul className="mt-3 divide-y divide-border/60 text-sm">
             {ordenes.map((o) => (
@@ -191,12 +193,12 @@ export default function MantenimientoAdminPage() {
                 <span>
                   {o.titulo} <span className="text-muted-foreground">({o.tipo})</span>
                 </span>
-                <span className="text-xs uppercase text-muted-foreground">{o.estado}</span>
+                <StatusChip status={o.estado} />
               </li>
             ))}
           </ul>
         )}
       </section>
-    </div>
+    </PlatformShell>
   );
 }

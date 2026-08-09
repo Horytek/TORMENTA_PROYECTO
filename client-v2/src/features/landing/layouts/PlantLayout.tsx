@@ -1,16 +1,8 @@
-import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LandingProductModule } from "../modules/landingModule.types";
 import { ExperienceDemo } from "../experiences/ExperienceDemo";
-import {
-  AntiConfusionBlock,
-  LayoutShell,
-  PricingAndFaqCta,
-  ScenarioBlock,
-  StoryBlock,
-  useLayoutChrome,
-} from "./layoutShared";
+import { ExperienceHeroCtas, LayoutShell, useLayoutChrome } from "./layoutShared";
+import { ExperienceBody } from "./ExperienceBody";
 
 export function PlantLayout({ module }: { module: LandingProductModule }) {
   const { accent, displayClass, copy } = useLayoutChrome(module);
@@ -21,7 +13,13 @@ export function PlantLayout({ module }: { module: LandingProductModule }) {
         <div className="mx-auto max-w-6xl px-6">
           <div className="grid gap-10 lg:grid-cols-2 lg:items-end">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{copy.badge}</p>
+              <p
+                className="text-[11px] font-semibold uppercase tracking-[0.22em]"
+                style={{ color: accent.accent }}
+              >
+                {module.name}
+              </p>
+              <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{copy.badge}</p>
               <h1 className={cn(displayClass, "mt-3 text-[clamp(2.4rem,5vw,3.8rem)]")}>
                 {copy.title}{" "}
                 <em className="not-italic" style={{ color: accent.accent }}>
@@ -29,6 +27,7 @@ export function PlantLayout({ module }: { module: LandingProductModule }) {
                 </em>
               </h1>
               <p className="mt-4 text-[15px] text-muted-foreground">{copy.body}</p>
+              <ExperienceHeroCtas module={module} primaryLabel="Abrir planta demo" />
             </div>
             <div className="rounded-2xl border border-black/5 bg-white/50 p-2">
               <ExperienceDemo
@@ -38,7 +37,12 @@ export function PlantLayout({ module }: { module: LandingProductModule }) {
               />
             </div>
           </div>
-          <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-black/5 bg-black/5 md:grid-cols-4">
+          <div
+            className={cn(
+              "mt-12 grid gap-px overflow-hidden rounded-2xl border border-black/5 bg-black/5",
+              copy.steps.length >= 4 ? "md:grid-cols-4" : "md:grid-cols-3",
+            )}
+          >
             {copy.steps.map((s) => (
               <div key={s.n} className="bg-white/90 p-5">
                 <p className="font-mono text-[20px]" style={{ color: accent.accent }}>
@@ -48,22 +52,10 @@ export function PlantLayout({ module }: { module: LandingProductModule }) {
                 <p className="mt-1 text-[12px] text-muted-foreground">{s.body}</p>
               </div>
             ))}
-            <div className="flex items-center justify-center bg-white/90 p-5">
-              <Link
-                to={module.loginHref}
-                className="inline-flex items-center gap-2 text-[13px] font-semibold"
-                style={{ color: accent.accent }}
-              >
-                Abrir planta <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
           </div>
         </div>
       </section>
-      <StoryBlock module={module} />
-      <ScenarioBlock module={module} />
-      <AntiConfusionBlock module={module} />
-      <PricingAndFaqCta module={module} />
+      <ExperienceBody module={module} />
     </LayoutShell>
   );
 }

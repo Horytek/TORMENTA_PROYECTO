@@ -9,6 +9,7 @@ export async function bootstrapFlotas(body: {
   nombre: string;
   email: string;
   password: string;
+  plan?: string;
 }) {
   const { data } = await client.post("/flotas/bootstrap", body);
   return data;
@@ -30,7 +31,7 @@ export async function getFlotasPortal(slug: string) {
 }
 
 export async function listFlotasVehiculos() {
-  const { data } = await client.get("/flotas/vehiculos");
+  const { data } = await client.get("/flotas/admin/vehiculos");
   return data;
 }
 
@@ -40,12 +41,12 @@ export async function createFlotasVehiculo(body: {
   modelo?: string;
   soat_vence?: string;
 }) {
-  const { data } = await client.post("/flotas/vehiculos", body);
+  const { data } = await client.post("/flotas/admin/vehiculos", body);
   return data;
 }
 
 export async function listFlotasConductores() {
-  const { data } = await client.get("/flotas/conductores");
+  const { data } = await client.get("/flotas/admin/conductores");
   return data;
 }
 
@@ -54,12 +55,12 @@ export async function createFlotasConductor(body: {
   licencia?: string;
   password?: string;
 }) {
-  const { data } = await client.post("/flotas/conductores", body);
+  const { data } = await client.post("/flotas/admin/conductores", body);
   return data;
 }
 
 export async function listFlotasCombustible() {
-  const { data } = await client.get("/flotas/combustible");
+  const { data } = await client.get("/flotas/admin/combustible");
   return data;
 }
 
@@ -69,6 +70,6 @@ export async function createFlotasCombustible(body: {
   monto: number;
   fecha: string;
 }) {
-  const { data } = await client.post("/flotas/combustible", body);
+  const { data } = await client.post("/flotas/admin/combustible", body);
   return data;
 }

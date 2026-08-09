@@ -10,6 +10,9 @@ import {
   listWmsUbicaciones,
   patchWmsTarea,
 } from "@/features/platform/api/platformProducts";
+import { PlatformShell } from "@/features/platform/ui/PlatformShell";
+import { StatusChip } from "@/features/platform/ui/StatusChip";
+import { EmptyState } from "@/features/platform/ui/EmptyState";
 
 type Ubicacion = { id_ubicacion: number; codigo: string; nombre: string };
 type Tarea = {
@@ -59,30 +62,29 @@ export default function WmsAdminPage() {
     load();
   }, []);
 
-  if (loading) return <div className="p-8 text-sm text-muted-foreground">Cargando WMS…</div>;
+  if (loading) {
+    return (
+      <PlatformShell productId="wms" title="WMS">
+        <p className="text-sm text-black/50">Cargando…</p>
+      </PlatformShell>
+    );
+  }
   if (error) {
     return (
-      <div className="p-8">
-        <h1 className="text-xl font-semibold">WMS</h1>
-        <p className="mt-3 text-sm text-destructive" role="alert">
+      <PlatformShell productId="wms" title="WMS">
+        <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
-      </div>
+      </PlatformShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 p-6 md:p-8">
-      <header>
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          Plataforma · Oleada C
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">WMS</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Ubicaciones y tareas de picking/packing. Operario: <code>/wms/operario</code>.
-        </p>
-      </header>
-
+    <PlatformShell
+      productId="wms"
+      title="WMS"
+      subtitle="Ubicaciones y tareas de picking/packing. Operario: /wms/operario"
+    >
       <section className="grid gap-8 md:grid-cols-2">
         <form
           className="space-y-3 border-b border-border/60 pb-6"
@@ -163,7 +165,7 @@ export default function WmsAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Ubicaciones</h2>
         {ubicaciones.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Sin ubicaciones.</p>
+          <EmptyState title="Sin ubicaciones" />
         ) : (
           <ul className="mt-3 divide-y divide-border/60 text-sm">
             {ubicaciones.map((u) => (
@@ -178,7 +180,7 @@ export default function WmsAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Tareas</h2>
         {tareas.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Sin tareas.</p>
+          <EmptyState title="Sin tareas" />
         ) : (
           <ul className="mt-3 space-y-2 text-sm">
             {tareas.map((t) => (
@@ -190,7 +192,7 @@ export default function WmsAdminPage() {
                   #{t.id_tarea} · {t.tipo} · {t.sku} × {t.cantidad}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs uppercase text-muted-foreground">{t.estado}</span>
+                  <StatusChip status={t.estado} />
                   {t.estado !== "hecha" && (
                     <Button
                       size="sm"
@@ -215,6 +217,6 @@ export default function WmsAdminPage() {
           </ul>
         )}
       </section>
-    </div>
+    </PlatformShell>
   );
 }

@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   listWmsTareas,
   patchWmsTarea,
 } from "@/features/platform/api/platformProducts";
+import { OpsShell } from "@/features/platform/ui/OpsShell";
+import { EmptyState } from "@/features/platform/ui/EmptyState";
+import { portalSecondaryBtnClass } from "@/features/platform/ui/portalTouch";
 
 type Tarea = {
   id_tarea: number;
@@ -45,44 +49,54 @@ export default function WmsOperarioPage() {
     load();
   }, []);
 
-  if (loading) return <div className="p-8 text-sm text-muted-foreground">Cargando tareas…</div>;
-  if (error) {
-    return (
-      <div className="p-8">
-        <h1 className="text-xl font-semibold">WMS Operario</h1>
-        <p className="mt-3 text-sm text-destructive">{error}</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="mx-auto max-w-lg space-y-8 p-6">
-      <header>
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          WMS · Operario
-        </p>
-        <h1 className="mt-1 text-xl font-semibold">Tareas pendientes</h1>
-      </header>
-
-      {tareas.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No hay tareas pendientes.</p>
+    <OpsShell
+      productId="wms"
+      companyName="Operador Demo WMS"
+      roleLabel="Operario"
+      title="Tareas pendientes"
+      width="default"
+      actions={
+        <>
+          <Button asChild variant="outline" className="min-h-11 px-3">
+            <Link to="/platform/wms">Admin WMS</Link>
+          </Button>
+          <Button asChild variant="outline" className="min-h-11 px-3">
+            <Link to="/login">Salir</Link>
+          </Button>
+        </>
+      }
+    >
+      {loading ? (
+        <p className="text-sm text-black/50">Cargando tareas…</p>
+      ) : error ? (
+        <div className="space-y-4">
+          <p className="text-sm text-destructive" role="alert">
+            {error}
+          </p>
+          <Link to="/login" className={portalSecondaryBtnClass}>
+            Ir al login
+          </Link>
+        </div>
+      ) : tareas.length === 0 ? (
+        <EmptyState title="Sin tareas" body="No hay tareas pendientes." />
       ) : (
         <ul className="space-y-3">
           {tareas.map((t) => (
             <li
               key={t.id_tarea}
-              className="flex items-center justify-between gap-3 rounded-md border border-border/60 px-3 py-3 text-sm"
+              className="flex items-center justify-between gap-3 rounded-lg border border-black/10 bg-white/80 px-4 py-4 text-sm"
             >
               <div>
                 <p className="font-medium">
                   {t.tipo} · {t.sku}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-black/45">
                   × {t.cantidad} · {t.estado}
                 </p>
               </div>
               <Button
-                size="sm"
+                className="min-h-11"
                 onClick={async () => {
                   try {
                     const next = t.estado === "pendiente" ? "en_curso" : "hecha";
@@ -101,6 +115,6 @@ export default function WmsOperarioPage() {
           ))}
         </ul>
       )}
-    </div>
+    </OpsShell>
   );
 }

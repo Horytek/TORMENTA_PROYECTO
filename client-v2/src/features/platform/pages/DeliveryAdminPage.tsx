@@ -1,18 +1,18 @@
 import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  bootstrapDelivery,
+  assignDeliveryPedido,
   createDeliveryRepartidor,
-  getDeliveryToken,
+  getDeliveryAdminToken,
   listDeliveryPedidos,
   listDeliveryRepartidores,
-  loginDeliveryAdmin,
-  patchDeliveryPedido,
-  setDeliveryToken,
+  setDeliveryAdminToken,
 } from "@/features/platform/api/delivery";
+import { PlatformShell } from "@/features/platform/ui/PlatformShell";
+import { StatusChip } from "@/features/platform/ui/StatusChip";
 
 type Pedido = {
   id_pedido: number;
@@ -31,12 +31,7 @@ function errMsg(e: unknown, fallback: string) {
 }
 
 export default function DeliveryAdminPage() {
-  const [session, setSession] = useState(Boolean(getDeliveryToken()));
-  const [mode, setMode] = useState<"login" | "bootstrap">("login");
-  const [slug, setSlug] = useState("");
-  const [nombre, setNombre] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [session, setSession] = useState(Boolean(getDeliveryAdminToken()));
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [repartidores, setRepartidores] = useState<Repartidor[]>([]);
   const [loading, setLoading] = useState(false);
@@ -44,6 +39,8 @@ export default function DeliveryAdminPage() {
   const [repNombre, setRepNombre] = useState("");
   const [repTel, setRepTel] = useState("");
   const [repPass, setRepPass] = useState("");
+  const [assignFor, setAssignFor] = useState<number | null>(null);
+  const [pickRep, setPickRep] = useState<number | "">("");
 
   const load = async () => {
     setLoading(true);
@@ -55,7 +52,7 @@ export default function DeliveryAdminPage() {
       setRepartidores(r.data || []);
     } catch (e: unknown) {
       setError(errMsg(e, "Error al cargar Delivery"));
-      setDeliveryToken(null);
+      setDeliveryAdminToken(null);
       setSession(false);
     } finally {
       setLoading(false);
@@ -67,98 +64,39 @@ export default function DeliveryAdminPage() {
   }, [session]);
 
   if (!session) {
+    return <Navigate to="/login?mode=delivery" replace />;
+  }
+
+  if (loading && pedidos.length === 0) {
     return (
-      <div className="mx-auto max-w-md space-y-6 p-6 md:p-8">
-        <header>
-          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Delivery · Admin
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold">
-            {mode === "login" ? "Iniciar sesión" : "Crear operador"}
-          </h1>
-        </header>
-        <form
-          className="space-y-3"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            try {
-              const res =
-                mode === "bootstrap"
-                  ? await bootstrapDelivery({ slug, nombre, email, password })
-                  : await loginDeliveryAdmin({ slug, email, password });
-              if (!res.success) throw new Error(res.message);
-              if (res.data?.token) setDeliveryToken(res.data.token);
-              setSession(true);
-            } catch (err: unknown) {
-              toast.error(errMsg(err, "Error"));
-            }
-          }}
-        >
-          <Label>Slug</Label>
-          <Input value={slug} onChange={(e) => setSlug(e.target.value)} required />
-          {mode === "bootstrap" && (
-            <>
-              <Label>Nombre</Label>
-              <Input value={nombre} onChange={(e) => setNombre(e.target.value)} required />
-            </>
-          )}
-          <Label>Email</Label>
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <Label>Contraseña</Label>
-          <Input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <Button type="submit" className="w-full">
-            {mode === "bootstrap" ? "Crear" : "Entrar"}
-          </Button>
-        </form>
-        <button
-          type="button"
-          className="text-sm text-muted-foreground underline"
-          onClick={() => setMode(mode === "login" ? "bootstrap" : "login")}
-        >
-          {mode === "login" ? "¿Primera vez? Crear operador" : "Ya tengo cuenta"}
-        </button>
-      </div>
+      <PlatformShell productId="delivery" companyName="Operador Demo Delivery" title="Control">
+        <p className="text-sm text-black/50">Cargando…</p>
+      </PlatformShell>
     );
   }
 
-  if (loading) return <div className="p-8 text-sm text-muted-foreground">Cargando Delivery…</div>;
   if (error) {
     return (
-      <div className="p-8">
-        <h1 className="text-xl font-semibold">Delivery</h1>
-        <p className="mt-3 text-sm text-destructive">{error}</p>
-      </div>
+      <PlatformShell productId="delivery" companyName="Operador Demo Delivery" title="Delivery">
+        <p className="text-sm text-destructive">{error}</p>
+      </PlatformShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 p-6 md:p-8">
-      <header className="flex justify-between">
-        <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Plataforma · Oleada D
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">Delivery · Control</h1>
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            setDeliveryToken(null);
-            setSession(false);
-          }}
-        >
-          Salir
-        </Button>
-      </header>
-
+    <PlatformShell
+      productId="delivery"
+      companyName="Operador Demo Delivery"
+      roleLabel="Admin"
+      title="Control"
+      subtitle="Pedidos y repartidores"
+      onLogout={() => {
+        setDeliveryAdminToken(null);
+        setSession(false);
+      }}
+    >
       <form
-        className="max-w-md space-y-3 border-b border-border/60 pb-6"
+        className="max-w-md space-y-3 border-b border-black/10 pb-6"
         onSubmit={async (e) => {
           e.preventDefault();
           try {
@@ -196,9 +134,9 @@ export default function DeliveryAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Repartidores</h2>
         {repartidores.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Sin repartidores.</p>
+          <p className="mt-2 text-sm text-black/50">Sin repartidores.</p>
         ) : (
-          <ul className="mt-3 divide-y divide-border/60 text-sm">
+          <ul className="mt-3 divide-y divide-black/8 text-sm">
             {repartidores.map((r) => (
               <li key={r.id_repartidor} className="py-2">
                 {r.nombre}
@@ -211,45 +149,75 @@ export default function DeliveryAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Pedidos</h2>
         {pedidos.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Sin pedidos.</p>
+          <p className="mt-2 text-sm text-black/50">Sin pedidos.</p>
         ) : (
           <ul className="mt-3 space-y-2 text-sm">
             {pedidos.map((p) => (
               <li
                 key={p.id_pedido}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/50 px-3 py-2"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-black/10 bg-white/70 px-3 py-2"
               >
                 <span>
                   #{p.id_pedido} · {p.recojo} → {p.entrega}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs uppercase text-muted-foreground">{p.estado}</span>
-                  {p.estado === "solicitado" && repartidores[0] && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={async () => {
-                        try {
-                          const res = await patchDeliveryPedido(p.id_pedido, {
-                            estado: "asignado",
-                            id_repartidor: repartidores[0].id_repartidor,
-                          });
-                          if (!res.success) throw new Error(res.message);
-                          await load();
-                        } catch (err: unknown) {
-                          toast.error(errMsg(err, "Error"));
-                        }
-                      }}
-                    >
-                      Asignar
-                    </Button>
-                  )}
+                  <StatusChip status={p.estado} />
+                  {p.estado === "solicitado" ? (
+                    assignFor === p.id_pedido ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <select
+                          className="rounded border px-2 py-1 text-sm"
+                          value={pickRep}
+                          onChange={(e) =>
+                            setPickRep(e.target.value ? Number(e.target.value) : "")
+                          }
+                        >
+                          <option value="">Repartidor…</option>
+                          {repartidores.map((r) => (
+                            <option key={r.id_repartidor} value={r.id_repartidor}>
+                              {r.nombre}
+                            </option>
+                          ))}
+                        </select>
+                        <Button
+                          size="sm"
+                          disabled={!pickRep}
+                          onClick={async () => {
+                            try {
+                              if (!pickRep) return;
+                              const res = await assignDeliveryPedido(p.id_pedido, Number(pickRep));
+                              if (!res.success) throw new Error(res.message);
+                              toast.success("Asignado");
+                              setAssignFor(null);
+                              await load();
+                            } catch (err: unknown) {
+                              toast.error(errMsg(err, "Error"));
+                            }
+                          }}
+                        >
+                          Confirmar
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={repartidores.length === 0}
+                        onClick={() => {
+                          setAssignFor(p.id_pedido);
+                          setPickRep(repartidores[0]?.id_repartidor ?? "");
+                        }}
+                      >
+                        Asignar
+                      </Button>
+                    )
+                  ) : null}
                 </div>
               </li>
             ))}
           </ul>
         )}
       </section>
-    </div>
+    </PlatformShell>
   );
 }

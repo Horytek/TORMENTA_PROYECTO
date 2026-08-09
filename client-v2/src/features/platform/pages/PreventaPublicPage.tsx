@@ -50,7 +50,7 @@ export default function PreventaPublicPage() {
       <div className="mx-auto max-w-lg px-6 py-24 text-center">
         <h1 className="text-xl font-semibold">Preventa</h1>
         <p className="mt-3 text-sm text-destructive">{error}</p>
-        <Link to="/soluciones/preventa" className="mt-6 inline-block text-sm underline">
+        <Link to="/?product=preventa" className="mt-6 inline-block text-sm underline">
           Ver producto Preventa
         </Link>
       </div>

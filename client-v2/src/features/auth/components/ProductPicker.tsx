@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { buildLoginProductOptions } from "@/features/platform/catalog/horytekProducts";
+import { getLoginAccent } from "@/features/auth/loginAccents";
 
 export type ProductPickerMode = string;
 
@@ -12,6 +13,7 @@ interface ProductPickerProps {
 
 /**
  * Selector escalable de superficie de auth — una tarjeta por loginMode del catálogo.
+ * La card activa usa la tonalidad del producto.
  */
 export function ProductPicker({ value, onChange, onOpenValidar }: ProductPickerProps) {
   const [q, setQ] = useState("");
@@ -41,6 +43,7 @@ export function ProductPicker({ value, onChange, onOpenValidar }: ProductPickerP
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {filtered.map((opt) => {
             const active = value === opt.mode;
+            const accent = getLoginAccent(opt.mode);
             return (
               <button
                 key={opt.mode}
@@ -49,15 +52,16 @@ export function ProductPicker({ value, onChange, onOpenValidar }: ProductPickerP
                 className={cn(
                   "rounded-md border px-3 py-2.5 text-left transition-colors",
                   active
-                    ? "border-foreground bg-foreground text-background"
+                    ? "border-transparent text-white"
                     : "border-border/70 bg-background hover:border-foreground/40"
                 )}
+                style={active ? { backgroundColor: accent } : undefined}
               >
                 <span className="block text-[13px] font-semibold">{opt.label}</span>
                 <span
                   className={cn(
                     "mt-0.5 block text-[11px] leading-snug",
-                    active ? "text-background/75" : "text-muted-foreground"
+                    active ? "text-white/80" : "text-muted-foreground"
                   )}
                 >
                   {opt.description}

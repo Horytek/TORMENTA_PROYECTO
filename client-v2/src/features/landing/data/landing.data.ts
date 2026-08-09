@@ -55,11 +55,53 @@ export const TAG_COLORS = ["#243645", "#3E6B89", "#0E7C7B", "#C9A227", "#B23A48"
 export type Mode = "standard" | "pocket" | "ecommerce";
 
 export const NAV_LINKS = [
-  { label: "Ecommerce", href: "#ecommerce" },
-  { label: "Qué incluye", href: "#funciones" },
-  { label: "Cómo funciona", href: "#flujo" },
+  { label: "Beneficios", href: "#beneficios" },
+  { label: "Producto", href: "#producto" },
   { label: "Planes", href: "#planes" },
   { label: "Preguntas", href: "#preguntas" },
+] as const;
+
+/** Claims post-hero — cualitativos / producto, sin inventar volumen de clientes. */
+export const TRUST_CLAIMS = [
+  {
+    label: "Facturación SUNAT",
+    body: "Boletas y facturas electrónicas integradas al flujo de venta.",
+  },
+  {
+    label: "Inventario unificado",
+    body: "El mismo stock para tu local, internet y canales conectados.",
+  },
+  {
+    label: "Multi-sucursal",
+    body: "Opera varios locales con el mismo catálogo y permisos por usuario.",
+  },
+  {
+    label: "Soporte en Perú",
+    body: "Acompañamiento local para activar, migrar catálogo y resolver el día a día.",
+  },
+] as const;
+
+export const BENEFIT_PILLARS = [
+  {
+    icon: Package,
+    title: "Control de inventario en tiempo real",
+    body: "Cada venta y cada ingreso actualizan el stock. Menos quiebres, menos Excel al cierre.",
+  },
+  {
+    icon: ShoppingCart,
+    title: "Punto de venta y ventas por internet",
+    body: "Cobra en caja o desde tu tienda online con el mismo catálogo y precios.",
+  },
+  {
+    icon: BarChart3,
+    title: "Reportes al instante",
+    body: "Ventas, márgenes e inventario listos para decidir sin armar reportes a mano.",
+  },
+  {
+    icon: Truck,
+    title: "Boleta y factura electrónica",
+    body: "Emite comprobantes ante SUNAT desde la misma venta — sin sistema aparte.",
+  },
 ] as const;
 
 export const HERO_BADGES = ["Vende en tu local", "Vende online", "Recibe pagos", "Emite comprobantes"] as const;
@@ -288,31 +330,39 @@ export const PLANS: Plan[] = [
   },
 ];
 
-// FAQ — solo preguntas que un dueño de tienda real se haría.
+// FAQ — objeciones típicas PYME Perú (estilo Bsale, respuestas Horytek).
 export const FAQS = [
   {
-    q: "¿Horytek también crea el ecommerce de mi negocio?",
-    a: "Sí. Es un servicio adicional: preparamos una tienda con tu marca, cargamos el catálogo y configuramos el cobro por internet. La cotización depende de la cantidad de productos y de lo que necesite tu negocio.",
+    q: "¿Qué es Horytek?",
+    a: "Horytek es un ERP + POS en la nube para PYMES del Perú: ventas, inventario, multi-sucursal y facturación electrónica ante SUNAT en un solo sistema. También ofrece productos especializados (taxi, delivery, WMS, CRM, etc.) según el job de tu operación.",
   },
   {
-    q: "¿Qué valor agrega el ecommerce además de mostrar productos?",
-    a: "Tus clientes pueden ver fotos y precios, armar su compra y pagar sin esperar una respuesta por chat. Además, dejamos tus productos ordenados y el enlace listo para compartir.",
+    q: "¿Emiten boleta y factura electrónica ante SUNAT?",
+    a: "Sí. La facturación electrónica está integrada al flujo de venta: boletas, facturas y notas, con los procesos que tu negocio necesita para operar en regla.",
   },
   {
-    q: "¿Qué pasa si vendo el mismo producto en el local y por internet?",
-    a: "Horytek usa el mismo control de stock para ambos canales. Así reduces el riesgo de ofrecer por internet algo que ya se vendió en tu local.",
+    q: "¿Sirve como punto de venta e inventario a la vez?",
+    a: "Sí. Cobras en caja, controlas stock en tiempo real y, si vendes online, usas el mismo inventario para no ofrecer lo que ya se agotó en el local.",
   },
   {
-    q: "¿Emiten boletas y facturas electrónicas?",
-    a: "Sí. La facturación electrónica ante SUNAT está integrada en el flujo de venta. Soportamos boletas, facturas y notas, con comunicación de baja automática.",
+    q: "¿Cobran comisión por cada venta?",
+    a: "Horytek se cobra por plan/suscripción según el producto. El cobro con Mercado Pago en ecommerce sigue las reglas de MP; Horytek no añade una comisión extra por ítem vendido en el ERP.",
+  },
+  {
+    q: "¿Necesito instalar software?",
+    a: "No. Funciona en el navegador (PC, tablet o celular). Pocket POS es la versión ligera para cobrar en feria o en la calle.",
+  },
+  {
+    q: "¿Hay soporte en Perú?",
+    a: "Sí. Atención local por WhatsApp y canales de soporte para activación, migración de catálogo y acompañamiento operativo.",
   },
   {
     q: "¿Puedo migrar mis productos y clientes?",
-    a: "Sí. Al activar tu cuenta, el equipo de soporte te ayuda a importar tu catálogo y base de clientes desde Excel o desde el sistema que uses hoy.",
+    a: "Sí. Al activar tu cuenta te ayudamos a importar catálogo y clientes desde Excel o desde el sistema que uses hoy.",
   },
   {
-    q: "¿Necesito instalar algo?",
-    a: "No. Horytek funciona en el navegador desde cualquier computador con conexión. También tienes Pocket POS, una versión ligera pensada para vender desde el celular.",
+    q: "¿Horytek también arma mi tienda online?",
+    a: "Sí, como servicio adicional: tienda con tu marca, catálogo y cobro por internet. La cotización depende del tamaño del catálogo y de lo que necesite tu negocio.",
   },
 ] as const;
 

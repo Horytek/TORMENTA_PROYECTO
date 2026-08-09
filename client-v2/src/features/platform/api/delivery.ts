@@ -1,16 +1,33 @@
 import { createProductClient } from "./createProductClient";
 
-const { client, getToken, setToken } = createProductClient("horytek_delivery_token");
+const adminApi = createProductClient("horytek_delivery_admin_token");
+const clienteApi = createProductClient("horytek_delivery_cliente_token");
+const repartidorApi = createProductClient("horytek_delivery_repartidor_token");
 
-export { getToken as getDeliveryToken, setToken as setDeliveryToken };
+export const getDeliveryAdminToken = adminApi.getToken;
+export const setDeliveryAdminToken = adminApi.setToken;
+export const getDeliveryClienteToken = clienteApi.getToken;
+export const setDeliveryClienteToken = clienteApi.setToken;
+export const getDeliveryRepartidorToken = repartidorApi.getToken;
+export const setDeliveryRepartidorToken = repartidorApi.setToken;
+
+/** @deprecated */
+export function getDeliveryToken() {
+  return getDeliveryAdminToken() || getDeliveryClienteToken() || getDeliveryRepartidorToken();
+}
+/** @deprecated */
+export function setDeliveryToken(token: string | null) {
+  setDeliveryAdminToken(token);
+}
 
 export async function bootstrapDelivery(body: {
   slug: string;
   nombre: string;
   email: string;
   password: string;
+  plan?: string;
 }) {
-  const { data } = await client.post("/delivery/bootstrap", body);
+  const { data } = await adminApi.client.post("/delivery/bootstrap", body);
   return data;
 }
 
@@ -19,8 +36,12 @@ export async function loginDeliveryAdmin(body: {
   email: string;
   password: string;
 }) {
-  const { data } = await client.post("/delivery/auth/admin", body);
-  if (data?.success && data?.data?.token) setToken(data.data.token);
+  const { data } = await adminApi.client.post("/delivery/auth/admin", body);
+  if (data?.success && data?.data?.token) {
+    setDeliveryAdminToken(data.data.token);
+    setDeliveryClienteToken(null);
+    setDeliveryRepartidorToken(null);
+  }
   return data;
 }
 
@@ -30,8 +51,12 @@ export async function loginDeliveryCliente(body: {
   password: string;
   nombre?: string;
 }) {
-  const { data } = await client.post("/delivery/auth/cliente", body);
-  if (data?.success && data?.data?.token) setToken(data.data.token);
+  const { data } = await clienteApi.client.post("/delivery/auth/cliente", body);
+  if (data?.success && data?.data?.token) {
+    setDeliveryClienteToken(data.data.token);
+    setDeliveryAdminToken(null);
+    setDeliveryRepartidorToken(null);
+  }
   return data;
 }
 
@@ -40,18 +65,22 @@ export async function loginDeliveryRepartidor(body: {
   telefono: string;
   password: string;
 }) {
-  const { data } = await client.post("/delivery/auth/repartidor", body);
-  if (data?.success && data?.data?.token) setToken(data.data.token);
+  const { data } = await repartidorApi.client.post("/delivery/auth/repartidor", body);
+  if (data?.success && data?.data?.token) {
+    setDeliveryRepartidorToken(data.data.token);
+    setDeliveryAdminToken(null);
+    setDeliveryClienteToken(null);
+  }
   return data;
 }
 
 export async function getDeliveryPortal(slug: string) {
-  const { data } = await client.get(`/delivery/portal/${encodeURIComponent(slug)}`);
+  const { data } = await adminApi.client.get(`/delivery/portal/${encodeURIComponent(slug)}`);
   return data;
 }
 
 export async function listDeliveryPedidos() {
-  const { data } = await client.get("/delivery/pedidos");
+  const { data } = await adminApi.client.get("/delivery/admin/pedidos");
   return data;
 }
 
@@ -60,20 +89,30 @@ export async function createDeliveryPedido(body: {
   entrega: string;
   detalle?: string;
 }) {
-  const { data } = await client.post("/delivery/pedidos", body);
+  const { data } = await adminApi.client.post("/delivery/admin/pedidos", body);
   return data;
 }
 
+export async function assignDeliveryPedido(id: number, id_repartidor: number) {
+  const { data } = await adminApi.client.patch(
+    `/delivery/admin/pedidos/${id}/asignar`,
+    { id_repartidor }
+  );
+  return data;
+}
+
+/** @deprecated usar assignDeliveryPedido */
 export async function patchDeliveryPedido(
   id: number,
   body: { estado: string; id_repartidor?: number }
 ) {
-  const { data } = await client.patch(`/delivery/pedidos/${id}`, body);
+  if (body.id_repartidor) return assignDeliveryPedido(id, body.id_repartidor);
+  const { data } = await adminApi.client.patch(`/delivery/admin/pedidos/${id}/asignar`, body);
   return data;
 }
 
 export async function listDeliveryRepartidores() {
-  const { data } = await client.get("/delivery/repartidores");
+  const { data } = await adminApi.client.get("/delivery/admin/repartidores");
   return data;
 }
 
@@ -82,6 +121,30 @@ export async function createDeliveryRepartidor(body: {
   telefono?: string;
   password: string;
 }) {
-  const { data } = await client.post("/delivery/repartidores", body);
+  const { data } = await adminApi.client.post("/delivery/admin/repartidores", body);
+  return data;
+}
+
+export async function listDeliveryClientePedidos() {
+  const { data } = await clienteApi.client.get("/delivery/cliente/pedidos");
+  return data;
+}
+
+export async function createDeliveryClientePedido(body: {
+  recojo: string;
+  entrega: string;
+  detalle?: string;
+}) {
+  const { data } = await clienteApi.client.post("/delivery/cliente/pedidos", body);
+  return data;
+}
+
+export async function listDeliveryRepartidorPedidos() {
+  const { data } = await repartidorApi.client.get("/delivery/repartidor/pedidos");
+  return data;
+}
+
+export async function patchDeliveryRepartidorPedido(id: number, body: { estado: string }) {
+  const { data } = await repartidorApi.client.patch(`/delivery/repartidor/pedidos/${id}`, body);
   return data;
 }

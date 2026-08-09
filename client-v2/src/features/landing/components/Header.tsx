@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { HorytekIcon } from "@/components/brand/HorytekIcon";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { NAV_LINKS, SALES_WHATSAPP_URL } from "../data/landing.data";
+import { SALES_WHATSAPP_URL } from "../data/landing.data";
 import { ProductSwitcher } from "./ProductSwitcher";
 import { getLandingModule } from "../modules/landingModules.registry";
 import { HORYTEK_PRODUCTS } from "@/features/platform/catalog/horytekProducts";
+import { buildNavLinks } from "./buildNavLinks";
+import { DemoSurfacesDropdown } from "./DemoSurfacesDropdown";
 
 interface HeaderProps {
   productId: string;
@@ -20,6 +22,7 @@ export function Header({ productId, onProductChange }: HeaderProps) {
   const product = HORYTEK_PRODUCTS.find((p) => p.id === productId);
   const isPocket = productId === "pocket";
   const isEcommerce = productId === "ecommerce";
+  const navLinks = buildNavLinks(productId, product?.name ?? module.name, module);
 
   return (
     <header
@@ -69,10 +72,10 @@ export function Header({ productId, onProductChange }: HeaderProps) {
           >
             Soluciones
           </Link>
-          {NAV_LINKS.map((l) => (
+          {navLinks.map((l) => (
             <a
-              key={l.href}
-              href={productId === "erp" || productId === "pocket" || productId === "ecommerce" ? l.href : "/#hero"}
+              key={`${l.href}-${l.label}`}
+              href={l.href}
               className="text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               {l.label}
@@ -90,26 +93,38 @@ export function Header({ productId, onProductChange }: HeaderProps) {
           <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
             <Link to={module.loginHref}>Iniciar sesión</Link>
           </Button>
-          <Button
-            asChild
-            size="sm"
-            className={cn("hidden gap-1.5 text-white sm:inline-flex")}
-            style={{ backgroundColor: module.accent.accent }}
-          >
-            {isEcommerce || module.renderer === "experience" ? (
-              <Link to={module.loginHref}>
-                Empezar <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            ) : isPocket ? (
-              <Link to="/login?mode=express">
-                Empezar <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            ) : (
-              <a href={SALES_WHATSAPP_URL} target="_blank" rel="noreferrer">
-                Solicitar demo <ArrowRight className="h-3.5 w-3.5" />
-              </a>
-            )}
-          </Button>
+          {module.renderer === "experience" ? (
+            <div className="hidden sm:block">
+              <DemoSurfacesDropdown
+                productId={productId}
+                accent={module.accent.accent}
+                size="sm"
+                label="Probar demo"
+                fallbackHref={`/?product=${productId}#planes`}
+              />
+            </div>
+          ) : (
+            <Button
+              asChild
+              size="sm"
+              className={cn("hidden gap-1.5 text-white sm:inline-flex")}
+              style={{ backgroundColor: module.accent.accent }}
+            >
+              {isEcommerce ? (
+                <Link to={module.loginHref}>
+                  Empezar <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              ) : isPocket ? (
+                <Link to="/login?mode=express">
+                  Empezar <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              ) : (
+                <Link to="/soluciones">
+                  Probar demo <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              )}
+            </Button>
+          )}
 
           <button
             type="button"
@@ -135,8 +150,8 @@ export function Header({ productId, onProductChange }: HeaderProps) {
                 Soluciones
               </Link>
             </li>
-            {NAV_LINKS.map((l) => (
-              <li key={l.href}>
+            {navLinks.map((l) => (
+              <li key={`${l.href}-${l.label}`}>
                 <a
                   href={l.href}
                   onClick={() => setMobileOpen(false)}
@@ -155,6 +170,18 @@ export function Header({ productId, onProductChange }: HeaderProps) {
                 Iniciar sesión
               </Link>
             </li>
+            {module.renderer === "experience" ? (
+              <li className="pt-2">
+                <DemoSurfacesDropdown
+                  productId={productId}
+                  accent={module.accent.accent}
+                  size="sm"
+                  label="Probar demo"
+                  className="w-full justify-center"
+                  fallbackHref={`/?product=${productId}#planes`}
+                />
+              </li>
+            ) : null}
           </ul>
         </div>
       )}

@@ -1,16 +1,8 @@
-import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LandingProductModule } from "../modules/landingModule.types";
 import { ExperienceDemo } from "../experiences/ExperienceDemo";
-import {
-  AntiConfusionBlock,
-  LayoutShell,
-  PricingAndFaqCta,
-  ScenarioBlock,
-  StoryBlock,
-  useLayoutChrome,
-} from "./layoutShared";
+import { ExperienceHeroCtas, LayoutShell, useLayoutChrome } from "./layoutShared";
+import { ExperienceBody } from "./ExperienceBody";
 
 export function PipelineLayout({ module }: { module: LandingProductModule }) {
   const { accent, displayClass, copy } = useLayoutChrome(module);
@@ -19,19 +11,21 @@ export function PipelineLayout({ module }: { module: LandingProductModule }) {
     <LayoutShell module={module}>
       <section id="hero" className="border-b border-black/5 py-16 md:py-20" style={{ background: accent.surface }}>
         <div className="mx-auto max-w-6xl px-6 text-center">
-          <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{copy.badge}</p>
+          <p
+            className="text-[11px] font-semibold uppercase tracking-[0.22em]"
+            style={{ color: accent.accent }}
+          >
+            {module.name}
+          </p>
+          <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-muted-foreground">{copy.badge}</p>
           <h1 className={cn(displayClass, "mx-auto mt-3 max-w-3xl text-[clamp(2.3rem,5vw,3.8rem)]")}>
             {copy.title}{" "}
             <span style={{ color: accent.accent }}>{copy.titleAccent}</span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-[15px] text-muted-foreground">{copy.body}</p>
-          <Link
-            to={module.loginHref}
-            className="mt-6 inline-flex items-center gap-2 rounded-xl px-5 py-3 text-[13px] font-semibold text-white"
-            style={{ backgroundColor: accent.accent }}
-          >
-            Abrir embudo <ArrowRight className="h-4 w-4" />
-          </Link>
+          <div className="flex justify-center">
+            <ExperienceHeroCtas module={module} primaryLabel="Probar embudo demo" />
+          </div>
         </div>
         <div className="mx-auto mt-10 max-w-4xl px-6">
           <ExperienceDemo
@@ -52,10 +46,7 @@ export function PipelineLayout({ module }: { module: LandingProductModule }) {
           ))}
         </ol>
       </section>
-      <StoryBlock module={module} />
-      <ScenarioBlock module={module} />
-      <AntiConfusionBlock module={module} />
-      <PricingAndFaqCta module={module} />
+      <ExperienceBody module={module} />
     </LayoutShell>
   );
 }

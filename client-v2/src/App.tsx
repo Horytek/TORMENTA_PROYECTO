@@ -105,6 +105,9 @@ const PurchaseInvoicesPage = lazy(() => import("@/features/purchases/pages/Purch
 const AccountsPayablePage = lazy(() => import("@/features/purchases/pages/AccountsPayablePage"));
 const AdvancesPage = lazy(() => import("@/features/purchases/pages/AdvancesPage"));
 const RegisterEcommercePage = lazy(() => import("@/features/ecommerce/pages/RegisterEcommercePage"));
+const RegisterPlatformPage = lazy(
+  () => import("@/features/registration/pages/RegisterPlatformPage")
+);
 const EcommerceAdminLayout = lazy(() =>
   import("@/features/ecommerce/components/EcommerceAdminLayout").then((m) => ({
     default: m.EcommerceAdminLayout,
@@ -240,6 +243,7 @@ export default function App() {
               <Route path="/contactanos" element={<ContactPage />} />
               <Route path="/registro" element={<RegisterPage />} />
               <Route path="/registro-ecommerce" element={<RegisterEcommercePage />} />
+              <Route path="/registro-plataforma" element={<RegisterPlatformPage />} />
               <Route path="/tienda/:slug" element={<StorefrontPage />} />
               <Route path="/tienda/:slug/producto/:id" element={<StoreProductPage />} />
               <Route path="/tienda/:slug/carrito" element={<StoreCartPage />} />
@@ -269,6 +273,13 @@ export default function App() {
                   <Route path="history" element={<ExpressSalesHistoryPage />} />
                 </Route>
               </Route>
+
+              {/* Admins de producto con JWT propio (no requieren sesión ERP) */}
+              <Route path="/taxi-admin" element={<TaxiAdminPage />} />
+              <Route path="/delivery-admin" element={<DeliveryAdminPage />} />
+              <Route path="/flotas-admin" element={<FlotasAdminPage />} />
+              <Route path="/academia-admin" element={<AcademiaAdminPage />} />
+              <Route path="/agenda-admin" element={<AgendaAdminPage />} />
 
               <Route path="/sobre-nosotros" element={<LandingSubPage pageId="sobre-nosotros" />} />
               <Route path="/equipo" element={<LandingSubPage pageId="equipo" />} />
@@ -302,11 +313,6 @@ export default function App() {
                   <Route path="/platform/campo" element={<CampoAdminPage />} />
                   <Route path="/platform/mantenimiento" element={<MantenimientoAdminPage />} />
                   <Route path="/platform/recluta" element={<ReclutaAdminPage />} />
-                  <Route path="/taxi-admin" element={<TaxiAdminPage />} />
-                  <Route path="/delivery-admin" element={<DeliveryAdminPage />} />
-                  <Route path="/flotas-admin" element={<FlotasAdminPage />} />
-                  <Route path="/academia-admin" element={<AcademiaAdminPage />} />
-                  <Route path="/agenda-admin" element={<AgendaAdminPage />} />
                   <Route
                     path="/products/costos"
                     element={<RequireCapability capability="productos.view"><CostosInicialesPage /></RequireCapability>}

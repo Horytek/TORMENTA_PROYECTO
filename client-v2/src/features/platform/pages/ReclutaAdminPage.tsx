@@ -10,6 +10,9 @@ import {
   patchReclutaPostulacion,
   setupReclutaPortal,
 } from "@/features/platform/api/platformProducts";
+import { PlatformShell } from "@/features/platform/ui/PlatformShell";
+import { StatusChip } from "@/features/platform/ui/StatusChip";
+import { EmptyState } from "@/features/platform/ui/EmptyState";
 
 type Vacante = { id_vacante: number; titulo: string; publicada: number; descripcion?: string };
 type Postulacion = {
@@ -60,30 +63,29 @@ export default function ReclutaAdminPage() {
     load();
   }, []);
 
-  if (loading) return <div className="p-8 text-sm text-muted-foreground">Cargando Recluta…</div>;
+  if (loading) {
+    return (
+      <PlatformShell productId="recluta" title="Recluta">
+        <p className="text-sm text-black/50">Cargando…</p>
+      </PlatformShell>
+    );
+  }
   if (error) {
     return (
-      <div className="p-8">
-        <h1 className="text-xl font-semibold">Recluta</h1>
-        <p className="mt-3 text-sm text-destructive" role="alert">
+      <PlatformShell productId="recluta" title="Recluta">
+        <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
-      </div>
+      </PlatformShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 p-6 md:p-8">
-      <header>
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          Plataforma · Oleada E
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Recluta</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Vacantes y etapas de selección. Portal: <code>/recluta/&#123;slug&#125;</code>.
-        </p>
-      </header>
-
+    <PlatformShell
+      productId="recluta"
+      title="Recluta"
+      subtitle="Vacantes y etapas de selección. Portal: /recluta/{slug}"
+    >
       <section className="grid gap-8 md:grid-cols-2">
         <form
           className="space-y-3 border-b border-border/60 pb-6"
@@ -143,15 +145,13 @@ export default function ReclutaAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Vacantes</h2>
         {vacantes.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Aún no hay vacantes.</p>
+          <EmptyState title="Aún no hay vacantes" />
         ) : (
           <ul className="mt-3 divide-y divide-border/60 text-sm">
             {vacantes.map((v) => (
-              <li key={v.id_vacante} className="py-2">
-                {v.titulo}
-                {!v.publicada && (
-                  <span className="ml-2 text-xs text-muted-foreground">borrador</span>
-                )}
+              <li key={v.id_vacante} className="flex items-center justify-between gap-2 py-2">
+                <span>{v.titulo}</span>
+                <StatusChip status={v.publicada ? "ok" : "pendiente"} />
               </li>
             ))}
           </ul>
@@ -161,7 +161,7 @@ export default function ReclutaAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Postulaciones</h2>
         {postulaciones.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Sin postulaciones.</p>
+          <EmptyState title="Sin postulaciones" />
         ) : (
           <ul className="mt-3 space-y-2 text-sm">
             {postulaciones.map((p) => (
@@ -169,9 +169,12 @@ export default function ReclutaAdminPage() {
                 key={p.id_postulacion}
                 className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/50 px-3 py-2"
               >
-                <span>
-                  {p.nombre} <span className="text-muted-foreground">({p.email})</span>
-                </span>
+                <div className="flex items-center gap-2">
+                  <span>
+                    {p.nombre} <span className="text-muted-foreground">({p.email})</span>
+                  </span>
+                  <StatusChip status={p.etapa} />
+                </div>
                 <select
                   className="h-8 rounded-md border border-input bg-transparent px-2 text-xs"
                   value={p.etapa}
@@ -199,6 +202,6 @@ export default function ReclutaAdminPage() {
           </ul>
         )}
       </section>
-    </div>
+    </PlatformShell>
   );
 }

@@ -163,9 +163,9 @@ function fallbackModule(productId: string): LandingProductModule {
         { n: "03", title: "Escala", body: "Suma bundles cuando haga falta." },
       ],
       faqs: [
-        { q: "¿Dónde empiezo?", a: "Ingresa con el modo de login del producto." },
-        { q: "¿Hay ficha?", a: `Sí: /soluciones/${p?.slug ?? productId}` },
-        { q: "¿Demo?", a: "Escríbenos por WhatsApp." },
+        { q: "¿Dónde empiezo?", a: "Elige un plan en la landing o entra con el modo de login del producto." },
+        { q: "¿Dónde está la landing?", a: `/?product=${productId}` },
+        { q: "¿Demo?", a: "Usa Probar demo en la landing o el acceso demo en /login." },
       ],
       notIncludes: p?.notIncludes ?? [],
     },

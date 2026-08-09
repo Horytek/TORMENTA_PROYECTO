@@ -8,13 +8,18 @@ import {
   createCrmDeal,
   getCrmStatus,
   listCrmDeals,
+  moveCrmDeal,
 } from "@/features/platform/api/platformProducts";
+import { PlatformShell } from "@/features/platform/ui/PlatformShell";
+import { StatusChip } from "@/features/platform/ui/StatusChip";
+import { EmptyState } from "@/features/platform/ui/EmptyState";
 
 type Deal = {
   id_deal: number;
   titulo: string;
   monto: number;
   estado: string;
+  id_etapa?: number;
 };
 
 function errMsg(e: unknown, fallback: string) {
@@ -55,32 +60,29 @@ export default function CrmAdminPage() {
     load();
   }, []);
 
-  if (loading) return <div className="p-8 text-sm text-muted-foreground">Cargando CRM…</div>;
+  if (loading) {
+    return (
+      <PlatformShell productId="crm" title="CRM">
+        <p className="text-sm text-black/50">Cargando…</p>
+      </PlatformShell>
+    );
+  }
   if (error) {
     return (
-      <div className="p-8">
-        <h1 className="text-xl font-semibold">CRM</h1>
-        <p className="mt-3 text-sm text-destructive" role="alert">
+      <PlatformShell productId="crm" title="CRM">
+        <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
-      </div>
+      </PlatformShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 p-6 md:p-8">
-      <header>
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          Plataforma · Oleada B
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">CRM</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Pipeline comercial y actividades. No reemplaza el master de clientes del ERP.
-        </p>
-        {status && (
-          <p className="mt-3 text-xs text-muted-foreground">{status.deals ?? deals.length} deals</p>
-        )}
-      </header>
+    <PlatformShell
+      productId="crm"
+      title="Pipeline comercial"
+      subtitle={`${status?.deals ?? deals.length} deals · no reemplaza clientes del ERP`}
+    >
 
       <section className="grid gap-8 md:grid-cols-2">
         <form
@@ -157,21 +159,47 @@ export default function CrmAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Deals</h2>
         {deals.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Aún no hay deals.</p>
+          <EmptyState title="Aún no hay deals" body="Crea el primero con el formulario." />
         ) : (
-          <ul className="mt-3 divide-y divide-border/60 text-sm">
+          <ul className="mt-3 space-y-2 text-sm">
             {deals.map((d) => (
-              <li key={d.id_deal} className="flex justify-between py-2">
+              <li
+                key={d.id_deal}
+                className="flex flex-wrap items-center justify-between gap-2 bg-white/70 px-3 py-2"
+              >
                 <span>
                   {d.titulo}{" "}
-                  <span className="text-muted-foreground">S/ {Number(d.monto).toFixed(2)}</span>
+                  <span className="text-black/45">S/ {Number(d.monto).toFixed(2)}</span>
                 </span>
-                <span className="text-xs uppercase text-muted-foreground">{d.estado}</span>
+                <div className="flex items-center gap-2">
+                  <StatusChip status={d.estado} />
+                  {d.estado === "abierto" && d.id_etapa != null ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={async () => {
+                        try {
+                          const res = await moveCrmDeal(d.id_deal, {
+                            id_etapa: Number(d.id_etapa),
+                            estado: "ganado",
+                          });
+                          if (!res.success) throw new Error(res.message);
+                          toast.success("Marcado ganado");
+                          await load();
+                        } catch (err: unknown) {
+                          toast.error(errMsg(err, "Error"));
+                        }
+                      }}
+                    >
+                      Ganado
+                    </Button>
+                  ) : null}
+                </div>
               </li>
             ))}
           </ul>
         )}
       </section>
-    </div>
+    </PlatformShell>
   );
 }

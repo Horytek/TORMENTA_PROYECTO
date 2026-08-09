@@ -13,6 +13,9 @@ import {
   listMayoristaTiendas,
   updateMayoristaPedidoEstado,
 } from "@/features/platform/api/mayorista";
+import { PlatformShell } from "@/features/platform/ui/PlatformShell";
+import { StatusChip } from "@/features/platform/ui/StatusChip";
+import { EmptyState } from "@/features/platform/ui/EmptyState";
 
 type Tienda = { id_tienda: number; slug: string; nombre: string; activo: number };
 type Lista = { id_lista: number; id_tienda: number; nombre: string; tienda_slug: string };
@@ -76,33 +79,29 @@ export default function MayoristaAdminPage() {
   }, []);
 
   if (loading) {
-    return <div className="p-8 text-sm text-muted-foreground">Cargando Mayorista…</div>;
+    return (
+      <PlatformShell productId="mayorista" title="Mayorista B2B">
+        <p className="text-sm text-black/50">Cargando…</p>
+      </PlatformShell>
+    );
   }
 
   if (error) {
     return (
-      <div className="p-8">
-        <h1 className="text-xl font-semibold">Mayorista</h1>
-        <p className="mt-3 text-sm text-destructive" role="alert">
+      <PlatformShell productId="mayorista" title="Mayorista B2B">
+        <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
-      </div>
+      </PlatformShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 p-6 md:p-8">
-      <header>
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          Plataforma · Oleada A
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Mayorista B2B</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Portales cerrados, listas por volumen y pedidos. BD propia <code>db_mayorista</code>.
-          El comprador entra en <code>/b2b/&#123;slug&#125;</code>.
-        </p>
-      </header>
-
+    <PlatformShell
+      productId="mayorista"
+      title="Mayorista B2B"
+      subtitle="Portales cerrados, listas por volumen y pedidos. Comprador: /b2b/{slug}"
+    >
       <section className="grid gap-8 lg:grid-cols-2">
         <form
           className="space-y-3 border-b border-border/60 pb-6"
@@ -306,7 +305,7 @@ export default function MayoristaAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Portales</h2>
         {tiendas.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Crea el primer portal arriba.</p>
+          <EmptyState title="Crea el primer portal" body="Usa el formulario de arriba." />
         ) : (
           <ul className="mt-3 divide-y divide-border/60 text-sm">
             {tiendas.map((t) => (
@@ -317,6 +316,7 @@ export default function MayoristaAdminPage() {
                     /b2b/{t.slug}
                   </a>
                 </span>
+                <StatusChip status={t.activo ? "ok" : "cancelado"} />
               </li>
             ))}
           </ul>
@@ -326,7 +326,7 @@ export default function MayoristaAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Pedidos</h2>
         {pedidos.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Sin pedidos todavía.</p>
+          <EmptyState title="Sin pedidos todavía" />
         ) : (
           <ul className="mt-3 space-y-2 text-sm">
             {pedidos.map((p) => (
@@ -336,8 +336,11 @@ export default function MayoristaAdminPage() {
                     #{p.id_pedido} · {p.razon_social}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {p.email} · S/ {Number(p.total).toFixed(2)} · {p.estado}
+                    {p.email} · S/ {Number(p.total).toFixed(2)}
                   </p>
+                  <div className="mt-1">
+                    <StatusChip status={p.estado} />
+                  </div>
                 </div>
                 <div className="flex gap-1">
                   {["confirmado", "rechazado", "despachado"].map((estado) => (
@@ -365,6 +368,6 @@ export default function MayoristaAdminPage() {
           </ul>
         )}
       </section>
-    </div>
+    </PlatformShell>
   );
 }

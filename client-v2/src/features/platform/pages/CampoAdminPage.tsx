@@ -8,6 +8,9 @@ import {
   listCampoCheckins,
   listCampoVendedores,
 } from "@/features/platform/api/platformProducts";
+import { PlatformShell } from "@/features/platform/ui/PlatformShell";
+import { StatusChip } from "@/features/platform/ui/StatusChip";
+import { EmptyState } from "@/features/platform/ui/EmptyState";
 
 type Vendedor = { id_vendedor: number; nombre: string; activo: number };
 type Checkin = {
@@ -55,30 +58,29 @@ export default function CampoAdminPage() {
     load();
   }, []);
 
-  if (loading) return <div className="p-8 text-sm text-muted-foreground">Cargando Campo…</div>;
+  if (loading) {
+    return (
+      <PlatformShell productId="campo" title="Campo">
+        <p className="text-sm text-black/50">Cargando…</p>
+      </PlatformShell>
+    );
+  }
   if (error) {
     return (
-      <div className="p-8">
-        <h1 className="text-xl font-semibold">Campo</h1>
-        <p className="mt-3 text-sm text-destructive" role="alert">
+      <PlatformShell productId="campo" title="Campo">
+        <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
-      </div>
+      </PlatformShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 p-6 md:p-8">
-      <header>
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          Plataforma · Oleada E
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Campo</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Asistencias GPS de fuerza de ventas. App vendedor: <code>/campo/vendedor</code>.
-        </p>
-      </header>
-
+    <PlatformShell
+      productId="campo"
+      title="Campo"
+      subtitle="Asistencias GPS de fuerza de ventas. App vendedor: /campo/vendedor"
+    >
       <form
         className="max-w-md space-y-3 border-b border-border/60 pb-6"
         onSubmit={async (e) => {
@@ -108,13 +110,13 @@ export default function CampoAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Vendedores</h2>
         {vendedores.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Aún no hay vendedores.</p>
+          <EmptyState title="Aún no hay vendedores" />
         ) : (
           <ul className="mt-3 divide-y divide-border/60 text-sm">
             {vendedores.map((v) => (
               <li key={v.id_vendedor} className="flex justify-between py-2">
                 <span>{v.nombre}</span>
-                <span className="text-xs text-muted-foreground">{v.activo ? "activo" : "off"}</span>
+                <StatusChip status={v.activo ? "ok" : "cancelado"} />
               </li>
             ))}
           </ul>
@@ -124,7 +126,7 @@ export default function CampoAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Check-ins recientes</h2>
         {checkins.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Sin check-ins.</p>
+          <EmptyState title="Sin check-ins" />
         ) : (
           <ul className="mt-3 space-y-2 text-sm">
             {checkins.slice(0, 30).map((c) => (
@@ -141,6 +143,6 @@ export default function CampoAdminPage() {
           </ul>
         )}
       </section>
-    </div>
+    </PlatformShell>
   );
 }

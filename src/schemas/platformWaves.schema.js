@@ -186,6 +186,7 @@ export const operatorBootstrapSchema = z.object({
   nombre: z.string().min(2).max(160),
   email: z.string().email().max(160),
   password: z.string().min(6).max(100),
+  plan: z.string().min(1).max(64).optional(),
 });
 
 export const operatorLoginSchema = z.object({
@@ -216,6 +217,21 @@ export const taxiConductorSchema = z.object({
   nombre: z.string().min(2).max(120),
   telefono: z.string().max(32).optional().nullable(),
   password: z.string().min(6).max(100),
+});
+
+export const taxiPasajeroRegisterSchema = z.object({
+  slug: z.string().min(2).max(80),
+  nombre: z.string().min(2).max(120),
+  telefono: z.string().min(6).max(32),
+  password: z.string().min(6).max(100),
+});
+
+export const taxiConductorPatchSchema = z.object({
+  estado: z.enum(["asignado", "en_curso", "finalizado", "cancelado"]),
+});
+
+export const deliveryRepartidorPatchSchema = z.object({
+  estado: z.enum(["asignado", "en_camino", "entregado", "cancelado"]),
 });
 
 export const taxiPasajeroSchema = z.object({

@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   createCampoCheckin,
   listCampoVendedores,
 } from "@/features/platform/api/platformProducts";
+import { getDemoPortalCreds } from "@/features/platform/demo/demoPortalCreds";
+import { useDemoAutoEnter } from "@/features/platform/demo/useDemoAutoEnter";
+import { OpsShell } from "@/features/platform/ui/OpsShell";
+import { portalButtonClass, portalInputClass } from "@/features/platform/ui/portalTouch";
 
 type Vendedor = { id_vendedor: number; nombre: string };
 
@@ -22,12 +26,14 @@ function errMsg(e: unknown, fallback: string) {
 }
 
 export default function CampoVendedorPage() {
-  const [unlocked, setUnlocked] = useState(
+  const demo = getDemoPortalCreds("campo", "vendedor");
+  const [hadUnlock] = useState(() =>
     Boolean(sessionStorage.getItem(PIN_KEY) && sessionStorage.getItem(VEND_KEY))
   );
+  const [unlocked, setUnlocked] = useState(hadUnlock);
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
+  const [vendorsReady, setVendorsReady] = useState(false);
   const [idVendedor, setIdVendedor] = useState(sessionStorage.getItem(VEND_KEY) || "");
-  const [pinInput, setPinInput] = useState("");
   const [nota, setNota] = useState("");
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [sending, setSending] = useState(false);
@@ -35,10 +41,26 @@ export default function CampoVendedorPage() {
   useEffect(() => {
     listCampoVendedores()
       .then((res) => {
-        if (res.success) setVendedores(res.data || []);
+        if (!res.success) return;
+        setVendedores(res.data || []);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setVendorsReady(true));
   }, []);
+
+  const autoPhase = useDemoAutoEnter(Boolean(demo) && !hadUnlock && vendorsReady, async () => {
+    if (!demo?.pin || demo.pin.length < 4) throw new Error("Sin PIN demo");
+    let vendId = "";
+    if (demo.nombre) {
+      const match = vendedores.find((v) => v.nombre === demo.nombre);
+      if (match) vendId = String(match.id_vendedor);
+    }
+    if (!vendId) throw new Error("Sin vendedor demo");
+    sessionStorage.setItem(PIN_KEY, demo.pin);
+    sessionStorage.setItem(VEND_KEY, vendId);
+    setIdVendedor(vendId);
+    setUnlocked(true);
+  });
 
   useEffect(() => {
     if (!unlocked || !navigator.geolocation) return;
@@ -49,78 +71,30 @@ export default function CampoVendedorPage() {
   }, [unlocked]);
 
   if (!unlocked) {
-    return (
-      <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
-        <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
-          Campo · Vendedor
-        </p>
-        <h1 className="mt-2 text-xl font-semibold">Check-in</h1>
-        <form
-          className="mt-6 space-y-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!idVendedor || pinInput.length < 4) {
-              toast.error("Elige vendedor y PIN");
-              return;
-            }
-            sessionStorage.setItem(PIN_KEY, pinInput);
-            sessionStorage.setItem(VEND_KEY, idVendedor);
-            setUnlocked(true);
-          }}
-        >
-          <Label>Vendedor</Label>
-          <select
-            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
-            value={idVendedor}
-            onChange={(e) => setIdVendedor(e.target.value)}
-            required
-          >
-            <option value="">Seleccionar…</option>
-            {vendedores.map((v) => (
-              <option key={v.id_vendedor} value={v.id_vendedor}>
-                {v.nombre}
-              </option>
-            ))}
-          </select>
-          <Label>PIN</Label>
-          <Input
-            type="password"
-            inputMode="numeric"
-            value={pinInput}
-            onChange={(e) => setPinInput(e.target.value)}
-            required
-          />
-          <Button type="submit" className="w-full">
-            Entrar
-          </Button>
-        </form>
-      </div>
-    );
+    if (!vendorsReady || autoPhase === "entering") {
+      return (
+        <div className="flex min-h-dvh items-center justify-center p-12 text-center text-sm text-muted-foreground">
+          {autoPhase === "entering" ? "Entrando a la demo…" : "Cargando…"}
+        </div>
+      );
+    }
+    return <Navigate to="/login?mode=campo" replace />;
   }
 
   return (
-    <div className="mx-auto max-w-sm space-y-8 p-6">
-      <header className="flex justify-between">
-        <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Campo
-          </p>
-          <h1 className="mt-1 text-xl font-semibold">Marcar asistencia</h1>
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            sessionStorage.removeItem(PIN_KEY);
-            sessionStorage.removeItem(VEND_KEY);
-            setUnlocked(false);
-          }}
-        >
-          Salir
-        </Button>
-      </header>
-
-      <p className="text-sm text-muted-foreground">
+    <OpsShell
+      productId="campo"
+      companyName="Operador Demo Campo"
+      roleLabel="Vendedor"
+      title="Marcar asistencia"
+      width="narrow"
+      onLogout={() => {
+        sessionStorage.removeItem(PIN_KEY);
+        sessionStorage.removeItem(VEND_KEY);
+        setUnlocked(false);
+      }}
+    >
+      <p className="text-sm text-black/55">
         {coords
           ? `Ubicación: ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`
           : "Obteniendo GPS…"}
@@ -153,11 +127,16 @@ export default function CampoVendedorPage() {
           }
         }}
       >
-        <Input placeholder="Nota (opcional)" value={nota} onChange={(e) => setNota(e.target.value)} />
-        <Button type="submit" className="w-full" disabled={sending || !coords}>
+        <Input
+          className={portalInputClass}
+          placeholder="Nota (opcional)"
+          value={nota}
+          onChange={(e) => setNota(e.target.value)}
+        />
+        <Button type="submit" className={portalButtonClass} disabled={sending || !coords}>
           {sending ? "Enviando…" : "Marcar check-in"}
         </Button>
       </form>
-    </div>
+    </OpsShell>
   );
 }

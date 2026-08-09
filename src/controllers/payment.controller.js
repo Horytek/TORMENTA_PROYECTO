@@ -7,6 +7,7 @@ import { Resend } from "resend";
 import PDFDocument from "pdfkit";
 import { isDeveloperReq } from "../middlewares/authorize.middleware.js";
 import { activateEcommerceFromPayment } from "./ecommerce.controller.js";
+import { activatePlatformOperatorFromPayment } from "./platformWaves.controller.js";
 dotenv.config();
 
 const client = new MercadoPagoConfig({
@@ -319,6 +320,41 @@ export const paymentWebhook = async (req, res) => {
         } catch (err) {
           console.error("Ecommerce webhook activation error:", err);
           try { await connection.rollback(); } catch { /* noop */ }
+          return res.sendStatus(200);
+        }
+      }
+
+      // Platform operators: taxi:12 | delivery:3 | flotas:… | academia:… | agenda:…
+      if (/^(taxi|delivery|flotas|academia|agenda):\d+$/i.test(String(externalReference))) {
+        try {
+          await connection.beginTransaction();
+          const [[locked]] = await connection.query(
+            "SELECT status FROM mp_payments WHERE mp_payment_id = ? LIMIT 1 FOR UPDATE",
+            [payment.id]
+          );
+          const alreadyApproved = String(locked?.status || "").toLowerCase() === "approved";
+          try {
+            await saveMPPayment(connection, 0, payment);
+          } catch {
+            /* noop */
+          }
+          if (!alreadyApproved) {
+            const planFromTitle = payment?.additional_info?.items?.[0]?.id || payment?.description;
+            await activatePlatformOperatorFromPayment({
+              externalReference,
+              payment,
+              planFlag: planFromTitle || "platform",
+            });
+          }
+          await connection.commit();
+          return res.sendStatus(200);
+        } catch (err) {
+          console.error("Platform operator webhook activation error:", err);
+          try {
+            await connection.rollback();
+          } catch {
+            /* noop */
+          }
           return res.sendStatus(200);
         }
       }

@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  bootstrapAgenda,
   createAgendaSlot,
   getAgendaToken,
   listAgendaReservas,
   listAgendaSlots,
-  loginAgendaAdmin,
   setAgendaToken,
 } from "@/features/platform/api/agenda";
+import { PlatformShell } from "@/features/platform/ui/PlatformShell";
+import { StatusChip } from "@/features/platform/ui/StatusChip";
+import { EmptyState } from "@/features/platform/ui/EmptyState";
 
 type Slot = {
   id_slot: number;
@@ -38,11 +40,6 @@ function errMsg(e: unknown, fallback: string) {
 
 export default function AgendaAdminPage() {
   const [session, setSession] = useState(Boolean(getAgendaToken()));
-  const [mode, setMode] = useState<"login" | "bootstrap">("login");
-  const [slug, setSlug] = useState("");
-  const [nombre, setNombre] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [slots, setSlots] = useState<Slot[]>([]);
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [loading, setLoading] = useState(false);
@@ -73,99 +70,34 @@ export default function AgendaAdminPage() {
   }, [session]);
 
   if (!session) {
-    return (
-      <div className="mx-auto max-w-md space-y-6 p-6 md:p-8">
-        <header>
-          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Agenda · Admin
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold">
-            {mode === "login" ? "Iniciar sesión" : "Crear profesional"}
-          </h1>
-        </header>
-        <form
-          className="space-y-3"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            try {
-              const res =
-                mode === "bootstrap"
-                  ? await bootstrapAgenda({ slug, nombre, email, password })
-                  : await loginAgendaAdmin({ slug, email, password });
-              if (!res.success) throw new Error(res.message);
-              if (res.data?.token) setAgendaToken(res.data.token);
-              setSession(true);
-            } catch (err: unknown) {
-              toast.error(errMsg(err, "Error"));
-            }
-          }}
-        >
-          <Label>Slug</Label>
-          <Input value={slug} onChange={(e) => setSlug(e.target.value)} required />
-          {mode === "bootstrap" && (
-            <>
-              <Label>Nombre</Label>
-              <Input value={nombre} onChange={(e) => setNombre(e.target.value)} required />
-            </>
-          )}
-          <Label>Email</Label>
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-          <Label>Contraseña</Label>
-          <Input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <Button type="submit" className="w-full">
-            {mode === "bootstrap" ? "Crear" : "Entrar"}
-          </Button>
-        </form>
-        <button
-          type="button"
-          className="text-sm text-muted-foreground underline"
-          onClick={() => setMode(mode === "login" ? "bootstrap" : "login")}
-        >
-          {mode === "login" ? "¿Primera vez? Crear profesional" : "Ya tengo cuenta"}
-        </button>
-      </div>
-    );
+    return <Navigate to="/login?mode=agenda" replace />;
   }
 
-  if (loading) return <div className="p-8 text-sm text-muted-foreground">Cargando Agenda…</div>;
+  if (loading && slots.length === 0 && !error) {
+    return (
+      <PlatformShell productId="agenda" title="Agenda">
+        <p className="text-sm text-black/50">Cargando…</p>
+      </PlatformShell>
+    );
+  }
   if (error) {
     return (
-      <div className="p-8">
-        <h1 className="text-xl font-semibold">Agenda</h1>
-        <p className="mt-3 text-sm text-destructive">{error}</p>
-      </div>
+      <PlatformShell productId="agenda" title="Agenda">
+        <p className="text-sm text-destructive">{error}</p>
+      </PlatformShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 p-6 md:p-8">
-      <header className="flex justify-between">
-        <div>
-          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-            Plataforma · Oleada E
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">Agenda</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Público: <code>/agenda/&#123;slug&#125;</code>
-          </p>
-        </div>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => {
-            setAgendaToken(null);
-            setSession(false);
-          }}
-        >
-          Salir
-        </Button>
-      </header>
-
+    <PlatformShell
+      productId="agenda"
+      title="Agenda"
+      subtitle="Público: /agenda/{slug}"
+      onLogout={() => {
+        setAgendaToken(null);
+        setSession(false);
+      }}
+    >
       <form
         className="max-w-md space-y-3 border-b border-border/60 pb-6"
         onSubmit={async (e) => {
@@ -215,7 +147,7 @@ export default function AgendaAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Slots</h2>
         {slots.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Sin slots.</p>
+          <EmptyState title="Sin slots" />
         ) : (
           <ul className="mt-3 divide-y divide-border/60 text-sm">
             {slots.map((s) => (
@@ -223,9 +155,10 @@ export default function AgendaAdminPage() {
                 <span>
                   {s.inicia_en} · {s.minutos} min
                 </span>
-                <span className="text-muted-foreground">
-                  S/ {Number(s.precio).toFixed(2)} · {s.disponible ? "libre" : "ocupado"}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">S/ {Number(s.precio).toFixed(2)}</span>
+                  <StatusChip status={s.disponible ? "libre" : "ocupado"} />
+                </div>
               </li>
             ))}
           </ul>
@@ -235,7 +168,7 @@ export default function AgendaAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Reservas</h2>
         {reservas.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Sin reservas.</p>
+          <EmptyState title="Sin reservas" />
         ) : (
           <ul className="mt-3 divide-y divide-border/60 text-sm">
             {reservas.map((r) => (
@@ -243,12 +176,12 @@ export default function AgendaAdminPage() {
                 <span>
                   {r.cliente_nombre} · {r.cliente_email}
                 </span>
-                <span className="text-xs uppercase text-muted-foreground">{r.estado_pago}</span>
+                <StatusChip status={r.estado_pago} />
               </li>
             ))}
           </ul>
         )}
       </section>
-    </div>
+    </PlatformShell>
   );
 }

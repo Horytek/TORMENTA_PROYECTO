@@ -12,6 +12,9 @@ import {
   listSyncJobs,
   listSyncMapeos,
 } from "@/features/platform/api/stockSync";
+import { PlatformShell } from "@/features/platform/ui/PlatformShell";
+import { StatusChip } from "@/features/platform/ui/StatusChip";
+import { EmptyState } from "@/features/platform/ui/EmptyState";
 
 type Canal = { id_canal: number; codigo: string; nombre: string; activo: number };
 type Mapeo = {
@@ -115,38 +118,33 @@ export default function SyncStockAdminPage() {
   };
 
   if (loading) {
-    return <div className="p-8 text-sm text-muted-foreground">Cargando Sync Stock…</div>;
+    return (
+      <PlatformShell productId="sync" title="Sync Stock">
+        <p className="text-sm text-black/50">Cargando…</p>
+      </PlatformShell>
+    );
   }
 
   if (error) {
     return (
-      <div className="p-8">
-        <h1 className="text-xl font-semibold">Sync Stock</h1>
-        <p className="mt-3 text-sm text-destructive" role="alert">
+      <PlatformShell productId="sync" title="Sync Stock">
+        <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
-      </div>
+      </PlatformShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 p-6 md:p-8">
-      <header>
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          Plataforma · Oleada A
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Sync Stock</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Unifica stock entre canales sin sobrevender. La cantidad maestra vive en ERP/Ecommerce;
-          aquí solo mapeos, colas y logs (BD <code>db_sync</code>).
-        </p>
-        {status && (
-          <p className="mt-3 text-xs text-muted-foreground">
-            {status.canales} canales · {status.mapeos} mapeos · {status.jobs} jobs
-          </p>
-        )}
-      </header>
-
+    <PlatformShell
+      productId="sync"
+      title="Sync Stock"
+      subtitle={
+        status
+          ? `${status.canales} canales · ${status.mapeos} mapeos · ${status.jobs} jobs`
+          : "Unifica stock entre canales sin sobrevender"
+      }
+    >
       <section className="grid gap-8 md:grid-cols-2">
         <form onSubmit={onCreateCanal} className="space-y-3 border-b border-border/60 pb-6">
           <h2 className="text-sm font-semibold">Nuevo canal</h2>
@@ -218,7 +216,7 @@ export default function SyncStockAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Canales</h2>
         {canales.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Aún no hay canales. Crea el primero arriba.</p>
+          <EmptyState title="Aún no hay canales" body="Crea el primero arriba." />
         ) : (
           <ul className="mt-3 divide-y divide-border/60 text-sm">
             {canales.map((c) => (
@@ -226,7 +224,7 @@ export default function SyncStockAdminPage() {
                 <span>
                   {c.nombre} <span className="text-muted-foreground">({c.codigo})</span>
                 </span>
-                <span className="text-xs text-muted-foreground">{c.activo ? "activo" : "off"}</span>
+                <StatusChip status={c.activo ? "ok" : "pendiente"} />
               </li>
             ))}
           </ul>
@@ -236,7 +234,7 @@ export default function SyncStockAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Mapeos</h2>
         {mapeos.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Sin mapeos todavía.</p>
+          <EmptyState title="Sin mapeos todavía" />
         ) : (
           <ul className="mt-3 divide-y divide-border/60 text-sm">
             {mapeos.map((m) => (
@@ -254,7 +252,7 @@ export default function SyncStockAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Jobs recientes</h2>
         {jobs.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Sin jobs.</p>
+          <EmptyState title="Sin jobs" />
         ) : (
           <ul className="mt-3 space-y-2 text-sm">
             {jobs.slice(0, 20).map((j) => (
@@ -263,7 +261,7 @@ export default function SyncStockAdminPage() {
                   <span className="font-medium">
                     #{j.id_job} · {j.tipo}
                   </span>
-                  <span className="text-xs uppercase text-muted-foreground">{j.estado}</span>
+                  <StatusChip status={j.estado} />
                 </div>
                 {j.mensaje && <p className="mt-1 text-xs text-muted-foreground">{j.mensaje}</p>}
               </li>
@@ -271,6 +269,6 @@ export default function SyncStockAdminPage() {
           </ul>
         )}
       </section>
-    </div>
+    </PlatformShell>
   );
 }

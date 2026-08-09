@@ -5,7 +5,7 @@
  */
 const KEY = "horytek_pending_payment_flow";
 
-export type PaymentFlow = "erp" | "pocket" | "ecommerce";
+export type PaymentFlow = "erp" | "pocket" | "ecommerce" | "platform";
 
 export const setPendingPaymentFlow = (flow: PaymentFlow) => sessionStorage.setItem(KEY, flow);
 export const getPendingPaymentFlow = (): PaymentFlow | null =>

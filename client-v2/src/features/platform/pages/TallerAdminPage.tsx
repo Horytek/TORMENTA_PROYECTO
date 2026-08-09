@@ -9,6 +9,9 @@ import {
   getTallerStatus,
   listTallerOrdenes,
 } from "@/features/platform/api/platformProducts";
+import { PlatformShell } from "@/features/platform/ui/PlatformShell";
+import { StatusChip } from "@/features/platform/ui/StatusChip";
+import { EmptyState } from "@/features/platform/ui/EmptyState";
 
 type Orden = {
   id_ot: number;
@@ -59,34 +62,28 @@ export default function TallerAdminPage() {
   }, []);
 
   if (loading) {
-    return <div className="p-8 text-sm text-muted-foreground">Cargando Taller…</div>;
+    return (
+      <PlatformShell productId="taller" title="Taller">
+        <p className="text-sm text-black/50">Cargando…</p>
+      </PlatformShell>
+    );
   }
   if (error) {
     return (
-      <div className="p-8">
-        <h1 className="text-xl font-semibold">Taller</h1>
-        <p className="mt-3 text-sm text-destructive" role="alert">
+      <PlatformShell productId="taller" title="Taller">
+        <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
-      </div>
+      </PlatformShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 p-6 md:p-8">
-      <header>
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          Plataforma · Oleada B
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Taller</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Órdenes de trabajo, insumos y mermas. Planta: <code>/taller/planta</code>.
-        </p>
-        {status && (
-          <p className="mt-3 text-xs text-muted-foreground">{status.ordenes ?? ordenes.length} OT</p>
-        )}
-      </header>
-
+    <PlatformShell
+      productId="taller"
+      title="Taller"
+      subtitle={`Órdenes de trabajo · planta: /taller/planta · ${status?.ordenes ?? ordenes.length} OT`}
+    >
       <section className="grid gap-8 md:grid-cols-2">
         <form
           className="space-y-3 border-b border-border/60 pb-6"
@@ -187,7 +184,7 @@ export default function TallerAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Órdenes de trabajo</h2>
         {ordenes.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Aún no hay OT. Crea la primera arriba.</p>
+          <EmptyState title="Aún no hay OT" body="Crea la primera arriba." />
         ) : (
           <ul className="mt-3 divide-y divide-border/60 text-sm">
             {ordenes.map((o) => (
@@ -195,12 +192,12 @@ export default function TallerAdminPage() {
                 <span>
                   <span className="font-medium">{o.codigo}</span> — {o.titulo}
                 </span>
-                <span className="text-xs uppercase text-muted-foreground">{o.estado}</span>
+                <StatusChip status={o.estado} />
               </li>
             ))}
           </ul>
         )}
       </section>
-    </div>
+    </PlatformShell>
   );
 }

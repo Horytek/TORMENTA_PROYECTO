@@ -1,16 +1,8 @@
-import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LandingProductModule } from "../modules/landingModule.types";
 import { ExperienceDemo } from "../experiences/ExperienceDemo";
-import {
-  AntiConfusionBlock,
-  LayoutShell,
-  PricingAndFaqCta,
-  ScenarioBlock,
-  StoryBlock,
-  useLayoutChrome,
-} from "./layoutShared";
+import { ExperienceHeroCtas, LayoutShell, useLayoutChrome } from "./layoutShared";
+import { ExperienceBody } from "./ExperienceBody";
 
 export function CommerceLayout({ module }: { module: LandingProductModule }) {
   const { accent, displayClass, copy } = useLayoutChrome(module);
@@ -21,7 +13,13 @@ export function CommerceLayout({ module }: { module: LandingProductModule }) {
         <div className="mx-auto flex max-w-6xl flex-col gap-10 px-6 py-16 md:py-24 lg:flex-row lg:items-stretch">
           <div className="flex flex-1 flex-col justify-center">
             <p
-              className="w-fit rounded-md px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white"
+              className="text-[11px] font-semibold uppercase tracking-[0.22em]"
+              style={{ color: accent.accent }}
+            >
+              {module.name}
+            </p>
+            <p
+              className="mt-2 w-fit rounded-md px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white"
               style={{ backgroundColor: accent.accent }}
             >
               {copy.badge}
@@ -31,13 +29,7 @@ export function CommerceLayout({ module }: { module: LandingProductModule }) {
               <span className="block text-muted-foreground">{copy.titleAccent}</span>
             </h1>
             <p className="mt-4 max-w-md text-[15px] text-muted-foreground">{copy.body}</p>
-            <Link
-              to={module.loginHref}
-              className="mt-6 inline-flex w-fit items-center gap-2 rounded-xl px-5 py-3 text-[13px] font-semibold text-white"
-              style={{ backgroundColor: accent.accent }}
-            >
-              Empezar <ArrowRight className="h-4 w-4" />
-            </Link>
+            <ExperienceHeroCtas module={module} primaryLabel="Probar comercio demo" />
           </div>
           <div className="flex-1">
             <ExperienceDemo
@@ -66,10 +58,7 @@ export function CommerceLayout({ module }: { module: LandingProductModule }) {
           </div>
         ) : null}
       </section>
-      <StoryBlock module={module} />
-      <ScenarioBlock module={module} />
-      <AntiConfusionBlock module={module} />
-      <PricingAndFaqCta module={module} />
+      <ExperienceBody module={module} />
     </LayoutShell>
   );
 }

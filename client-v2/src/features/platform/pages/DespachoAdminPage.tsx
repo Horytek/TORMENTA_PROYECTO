@@ -9,6 +9,9 @@ import {
   getDespachoStatus,
   listDespachoRutas,
 } from "@/features/platform/api/platformProducts";
+import { PlatformShell } from "@/features/platform/ui/PlatformShell";
+import { StatusChip } from "@/features/platform/ui/StatusChip";
+import { EmptyState } from "@/features/platform/ui/EmptyState";
 
 type Ruta = {
   id_ruta: number;
@@ -57,33 +60,29 @@ export default function DespachoAdminPage() {
     load();
   }, []);
 
-  if (loading) return <div className="p-8 text-sm text-muted-foreground">Cargando Despacho…</div>;
+  if (loading) {
+    return (
+      <PlatformShell productId="despacho" title="Despacho">
+        <p className="text-sm text-black/50">Cargando…</p>
+      </PlatformShell>
+    );
+  }
   if (error) {
     return (
-      <div className="p-8">
-        <h1 className="text-xl font-semibold">Despacho</h1>
-        <p className="mt-3 text-sm text-destructive" role="alert">
+      <PlatformShell productId="despacho" title="Despacho">
+        <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
-      </div>
+      </PlatformShell>
     );
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10 p-6 md:p-8">
-      <header>
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
-          Plataforma · Oleada C
-        </p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">Despacho</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Rutas del día para flota propia. Chofer: <code>/despacho/chofer</code>.
-        </p>
-        {status && (
-          <p className="mt-3 text-xs text-muted-foreground">{status.rutas ?? rutas.length} rutas</p>
-        )}
-      </header>
-
+    <PlatformShell
+      productId="despacho"
+      title="Despacho"
+      subtitle={`Rutas del día · chofer: /despacho/chofer${status ? ` · ${status.rutas ?? rutas.length} rutas` : ""}`}
+    >
       <section className="grid gap-8 md:grid-cols-2">
         <form
           className="space-y-3 border-b border-border/60 pb-6"
@@ -163,7 +162,7 @@ export default function DespachoAdminPage() {
       <section>
         <h2 className="text-sm font-semibold">Rutas</h2>
         {rutas.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">Aún no hay rutas.</p>
+          <EmptyState title="Aún no hay rutas" />
         ) : (
           <ul className="mt-3 divide-y divide-border/60 text-sm">
             {rutas.map((r) => (
@@ -171,12 +170,12 @@ export default function DespachoAdminPage() {
                 <span>
                   {r.fecha} · {r.vehiculo} · {r.chofer}
                 </span>
-                <span className="text-xs uppercase text-muted-foreground">{r.estado}</span>
+                <StatusChip status={r.estado} />
               </li>
             ))}
           </ul>
         )}
       </section>
-    </div>
+    </PlatformShell>
   );
 }

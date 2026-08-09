@@ -1,6 +1,4 @@
-import { Link } from "react-router-dom";
 import {
-  ArrowRight,
   ClipboardCheck,
   MapPinned,
   MessageSquareText,
@@ -11,14 +9,8 @@ import { cn } from "@/lib/utils";
 import type { LandingProductModule } from "../modules/landingModule.types";
 import { ExperienceDemo } from "../experiences/ExperienceDemo";
 import { CampoMapHero } from "../maps/CampoMapHero";
-import {
-  AntiConfusionBlock,
-  LayoutShell,
-  PricingAndFaqCta,
-  ScenarioBlock,
-  StoryBlock,
-  useLayoutChrome,
-} from "./layoutShared";
+import { ExperienceHeroCtas, LayoutShell, useLayoutChrome } from "./layoutShared";
+import { ExperienceBody } from "./ExperienceBody";
 
 const CAMPO_DAY = [
   { time: "08:10", place: "Cliente Norte", status: "Check-in + nota", ok: true },
@@ -54,7 +46,13 @@ export function RailOpsLayout({ module }: { module: LandingProductModule }) {
 
         <div className="relative mx-auto grid max-w-6xl gap-0 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="flex flex-col justify-center border-b border-black/5 px-6 py-16 lg:border-b-0 lg:border-r lg:py-24">
-            <div className="flex flex-wrap items-center gap-2">
+            <p
+              className="text-[11px] font-semibold uppercase tracking-[0.22em]"
+              style={{ color: accent.accent }}
+            >
+              {module.name}
+            </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
               <span
                 className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]"
                 style={{
@@ -100,18 +98,13 @@ export function RailOpsLayout({ module }: { module: LandingProductModule }) {
               ))}
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link
-                to={module.loginHref}
-                className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-[13px] font-semibold text-white shadow-[0_12px_28px_-12px_var(--lp-accent)] transition-transform hover:scale-[1.02]"
-                style={{ backgroundColor: accent.accent }}
-              >
-                Entrar a {module.name} <ArrowRight className="h-4 w-4" />
-              </Link>
-              <p className="text-[12px] text-muted-foreground">
-                Admin + vendedor · evidencia GPS
-              </p>
-            </div>
+            <ExperienceHeroCtas
+              module={module}
+              primaryLabel={isCampo ? "Probar ruta campo" : "Probar ops demo"}
+            />
+            <p className="mt-3 text-[12px] text-muted-foreground">
+              Admin + vendedor · evidencia GPS
+            </p>
           </div>
 
           <div className="flex min-h-[400px] flex-col gap-3 p-4 lg:p-6">
@@ -204,11 +197,7 @@ export function RailOpsLayout({ module }: { module: LandingProductModule }) {
           </div>
         )}
       </section>
-
-      <StoryBlock module={module} />
-      <ScenarioBlock module={module} />
-      <AntiConfusionBlock module={module} />
-      <PricingAndFaqCta module={module} />
+      <ExperienceBody module={module} />
     </LayoutShell>
   );
 }
