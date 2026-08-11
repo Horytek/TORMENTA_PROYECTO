@@ -91,9 +91,23 @@ export default function StoreCartPage() {
         );
       }
       clear();
-      window.location.href =
-        res.data.init_point ||
-        `https://www.mercadopago.com.pe/checkout/v1/redirect?pref_id=${res.data.preference_id}`;
+      const isTest = String(res.data.modo || "test").toLowerCase() === "test";
+      const checkoutUrl = isTest
+        ? res.data.sandbox_init_point ||
+          res.data.init_point ||
+          (res.data.preference_id
+            ? `https://sandbox.mercadopago.com.pe/checkout/v1/redirect?pref_id=${res.data.preference_id}`
+            : null)
+        : res.data.init_point ||
+          res.data.sandbox_init_point ||
+          (res.data.preference_id
+            ? `https://www.mercadopago.com.pe/checkout/v1/redirect?pref_id=${res.data.preference_id}`
+            : null);
+      if (!checkoutUrl) {
+        toast.error("No se recibió URL de pago");
+        return;
+      }
+      window.location.href = checkoutUrl;
     },
     onError: (e: Error & { response?: { data?: { message?: string } } }) => {
       toast.error(e.response?.data?.message || e.message || "Error");
