@@ -315,7 +315,8 @@ export const adminInventarioResumen = async (req, res) => {
 
 export const adminInventarioMatriz = async (req, res) => {
   const id_sucursal = req.query.sucursal ? Number(req.query.sucursal) : null;
-  const limit = Math.min(Math.max(Number(req.query.limit) || 25, 1), 100);
+  // Paginamos por producto (no por fila sucursal) para agrupar limpio en UI.
+  const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
   const offset = Math.max(Number(req.query.offset) || 0, 0);
   const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
   let connection;
@@ -334,7 +335,7 @@ export const adminInventarioMatriz = async (req, res) => {
     }
 
     const [[{ total }]] = await connection.query(
-      `SELECT COUNT(*) AS total
+      `SELECT COUNT(DISTINCT p.id_producto) AS total
        FROM producto p
        JOIN ecom_variante v ON v.id_producto = p.id_producto AND v.id_tienda = p.id_tienda
        JOIN ecom_inventario i ON i.id_variante = v.id_variante AND i.id_tienda = p.id_tienda
@@ -343,6 +344,25 @@ export const adminInventarioMatriz = async (req, res) => {
       params
     );
 
+    const [productIds] = await connection.query(
+      `SELECT p.id_producto
+       FROM producto p
+       JOIN ecom_variante v ON v.id_producto = p.id_producto AND v.id_tienda = p.id_tienda
+       JOIN ecom_inventario i ON i.id_variante = v.id_variante AND i.id_tienda = p.id_tienda
+       JOIN ecom_sucursal s ON s.id_sucursal = i.id_sucursal AND s.id_tienda = p.id_tienda
+       ${where}
+       GROUP BY p.id_producto, p.nombre
+       ORDER BY p.nombre
+       LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
+    );
+
+    if (!productIds.length) {
+      return res.json({ success: true, data: [], total: Number(total), limit, offset });
+    }
+
+    const ids = productIds.map((r) => r.id_producto);
+    const placeholders = ids.map(() => "?").join(",");
     const [rows] = await connection.query(
       `SELECT p.id_producto, p.nombre, p.sku, p.categoria,
               s.id_sucursal, s.nombre AS sucursal_nombre,
@@ -352,10 +372,10 @@ export const adminInventarioMatriz = async (req, res) => {
        JOIN ecom_variante v ON v.id_producto = p.id_producto AND v.id_tienda = p.id_tienda
        JOIN ecom_inventario i ON i.id_variante = v.id_variante AND i.id_tienda = p.id_tienda
        JOIN ecom_sucursal s ON s.id_sucursal = i.id_sucursal AND s.id_tienda = p.id_tienda
-       ${where}
-       ORDER BY p.nombre, s.nombre
-       LIMIT ? OFFSET ?`,
-      [...params, limit, offset]
+       WHERE p.id_tienda = ? AND p.id_producto IN (${placeholders}) AND s.activo = 1
+         ${id_sucursal ? "AND s.id_sucursal = ?" : ""}
+       ORDER BY p.nombre, s.nombre, v.id_variante`,
+      id_sucursal ? [req.id_tienda, ...ids, id_sucursal] : [req.id_tienda, ...ids]
     );
     const data = rows.map((r) => ({ ...r, disponible: calcDisponible(r) }));
     return res.json({ success: true, data, total: Number(total), limit, offset });
