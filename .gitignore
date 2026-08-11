@@ -32,3 +32,6 @@ sku_sin_fuente.csv
 sku_conflictos.csv
 sku_rollback_attrs_key.csv
 .vercel
+
+# Dumps locales (PII / cutover ecommerce)
+.local/

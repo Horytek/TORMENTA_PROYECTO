@@ -75,7 +75,9 @@ export default function PaymentResultPage() {
           ? "Recibirás tus credenciales de acceso por correo apenas se confirme el pago."
           : flow === "ecommerce"
             ? "Recibirás usuario, contraseña y el link de tu tienda (/tienda/…) por correo cuando se confirme el pago."
-            : null
+            : flow === "platform"
+              ? "Tu operador se activa al confirmar el pago. Luego ingresa en /login con el modo del producto."
+              : null
       );
       return;
     }

@@ -1,0 +1,123 @@
+/* Catálogo Express — identidad visual propia (WhatsApp / ERP) */
+
+.cx {
+  --cx-ink: #0c1222;
+  --cx-surface: #eef1f6;
+  --cx-elevated: #ffffff;
+  --cx-muted: #5b6b7c;
+  --cx-border: rgba(12, 18, 34, 0.1);
+  --cx-accent: #128c7e;
+  --cx-cta: #25d366;
+  --cx-cta-ink: #053320;
+  --cx-radius: 14px;
+  --cx-radius-lg: 20px;
+  --cx-radius-sm: 10px;
+  --font-cx-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-cx-body: "Manrope", ui-sans-serif, system-ui, sans-serif;
+
+  color: var(--cx-ink);
+  font-family: var(--font-cx-body);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(18, 140, 126, 0.12), transparent 55%),
+    radial-gradient(900px 500px at 90% 0%, rgba(37, 211, 102, 0.08), transparent 50%),
+    linear-gradient(180deg, #f7f8fb 0%, var(--cx-surface) 40%, #e8ecf2 100%);
+  min-height: 100dvh;
+}
+
+.cx-display {
+  font-family: var(--font-cx-display);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.cx-hairline {
+  border-color: var(--cx-border);
+}
+
+.cx-elevated {
+  background: var(--cx-elevated);
+  border: 1px solid var(--cx-border);
+  border-radius: var(--cx-radius);
+}
+
+.cx-muted {
+  color: var(--cx-muted);
+}
+
+.cx-focus:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--cx-accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.cx-btn-wa {
+  background: var(--cx-cta);
+  color: #053320;
+  font-weight: 700;
+  border-radius: 999px;
+  transition: transform 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
+}
+
+.cx-btn-wa:hover:not(:disabled) {
+  filter: brightness(1.03);
+  transform: translateY(-1px);
+}
+
+.cx-btn-wa:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cx-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  background: color-mix(in srgb, var(--cx-ink) 5%, transparent);
+  border: 1px solid var(--cx-border);
+}
+
+.cx-skeleton {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--cx-ink) 6%, transparent) 25%,
+    color-mix(in srgb, var(--cx-ink) 10%, transparent) 37%,
+    color-mix(in srgb, var(--cx-ink) 6%, transparent) 63%
+  );
+  background-size: 400% 100%;
+  animation: cx-shimmer 1.2s ease-in-out infinite;
+  border-radius: var(--cx-radius-sm);
+}
+
+@keyframes cx-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cx-skeleton {
+    animation: none;
+  }
+  .cx-btn-wa:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Dialog overlay polish on small screens */
+.cx [data-slot="dialog-content"],
+.cx[role="dialog"] {
+  max-width: min(100vw - 1.25rem, 52rem);
+}

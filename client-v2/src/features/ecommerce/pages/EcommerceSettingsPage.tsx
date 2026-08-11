@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, ExternalLink } from "lucide-react";
 import {
   ecommerceMe,
+  ecommerceListProductos,
   ecommerceSaveMpCredentials,
   ecommerceUpdateTienda,
   ecommerceUploadBanner,
@@ -26,13 +27,20 @@ import {
   FONT_BODY_STACK,
   FONT_DISPLAY_STACK,
   PRESET_SURFACES,
+  buildNavItemsFromCatalog,
   resolveTheme,
+  type ColorSchemePref,
   type FontBody,
   type FontDisplay,
   type HeaderStyle,
+  type NavItem,
+  type NavItemKind,
+  type NavStyle,
+  type StoreModule,
   type StoreTheme,
   type ThemePreset,
 } from "../types/theme";
+import { getCategoria } from "../types/storefront";
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -43,16 +51,107 @@ function fileToBase64(file: File): Promise<string> {
   });
 }
 
-const PRESETS: { id: ThemePreset; label: string; hint: string }[] = [
-  { id: "nocturna", label: "Nocturna", hint: "Stage oscuro, discovery cinemático" },
-  { id: "clara", label: "Clara", hint: "Superficies claras, retail limpio" },
-  { id: "retail", label: "Retail", hint: "Grises densos, look tienda" },
+const PRESETS: {
+  id: ThemePreset;
+  label: string;
+  hint: string;
+  /** Caracter visual de la tarjeta (no es el color-scheme del visitante) */
+  preview: "light" | "dark";
+}[] = [
+  { id: "store", label: "Store", hint: "Storefront digital tipo Epic/Steam", preview: "dark" },
+  { id: "nocturna", label: "Nocturna", hint: "Stage oscuro, discovery cinematográfico", preview: "dark" },
+  { id: "clara", label: "Clara", hint: "Superficies claras, retail limpio", preview: "light" },
+  { id: "retail", label: "Retail", hint: "Grises densos, look tienda", preview: "dark" },
 ];
+
+function surf(preset: ThemePreset, scheme: "light" | "dark" = "dark") {
+  return PRESET_SURFACES[preset]?.[scheme] ?? PRESET_SURFACES.store.dark;
+}
+
+function PresetCard({
+  preset,
+  label,
+  hint,
+  preview,
+  selected,
+  accent,
+  onSelect,
+}: {
+  preset: ThemePreset;
+  label: string;
+  hint: string;
+  preview: "light" | "dark";
+  selected: boolean;
+  accent: string;
+  onSelect: () => void;
+}) {
+  const s = surf(preset, preview);
+  const safeAccent = /^#[0-9A-Fa-f]{6}$/.test(accent) ? accent : "#0E7C7B";
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className={`text-left rounded-xl border-2 overflow-hidden transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600/40 ${
+        selected
+          ? "border-teal-600 ring-2 ring-teal-600/15 shadow-sm"
+          : "border-stone-200 hover:border-stone-300"
+      }`}
+    >
+      <div className="relative h-16" style={{ background: s.mist }}>
+        <div
+          className="absolute inset-x-0 top-0 h-3"
+          style={{ background: s.elevated, borderBottom: `1px solid ${s.border}` }}
+        />
+        <div
+          className="absolute inset-x-2 bottom-2 top-5 rounded-sm"
+          style={{
+            background: `linear-gradient(135deg, ${s.stageFrom}, ${s.stageTo})`,
+          }}
+        />
+        <div
+          className="absolute left-2 bottom-2 w-1.5 h-6 rounded-full"
+          style={{ background: safeAccent }}
+        />
+        {selected && (
+          <span className="absolute top-1.5 right-1.5 size-5 rounded-full bg-teal-600 text-white text-[10px] font-bold flex items-center justify-center">
+            ✓
+          </span>
+        )}
+      </div>
+      <div className="p-3 bg-white">
+        <p className="text-sm font-semibold text-stone-900">{label}</p>
+        <p className="text-[11px] text-stone-500 leading-snug mt-0.5">{hint}</p>
+        <p className="text-[10px] uppercase tracking-wider text-stone-400 mt-2">
+          Preview {preview === "light" ? "claro" : "oscuro"}
+        </p>
+      </div>
+    </button>
+  );
+}
 
 export default function EcommerceSettingsPage() {
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ["ecom-me"], queryFn: ecommerceMe });
+  const { data: productosData } = useQuery({
+    queryKey: ["ecom-productos"],
+    queryFn: ecommerceListProductos,
+  });
   const tienda = data?.data?.tienda;
+
+  const catalogCategorias = useMemo(() => {
+    const list = (productosData?.data || []) as { categoria?: string | null; attrs_json?: unknown }[];
+    const map = new Map<string, number>();
+    for (const p of list) {
+      const cat = getCategoria(p as Parameters<typeof getCategoria>[0]);
+      if (!cat) continue;
+      map.set(cat, (map.get(cat) || 0) + 1);
+    }
+    return [...map.entries()]
+      .map(([nombre, count]) => ({ nombre, count }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+  }, [productosData]);
 
   const [mp, setMp] = useState({ public_key: "", access_token: "", modo: "test" as "test" | "prod" });
   const [nombre, setNombre] = useState("");
@@ -78,7 +177,35 @@ export default function EcommerceSettingsPage() {
   }, [tienda, hydrated]);
 
   const patchTheme = (partial: Partial<StoreTheme>) => {
-    setTheme((t) => resolveTheme({ ...t, ...partial, sections: { ...t.sections, ...partial.sections }, trust: { ...t.trust, ...partial.trust } }));
+    setTheme((t) =>
+      resolveTheme({
+        ...t,
+        ...partial,
+        sections: { ...t.sections, ...partial.sections },
+        trust: { ...t.trust, ...partial.trust },
+        nav: {
+          ...t.nav,
+          ...partial.nav,
+          items: partial.nav?.items !== undefined ? partial.nav.items : t.nav.items,
+        },
+        modules: partial.modules ?? t.modules,
+        quick_actions: { ...t.quick_actions, ...partial.quick_actions },
+      })
+    );
+  };
+
+  const moveModule = (index: number, dir: -1 | 1) => {
+    const next = [...theme.modules];
+    const j = index + dir;
+    if (j < 0 || j >= next.length) return;
+    [next[index], next[j]] = [next[j], next[index]];
+    patchTheme({ modules: next });
+  };
+
+  const toggleModule = (id: string, enabled: boolean) => {
+    patchTheme({
+      modules: theme.modules.map((m) => (m.id === id ? ({ ...m, enabled } as StoreModule) : m)),
+    });
   };
 
   const saveBrand = useMutation({
@@ -141,26 +268,41 @@ export default function EcommerceSettingsPage() {
   });
 
   const previewStyle = useMemo(() => {
-    const surfaces = PRESET_SURFACES[theme.preset];
+    const scheme = theme.preset === "clara" ? "light" : "dark";
+    const surfaces = surf(theme.preset, scheme);
+    const accent = /^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#0E7C7B";
     return {
-      "--vitrina-accent": color || "#0E7C7B",
+      "--vitrina-accent": accent,
       "--vitrina-ink": surfaces.ink,
       "--vitrina-fog": surfaces.fog,
       "--vitrina-mist": surfaces.mist,
+      "--vitrina-elevated": surfaces.elevated,
+      "--vitrina-border": surfaces.border,
+      "--vitrina-muted": surfaces.muted,
       "--vitrina-stage-from": surfaces.stageFrom,
       "--vitrina-stage-to": surfaces.stageTo,
       "--font-vitrina-display": FONT_DISPLAY_STACK[theme.font_display],
       "--font-vitrina-body": FONT_BODY_STACK[theme.font_body],
       fontFamily: FONT_BODY_STACK[theme.font_body],
+      background: surfaces.mist,
+      color: surfaces.ink,
     } as CSSProperties;
   }, [theme, color]);
 
   const headerPreview =
     theme.header_style === "accent"
-      ? { background: color, color: "#fff" }
+      ? { background: /^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#0E7C7B", color: "#fff" }
       : theme.header_style === "light"
-        ? { background: "#fff", color: PRESET_SURFACES[theme.preset].ink, borderBottom: "1px solid #e2e8f0" }
-        : { background: PRESET_SURFACES[theme.preset].ink, color: "#fff" };
+        ? {
+            background: surf(theme.preset, "light").elevated,
+            color: surf(theme.preset, "light").ink,
+            borderBottom: `1px solid ${surf(theme.preset, "light").border}`,
+          }
+        : {
+            background: surf(theme.preset, theme.preset === "clara" ? "light" : "dark").mist,
+            color: surf(theme.preset, theme.preset === "clara" ? "light" : "dark").ink,
+            borderBottom: `1px solid ${surf(theme.preset, theme.preset === "clara" ? "light" : "dark").border}`,
+          };
 
   if (isLoading && !tienda) {
     return <div className="text-stone-400 text-sm py-10">Cargando configuración…</div>;
@@ -242,44 +384,87 @@ export default function EcommerceSettingsPage() {
           </section>
 
           {/* Color + preset */}
-          <section className="rounded-xl border border-stone-200 bg-white p-5 space-y-4">
-            <h2 className="font-medium text-sm">Color y ambiente</h2>
-            <div className="flex items-end gap-3">
-              <div>
-                <Label>Color primario</Label>
-                <div className="flex gap-2 mt-1">
-                  <input
-                    type="color"
-                    value={/^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#0E7C7B"}
-                    onChange={(e) => setColor(e.target.value)}
-                    className="size-10 rounded-md border border-stone-200 cursor-pointer p-0.5"
-                  />
-                  <Input value={color} onChange={(e) => setColor(e.target.value)} className="w-32 font-mono" />
-                </div>
+          <section className="rounded-xl border border-stone-200 bg-white p-5 space-y-5">
+            <div>
+              <h2 className="font-medium text-sm">Color y ambiente</h2>
+              <p className="text-xs text-stone-500 mt-1">
+                El color primario es tu marca. El preset define el look de la vitrina (independiente del modo claro/oscuro del visitante).
+              </p>
+            </div>
+            <div>
+              <Label>Color primario</Label>
+              <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                <input
+                  type="color"
+                  value={/^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#0E7C7B"}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="size-11 rounded-md border border-stone-200 cursor-pointer p-0.5 shrink-0"
+                  aria-label="Selector de color"
+                />
+                <Input
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="w-36 font-mono"
+                  placeholder="#0E7C7B"
+                />
+                <div
+                  className="h-11 flex-1 min-w-[6rem] max-w-[12rem] rounded-md border border-stone-200"
+                  style={{ background: /^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#0E7C7B" }}
+                  title="Vista previa del acento"
+                />
               </div>
             </div>
-            <div className="grid sm:grid-cols-3 gap-2">
-              {PRESETS.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => patchTheme({ preset: p.id })}
-                  className={`text-left rounded-lg border p-3 transition ${
-                    theme.preset === p.id
-                      ? "border-teal-600 ring-2 ring-teal-600/20"
-                      : "border-stone-200 hover:border-stone-300"
-                  }`}
-                >
-                  <div
-                    className="h-8 rounded mb-2"
-                    style={{
-                      background: `linear-gradient(135deg, ${PRESET_SURFACES[p.id].stageFrom}, ${PRESET_SURFACES[p.id].stageTo})`,
-                    }}
+            <div>
+              <Label className="mb-2 block">Preset de marca</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {PRESETS.map((p) => (
+                  <PresetCard
+                    key={p.id}
+                    preset={p.id}
+                    label={p.label}
+                    hint={p.hint}
+                    preview={p.preview}
+                    selected={theme.preset === p.id}
+                    accent={color}
+                    onSelect={() => patchTheme({ preset: p.id })}
                   />
-                  <p className="text-sm font-medium">{p.label}</p>
-                  <p className="text-[11px] text-stone-500">{p.hint}</p>
-                </button>
-              ))}
+                ))}
+              </div>
+              <p className="text-[11px] text-stone-400 mt-2">
+                Activo: <span className="font-medium text-stone-600">{theme.preset}</span>
+                {" · "}
+                Guarda con el botón de abajo para aplicar en la tienda pública.
+              </p>
+            </div>
+          </section>
+
+          <section className="rounded-xl border border-stone-200 bg-white p-5 space-y-4">
+            <h2 className="font-medium text-sm">Modo oscuro del visitante</h2>
+            <p className="text-xs text-stone-500">
+              Independiente del preset de marca. El comprador puede cambiar claro/oscuro/sistema.
+            </p>
+            <div>
+              <Label>Default</Label>
+              <Select
+                value={theme.color_scheme_default}
+                onValueChange={(v) => patchTheme({ color_scheme_default: v as ColorSchemePref })}
+              >
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="system">Sistema</SelectItem>
+                  <SelectItem value="light">Claro</SelectItem>
+                  <SelectItem value="dark">Oscuro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm">Permitir toggle en la vitrina</span>
+              <Switch
+                checked={theme.allow_visitor_scheme_toggle}
+                onCheckedChange={(v) => patchTheme({ allow_visitor_scheme_toggle: v })}
+              />
             </div>
           </section>
 
@@ -366,6 +551,311 @@ export default function EcommerceSettingsPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Navbar categorías */}
+            <div className="rounded-lg border border-stone-100 bg-stone-50/80 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">Menú del header</p>
+                  <p className="text-xs text-stone-500 mt-0.5">
+                    Estilo y contenido: etiquetas, orden, categorías o links.
+                    {theme.nav.items.length === 0
+                      ? " Ahora usa el menú automático del catálogo."
+                      : ` Menú personalizado (${theme.nav.items.filter((i) => i.enabled).length} ítems).`}
+                  </p>
+                </div>
+                <label className="inline-flex items-center gap-2 text-xs text-stone-600 shrink-0">
+                  <Switch
+                    checked={theme.nav.show_categories !== false}
+                    onCheckedChange={(v) => patchTheme({ nav: { ...theme.nav, show_categories: v } })}
+                  />
+                  Mostrar
+                </label>
+              </div>
+              {theme.nav.show_categories !== false && (
+                <>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div>
+                      <Label>Estilo de links</Label>
+                      <Select
+                        value={theme.nav.style}
+                        onValueChange={(v) => patchTheme({ nav: { ...theme.nav, style: v as NavStyle } })}
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="text">Texto simple</SelectItem>
+                          <SelectItem value="soft">Suave (redondeado)</SelectItem>
+                          <SelectItem value="pill">Cápsula</SelectItem>
+                          <SelectItem value="underline">Subrayado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Máx. ítems visibles</Label>
+                      <Select
+                        value={String(theme.nav.max_items)}
+                        onValueChange={(v) =>
+                          patchTheme({ nav: { ...theme.nav, max_items: Number(v) } })
+                        }
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[3, 4, 5, 6, 8, 10, 12].map((n) => (
+                            <SelectItem key={n} value={String(n)}>
+                              {n}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    {theme.nav.items.length === 0 && (
+                      <div>
+                        <Label>Etiqueta “todas” (modo auto)</Label>
+                        <Input
+                          className="mt-1"
+                          value={theme.nav.label_all}
+                          onChange={(e) =>
+                            patchTheme({ nav: { ...theme.nav, label_all: e.target.value.slice(0, 40) } })
+                          }
+                          placeholder="Todo"
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-end pb-1">
+                      <label className="inline-flex items-center gap-2 text-sm">
+                        <Switch
+                          checked={theme.nav.show_counts === true}
+                          onCheckedChange={(v) => patchTheme({ nav: { ...theme.nav, show_counts: v } })}
+                        />
+                        Mostrar contador
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const items = buildNavItemsFromCatalog(
+                          catalogCategorias,
+                          theme.nav.label_all || "Todo"
+                        );
+                        patchTheme({ nav: { ...theme.nav, items } });
+                        toast.success(
+                          catalogCategorias.length
+                            ? `Menú cargado con ${catalogCategorias.length} categorías`
+                            : "Menú base creado (sin categorías aún)"
+                        );
+                      }}
+                    >
+                      Personalizar desde catálogo
+                    </Button>
+                    {theme.nav.items.length > 0 && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => patchTheme({ nav: { ...theme.nav, items: [] } })}
+                      >
+                        Volver a automático
+                      </Button>
+                    )}
+                    {theme.nav.items.length > 0 && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const id = `nav_${Date.now().toString(36)}`;
+                          const next: NavItem[] = [
+                            ...theme.nav.items,
+                            {
+                              id,
+                              label: "Nuevo",
+                              kind: "category",
+                              category: catalogCategorias[0]?.nombre || "",
+                              href: null,
+                              enabled: true,
+                            },
+                          ];
+                          patchTheme({ nav: { ...theme.nav, items: next } });
+                        }}
+                      >
+                        + Ítem
+                      </Button>
+                    )}
+                  </div>
+
+                  {theme.nav.items.length > 0 && (
+                    <ul className="space-y-2 pt-1">
+                      {theme.nav.items.map((item, index) => (
+                        <li
+                          key={item.id}
+                          className="rounded-lg border border-stone-200 bg-white p-3 space-y-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={item.enabled !== false}
+                              onCheckedChange={(v) => {
+                                const items = theme.nav.items.map((it, i) =>
+                                  i === index ? { ...it, enabled: v } : it
+                                );
+                                patchTheme({ nav: { ...theme.nav, items } });
+                              }}
+                            />
+                            <Input
+                              value={item.label}
+                              onChange={(e) => {
+                                const items = theme.nav.items.map((it, i) =>
+                                  i === index ? { ...it, label: e.target.value.slice(0, 40) } : it
+                                );
+                                patchTheme({ nav: { ...theme.nav, items } });
+                              }}
+                              placeholder="Etiqueta visible"
+                              className="h-8 text-sm flex-1"
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              disabled={index === 0}
+                              onClick={() => {
+                                const items = [...theme.nav.items];
+                                [items[index - 1], items[index]] = [items[index], items[index - 1]];
+                                patchTheme({ nav: { ...theme.nav, items } });
+                              }}
+                            >
+                              ↑
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              disabled={index === theme.nav.items.length - 1}
+                              onClick={() => {
+                                const items = [...theme.nav.items];
+                                [items[index], items[index + 1]] = [items[index + 1], items[index]];
+                                patchTheme({ nav: { ...theme.nav, items } });
+                              }}
+                            >
+                              ↓
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              className="text-red-600"
+                              onClick={() => {
+                                const items = theme.nav.items.filter((_, i) => i !== index);
+                                patchTheme({ nav: { ...theme.nav, items } });
+                              }}
+                            >
+                              ✕
+                            </Button>
+                          </div>
+                          <div className="grid sm:grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-[11px]">Tipo</Label>
+                              <Select
+                                value={item.kind}
+                                onValueChange={(v) => {
+                                  const kind = v as NavItemKind;
+                                  const items = theme.nav.items.map((it, i) => {
+                                    if (i !== index) return it;
+                                    if (kind === "all")
+                                      return { ...it, kind, category: null, href: null };
+                                    if (kind === "link")
+                                      return { ...it, kind, category: null, href: it.href || "#catalogo" };
+                                    return {
+                                      ...it,
+                                      kind,
+                                      category: it.category || catalogCategorias[0]?.nombre || "",
+                                      href: null,
+                                    };
+                                  });
+                                  patchTheme({ nav: { ...theme.nav, items } });
+                                }}
+                              >
+                                <SelectTrigger className="mt-1 h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="all">Ver todo</SelectItem>
+                                  <SelectItem value="category">Categoría</SelectItem>
+                                  <SelectItem value="link">Link / ancla</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            {item.kind === "category" && (
+                              <div>
+                                <Label className="text-[11px]">Categoría del catálogo</Label>
+                                {catalogCategorias.length > 0 ? (
+                                  <Select
+                                    value={item.category || catalogCategorias[0]?.nombre || ""}
+                                    onValueChange={(v) => {
+                                      const items = theme.nav.items.map((it, i) =>
+                                        i === index ? { ...it, category: v } : it
+                                      );
+                                      patchTheme({ nav: { ...theme.nav, items } });
+                                    }}
+                                  >
+                                    <SelectTrigger className="mt-1 h-8">
+                                      <SelectValue placeholder="Elegir" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {catalogCategorias.map((c) => (
+                                        <SelectItem key={c.nombre} value={c.nombre}>
+                                          {c.nombre} ({c.count})
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                ) : (
+                                  <Input
+                                    className="mt-1 h-8"
+                                    value={item.category || ""}
+                                    onChange={(e) => {
+                                      const items = theme.nav.items.map((it, i) =>
+                                        i === index ? { ...it, category: e.target.value } : it
+                                      );
+                                      patchTheme({ nav: { ...theme.nav, items } });
+                                    }}
+                                    placeholder="Nombre exacto de categoría"
+                                  />
+                                )}
+                              </div>
+                            )}
+                            {item.kind === "link" && (
+                              <div>
+                                <Label className="text-[11px]">URL o ancla</Label>
+                                <Input
+                                  className="mt-1 h-8"
+                                  value={item.href || ""}
+                                  onChange={(e) => {
+                                    const items = theme.nav.items.map((it, i) =>
+                                      i === index ? { ...it, href: e.target.value } : it
+                                    );
+                                    patchTheme({ nav: { ...theme.nav, items } });
+                                  }}
+                                  placeholder="#catalogo o https://…"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </div>
+
             <div>
               <Label>Banner de fondo del Stage</Label>
               <div className="mt-2 flex items-center gap-3">
@@ -401,29 +891,63 @@ export default function EcommerceSettingsPage() {
             </div>
           </section>
 
-          {/* Secciones */}
+          {/* Módulos ordenables */}
           <section className="rounded-xl border border-stone-200 bg-white p-5 space-y-4">
-            <h2 className="font-medium text-sm">Secciones de la Vitrina</h2>
-            {(
-              [
-                ["stage", "Stage / Destacados"],
-                ["categories", "Categorías"],
-                ["trust", "Franja de confianza"],
-                ["stories", "Story tiles"],
-                ["rails", "Rails de productos"],
-              ] as const
-            ).map(([key, label]) => (
-              <div key={key} className="flex items-center justify-between gap-3">
-                <span className="text-sm">{label}</span>
+            <h2 className="font-medium text-sm">Arquitecto de vitrina (módulos)</h2>
+            <p className="text-xs text-stone-500">Activa, desactiva y reordena bloques. Browse = catálogo con filtros.</p>
+            <ul className="space-y-2">
+              {theme.modules.map((m, i) => (
+                <li
+                  key={m.id}
+                  className="flex items-center gap-2 rounded-lg border border-stone-100 px-3 py-2"
+                >
+                  <Switch checked={m.enabled} onCheckedChange={(v) => toggleModule(m.id, v)} />
+                  <span className="flex-1 text-sm font-medium capitalize">{m.type}</span>
+                  <span className="text-[10px] text-stone-400 font-mono">{m.id}</span>
+                  <Button type="button" size="sm" variant="ghost" disabled={i === 0} onClick={() => moveModule(i, -1)}>
+                    ↑
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={i === theme.modules.length - 1}
+                    onClick={() => moveModule(i, 1)}
+                  >
+                    ↓
+                  </Button>
+                </li>
+              ))}
+            </ul>
+            <div className="flex flex-wrap gap-4 text-sm pt-2 border-t border-stone-100">
+              <label className="inline-flex items-center gap-2">
                 <Switch
-                  checked={theme.sections[key]}
+                  checked={theme.quick_actions.cart_fab !== false}
                   onCheckedChange={(v) =>
-                    patchTheme({ sections: { ...theme.sections, [key]: v } })
+                    patchTheme({ quick_actions: { ...theme.quick_actions, cart_fab: v } })
                   }
                 />
-              </div>
-            ))}
-            <p className="text-[11px] text-stone-400">El catálogo completo siempre está visible.</p>
+                Cart FAB
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <Switch
+                  checked={theme.quick_actions.quick_add !== false}
+                  onCheckedChange={(v) =>
+                    patchTheme({ quick_actions: { ...theme.quick_actions, quick_add: v } })
+                  }
+                />
+                Quick add
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <Switch
+                  checked={theme.quick_actions.whatsapp !== false}
+                  onCheckedChange={(v) =>
+                    patchTheme({ quick_actions: { ...theme.quick_actions, whatsapp: v } })
+                  }
+                />
+                WhatsApp
+              </label>
+            </div>
           </section>
 
           {/* Trust texts */}
@@ -541,16 +1065,72 @@ export default function EcommerceSettingsPage() {
                 </span>
               )}
               <span
-                className="font-semibold truncate"
+                className="font-semibold truncate shrink-0"
                 style={{ fontFamily: FONT_DISPLAY_STACK[theme.font_display] }}
               >
                 {nombre || "Tu tienda"}
               </span>
+              {theme.nav.show_categories !== false && (
+                <div className="hidden sm:flex items-center gap-1 ml-2 min-w-0 overflow-hidden">
+                  {(theme.nav.items.length > 0
+                    ? theme.nav.items.filter((i) => i.enabled).slice(0, 3).map((i) => i.label)
+                    : [theme.nav.label_all || "Todo", "Moda", "Tech"]
+                  ).map((label, i) => {
+                    const active = i === (theme.nav.items.length > 0 ? 0 : 1);
+                    const style = theme.nav.style;
+                    const pill =
+                      style === "pill"
+                        ? {
+                            background: active
+                              ? theme.header_style === "accent"
+                                ? "rgba(0,0,0,0.28)"
+                                : color
+                              : "transparent",
+                            color: active && theme.header_style !== "accent" ? "#fff" : undefined,
+                            borderRadius: 999,
+                            padding: "2px 8px",
+                            fontWeight: active ? 600 : 400,
+                          }
+                        : style === "soft"
+                          ? {
+                              background: active
+                                ? theme.header_style === "accent"
+                                  ? "rgba(0,0,0,0.2)"
+                                  : `${color}22`
+                                : "transparent",
+                              color: active && theme.header_style !== "accent" ? color : undefined,
+                              borderRadius: 10,
+                              padding: "2px 8px",
+                              fontWeight: active ? 600 : 400,
+                            }
+                          : style === "underline"
+                            ? {
+                                borderBottom: active
+                                  ? `2px solid ${theme.header_style === "accent" ? "#fff" : color}`
+                                  : "2px solid transparent",
+                                color: active && theme.header_style !== "accent" ? color : undefined,
+                                fontWeight: active ? 600 : 400,
+                                padding: "2px 4px",
+                              }
+                            : {
+                                color: active && theme.header_style !== "accent" ? color : undefined,
+                                fontWeight: active ? 600 : 400,
+                                padding: "2px 4px",
+                              };
+                    return (
+                      <span key={`${label}-${i}`} className="truncate opacity-90" style={pill}>
+                        {label}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
             </div>
             <div
               className="relative h-36 p-4 flex flex-col justify-end text-white"
               style={{
-                background: `linear-gradient(145deg, ${PRESET_SURFACES[theme.preset].stageFrom}, ${PRESET_SURFACES[theme.preset].stageTo})`,
+                background: `linear-gradient(145deg, ${surf(theme.preset, theme.preset === "clara" ? "light" : "dark").stageFrom}, ${surf(theme.preset, theme.preset === "clara" ? "light" : "dark").stageTo})`,
+                color: theme.preset === "clara" ? surf(theme.preset, "light").ink : "#fff",
               }}
             >
               {theme.banner_url && (
@@ -563,34 +1143,37 @@ export default function EcommerceSettingsPage() {
                 >
                   {theme.hero_headline || nombre || "Headline"}
                 </p>
-                <p className="text-[10px] text-white/70 mt-2 line-clamp-2">
+                <p
+                  className="text-[10px] mt-2 line-clamp-2"
+                  style={{ opacity: 0.7 }}
+                >
                   {theme.hero_tagline || descripcion || "Tu tagline aparece aquí"}
                 </p>
                 <span
-                  className="inline-block mt-3 text-[10px] font-semibold px-2.5 py-1 rounded-full"
-                  style={{ background: color }}
+                  className="inline-block mt-3 text-[10px] font-semibold px-2.5 py-1 rounded-full text-white"
+                  style={{ background: /^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#0E7C7B" }}
                 >
                   Explorar
                 </span>
               </div>
             </div>
             <div className="bg-[var(--vitrina-mist)] p-3 grid grid-cols-3 gap-1.5">
-              {theme.sections.trust &&
+              {theme.modules.some((m) => m.type === "trust" && m.enabled) &&
                 [theme.trust.envio, theme.trust.pago, theme.trust.soporte].map((t) => (
                   <div key={t} className="rounded bg-white border border-stone-100 p-1.5 text-[9px] text-stone-600 truncate">
                     {t}
                   </div>
                 ))}
-              {!theme.sections.trust && (
+              {!theme.modules.some((m) => m.type === "trust" && m.enabled) && (
                 <p className="col-span-3 text-[10px] text-stone-400 text-center py-2">Trust oculto</p>
               )}
             </div>
             <div className="px-3 py-2 bg-white border-t border-stone-100 text-[10px] text-stone-400 flex flex-wrap gap-1">
-              {Object.entries(theme.sections)
-                .filter(([, v]) => v)
-                .map(([k]) => (
-                  <span key={k} className="px-1.5 py-0.5 rounded bg-stone-100">
-                    {k}
+              {theme.modules
+                .filter((m) => m.enabled)
+                .map((m) => (
+                  <span key={m.id} className="px-1.5 py-0.5 rounded bg-stone-100">
+                    {m.type}
                   </span>
                 ))}
             </div>

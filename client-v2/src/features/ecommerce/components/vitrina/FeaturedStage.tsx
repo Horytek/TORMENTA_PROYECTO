@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { formatPen, tiendaTheme, type StoreProducto, type StoreTienda } from "../../types/storefront";
 
 type Props = {
   tienda: StoreTienda;
   slug: string;
   productos: StoreProducto[];
+  ctaLabel?: string;
+  autoplayMs?: number;
 };
 
-export function FeaturedStage({ tienda, slug, productos }: Props) {
+export function FeaturedStage({ tienda, slug, productos, ctaLabel, autoplayMs = 6000 }: Props) {
   const reduce = useReducedMotion();
   const [active, setActive] = useState(0);
   const featured = productos.slice(0, 5);
@@ -21,15 +23,15 @@ export function FeaturedStage({ tienda, slug, productos }: Props) {
   const isClara = theme.preset === "clara";
   const textMain = isClara ? "text-[var(--vitrina-ink)]" : "text-white";
   const textMuted = isClara ? "text-slate-600" : "text-white/70";
-  const textSoft = isClara ? "text-slate-400" : "text-white/55";
+  const textSoft = isClara ? "text-slate-400" : "text-white/50";
 
   useEffect(() => {
     if (reduce || featured.length < 2) return;
     const id = window.setInterval(() => {
       setActive((i) => (i + 1) % featured.length);
-    }, 6000);
+    }, autoplayMs);
     return () => window.clearInterval(id);
-  }, [featured.length, reduce]);
+  }, [featured.length, reduce, autoplayMs]);
 
   const scrollCatalogo = () => {
     document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" });
@@ -48,10 +50,10 @@ export function FeaturedStage({ tienda, slug, productos }: Props) {
           <button
             type="button"
             onClick={scrollCatalogo}
-            className="vitrina-pill mt-10 inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white"
+            className="vitrina-pill store-focus-ring mt-10 inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white"
             style={{ background: "var(--vitrina-accent)" }}
           >
-            Explorar catálogo <ArrowRight className="size-4" />
+            {ctaLabel || "Explorar catálogo"} <ArrowRight className="size-4" />
           </button>
         </div>
       </section>
@@ -67,8 +69,8 @@ export function FeaturedStage({ tienda, slug, productos }: Props) {
           className="absolute inset-0 size-full object-cover opacity-25 pointer-events-none"
         />
       )}
-      <div className="relative max-w-7xl mx-auto px-4 lg:px-8 min-h-[min(92vh,820px)] grid lg:grid-cols-[1.65fr_1fr] gap-6 lg:gap-10 py-10 lg:py-14 items-stretch">
-        <div className="relative min-h-[320px] lg:min-h-0 rounded-none lg:overflow-hidden">
+      <div className="relative max-w-7xl mx-auto px-4 lg:px-8 min-h-[min(92vh,820px)] grid lg:grid-cols-[1.55fr_1fr] gap-8 lg:gap-12 py-10 lg:py-14 items-stretch">
+        <div className="relative min-h-[320px] lg:min-h-0 store-stage-frame">
           <AnimatePresence mode="wait">
             <motion.div
               key={current?.id_producto}
@@ -93,7 +95,7 @@ export function FeaturedStage({ tienda, slug, productos }: Props) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15, duration: 0.5 }}
             >
-              <p className="text-[11px] uppercase tracking-[0.28em] text-white/55 mb-3">Vitrina · Escena</p>
+              <p className="text-[11px] uppercase tracking-[0.28em] text-white/55 mb-3">En escena</p>
               <h1 className="vitrina-display text-4xl sm:text-6xl lg:text-7xl max-w-2xl">{headline}</h1>
               {tagline && (
                 <p className="mt-4 text-base sm:text-lg text-white/70 max-w-lg leading-relaxed line-clamp-2">
@@ -104,16 +106,16 @@ export function FeaturedStage({ tienda, slug, productos }: Props) {
                 <button
                   type="button"
                   onClick={scrollCatalogo}
-                  className="vitrina-pill inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white"
+                  className="vitrina-pill store-focus-ring inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white"
                   style={{ background: "var(--vitrina-accent)" }}
                 >
-                  Explorar catálogo
+                  {ctaLabel || "Explorar catálogo"}
                   <ArrowRight className="size-4" />
                 </button>
                 {current && (
                   <Link
                     to={`/tienda/${slug}/producto/${current.id_producto}`}
-                    className="vitrina-pill inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold border border-white/30 text-white hover:bg-white/10 transition"
+                    className="vitrina-pill store-focus-ring inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold border border-white/30 text-white hover:bg-white/10 transition"
                   >
                     Ver {current.nombre}
                   </Link>
@@ -123,43 +125,130 @@ export function FeaturedStage({ tienda, slug, productos }: Props) {
           </div>
         </div>
 
-        <div className="flex flex-col justify-center gap-1 py-2">
-          <p className={`text-[11px] uppercase tracking-[0.22em] ${textSoft} mb-3 px-1`}>Destacados</p>
-          {featured.map((p, i) => {
-            const isActive = i === active;
-            return (
-              <button
-                key={p.id_producto}
-                type="button"
-                onClick={() => setActive(i)}
-                onMouseEnter={() => setActive(i)}
-                className={`flex items-center gap-3 p-3 text-left transition-all duration-300 border-l-2 ${
-                  isActive
-                    ? isClara
-                      ? "bg-black/5 border-[var(--vitrina-accent)]"
-                      : "bg-white/10 border-[var(--vitrina-accent)]"
-                    : "border-transparent hover:bg-black/5 opacity-70 hover:opacity-100"
-                }`}
-              >
-                <div className="size-14 sm:size-16 shrink-0 overflow-hidden bg-black/5">
-                  {p.imagen_url ? (
-                    <img src={p.imagen_url} alt="" className="size-full object-cover" />
-                  ) : (
-                    <div className="size-full bg-slate-700" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold truncate text-sm sm:text-base">{p.nombre}</p>
-                  <p
-                    className="text-sm mt-0.5 font-medium"
-                    style={{ color: isActive ? "var(--vitrina-accent)" : undefined }}
-                  >
-                    {formatPen(Number(p.precio))}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
+        {/* Rail creativo: timeline + card activa expandida */}
+        <div className="flex flex-col justify-center relative py-2">
+          <div className="flex items-end justify-between mb-5 px-1">
+            <div>
+              <p className={`text-[10px] uppercase tracking-[0.3em] ${textSoft}`}>Curaduría</p>
+              <p className="text-lg font-semibold tracking-tight mt-1">En foco</p>
+            </div>
+            <div className="flex gap-1.5 items-center pb-1">
+              {featured.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  aria-label={`Producto ${i + 1}`}
+                  onClick={() => setActive(i)}
+                  className="h-1.5 rounded-full transition-all store-focus-ring"
+                  style={{
+                    width: i === active ? 22 : 8,
+                    background: i === active ? "var(--vitrina-accent)" : isClara ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.25)",
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="relative pl-5">
+            <div
+              className="absolute left-[7px] top-3 bottom-3 w-px"
+              style={{ background: isClara ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.12)" }}
+            />
+            <motion.div
+              className="absolute left-[5px] w-[5px] rounded-full"
+              style={{ background: "var(--vitrina-accent)" }}
+              animate={{
+                top: `calc(${(active / Math.max(featured.length - 1, 1)) * 100}% * 0.72 + 12px)`,
+              }}
+              transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 280, damping: 28 }}
+              aria-hidden
+            >
+              <span className="block size-[5px] rounded-full" />
+            </motion.div>
+
+            <ul className="space-y-2">
+              {featured.map((p, i) => {
+                const isActive = i === active;
+                return (
+                  <li key={p.id_producto}>
+                    <button
+                      type="button"
+                      onClick={() => setActive(i)}
+                      onMouseEnter={() => setActive(i)}
+                      className={`store-focus-ring relative w-full text-left transition-all duration-300 ${
+                        isActive ? "pl-1" : "pl-1 opacity-50 hover:opacity-80"
+                      }`}
+                    >
+                      <span
+                        className="absolute -left-5 top-1/2 -translate-y-1/2 size-2.5 rounded-full border-2"
+                        style={{
+                          borderColor: isActive ? "var(--vitrina-accent)" : isClara ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.35)",
+                          background: isActive ? "var(--vitrina-accent)" : "transparent",
+                        }}
+                      />
+
+                      <AnimatePresence mode="wait">
+                        {isActive ? (
+                          <motion.div
+                            key={`active-${p.id_producto}`}
+                            initial={reduce ? false : { opacity: 0, y: 8, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={reduce ? undefined : { opacity: 0, y: -6 }}
+                            transition={{ duration: 0.28 }}
+                            className={`flex gap-3 p-3 rounded-[1.1rem] backdrop-blur-md ${
+                              isClara ? "bg-white/70 shadow-sm ring-1 ring-black/5" : "bg-white/10 ring-1 ring-white/15"
+                            }`}
+                          >
+                            <div className="relative shrink-0">
+                              <div className="size-16 sm:size-[4.5rem] rounded-2xl overflow-hidden bg-black/10 rotate-[-3deg] shadow-md">
+                                {p.imagen_url ? (
+                                  <img src={p.imagen_url} alt="" className="size-full object-cover" />
+                                ) : (
+                                  <div className="size-full bg-slate-700" />
+                                )}
+                              </div>
+                              <span
+                                className="absolute -top-1.5 -left-1.5 size-6 rounded-full text-[10px] font-bold flex items-center justify-center text-white"
+                                style={{ background: "var(--vitrina-accent)" }}
+                              >
+                                {String(i + 1).padStart(2, "0")}
+                              </span>
+                            </div>
+                            <div className="min-w-0 flex-1 py-0.5">
+                              <p className="font-semibold text-sm sm:text-[15px] leading-snug line-clamp-2">
+                                {p.nombre}
+                              </p>
+                              <p className="text-sm font-semibold mt-1.5" style={{ color: "var(--vitrina-accent)" }}>
+                                {formatPen(Number(p.precio))}
+                              </p>
+                              <Link
+                                to={`/tienda/${slug}/producto/${p.id_producto}`}
+                                className="inline-flex items-center gap-1 mt-2 text-[11px] font-medium opacity-80 hover:opacity-100"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Abrir ficha <ArrowUpRight className="size-3" />
+                              </Link>
+                            </div>
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key={`idle-${p.id_producto}`}
+                            initial={false}
+                            className="flex items-center gap-3 py-2.5 px-2"
+                          >
+                            <span className={`text-[11px] tabular-nums w-5 ${textSoft}`}>
+                              {String(i + 1).padStart(2, "0")}
+                            </span>
+                            <span className="text-sm truncate">{p.nombre}</span>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </div>
       </div>
     </section>

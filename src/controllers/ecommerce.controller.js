@@ -3,7 +3,7 @@ import axios from "axios";
 import jwt from "jsonwebtoken";
 import { MercadoPagoConfig, Preference } from "mercadopago";
 import { Resend } from "resend";
-import { getConnection } from "../database/database.js";
+import { getEcommerceConnection } from "../database/database_ecommerce.js";
 import { TOKEN_SECRET } from "../config.js";
 import { getEcommercePlan, validateEcommercePlanPrice } from "../config/ecommercePlans.config.js";
 import { hashPassword, verifyPassword } from "../utils/passwordUtil.js";
@@ -64,86 +64,124 @@ function sellerMpClient(accessToken) {
   return new MercadoPagoConfig({ accessToken });
 }
 
-/** Activación post-pago SaaS (llamado desde payment webhook). Idempotente. */
-export async function activateEcommerceFromPayment({ connection, externalReference, payment }) {
+/** Activación post-pago SaaS (llamado desde payment webhook). Idempotente.
+ *  Siempre usa db_ecommerce (el `connection` del caller puede ser db_tormenta).
+ */
+export async function activateEcommerceFromPayment({ externalReference, payment }) {
   if (!externalReference || !String(externalReference).startsWith("ecommerce:")) {
     return { handled: false };
   }
   const id_tienda = Number(String(externalReference).split(":")[1]);
   if (!Number.isFinite(id_tienda) || id_tienda <= 0) return { handled: false };
 
-  const [[tienda]] = await connection.query(
-    `SELECT t.*, u.id_usuario, u.usua, u.clave_acceso, u.email AS user_email
-     FROM ecommerce_tienda t
-     LEFT JOIN ecommerce_usuario u ON u.id_tenant = t.id_tenant
-     WHERE t.id_tienda = ? LIMIT 1`,
-    [id_tienda]
-  );
-  if (!tienda) return { handled: true, activated: false };
+  let connection;
+  try {
+    connection = await getEcommerceConnection();
+    await connection.beginTransaction();
 
-  const mpId = String(payment.id);
-  const [[existingSaas]] = await connection.query(
-    `SELECT id FROM ecommerce_pago_saas WHERE mp_payment_id = ? LIMIT 1`,
-    [mpId]
-  );
-  if (existingSaas) return { handled: true, activated: false, already: true };
+    const [[tienda]] = await connection.query(
+      `SELECT t.*, u.id_usuario, u.usua, u.email AS user_email
+       FROM tienda t
+       LEFT JOIN usuario u ON u.id_tienda = t.id_tienda
+       WHERE t.id_tienda = ? LIMIT 1`,
+      [id_tienda]
+    );
+    if (!tienda) {
+      await connection.rollback();
+      return { handled: true, activated: false };
+    }
 
-  await connection.query(
-    `INSERT INTO ecommerce_pago_saas
-      (id_tienda, id_tenant, mp_payment_id, mp_preference_id, status, amount, external_reference)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [
-      tienda.id_tienda,
-      tienda.id_tenant,
-      mpId,
-      payment.preference_id || null,
-      payment.status,
-      payment.transaction_amount ?? null,
-      externalReference,
-    ]
-  );
+    const mpId = String(payment.id);
+    const [[existingSaas]] = await connection.query(
+      `SELECT id FROM suscripcion_pago WHERE mp_payment_id = ? LIMIT 1`,
+      [mpId]
+    );
+    if (existingSaas) {
+      await connection.rollback();
+      return { handled: true, activated: false, already: true };
+    }
 
-  if (String(payment.status).toLowerCase() !== "approved") {
-    return { handled: true, activated: false };
-  }
+    await connection.query(
+      `INSERT INTO suscripcion_pago
+        (id_tienda, mp_payment_id, mp_preference_id, status, amount, external_reference)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        tienda.id_tienda,
+        mpId,
+        payment.preference_id || null,
+        payment.status,
+        payment.transaction_amount ?? null,
+        externalReference,
+      ]
+    );
 
-  const wasPending = tienda.estado === "pending";
-  await connection.query(
-    `UPDATE ecommerce_tienda SET estado = 'active', fecha_pago = CURDATE() WHERE id_tienda = ? AND id_tenant = ?`,
-    [tienda.id_tienda, tienda.id_tenant]
-  );
-  await connection.query(
-    `UPDATE ecommerce_usuario SET estado = 1 WHERE id_tenant = ?`,
-    [tienda.id_tenant]
-  );
+    if (String(payment.status).toLowerCase() !== "approved") {
+      await connection.commit();
+      return { handled: true, activated: false };
+    }
 
-  if (wasPending && tienda.clave_acceso && tienda.usua) {
-    const loginUrl = `${FRONTEND()}/login?mode=ecommerce`;
-    const storeUrl = `${FRONTEND()}/tienda/${tienda.slug}`;
-    try {
-      await resend.emails.send({
-        from: process.env.RESEND_FROM || "Horytek Ecommerce <no-reply@send.horycore.online>",
-        to: tienda.email,
-        subject: "Tu tienda Horytek Ecommerce está lista",
-        html: `
+    const wasPending = tienda.estado === "pending";
+    await connection.query(
+      `UPDATE tienda SET estado = 'active', fecha_pago = CURDATE() WHERE id_tienda = ?`,
+      [tienda.id_tienda]
+    );
+    await connection.query(
+      `UPDATE usuario SET estado = 1 WHERE id_tienda = ?`,
+      [tienda.id_tienda]
+    );
+
+    let claveEmail = null;
+    if (wasPending && tienda.usua) {
+      const { clave } = generateCredentials(tienda.slug || "tienda");
+      claveEmail = clave;
+      const temp_password_hash = await hashPassword(clave);
+      // password_hash + temp: tras login con temp se limpian solo los campos temp;
+      // la clave del email sigue válida vía password_hash.
+      await connection.query(
+        `UPDATE usuario
+         SET password_hash = ?,
+             temp_password_hash = ?,
+             temp_password_expires_at = DATE_ADD(NOW(), INTERVAL 7 DAY)
+         WHERE id_tienda = ?`,
+        [temp_password_hash, temp_password_hash, tienda.id_tienda]
+      );
+    }
+
+    await connection.commit();
+
+    if (claveEmail && tienda.usua) {
+      const loginUrl = `${FRONTEND()}/login?mode=ecommerce`;
+      const storeUrl = `${FRONTEND()}/tienda/${tienda.slug}`;
+      try {
+        await resend.emails.send({
+          from: process.env.RESEND_FROM || "Horytek Ecommerce <no-reply@send.horycore.online>",
+          to: tienda.email,
+          subject: "Tu tienda Horytek Ecommerce está lista",
+          html: `
           <div style="font-family:sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#0f172a">
             <h1 style="font-size:22px;margin:0 0 12px">¡Pago aprobado!</h1>
             <p>Tu tienda <strong>${tienda.nombre}</strong> ya está activa.</p>
             <ul>
               <li><b>Usuario admin:</b> ${tienda.usua}</li>
-              <li><b>Contraseña temporal:</b> ${tienda.clave_acceso}</li>
+              <li><b>Contraseña temporal:</b> ${claveEmail}</li>
               <li><b>Panel:</b> <a href="${loginUrl}">${loginUrl}</a></li>
               <li><b>Tienda pública:</b> <a href="${storeUrl}">${storeUrl}</a></li>
             </ul>
             <p style="color:#64748b;font-size:13px">Configura tus credenciales de Mercado Pago en el admin para empezar a cobrar.</p>
           </div>`,
-      });
-    } catch (err) {
-      console.error("[ecommerce] Resend activación:", err.message);
+        });
+      } catch (err) {
+        console.error("[ecommerce] Resend activación:", err.message);
+      }
     }
-  }
 
-  return { handled: true, activated: wasPending, tienda };
+    return { handled: true, activated: wasPending, tienda };
+  } catch (error) {
+    if (connection) try { await connection.rollback(); } catch { /* noop */ }
+    throw error;
+  } finally {
+    if (connection) connection.release();
+  }
 }
 
 // ─── Registro + preferencia SaaS ───────────────────────────────────────────
@@ -157,11 +195,11 @@ export const registerEcommerce = async (req, res) => {
 
   let connection;
   try {
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     await connection.beginTransaction();
 
     const [dup] = await connection.query(
-      `SELECT slug, email FROM ecommerce_tienda WHERE slug = ? OR email = ? LIMIT 1`,
+      `SELECT slug, email FROM tienda WHERE slug = ? OR email = ? LIMIT 1`,
       [slug, email]
     );
     if (dup.length) {
@@ -170,26 +208,22 @@ export const registerEcommerce = async (req, res) => {
       return res.status(400).json({ success: false, message: msg });
     }
 
-    const [[maxRow]] = await connection.query(
-      `SELECT COALESCE(MAX(id_tenant), 800000) AS m FROM ecommerce_tienda`
-    );
-    const id_tenant = Number(maxRow.m) + 1;
     const { usua, clave } = generateCredentials(slug);
     const password_hash = await hashPassword(clave);
 
     const [ins] = await connection.query(
-      `INSERT INTO ecommerce_tienda
-        (id_tenant, id_plan, slug, nombre, email, telefono, estado)
-       VALUES (?, ?, ?, ?, ?, ?, 'pending')`,
-      [id_tenant, planInfo.id, slug, nombre, email, telefono || null]
+      `INSERT INTO tienda
+        (id_plan, slug, nombre, email, telefono, estado)
+       VALUES (?, ?, ?, ?, ?, 'pending')`,
+      [planInfo.id, slug, nombre, email, telefono || null]
     );
     const id_tienda = ins.insertId;
 
     await connection.query(
-      `INSERT INTO ecommerce_usuario
-        (id_tenant, usua, password_hash, clave_acceso, email, nombre, rol, estado)
-       VALUES (?, ?, ?, ?, ?, ?, 'admin', 0)`,
-      [id_tenant, usua, password_hash, clave, email, nombre]
+      `INSERT INTO usuario
+        (id_tienda, usua, password_hash, email, nombre, rol, estado)
+       VALUES (?, ?, ?, ?, ?, 'admin', 0)`,
+      [id_tienda, usua, password_hash, email, nombre]
     );
 
     await connection.commit();
@@ -197,7 +231,6 @@ export const registerEcommerce = async (req, res) => {
       success: true,
       data: {
         id_tienda,
-        id_tenant,
         slug,
         email,
         plan: planInfo.codigo,
@@ -223,9 +256,9 @@ export const createEcommerceSaasPreference = async (req, res) => {
 
   let connection;
   try {
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     const [[tienda]] = await connection.query(
-      `SELECT id_tienda, email, nombre, estado, id_plan FROM ecommerce_tienda WHERE id_tienda = ? LIMIT 1`,
+      `SELECT id_tienda, email, nombre, estado, id_plan FROM tienda WHERE id_tienda = ? LIMIT 1`,
       [id_tienda]
     );
     if (!tienda) {
@@ -235,7 +268,7 @@ export const createEcommerceSaasPreference = async (req, res) => {
       return res.status(400).json({ success: false, message: "La tienda ya está activa." });
     }
     if (Number(tienda.id_plan) !== Number(planInfo.id)) {
-      await connection.query(`UPDATE ecommerce_tienda SET id_plan = ? WHERE id_tienda = ?`, [
+      await connection.query(`UPDATE tienda SET id_plan = ? WHERE id_tienda = ?`, [
         planInfo.id,
         id_tienda,
       ]);
@@ -304,11 +337,11 @@ export const loginEcommerce = async (req, res) => {
   const { usuario, password } = req.body;
   let connection;
   try {
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     const [[user]] = await connection.query(
       `SELECT u.*, t.estado AS tienda_estado, t.slug, t.nombre AS tienda_nombre
-       FROM ecommerce_usuario u
-       JOIN ecommerce_tienda t ON t.id_tenant = u.id_tenant
+       FROM usuario u
+       JOIN tienda t ON t.id_tienda = u.id_tienda
        WHERE u.usua = ? OR u.email = ?
        LIMIT 1`,
       [usuario, usuario]
@@ -316,10 +349,20 @@ export const loginEcommerce = async (req, res) => {
     if (!user) {
       return res.status(401).json({ success: false, message: "Credenciales inválidas." });
     }
-    const ok = await verifyPassword(password, user.password_hash);
-    if (!ok && user.clave_acceso !== password) {
-      return res.status(401).json({ success: false, message: "Credenciales inválidas." });
+
+    const okHash = await verifyPassword(password, user.password_hash);
+    let usedTemp = false;
+    if (!okHash) {
+      const tempValid =
+        user.temp_password_hash &&
+        user.temp_password_expires_at &&
+        new Date(user.temp_password_expires_at) > new Date();
+      if (!tempValid || !(await verifyPassword(password, user.temp_password_hash))) {
+        return res.status(401).json({ success: false, message: "Credenciales inválidas." });
+      }
+      usedTemp = true;
     }
+
     if (user.tienda_estado === "pending") {
       return res.status(403).json({
         success: false,
@@ -335,11 +378,18 @@ export const loginEcommerce = async (req, res) => {
       });
     }
 
+    if (usedTemp) {
+      await connection.query(
+        `UPDATE usuario SET temp_password_hash = NULL, temp_password_expires_at = NULL WHERE id_usuario = ?`,
+        [user.id_usuario]
+      );
+    }
+
     const token = jwt.sign(
       {
         sub: user.id_usuario,
         usr: user.usua,
-        ten: user.id_tenant,
+        ten: user.id_tienda,
         rol: user.rol,
       },
       TOKEN_SECRET,
@@ -357,7 +407,7 @@ export const loginEcommerce = async (req, res) => {
         token,
         usuario: user.usua,
         email: user.email,
-        id_tenant: user.id_tenant,
+        id_tienda: user.id_tienda,
         slug: user.slug,
         tienda: user.tienda_nombre,
       },
@@ -373,18 +423,18 @@ export const loginEcommerce = async (req, res) => {
 export const meEcommerce = async (req, res) => {
   let connection;
   try {
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     const [[tienda]] = await connection.query(
-      `SELECT id_tienda, id_tenant, slug, nombre, email, telefono, estado, color_primario, logo_url, descripcion, id_plan, theme_json
-       FROM ecommerce_tienda WHERE id_tenant = ? LIMIT 1`,
-      [req.id_tenant]
+      `SELECT id_tienda, slug, nombre, email, telefono, estado, color_primario, logo_url, descripcion, id_plan, theme_json
+       FROM tienda WHERE id_tienda = ? LIMIT 1`,
+      [req.id_tienda]
     );
     if (tienda) {
       tienda.theme_json = parseThemeJson(tienda.theme_json);
     }
     const [[mp]] = await connection.query(
-      `SELECT public_key, modo, conectado_en FROM ecommerce_mp_credenciales WHERE id_tenant = ? LIMIT 1`,
-      [req.id_tenant]
+      `SELECT public_key, modo, conectado_en FROM mp_cuenta WHERE id_tienda = ? LIMIT 1`,
+      [req.id_tienda]
     );
     return res.json({
       success: true,
@@ -410,21 +460,21 @@ export const updateTienda = async (req, res) => {
   const { nombre, descripcion, color_primario, telefono, logo_url, theme_json } = req.body;
   let connection;
   try {
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     const themeValue =
       theme_json === undefined ? null : theme_json === null ? null : JSON.stringify(theme_json);
 
     // theme_json: si viene en body, reemplaza; si no, COALESCE mantiene
     if (theme_json !== undefined) {
       await connection.query(
-        `UPDATE ecommerce_tienda SET
+        `UPDATE tienda SET
           nombre = COALESCE(?, nombre),
           descripcion = COALESCE(?, descripcion),
           color_primario = COALESCE(?, color_primario),
           telefono = COALESCE(?, telefono),
           logo_url = COALESCE(?, logo_url),
           theme_json = ?
-         WHERE id_tenant = ?`,
+         WHERE id_tienda = ?`,
         [
           nombre ?? null,
           descripcion ?? null,
@@ -432,25 +482,25 @@ export const updateTienda = async (req, res) => {
           telefono ?? null,
           logo_url ?? null,
           themeValue,
-          req.id_tenant,
+          req.id_tienda,
         ]
       );
     } else {
       await connection.query(
-        `UPDATE ecommerce_tienda SET
+        `UPDATE tienda SET
           nombre = COALESCE(?, nombre),
           descripcion = COALESCE(?, descripcion),
           color_primario = COALESCE(?, color_primario),
           telefono = COALESCE(?, telefono),
           logo_url = COALESCE(?, logo_url)
-         WHERE id_tenant = ?`,
+         WHERE id_tienda = ?`,
         [
           nombre ?? null,
           descripcion ?? null,
           color_primario ?? null,
           telefono ?? null,
           logo_url ?? null,
-          req.id_tenant,
+          req.id_tienda,
         ]
       );
     }
@@ -483,15 +533,15 @@ async function uploadBrandAsset(req, res, kind) {
   try {
     const uploaded = await subirAImageKit({
       file,
-      fileName: `ecom_${kind}_${req.id_tenant}_${Date.now()}.${extension}`,
-      folder: `/ecommerce/${req.id_tenant}/brand/`,
+      fileName: `ecom_${kind}_${req.id_tienda}_${Date.now()}.${extension}`,
+      folder: `/ecommerce/${req.id_tienda}/brand/`,
     });
 
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     if (kind === "logo") {
-      await connection.query(`UPDATE ecommerce_tienda SET logo_url = ? WHERE id_tenant = ?`, [
+      await connection.query(`UPDATE tienda SET logo_url = ? WHERE id_tienda = ?`, [
         uploaded.url,
-        req.id_tenant,
+        req.id_tienda,
       ]);
       return res.status(201).json({
         success: true,
@@ -501,14 +551,14 @@ async function uploadBrandAsset(req, res, kind) {
 
     // banner → merge into theme_json.banner_url
     const [[row]] = await connection.query(
-      `SELECT theme_json FROM ecommerce_tienda WHERE id_tenant = ? LIMIT 1`,
-      [req.id_tenant]
+      `SELECT theme_json FROM tienda WHERE id_tienda = ? LIMIT 1`,
+      [req.id_tienda]
     );
     const theme = parseThemeJson(row?.theme_json) || {};
     theme.banner_url = uploaded.url;
-    await connection.query(`UPDATE ecommerce_tienda SET theme_json = ? WHERE id_tenant = ?`, [
+    await connection.query(`UPDATE tienda SET theme_json = ? WHERE id_tienda = ?`, [
       JSON.stringify(theme),
-      req.id_tenant,
+      req.id_tienda,
     ]);
     return res.status(201).json({
       success: true,
@@ -530,16 +580,16 @@ export const saveMpCredentials = async (req, res) => {
   let connection;
   try {
     const enc = encryptMpToken(access_token);
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     await connection.query(
-      `INSERT INTO ecommerce_mp_credenciales (id_tenant, public_key, access_token_enc, modo, conectado_en)
+      `INSERT INTO mp_cuenta (id_tienda, public_key, access_token_enc, modo, conectado_en)
        VALUES (?, ?, ?, ?, NOW())
        ON DUPLICATE KEY UPDATE
          public_key = VALUES(public_key),
          access_token_enc = VALUES(access_token_enc),
          modo = VALUES(modo),
          conectado_en = NOW()`,
-      [req.id_tenant, public_key, enc, modo || "test"]
+      [req.id_tienda, public_key, enc, modo || "test"]
     );
     return res.json({ success: true, message: "Credenciales guardadas." });
   } catch (error) {
@@ -553,20 +603,20 @@ export const saveMpCredentials = async (req, res) => {
 export const getDashboard = async (req, res) => {
   let connection;
   try {
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     const [[stats]] = await connection.query(
       `SELECT
-         (SELECT COUNT(*) FROM ecommerce_producto WHERE id_tenant = ? AND activo = 1) AS productos,
-         (SELECT COUNT(*) FROM ecommerce_orden WHERE id_tenant = ? AND estado = 'approved') AS ordenes_aprobadas,
-         (SELECT COALESCE(SUM(total),0) FROM ecommerce_orden WHERE id_tenant = ? AND estado = 'approved') AS ventas,
-         (SELECT COUNT(*) FROM ecommerce_producto WHERE id_tenant = ? AND activo = 1 AND stock <= stock_min) AS stock_bajo`,
-      [req.id_tenant, req.id_tenant, req.id_tenant, req.id_tenant]
+         (SELECT COUNT(*) FROM producto WHERE id_tienda = ? AND activo = 1) AS productos,
+         (SELECT COUNT(*) FROM orden WHERE id_tienda = ? AND estado = 'approved') AS ordenes_aprobadas,
+         (SELECT COALESCE(SUM(total),0) FROM orden WHERE id_tienda = ? AND estado = 'approved') AS ventas,
+         (SELECT COUNT(*) FROM producto WHERE id_tienda = ? AND activo = 1 AND stock <= stock_min) AS stock_bajo`,
+      [req.id_tienda, req.id_tienda, req.id_tienda, req.id_tienda]
     );
     const [recientes] = await connection.query(
       `SELECT id_orden, codigo, estado, total, email_comprador, created_at
-       FROM ecommerce_orden WHERE id_tenant = ?
+       FROM orden WHERE id_tienda = ?
        ORDER BY created_at DESC LIMIT 8`,
-      [req.id_tenant]
+      [req.id_tienda]
     );
     return res.json({ success: true, data: { stats, recientes } });
   } catch (error) {
@@ -580,16 +630,16 @@ export const getDashboard = async (req, res) => {
 export const listProductos = async (req, res) => {
   let connection;
   try {
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     const [rows] = await connection.query(
       `SELECT p.*,
-         (SELECT url FROM ecommerce_producto_imagen i
-          WHERE i.id_producto = p.id_producto AND i.id_tenant = p.id_tenant
+         (SELECT url FROM producto_imagen i
+          WHERE i.id_producto = p.id_producto AND i.id_tienda = p.id_tienda
           ORDER BY i.es_principal DESC, i.orden ASC LIMIT 1) AS imagen_url
-       FROM ecommerce_producto p
-       WHERE p.id_tenant = ?
+       FROM producto p
+       WHERE p.id_tienda = ?
        ORDER BY p.id_producto DESC`,
-      [req.id_tenant]
+      [req.id_tienda]
     );
     return res.json({ success: true, data: rows });
   } catch (error) {
@@ -601,16 +651,16 @@ export const listProductos = async (req, res) => {
 };
 
 export const createProducto = async (req, res) => {
-  const { nombre, descripcion, precio, stock, stock_min, activo, sku, attrs_json } = req.body;
+  const { nombre, descripcion, precio, stock, stock_min, activo, sku, categoria, attrs_json } = req.body;
   let connection;
   try {
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     const [r] = await connection.query(
-      `INSERT INTO ecommerce_producto
-        (id_tenant, nombre, descripcion, precio, stock, stock_min, activo, sku, attrs_json)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO producto
+        (id_tienda, nombre, descripcion, precio, stock, stock_min, activo, sku, categoria, attrs_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        req.id_tenant,
+        req.id_tienda,
         nombre,
         descripcion || null,
         precio,
@@ -618,6 +668,7 @@ export const createProducto = async (req, res) => {
         stock_min ?? 5,
         activo === false ? 0 : 1,
         sku || null,
+        categoria || null,
         attrs_json ? JSON.stringify(attrs_json) : null,
       ]
     );
@@ -632,12 +683,12 @@ export const createProducto = async (req, res) => {
 
 export const updateProducto = async (req, res) => {
   const id = Number(req.params.id);
-  const { nombre, descripcion, precio, stock, stock_min, activo, sku, attrs_json } = req.body;
+  const { nombre, descripcion, precio, stock, stock_min, activo, sku, categoria, attrs_json } = req.body;
   let connection;
   try {
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     const [r] = await connection.query(
-      `UPDATE ecommerce_producto SET
+      `UPDATE producto SET
         nombre = COALESCE(?, nombre),
         descripcion = COALESCE(?, descripcion),
         precio = COALESCE(?, precio),
@@ -645,8 +696,9 @@ export const updateProducto = async (req, res) => {
         stock_min = COALESCE(?, stock_min),
         activo = COALESCE(?, activo),
         sku = COALESCE(?, sku),
+        categoria = COALESCE(?, categoria),
         attrs_json = COALESCE(?, attrs_json)
-       WHERE id_producto = ? AND id_tenant = ?`,
+       WHERE id_producto = ? AND id_tienda = ?`,
       [
         nombre ?? null,
         descripcion ?? null,
@@ -655,9 +707,10 @@ export const updateProducto = async (req, res) => {
         stock_min ?? null,
         typeof activo === "boolean" ? (activo ? 1 : 0) : null,
         sku ?? null,
+        categoria ?? null,
         attrs_json != null ? JSON.stringify(attrs_json) : null,
         id,
-        req.id_tenant,
+        req.id_tienda,
       ]
     );
     if (!r.affectedRows) {
@@ -676,10 +729,10 @@ export const deleteProducto = async (req, res) => {
   const id = Number(req.params.id);
   let connection;
   try {
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     const [imgs] = await connection.query(
-      `SELECT file_id FROM ecommerce_producto_imagen WHERE id_producto = ? AND id_tenant = ?`,
-      [id, req.id_tenant]
+      `SELECT file_id FROM producto_imagen WHERE id_producto = ? AND id_tienda = ?`,
+      [id, req.id_tienda]
     );
     for (const img of imgs) {
       if (img.file_id) {
@@ -687,8 +740,8 @@ export const deleteProducto = async (req, res) => {
       }
     }
     const [r] = await connection.query(
-      `DELETE FROM ecommerce_producto WHERE id_producto = ? AND id_tenant = ?`,
-      [id, req.id_tenant]
+      `DELETE FROM producto WHERE id_producto = ? AND id_tienda = ?`,
+      [id, req.id_tienda]
     );
     if (!r.affectedRows) {
       return res.status(404).json({ success: false, message: "Producto no encontrado." });
@@ -721,18 +774,18 @@ export const uploadProductoImagen = async (req, res) => {
 
   let connection;
   try {
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     const [[prod]] = await connection.query(
-      `SELECT id_producto FROM ecommerce_producto WHERE id_producto = ? AND id_tenant = ? LIMIT 1`,
-      [id_producto, req.id_tenant]
+      `SELECT id_producto FROM producto WHERE id_producto = ? AND id_tienda = ? LIMIT 1`,
+      [id_producto, req.id_tienda]
     );
     if (!prod) {
       return res.status(404).json({ success: false, message: "Producto no encontrado." });
     }
 
     const [[count]] = await connection.query(
-      `SELECT COUNT(*) AS c FROM ecommerce_producto_imagen WHERE id_producto = ? AND id_tenant = ?`,
-      [id_producto, req.id_tenant]
+      `SELECT COUNT(*) AS c FROM producto_imagen WHERE id_producto = ? AND id_tienda = ?`,
+      [id_producto, req.id_tienda]
     );
     connection.release();
     connection = null;
@@ -741,16 +794,16 @@ export const uploadProductoImagen = async (req, res) => {
     const uploaded = await subirAImageKit({
       file,
       fileName: `ecom_${id_producto}_${Date.now()}.${extension}`,
-      folder: `/ecommerce/${req.id_tenant}/`,
+      folder: `/ecommerce/${req.id_tienda}/`,
     });
 
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     const es_principal = count.c === 0 ? 1 : 0;
     const [ins] = await connection.query(
-      `INSERT INTO ecommerce_producto_imagen
-        (id_tenant, id_producto, url, file_id, orden, es_principal)
+      `INSERT INTO producto_imagen
+        (id_tienda, id_producto, url, file_id, orden, es_principal)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [req.id_tenant, id_producto, uploaded.url, uploaded.fileId, count.c, es_principal]
+      [req.id_tienda, id_producto, uploaded.url, uploaded.fileId, count.c, es_principal]
     );
 
     return res.status(201).json({
@@ -768,12 +821,12 @@ export const uploadProductoImagen = async (req, res) => {
 export const listOrdenes = async (req, res) => {
   let connection;
   try {
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     const [rows] = await connection.query(
       `SELECT id_orden, codigo, estado, total, moneda, email_comprador, nombre_comprador, mp_payment_id, created_at
-       FROM ecommerce_orden WHERE id_tenant = ?
+       FROM orden WHERE id_tienda = ?
        ORDER BY created_at DESC LIMIT 100`,
-      [req.id_tenant]
+      [req.id_tienda]
     );
     return res.json({ success: true, data: rows });
   } catch (error) {
@@ -788,17 +841,17 @@ export const getOrden = async (req, res) => {
   const id = Number(req.params.id);
   let connection;
   try {
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     const [[orden]] = await connection.query(
-      `SELECT * FROM ecommerce_orden WHERE id_orden = ? AND id_tenant = ? LIMIT 1`,
-      [id, req.id_tenant]
+      `SELECT * FROM orden WHERE id_orden = ? AND id_tienda = ? LIMIT 1`,
+      [id, req.id_tienda]
     );
     if (!orden) {
       return res.status(404).json({ success: false, message: "Orden no encontrada." });
     }
     const [detalle] = await connection.query(
-      `SELECT * FROM ecommerce_orden_detalle WHERE id_orden = ? AND id_tenant = ?`,
-      [id, req.id_tenant]
+      `SELECT * FROM orden_item WHERE id_orden = ? AND id_tienda = ?`,
+      [id, req.id_tienda]
     );
     return res.json({ success: true, data: { ...orden, detalle } });
   } catch (error) {
@@ -815,10 +868,10 @@ export const getStoreBySlug = async (req, res) => {
   const { slug } = req.params;
   let connection;
   try {
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     const [[tienda]] = await connection.query(
-      `SELECT id_tienda, id_tenant, slug, nombre, color_primario, logo_url, descripcion, telefono, estado, theme_json
-       FROM ecommerce_tienda WHERE slug = ? LIMIT 1`,
+      `SELECT id_tienda, slug, nombre, color_primario, logo_url, descripcion, telefono, estado, theme_json
+       FROM tienda WHERE slug = ? LIMIT 1`,
       [slug]
     );
     if (!tienda || tienda.estado !== "active") {
@@ -826,19 +879,19 @@ export const getStoreBySlug = async (req, res) => {
     }
 
     const [productos] = await connection.query(
-      `SELECT p.id_producto, p.nombre, p.descripcion, p.precio, p.stock, p.sku, p.attrs_json,
-         (SELECT url FROM ecommerce_producto_imagen i
-          WHERE i.id_producto = p.id_producto AND i.id_tenant = p.id_tenant
+      `SELECT p.id_producto, p.nombre, p.descripcion, p.precio, p.stock, p.sku, p.categoria, p.attrs_json,
+         (SELECT url FROM producto_imagen i
+          WHERE i.id_producto = p.id_producto AND i.id_tienda = p.id_tienda
           ORDER BY i.es_principal DESC, i.orden ASC LIMIT 1) AS imagen_url
-       FROM ecommerce_producto p
-       WHERE p.id_tenant = ? AND p.activo = 1 AND p.stock > 0
+       FROM producto p
+       WHERE p.id_tienda = ? AND p.activo = 1 AND p.stock > 0
        ORDER BY p.nombre ASC`,
-      [tienda.id_tenant]
+      [tienda.id_tienda]
     );
 
     const [[mp]] = await connection.query(
-      `SELECT public_key, modo FROM ecommerce_mp_credenciales WHERE id_tenant = ? LIMIT 1`,
-      [tienda.id_tenant]
+      `SELECT public_key, modo FROM mp_cuenta WHERE id_tienda = ? LIMIT 1`,
+      [tienda.id_tienda]
     );
 
     return res.json({
@@ -862,25 +915,25 @@ export const getStoreProduct = async (req, res) => {
   const { slug, id } = req.params;
   let connection;
   try {
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     const [[tienda]] = await connection.query(
-      `SELECT id_tenant, slug, nombre, color_primario, logo_url, descripcion, telefono, estado, theme_json FROM ecommerce_tienda WHERE slug = ? LIMIT 1`,
+      `SELECT id_tienda, slug, nombre, color_primario, logo_url, descripcion, telefono, estado, theme_json FROM tienda WHERE slug = ? LIMIT 1`,
       [slug]
     );
     if (!tienda || tienda.estado !== "active") {
       return res.status(404).json({ success: false, message: "Tienda no encontrada." });
     }
     const [[producto]] = await connection.query(
-      `SELECT * FROM ecommerce_producto WHERE id_producto = ? AND id_tenant = ? AND activo = 1 LIMIT 1`,
-      [Number(id), tienda.id_tenant]
+      `SELECT * FROM producto WHERE id_producto = ? AND id_tienda = ? AND activo = 1 LIMIT 1`,
+      [Number(id), tienda.id_tienda]
     );
     if (!producto) {
       return res.status(404).json({ success: false, message: "Producto no encontrado." });
     }
     const [imagenes] = await connection.query(
-      `SELECT id_imagen, url, es_principal, orden FROM ecommerce_producto_imagen
-       WHERE id_producto = ? AND id_tenant = ? ORDER BY es_principal DESC, orden ASC`,
-      [producto.id_producto, tienda.id_tenant]
+      `SELECT id_imagen, url, es_principal, orden FROM producto_imagen
+       WHERE id_producto = ? AND id_tienda = ? ORDER BY es_principal DESC, orden ASC`,
+      [producto.id_producto, tienda.id_tienda]
     );
     return res.json({
       success: true,
@@ -903,11 +956,11 @@ export const checkoutStore = async (req, res) => {
   const { items, email_comprador, nombre_comprador, telefono_comprador } = req.body;
   let connection;
   try {
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     await connection.beginTransaction();
 
     const [[tienda]] = await connection.query(
-      `SELECT id_tienda, id_tenant, slug, nombre, estado FROM ecommerce_tienda WHERE slug = ? FOR UPDATE`,
+      `SELECT id_tienda, slug, nombre, estado FROM tienda WHERE slug = ? FOR UPDATE`,
       [slug]
     );
     if (!tienda || tienda.estado !== "active") {
@@ -916,8 +969,8 @@ export const checkoutStore = async (req, res) => {
     }
 
     const [[creds]] = await connection.query(
-      `SELECT access_token_enc, public_key FROM ecommerce_mp_credenciales WHERE id_tenant = ? LIMIT 1`,
-      [tienda.id_tenant]
+      `SELECT access_token_enc, public_key FROM mp_cuenta WHERE id_tienda = ? LIMIT 1`,
+      [tienda.id_tienda]
     );
     if (!creds) {
       await connection.rollback();
@@ -939,9 +992,9 @@ export const checkoutStore = async (req, res) => {
     let total = 0;
     for (const item of items) {
       const [[prod]] = await connection.query(
-        `SELECT id_producto, nombre, precio, stock FROM ecommerce_producto
-         WHERE id_producto = ? AND id_tenant = ? AND activo = 1 FOR UPDATE`,
-        [item.id_producto, tienda.id_tenant]
+        `SELECT id_producto, nombre, precio, stock FROM producto
+         WHERE id_producto = ? AND id_tienda = ? AND activo = 1 FOR UPDATE`,
+        [item.id_producto, tienda.id_tienda]
       );
       if (!prod) {
         await connection.rollback();
@@ -965,13 +1018,13 @@ export const checkoutStore = async (req, res) => {
     }
 
     const codigo = orderCode();
-    const external_reference = `ecom_order:${tienda.id_tenant}:${codigo}`;
+    const external_reference = `ecom_order:${tienda.id_tienda}:${codigo}`;
     const [ord] = await connection.query(
-      `INSERT INTO ecommerce_orden
-        (id_tenant, codigo, estado, total, email_comprador, nombre_comprador, telefono_comprador, external_reference)
+      `INSERT INTO orden
+        (id_tienda, codigo, estado, total, email_comprador, nombre_comprador, telefono_comprador, external_reference)
        VALUES (?, ?, 'pending', ?, ?, ?, ?, ?)`,
       [
-        tienda.id_tenant,
+        tienda.id_tienda,
         codigo,
         total,
         email_comprador,
@@ -984,15 +1037,15 @@ export const checkoutStore = async (req, res) => {
 
     for (const li of lineItems) {
       await connection.query(
-        `INSERT INTO ecommerce_orden_detalle
-          (id_orden, id_tenant, id_producto, nombre_snapshot, cantidad, precio_unitario)
+        `INSERT INTO orden_item
+          (id_orden, id_tienda, id_producto, nombre_snapshot, cantidad, precio_unitario)
          VALUES (?, ?, ?, ?, ?, ?)`,
-        [id_orden, tienda.id_tenant, li.id_producto, li.nombre, li.cantidad, li.precio]
+        [id_orden, tienda.id_tienda, li.id_producto, li.nombre, li.cantidad, li.precio]
       );
     }
 
     const origin = FRONTEND();
-    const notification_url = `${WEBHOOK_BASE()}/api/ecommerce/webhook?id_tenant=${tienda.id_tenant}`;
+    const notification_url = `${WEBHOOK_BASE()}/api/ecommerce/webhook?id_tienda=${tienda.id_tienda}`;
     const preference = new Preference(sellerMpClient(accessToken));
     const result = await preference.create({
       body: {
@@ -1011,13 +1064,13 @@ export const checkoutStore = async (req, res) => {
           pending: `${origin}/tienda/${slug}/pago/resultado?status=pending&orden=${codigo}`,
         },
         notification_url,
-        metadata: { id_orden, id_tenant: tienda.id_tenant, codigo },
+        metadata: { id_orden, id_tienda: tienda.id_tienda, codigo },
       },
     });
 
     await connection.query(
-      `UPDATE ecommerce_orden SET mp_preference_id = ? WHERE id_orden = ? AND id_tenant = ?`,
-      [result.id, id_orden, tienda.id_tenant]
+      `UPDATE orden SET mp_preference_id = ? WHERE id_orden = ? AND id_tienda = ?`,
+      [result.id, id_orden, tienda.id_tienda]
     );
 
     await connection.commit();
@@ -1044,8 +1097,8 @@ export const checkoutStore = async (req, res) => {
 
 /** Webhook de pagos del carrito (token del comerciante). */
 export const ecommerceStoreWebhook = async (req, res) => {
-  const id_tenant = Number(req.query.id_tenant);
-  if (!Number.isFinite(id_tenant) || id_tenant <= 0) {
+  const id_tienda = Number(req.query.id_tienda ?? req.query.id_tenant);
+  if (!Number.isFinite(id_tienda) || id_tienda <= 0) {
     return res.sendStatus(200);
   }
 
@@ -1058,10 +1111,10 @@ export const ecommerceStoreWebhook = async (req, res) => {
 
   let connection;
   try {
-    connection = await getConnection();
+    connection = await getEcommerceConnection();
     const [[creds]] = await connection.query(
-      `SELECT access_token_enc FROM ecommerce_mp_credenciales WHERE id_tenant = ? LIMIT 1`,
-      [id_tenant]
+      `SELECT access_token_enc FROM mp_cuenta WHERE id_tienda = ? LIMIT 1`,
+      [id_tienda]
     );
     if (!creds) return res.sendStatus(200);
 
@@ -1083,8 +1136,8 @@ export const ecommerceStoreWebhook = async (req, res) => {
     await connection.beginTransaction();
 
     const [[orden]] = await connection.query(
-      `SELECT * FROM ecommerce_orden WHERE external_reference = ? AND id_tenant = ? FOR UPDATE`,
-      [external_reference, id_tenant]
+      `SELECT * FROM orden WHERE external_reference = ? AND id_tienda = ? FOR UPDATE`,
+      [external_reference, id_tienda]
     );
     if (!orden) {
       await connection.rollback();
@@ -1099,29 +1152,29 @@ export const ecommerceStoreWebhook = async (req, res) => {
     const status = String(payment.status || "").toLowerCase();
     if (status === "approved" && orden.estado !== "approved") {
       const [detalle] = await connection.query(
-        `SELECT id_producto, cantidad FROM ecommerce_orden_detalle WHERE id_orden = ? AND id_tenant = ?`,
-        [orden.id_orden, id_tenant]
+        `SELECT id_producto, cantidad FROM orden_item WHERE id_orden = ? AND id_tienda = ?`,
+        [orden.id_orden, id_tienda]
       );
       for (const d of detalle) {
         await connection.query(
-          `UPDATE ecommerce_producto SET stock = GREATEST(0, stock - ?)
-           WHERE id_producto = ? AND id_tenant = ?`,
-          [d.cantidad, d.id_producto, id_tenant]
+          `UPDATE producto SET stock = GREATEST(0, stock - ?)
+           WHERE id_producto = ? AND id_tienda = ?`,
+          [d.cantidad, d.id_producto, id_tienda]
         );
       }
       await connection.query(
-        `UPDATE ecommerce_orden SET estado = 'approved', mp_payment_id = ? WHERE id_orden = ? AND id_tenant = ?`,
-        [String(payment.id), orden.id_orden, id_tenant]
+        `UPDATE orden SET estado = 'approved', mp_payment_id = ? WHERE id_orden = ? AND id_tienda = ?`,
+        [String(payment.id), orden.id_orden, id_tienda]
       );
     } else if (status === "rejected" || status === "cancelled") {
       await connection.query(
-        `UPDATE ecommerce_orden SET estado = ?, mp_payment_id = ? WHERE id_orden = ? AND id_tenant = ? AND estado = 'pending'`,
-        [status === "cancelled" ? "cancelled" : "rejected", String(payment.id), orden.id_orden, id_tenant]
+        `UPDATE orden SET estado = ?, mp_payment_id = ? WHERE id_orden = ? AND id_tienda = ? AND estado = 'pending'`,
+        [status === "cancelled" ? "cancelled" : "rejected", String(payment.id), orden.id_orden, id_tienda]
       );
     } else {
       await connection.query(
-        `UPDATE ecommerce_orden SET mp_payment_id = ? WHERE id_orden = ? AND id_tenant = ?`,
-        [String(payment.id), orden.id_orden, id_tenant]
+        `UPDATE orden SET mp_payment_id = ? WHERE id_orden = ? AND id_tienda = ?`,
+        [String(payment.id), orden.id_orden, id_tienda]
       );
     }
 

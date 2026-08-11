@@ -1,4 +1,4 @@
-/** Planes SaaS Ecommerce — sincronizar con client-v2 ECOMMERCE_PLANS y tabla ecommerce_plan. */
+/** Planes SaaS Ecommerce — sincronizar con client-v2 ECOMMERCE_PLANS y tabla plan (db_ecommerce). */
 
 export const ECOMMERCE_PLANS_CONFIG = {
   starter: {

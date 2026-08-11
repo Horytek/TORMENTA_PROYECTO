@@ -13,13 +13,10 @@ import {
 import { SwatchStrip } from "@/components/brand/Swatch";
 import { SizeCurve } from "@/components/brand/SizeCurve";
 import {
-  HERO_BADGES,
-  HERO_VALUE_POINTS,
   POCKET_HERO,
   ECOMMERCE_HERO,
   SALES_WHATSAPP_URL,
   TAG_COLORS,
-  STANDARD_TRUST_INDICATORS,
   type Mode,
 } from "../data/landing.data";
 import { cn } from "@/lib/utils";
@@ -60,62 +57,41 @@ function HeroStandard() {
   return (
     <div className="mx-auto grid max-w-6xl gap-12 px-6 pb-20 pt-16 md:pt-24 lg:grid-cols-[1.04fr_0.96fr] lg:gap-16 lg:pb-28 lg:pt-28">
       <div className="flex flex-col">
-        <span className="inline-flex w-fit items-center gap-2 rounded-full border border-brand/25 bg-brand/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-brand">
-          <span className="h-1.5 w-1.5 rounded-full bg-brand" />
-          Para emprendedores que quieren crecer
-        </span>
+        <p className="text-[13px] font-medium text-muted-foreground">
+          ¿Vendes productos y necesitas orden en caja, stock y SUNAT?
+        </p>
 
-        <div className="mt-5 flex flex-wrap items-center gap-1.5">
-          {HERO_BADGES.map((b) => (
-            <span
-              key={b}
-              className="num rounded-full border border-border bg-secondary px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground"
-            >
-              {b}
-            </span>
-          ))}
-        </div>
+        <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand">
+          Horytek
+        </p>
 
-        <h1 className="mt-6 text-balance text-[clamp(2.55rem,5.5vw,4.15rem)] font-semibold leading-[0.98] tracking-[-0.035em] text-foreground">
-          Tu tienda física y online,{
-          " "}<span className="text-brand">en un solo lugar.</span>
+        <h1 className="mt-3 text-balance text-[clamp(2.4rem,5.2vw,3.85rem)] font-semibold leading-[0.98] tracking-[-0.035em] text-foreground">
+          Controla tu inventario y vende con un sistema hecho para PYMES del Perú.
         </h1>
 
         <p className="mt-6 max-w-xl text-balance text-[16px] leading-relaxed text-muted-foreground">
-          Cobra en tu local o por internet, controla qué productos te quedan y
-          entrega boletas o facturas desde el mismo lugar.
+          Emite boleta y factura electrónica, cobra en tu local o online, y mira
+          el negocio completo — con acompañamiento local.
         </p>
 
         <div className="mt-8 flex flex-wrap items-center gap-3">
           <Button asChild size="lg" className="gap-2 px-5">
-            <a href={SALES_WHATSAPP_URL} target="_blank" rel="noreferrer">
-              Solicitar una demo <ArrowRight className="h-4 w-4" />
-            </a>
+            <Link to="/soluciones">
+              Probar soluciones demo <ArrowRight className="h-4 w-4" />
+            </Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="gap-2">
-            <a href="#producto">Ver cómo compra tu cliente</a>
+            <a href="#planes">Ver planes</a>
+          </Button>
+          <Button asChild size="lg" variant="ghost" className="gap-2">
+            <a href={SALES_WHATSAPP_URL} target="_blank" rel="noreferrer">
+              WhatsApp
+            </a>
           </Button>
         </div>
-
-        {/* Trust indicators */}
-        <ul className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          {STANDARD_TRUST_INDICATORS.map((t) => (
-            <li key={t.label} className="flex items-center gap-2">
-              <span className={cn("h-1.5 w-1.5 rounded-full", t.dot)} />
-              {t.label}
-            </li>
-          ))}
-        </ul>
-
-        <dl className="mt-10 grid gap-3 border-t border-border/70 pt-6 sm:grid-cols-3">
-          {HERO_VALUE_POINTS.map(({ icon: Icon, title, body }) => (
-            <div key={title} className="rounded-lg bg-secondary/45 p-3.5">
-              <Icon className="h-4 w-4 text-brand" aria-hidden />
-              <dt className="mt-2 text-[12px] font-semibold text-foreground">{title}</dt>
-              <dd className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{body}</dd>
-            </div>
-          ))}
-        </dl>
+        <p className="mt-3 text-[12px] text-muted-foreground">
+          Demos con datos seed · Soporte en Perú · Facturación SUNAT integrada
+        </p>
       </div>
 
       <HeroVisualStandard />

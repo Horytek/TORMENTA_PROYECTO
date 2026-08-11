@@ -10,6 +10,9 @@ import { StoreHeader } from "../components/vitrina/StoreHeader";
 import { StoreFooter } from "../components/vitrina/StoreFooter";
 import { ProductRail } from "../components/vitrina/ProductRail";
 import { useStorefrontCatalog } from "../components/vitrina/hooks/useStorefrontCatalog";
+import { ProductSpecs, StockBadge, StoreSkeleton } from "../components/vitrina/detail/ProductSpecs";
+import { StickyBuyBar } from "../components/vitrina/quick/StickyBuyBar";
+import { CartFab } from "../components/vitrina/quick/CartFab";
 import {
   formatPen,
   getCategoria,
@@ -23,6 +26,7 @@ export default function StoreProductPage() {
   const productId = Number(id);
   const setSlug = useEcommerceCartStore((s) => s.setSlug);
   const add = useEcommerceCartStore((s) => s.add);
+  const items = useEcommerceCartStore((s) => s.items);
   const count = useEcommerceCartStore((s) => s.count());
   const [qty, setQty] = useState(1);
   const [imgIdx, setImgIdx] = useState(0);
@@ -66,6 +70,8 @@ export default function StoreProductPage() {
     return otros.slice(0, 8);
   }, [catalogo, producto]);
 
+  const inCart = Boolean(producto && items.some((i) => i.id_producto === producto.id_producto));
+
   const onAdd = (p: StoreProducto, cantidad = 1) => {
     add(
       {
@@ -79,17 +85,11 @@ export default function StoreProductPage() {
     toast.success(`${p.nombre} agregado al carrito`);
   };
 
-  if (productQ.isLoading || storeQ.isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0b1220] text-white/50">
-        Cargando producto…
-      </div>
-    );
-  }
+  if (productQ.isLoading || storeQ.isLoading) return <StoreSkeleton />;
 
   if (!tienda || !producto || productQ.isError || !productQ.data?.success) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#e8eef5] text-slate-600">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#0a0e14] text-slate-400">
         <p>Producto no encontrado.</p>
         <Link to={`/tienda/${slug}`} className="text-sm font-semibold underline">
           Volver a la tienda
@@ -102,29 +102,27 @@ export default function StoreProductPage() {
   const activeImg = galeria[imgIdx] || galeria[0];
 
   return (
-    <StoreShell tienda={tienda}>
+    <StoreShell tienda={tienda} slug={slug}>
       <StoreHeader
         tienda={tienda}
         slug={slug}
         cartCount={count}
         categorias={catalog.categorias}
-        search={catalog.busqueda}
-        onSearchChange={catalog.setBusqueda}
         onCategoria={catalog.setCategoria}
         categoriaActiva={catalog.categoria}
-        compactSearch
+        productos={catalogo}
       />
 
-      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8 lg:py-12">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8 lg:py-12 pb-28 lg:pb-12">
         <Link
           to={`/tienda/${slug}`}
-          className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-[var(--vitrina-accent)] mb-8"
+          className="inline-flex items-center gap-2 text-sm store-muted hover:text-[var(--vitrina-accent)] mb-8 min-h-11"
         >
           <ArrowLeft className="size-4" />
-          Volver al catálogo
+          Volver
         </Link>
 
-        <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-14">
           <div className="flex gap-3">
             {galeria.length > 1 && (
               <div className="hidden sm:flex flex-col gap-2 w-16 shrink-0">
@@ -133,8 +131,8 @@ export default function StoreProductPage() {
                     key={url + i}
                     type="button"
                     onClick={() => setImgIdx(i)}
-                    className={`aspect-square overflow-hidden border-2 transition ${
-                      i === imgIdx ? "border-[var(--vitrina-accent)]" : "border-transparent opacity-70 hover:opacity-100"
+                    className={`store-thumb aspect-square overflow-hidden border ${
+                      i === imgIdx ? "border-[var(--vitrina-accent)]" : "store-hairline opacity-70"
                     }`}
                   >
                     <img src={url} alt="" className="size-full object-cover" />
@@ -142,49 +140,37 @@ export default function StoreProductPage() {
                 ))}
               </div>
             )}
-            <div className="flex-1 aspect-square bg-slate-100 overflow-hidden">
+            <div className="flex-1 aspect-square bg-[var(--vitrina-fog)] overflow-hidden rounded-[var(--store-radius-lg)]">
               {activeImg ? (
                 <img src={activeImg} alt={producto.nombre} className="size-full object-cover" />
               ) : (
-                <div className="size-full flex items-center justify-center text-slate-300">Sin foto</div>
+                <div className="size-full flex items-center justify-center store-muted">Sin foto</div>
               )}
             </div>
           </div>
 
-          <div className="flex flex-col">
-            {cat && (
-              <span className="text-[11px] uppercase tracking-[0.2em] text-slate-400 mb-3">{cat}</span>
-            )}
-            <h1 className="vitrina-display text-4xl sm:text-5xl lg:text-6xl">{producto.nombre}</h1>
-            <p className="mt-4 text-3xl font-semibold" style={{ color: "var(--vitrina-accent)" }}>
+          <div className="flex flex-col gap-4">
+            {cat && <span className="text-[11px] uppercase tracking-wider store-muted">{cat}</span>}
+            <h1 className="vitrina-display text-4xl sm:text-5xl">{producto.nombre}</h1>
+            <p className="text-2xl font-semibold" style={{ color: "var(--vitrina-accent)" }}>
               {formatPen(Number(producto.precio))}
             </p>
-            {producto.sku && (
-              <p className="mt-2 text-xs font-mono text-slate-400">SKU {producto.sku}</p>
-            )}
+            <StockBadge stock={producto.stock} />
             {producto.descripcion && (
-              <p className="mt-6 text-slate-600 leading-relaxed whitespace-pre-line">{producto.descripcion}</p>
+              <p className="store-muted leading-relaxed whitespace-pre-line text-sm">{producto.descripcion}</p>
             )}
-            <p className="mt-4 text-sm text-slate-500">
-              {producto.stock > 0 ? `${producto.stock} en stock` : "Agotado"}
-            </p>
+            <ProductSpecs producto={producto} />
 
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <div className="inline-flex items-center border border-slate-200 rounded-full bg-white">
-                <button
-                  type="button"
-                  className="size-10 flex items-center justify-center"
-                  onClick={() => setQty((q) => Math.max(1, q - 1))}
-                  aria-label="Menos"
-                >
+            <div className="hidden lg:flex flex-wrap items-center gap-4 mt-4">
+              <div className="inline-flex items-center border store-hairline bg-[var(--vitrina-elevated)] rounded-[var(--store-radius-pill)] overflow-hidden">
+                <button type="button" className="size-11 flex items-center justify-center" onClick={() => setQty((q) => Math.max(1, q - 1))}>
                   <Minus className="size-4" />
                 </button>
                 <span className="w-10 text-center font-semibold">{qty}</span>
                 <button
                   type="button"
-                  className="size-10 flex items-center justify-center"
+                  className="size-11 flex items-center justify-center"
                   onClick={() => setQty((q) => Math.min(producto.stock || 99, q + 1))}
-                  aria-label="Más"
                 >
                   <Plus className="size-4" />
                 </button>
@@ -193,7 +179,7 @@ export default function StoreProductPage() {
                 type="button"
                 disabled={producto.stock <= 0}
                 onClick={() => onAdd(producto, qty)}
-                className="vitrina-pill inline-flex items-center gap-2 px-8 py-3 text-sm font-semibold text-white disabled:opacity-40"
+                className="vitrina-pill inline-flex items-center gap-2 h-11 px-8 text-sm font-semibold text-white disabled:opacity-40"
                 style={{ background: "var(--vitrina-accent)" }}
               >
                 <ShoppingBag className="size-4" />
@@ -204,24 +190,13 @@ export default function StoreProductPage() {
         </div>
       </div>
 
-      {/* Sticky buy bar mobile */}
-      <div className="lg:hidden fixed bottom-0 inset-x-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur px-4 py-3 flex items-center justify-between gap-3 safe-area-pb">
-        <div>
-          <p className="text-xs text-slate-400 truncate max-w-[10rem]">{producto.nombre}</p>
-          <p className="font-semibold" style={{ color: "var(--vitrina-accent)" }}>
-            {formatPen(Number(producto.precio))}
-          </p>
-        </div>
-        <button
-          type="button"
-          disabled={producto.stock <= 0}
-          onClick={() => onAdd(producto, qty)}
-          className="vitrina-pill px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40"
-          style={{ background: "var(--vitrina-accent)" }}
-        >
-          Agregar
-        </button>
-      </div>
+      <StickyBuyBar
+        precio={Number(producto.precio) * qty}
+        disabled={producto.stock <= 0}
+        onAdd={() => onAdd(producto, qty)}
+        inCart={inCart}
+        slug={slug}
+      />
 
       <ProductRail
         title="También te puede interesar"
@@ -231,8 +206,8 @@ export default function StoreProductPage() {
         onAdd={(p) => onAdd(p, 1)}
       />
 
-      <div className="h-16 lg:hidden" />
       <StoreFooter tienda={tienda} slug={slug} />
+      <CartFab slug={slug} count={count} />
     </StoreShell>
   );
 }

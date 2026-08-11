@@ -18,6 +18,7 @@ export type StoreProducto = {
   precio: number;
   stock: number;
   sku?: string | null;
+  categoria?: string | null;
   attrs_json?: Record<string, unknown> | string | null;
   imagen_url?: string | null;
 };
@@ -47,9 +48,25 @@ export function parseAttrs(attrs: StoreProducto["attrs_json"]): Record<string, u
 }
 
 export function getCategoria(p: StoreProducto): string | null {
+  if (typeof p.categoria === "string" && p.categoria.trim()) return p.categoria.trim();
   const attrs = parseAttrs(p.attrs_json);
   const cat = attrs.categoria;
   return typeof cat === "string" && cat.trim() ? cat.trim() : null;
+}
+
+export function getTags(p: StoreProducto): string[] {
+  const attrs = parseAttrs(p.attrs_json);
+  const tags = attrs.tags;
+  if (Array.isArray(tags)) return tags.filter((t): t is string => typeof t === "string" && t.trim()).map((t) => t.trim());
+  return [];
+}
+
+export function isDestacado(p: StoreProducto): boolean {
+  return Boolean(parseAttrs(p.attrs_json).destacado);
+}
+
+export function isStory(p: StoreProducto): boolean {
+  return Boolean(parseAttrs(p.attrs_json).story);
 }
 
 export function monograma(nombre: string): string {

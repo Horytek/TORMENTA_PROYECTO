@@ -4,7 +4,7 @@ import { clearEcommerceToken, getEcommerceToken, setEcommerceToken } from "../ap
 type EcomUser = {
   usuario: string;
   email: string;
-  id_tenant: number;
+  id_tienda: number;
   slug: string;
   tienda: string;
 };

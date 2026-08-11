@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { ScrollUpButton } from "../components/ScrollUpButton";
-import { useMode } from "../hooks/useMode";
+import { useLandingProduct } from "../hooks/useLandingProduct";
 import { useUserStore } from "@/store/useUserStore";
 import {
   Lock,
@@ -30,7 +30,7 @@ interface LandingSubPageProps {
 export default function LandingSubPage({ pageId }: LandingSubPageProps) {
   const isAuthenticated = useUserStore((s) => s.isAuthenticated);
   const navigate = useNavigate();
-  const { mode, setMode } = useMode();
+  const { productId, setProductId } = useLandingProduct();
 
   useEffect(() => {
     if (isAuthenticated) navigate("/dashboard", { replace: true });
@@ -343,7 +343,7 @@ export default function LandingSubPage({ pageId }: LandingSubPageProps) {
   return (
     <div className="min-h-screen w-full bg-background flex flex-col justify-between">
       <div>
-        <Header mode={mode} onModeChange={setMode} />
+        <Header productId={productId} onProductChange={setProductId} />
 
         <main className="mx-auto max-w-4xl px-6 py-16 md:py-24 space-y-12">
           {/* Header de la Subpágina */}

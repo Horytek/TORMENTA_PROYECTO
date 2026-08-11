@@ -18,7 +18,7 @@ Migración:  npm run db:migrate:ecommerce
 API:        /api/ecommerce/*
 
 SaaS:  external_reference = ecommerce:{id_tienda} → /api/webhook + Resend
-Cart:  external_reference = ecom_order:{tenant}:{codigo} → /api/ecommerce/webhook?id_tenant=
+Cart:  external_reference = ecom_order:{id_tienda}:{codigo} → /api/ecommerce/webhook?id_tienda=
 
 UI:
   /?mode=ecommerce

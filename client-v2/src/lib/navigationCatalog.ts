@@ -27,6 +27,16 @@ import {
   HandCoins,
   ArrowLeftRight,
   MessageCircle,
+  RefreshCw,
+  Store,
+  Factory,
+  Handshake,
+  PackageSearch,
+  Route,
+  MapPin,
+  Wrench,
+  UserPlus,
+  CalendarClock,
 } from "lucide-react";
 import type { RouteModule, CatalogMeta } from "@/api/rutas";
 import { getIcon, type NavIcon } from "@/lib/iconRegistry";
@@ -67,6 +77,17 @@ export interface ModuleMeta {
 const MODULE_META: Record<string, ModuleMeta> = {
   "productos": { url: "/products", icon: Tags, group: "General", title: "Productos", keywords: ["sku", "catálogo", "stock"] },
   "catalogo": { url: "/catalog-express", icon: MessageCircle, group: "General", title: "Catálogo WhatsApp", keywords: ["whatsapp", "catalogo", "tienda", "vitrina", "pedidos"] },
+  "stock-sync": { url: "/platform/sync", icon: RefreshCw, group: "Plataforma", title: "Sync Stock", keywords: ["sync", "stock", "canales", "sobrevende"] },
+  "mayorista": { url: "/mayorista-admin", icon: Store, group: "Plataforma", title: "Mayorista B2B", keywords: ["b2b", "mayorista", "lista", "volumen"] },
+  "taller": { url: "/platform/taller", icon: Factory, group: "Plataforma", title: "Taller", keywords: ["ot", "insumos", "merma", "planta", "fabricación"] },
+  "preventa": { url: "/platform/preventa", icon: CalendarClock, group: "Plataforma", title: "Preventa", keywords: ["reserva", "anticipo", "edición limitada", "campaña"] },
+  "crm": { url: "/platform/crm", icon: Handshake, group: "Plataforma", title: "CRM", keywords: ["pipeline", "deal", "seguimiento", "ventas"] },
+  "envios": { url: "/platform/envios", icon: Truck, group: "Plataforma", title: "Envíos", keywords: ["courier", "guía", "tracking", "paquete"] },
+  "wms": { url: "/platform/wms", icon: PackageSearch, group: "Plataforma", title: "WMS", keywords: ["picking", "packing", "ubicación", "almacén"] },
+  "despacho": { url: "/platform/despacho", icon: Route, group: "Plataforma", title: "Despacho", keywords: ["ruta", "parada", "chofer", "flota propia"] },
+  "campo": { url: "/platform/campo", icon: MapPin, group: "Plataforma", title: "Campo", keywords: ["gps", "checkin", "vendedor", "asistencia"] },
+  "mantenimiento": { url: "/platform/mantenimiento", icon: Wrench, group: "Plataforma", title: "Mantenimiento", keywords: ["activo", "preventivo", "correctivo", "máquina"] },
+  "recluta": { url: "/platform/recluta", icon: UserPlus, group: "Plataforma", title: "Recluta", keywords: ["vacante", "postulación", "selección", "rrhh"] },
   "ventas": { url: "/sales", icon: ShoppingCart, group: "General", title: "Punto de Venta (POS)", keywords: ["caja", "cobrar", "vender"] },
   "devoluciones": { url: "/sales/returns", icon: RotateCcw, group: "General", title: "Devoluciones", keywords: ["reembolso", "nota de crédito", "cambio", "retorno"] },
   "almacen": { url: "/inventory", icon: Package, group: "Logística", title: "Inventario / Kárdex", keywords: ["stock", "movimientos", "kardex"] },
@@ -93,7 +114,7 @@ const MODULE_META: Record<string, ModuleMeta> = {
   "negocio": { url: "/settings/system", icon: Building2, group: "Ajustes", title: "Configuración de la Empresa", keywords: ["empresa", "ruc", "negocio", "razón social", "logo", "datos", "sistema"] },
 };
 
-export const SECTION_ORDER = ["General", "Logística", "Personas", "Reportes", "Ajustes"];
+export const SECTION_ORDER = ["General", "Logística", "Personas", "Reportes", "Plataforma", "Ajustes"];
 
 export function normalizeSlug(ruta?: string | null): string {
   if (!ruta) return "";
@@ -170,6 +191,87 @@ export function buildNavSections(catalog: RouteModule[]): NavSection[] {
       keywords: meta.keywords,
     });
     groups.set(meta.group, list);
+  }
+
+  // Oleadas A–E — visibles sin esperar seed en `modulo` (entitlement se valida en API).
+  const platformExtras: NavItem[] = [
+    {
+      title: "Sync Stock",
+      url: "/platform/sync",
+      icon: RefreshCw,
+      group: "Plataforma",
+      keywords: MODULE_META["stock-sync"].keywords,
+    },
+    {
+      title: "Taller",
+      url: "/platform/taller",
+      icon: Factory,
+      group: "Plataforma",
+      keywords: MODULE_META.taller.keywords,
+    },
+    {
+      title: "Preventa",
+      url: "/platform/preventa",
+      icon: CalendarClock,
+      group: "Plataforma",
+      keywords: MODULE_META.preventa.keywords,
+    },
+    {
+      title: "CRM",
+      url: "/platform/crm",
+      icon: Handshake,
+      group: "Plataforma",
+      keywords: MODULE_META.crm.keywords,
+    },
+    {
+      title: "Envíos",
+      url: "/platform/envios",
+      icon: Truck,
+      group: "Plataforma",
+      keywords: MODULE_META.envios.keywords,
+    },
+    {
+      title: "WMS",
+      url: "/platform/wms",
+      icon: PackageSearch,
+      group: "Plataforma",
+      keywords: MODULE_META.wms.keywords,
+    },
+    {
+      title: "Despacho",
+      url: "/platform/despacho",
+      icon: Route,
+      group: "Plataforma",
+      keywords: MODULE_META.despacho.keywords,
+    },
+    {
+      title: "Campo",
+      url: "/platform/campo",
+      icon: MapPin,
+      group: "Plataforma",
+      keywords: MODULE_META.campo.keywords,
+    },
+    {
+      title: "Mantenimiento",
+      url: "/platform/mantenimiento",
+      icon: Wrench,
+      group: "Plataforma",
+      keywords: MODULE_META.mantenimiento.keywords,
+    },
+    {
+      title: "Recluta",
+      url: "/platform/recluta",
+      icon: UserPlus,
+      group: "Plataforma",
+      keywords: MODULE_META.recluta.keywords,
+    },
+  ];
+  for (const item of platformExtras) {
+    if (seenUrls.has(item.url)) continue;
+    seenUrls.add(item.url);
+    const list = groups.get(item.group) ?? [];
+    list.push(item);
+    groups.set(item.group, list);
   }
 
   return SECTION_ORDER

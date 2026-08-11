@@ -48,6 +48,10 @@ export default defineConfig({
       '@': resolve(__dirname, './src')
     }
   },
+  // maplibre-gl v6 es ESM puro (sin default export); evita interop roto en deps prebundle
+  optimizeDeps: {
+    include: ['maplibre-gl'],
+  },
   assetsInclude: ['**/*.ogg', '**/*.mp3', '**/*.wav'],
   build: {
     target: 'es2022',

@@ -1,6 +1,7 @@
 import { Phone } from "lucide-react";
 import { Link } from "react-router-dom";
 import { monograma, type StoreTienda } from "../../types/storefront";
+import { ContactQuick } from "./quick/ContactQuick";
 
 type Props = {
   tienda: StoreTienda;
@@ -9,66 +10,42 @@ type Props = {
 
 export function StoreFooter({ tienda, slug }: Props) {
   return (
-    <footer className="mt-auto bg-[var(--vitrina-ink)] text-[var(--vitrina-fog)]">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            {tienda.logo_url ? (
-              <img src={tienda.logo_url} alt="" className="size-10 rounded-full object-cover" />
-            ) : (
-              <span
-                className="size-10 rounded-full flex items-center justify-center text-sm font-bold text-white"
-                style={{ background: "var(--vitrina-accent)" }}
-              >
-                {monograma(tienda.nombre)}
-              </span>
-            )}
-            <span className="vitrina-display text-2xl">{tienda.nombre}</span>
-          </div>
-          {tienda.descripcion && (
-            <p className="text-sm text-white/55 leading-relaxed max-w-sm">{tienda.descripcion}</p>
-          )}
-        </div>
-
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-3">Explorar</p>
-          <ul className="space-y-2 text-sm">
-            <li>
-              <Link to={`/tienda/${slug}`} className="hover:text-[var(--vitrina-accent)] transition-colors">
-                Catálogo
-              </Link>
-            </li>
-            <li>
-              <a href="#catalogo" className="hover:text-[var(--vitrina-accent)] transition-colors">
-                Todos los productos
-              </a>
-            </li>
-            <li>
-              <Link to={`/tienda/${slug}/carrito`} className="hover:text-[var(--vitrina-accent)] transition-colors">
-                Carrito
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.2em] text-white/40 mb-3">Contacto</p>
-          {tienda.telefono ? (
-            <a
-              href={`tel:${tienda.telefono}`}
-              className="inline-flex items-center gap-2 text-sm hover:text-[var(--vitrina-accent)] transition-colors"
+    <footer className="mt-auto border-t store-hairline bg-[var(--vitrina-elevated)] text-[var(--vitrina-ink)]">
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 py-10 flex flex-col sm:flex-row gap-8 sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          {tienda.logo_url ? (
+            <img src={tienda.logo_url} alt="" className="store-logo size-9 object-cover" />
+          ) : (
+            <span
+              className="store-logo size-9 flex items-center justify-center text-xs font-bold text-white"
+              style={{ background: "var(--vitrina-accent)" }}
             >
-              <Phone className="size-4" />
+              {monograma(tienda.nombre)}
+            </span>
+          )}
+          <div className="min-w-0">
+            <p className="font-semibold truncate">{tienda.nombre}</p>
+            <p className="text-xs store-muted">Pago seguro · Mercado Pago</p>
+          </div>
+        </div>
+        <nav className="flex flex-wrap gap-2 text-sm">
+          <Link to={`/tienda/${slug}`} className="store-nav-btn px-2.5 py-1.5 hover:text-[var(--vitrina-accent)]">
+            Catálogo
+          </Link>
+          <Link to={`/tienda/${slug}/carrito`} className="store-nav-btn px-2.5 py-1.5 hover:text-[var(--vitrina-accent)]">
+            Carrito
+          </Link>
+          {tienda.telefono && (
+            <a href={`tel:${tienda.telefono}`} className="store-nav-btn inline-flex items-center gap-1 px-2.5 py-1.5 hover:text-[var(--vitrina-accent)]">
+              <Phone className="size-3.5" />
               {tienda.telefono}
             </a>
-          ) : (
-            <p className="text-sm text-white/45">Consulta disponible al comprar</p>
           )}
-          <p className="mt-6 text-xs text-white/30">Pago procesado de forma segura con Mercado Pago.</p>
-        </div>
+          <ContactQuick telefono={tienda.telefono} />
+        </nav>
       </div>
-      <div className="border-t border-white/10 px-4 lg:px-8 py-4 text-center text-[11px] text-white/30">
-        © {new Date().getFullYear()} {tienda.nombre}. Vitrina impulsada por Horytek.
+      <div className="border-t store-hairline px-4 py-3 text-center text-[11px] store-muted">
+        © {new Date().getFullYear()} {tienda.nombre} · Horytek
       </div>
     </footer>
   );
