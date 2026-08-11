@@ -1,10 +1,10 @@
 import { getEcommerceConnection } from "../database/database_ecommerce.js";
 import { hashPassword } from "../utils/passwordUtil.js";
 
-const slug = "demo-horytek";
-const email = "demo-ecommerce@horytek.test";
-const usua = "ecom_demo";
-const clave = "DemoEcom2026!";
+const slug = (process.env.ECOM_DEMO_SLUG || "textiles_creando_moda").trim();
+const email = (process.env.ECOM_DEMO_EMAIL || "admin@textilescreandomoda.local").trim();
+const usua = (process.env.ECOM_DEMO_USUA || "textiles_creando_moda").trim();
+const clave = (process.env.ECOM_DEMO_PASSWORD || "CreandoModa2026!").trim();
 
 const c = await getEcommerceConnection();
 try {
@@ -34,14 +34,14 @@ try {
     `INSERT INTO tienda
       (id_plan, slug, nombre, email, telefono, estado, fecha_pago, descripcion)
      VALUES (1, ?, ?, ?, ?, 'active', CURDATE(), ?)`,
-    [slug, "Demo Horytek Shop", email, "999000111", "Tienda de prueba Ecommerce"]
+    [slug, "Textiles Creando Moda", email, "999000111", "Moda femenina online"]
   );
   const id_tienda = ins.insertId;
   await c.query(
     `INSERT INTO usuario
       (id_tienda, usua, password_hash, email, nombre, rol, estado)
      VALUES (?, ?, ?, ?, ?, 'admin', 1)`,
-    [id_tienda, usua, hash, email, "Admin Demo"]
+    [id_tienda, usua, hash, email, "Admin Textiles Creando Moda"]
   );
   await c.commit();
   console.log(
@@ -49,7 +49,7 @@ try {
       {
         ok: true,
         admin: { login: "/login?mode=ecommerce", usuario: usua, password: clave, email },
-        storefront: { url: `/tienda/${slug}`, nota: "Sin login de cliente: el catálogo es público" },
+        storefront: { url: `/tienda/${slug}`, nota: "Catálogo público sin login de cliente" },
         id_tienda,
         slug,
       },
@@ -63,7 +63,7 @@ try {
   } catch {
     /* noop */
   }
-  console.error(e.message);
+  console.error(e);
   process.exitCode = 1;
 } finally {
   c.release();

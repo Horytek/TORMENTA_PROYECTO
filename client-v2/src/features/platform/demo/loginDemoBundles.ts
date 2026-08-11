@@ -164,16 +164,18 @@ export function getLoginDemoBundle(
   }
 
   if (mode === "ecommerce") {
+    const ecommerceDemoUsuario = "demo_ecommerce_store";
+    const ecommerceDemoPassword = "DemoEcommerce2026!";
     return {
       mode,
       surface: "admin",
-      hint: "Cuenta demo de tienda. Usa los botones para rellenar e ingresar.",
+      hint: "Acceso de la tienda Ecommerce demo. Usa los botones para rellenar e ingresar.",
       lines: publicLines([
-        { label: "Usuario", value: "ecom_demo" },
-        { label: "Contraseña", value: "DemoEcom2026!" },
+        { label: "Usuario", value: ecommerceDemoUsuario },
+        { label: "Contraseña", value: ecommerceDemoPassword },
       ]),
-      fill: { usuario: "ecom_demo", password: "DemoEcom2026!" },
-      enterLabel: "Entrar con demo",
+      fill: { usuario: ecommerceDemoUsuario, password: ecommerceDemoPassword },
+      enterLabel: "Entrar a la tienda",
     };
   }
 

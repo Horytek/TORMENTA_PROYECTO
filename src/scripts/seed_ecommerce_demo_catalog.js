@@ -5,16 +5,16 @@
 import { getEcommerceConnection } from "../database/database_ecommerce.js";
 import { hashPassword } from "../utils/passwordUtil.js";
 
-const slug = "demo-horytek";
-const email = "demo-ecommerce@horytek.test";
-const usua = "ecom_demo";
-const clave = "DemoEcom2026!";
+const slug = (process.env.ECOM_DEMO_SLUG || "textiles_creando_moda").trim();
+const email = (process.env.ECOM_DEMO_EMAIL || "admin@textilescreandomoda.local").trim();
+const usua = (process.env.ECOM_DEMO_USUA || "textiles_creando_moda").trim();
+const clave = (process.env.ECOM_DEMO_PASSWORD || "CreandoModa2026!").trim();
 
 const TIENDA = {
-  nombre: "Demo Horytek Shop",
-  descripcion: "Destacados esta semana · Tecnología, hogar, moda y deporte.",
-  color_primario: "#0E7C7B",
-  logo_url: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=200&h=200&fit=crop",
+  nombre: slug === "textiles_creando_moda" ? "Textiles Creando Moda" : "Textiles Creando Moda (Demo)",
+  descripcion: "Colección femenina · Vestidos, blusas y denim.",
+  color_primario: "#BE185D",
+  logo_url: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=200&h=200&fit=crop",
   telefono: "999000111",
 };
 
@@ -357,8 +357,12 @@ try {
     await c.query(
       `INSERT INTO usuario (id_tienda, usua, password_hash, email, nombre, rol, estado)
        VALUES (?, ?, ?, ?, ?, 'admin', 1)
-       ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), estado = 1`,
-      [insT.insertId, usua, hash, email, "Admin Demo"]
+       ON DUPLICATE KEY UPDATE
+         password_hash = VALUES(password_hash),
+         email = VALUES(email),
+         nombre = VALUES(nombre),
+         estado = 1`,
+      [insT.insertId, usua, hash, email, `Admin ${TIENDA.nombre}`]
     );
     [[tienda]] = await c.query(`SELECT id_tienda FROM tienda WHERE slug = ? LIMIT 1`, [slug]);
   }
@@ -367,10 +371,11 @@ try {
 
   await c.query(
     `UPDATE tienda SET
-      nombre = ?, descripcion = ?, color_primario = ?, logo_url = ?, telefono = ?, estado = 'active', theme_json = ?
+      nombre = ?, email = ?, descripcion = ?, color_primario = ?, logo_url = ?, telefono = ?, estado = 'active', theme_json = ?
      WHERE id_tienda = ?`,
     [
       TIENDA.nombre,
+      email,
       TIENDA.descripcion,
       TIENDA.color_primario,
       TIENDA.logo_url,

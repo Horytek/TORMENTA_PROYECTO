@@ -71,8 +71,24 @@ En `/login`, la tarjeta **Acceso demostración** rellena credenciales por produc
 | **Atelier** | `npm run seed:atelier-demo` → base `db_atelier` |
 | Catálogo WA | `/catalogo/{SEED_TENANT_ID}` (datos ERP del tenant) |
 | ERP | Credenciales locales del usuario |
-| Ecommerce | `ecom_demo` / `DemoEcom2026!` (script ecommerce) |
+| Ecommerce (demo) | `demo_ecommerce_store` / `DemoEcommerce2026!` — seed específico |
 | Pocket | `npm run seed:express` → `demo.pocket@horytek.test` / `PocketDemo2026!` |
+| Ecommerce (empresa ERP → tienda) | `npm run sync:empresa-ecommerce` |
+
+### Ecommerce (sync desde empresa ERP)
+
+Copia `id_empresa=2` (nombre, contacto, logo) a la tienda `textiles_creando_moda`, asegura admin, MP TEST y catálogo de prendas femeninas.
+
+```bash
+npm run sync:empresa-ecommerce
+```
+
+| Rol | Credencial | Destino |
+|-----|------------|---------|
+| Admin tienda | `textiles_creando_moda` / `CreandoModa2026!` | `/login?mode=ecommerce` |
+| Vitrina | — | `/tienda/textiles_creando_moda` |
+
+Overrides: `ECOM_SYNC_ID_EMPRESA`, `ECOM_SYNC_SLUG`. MP = keys TEST de `src/scripts/ecommerce_mp_test_creds.js` (no `.env`).
 
 ### Atelier (marketplace de dibujos)
 
