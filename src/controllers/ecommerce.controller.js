@@ -8,6 +8,9 @@ import { TOKEN_SECRET } from "../config.js";
 import { getEcommercePlan, validateEcommercePlanPrice } from "../config/ecommercePlans.config.js";
 import { hashPassword, verifyPassword } from "../utils/passwordUtil.js";
 import { encryptMpToken, decryptMpToken } from "../utils/ecommerceCrypto.js";
+import {
+  MP_TEST_ACCESS_TOKEN,
+} from "../scripts/ecommerce_mp_test_creds.js";
 import { uploadImage as subirAImageKit, deleteImage as borrarDeImageKit } from "../services/imagekit.service.js";
 import {
   listSucursalesActivas,
@@ -75,6 +78,29 @@ function platformMpClient() {
 
 function sellerMpClient(accessToken) {
   return new MercadoPagoConfig({ accessToken });
+}
+
+/**
+ * Resuelve access_token del seller.
+ * Si el TOKEN_SECRET del runtime no coincide con el usado al cifrar (típico Vercel vs seed local),
+ * en modo test cae al token TEST canónico para no romper demos.
+ */
+function resolveSellerAccessToken(creds) {
+  try {
+    return decryptMpToken(creds.access_token_enc);
+  } catch (err) {
+    const modo = String(creds.modo || "").toLowerCase();
+    if (modo === "test") {
+      const fallback = process.env.MP_TEST_ACCESS_TOKEN || MP_TEST_ACCESS_TOKEN;
+      if (fallback) {
+        console.warn(
+          "[ecommerce.mp] decrypt falló; usando MP TEST fallback (modo=test). Revisá TOKEN_SECRET en el deploy."
+        );
+        return fallback;
+      }
+    }
+    throw err;
+  }
 }
 
 /** Activación post-pago SaaS (llamado desde payment webhook). Idempotente.
@@ -1037,7 +1063,7 @@ export const checkoutStore = async (req, res) => {
     }
 
     const [[creds]] = await connection.query(
-      `SELECT access_token_enc, public_key FROM mp_cuenta WHERE id_tienda = ? LIMIT 1`,
+      `SELECT access_token_enc, public_key, modo FROM mp_cuenta WHERE id_tienda = ? LIMIT 1`,
       [tienda.id_tienda]
     );
     if (!creds) {
@@ -1050,10 +1076,14 @@ export const checkoutStore = async (req, res) => {
 
     let accessToken;
     try {
-      accessToken = decryptMpToken(creds.access_token_enc);
+      accessToken = resolveSellerAccessToken(creds);
     } catch {
       await connection.rollback();
-      return res.status(500).json({ success: false, message: "Credenciales MP inválidas." });
+      return res.status(500).json({
+        success: false,
+        message:
+          "Credenciales MP inválidas. En modo test re-sembrá con seed_ecommerce_demo_mp.js o alineá TOKEN_SECRET del deploy.",
+      });
     }
 
     const lineItems = [];
@@ -1240,14 +1270,14 @@ export const ecommerceStoreWebhook = async (req, res) => {
   try {
     connection = await getEcommerceConnection();
     const [[creds]] = await connection.query(
-      `SELECT access_token_enc FROM mp_cuenta WHERE id_tienda = ? LIMIT 1`,
+      `SELECT access_token_enc, modo FROM mp_cuenta WHERE id_tienda = ? LIMIT 1`,
       [id_tienda]
     );
     if (!creds) return res.sendStatus(200);
 
     let accessToken;
     try {
-      accessToken = decryptMpToken(creds.access_token_enc);
+      accessToken = resolveSellerAccessToken(creds);
     } catch {
       return res.sendStatus(200);
     }
