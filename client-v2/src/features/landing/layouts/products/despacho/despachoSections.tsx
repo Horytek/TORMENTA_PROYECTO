@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Clock3, MapPin, RotateCcw, Truck, UserRound } from "lucide-react";
+import { Check, Clock3, RotateCcw, Truck, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LandingProductModule } from "../../../modules/landingModule.types";
 import { useLayoutChrome } from "../../layoutShared";

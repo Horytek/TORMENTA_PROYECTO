@@ -281,7 +281,29 @@ export default function DeliveryAdminPage() {
 
         <PlatformMapPanel
           title="Mapa operativo"
-          points={LIMA_POINTS.slice(0, Math.min(6, Math.max(2, pedidos.length)))}
+          footnote="Demo geo Lima"
+          center={LIMA_POINTS.jesusMaria}
+          markers={(pedidos.length
+            ? pedidos.slice(0, 6)
+            : [{ id_pedido: 0, recojo: "Demo A", entrega: "Demo B", estado: "pendiente" }]
+          ).map((p, i) => {
+            const pts = [
+              LIMA_POINTS.jesusMaria,
+              LIMA_POINTS.surco,
+              LIMA_POINTS.sanIsidro,
+              LIMA_POINTS.miraflores,
+              LIMA_POINTS.callao,
+              LIMA_POINTS.laMolina,
+            ];
+            const pt = pts[i % pts.length];
+            return {
+              id: String(p.id_pedido || i),
+              label: `#${p.id_pedido || "demo"}`,
+              lng: pt[0],
+              lat: pt[1],
+              popup: `${p.recojo} → ${p.entrega}`,
+            };
+          })}
         />
       </div>
     </DeliveryAdminShell>

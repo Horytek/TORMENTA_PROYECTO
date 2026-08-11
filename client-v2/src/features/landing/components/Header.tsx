@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { HorytekIcon } from "@/components/brand/HorytekIcon";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { SALES_WHATSAPP_URL } from "../data/landing.data";
 import { ProductSwitcher } from "./ProductSwitcher";
 import { getLandingModule } from "../modules/landingModules.registry";
 import { HORYTEK_PRODUCTS } from "@/features/platform/catalog/horytekProducts";
