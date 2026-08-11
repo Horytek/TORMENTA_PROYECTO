@@ -164,18 +164,19 @@ export function getLoginDemoBundle(
   }
 
   if (mode === "ecommerce") {
-    const ecommerceDemoUsuario = "demo_ecommerce_store";
-    const ecommerceDemoPassword = "DemoEcommerce2026!";
+    // Canónico del seed: src/scripts/seed_ecommerce_demo.js
+    const ecommerceDemoUsuario = "ecom_demo";
+    const ecommerceDemoPassword = "DemoEcom2026!";
     return {
       mode,
       surface: "admin",
-      hint: "Acceso de la tienda Ecommerce demo. Usa los botones para rellenar e ingresar.",
+      hint: "Cuenta demo de tienda. Usa los botones para rellenar e ingresar.",
       lines: publicLines([
         { label: "Usuario", value: ecommerceDemoUsuario },
         { label: "Contraseña", value: ecommerceDemoPassword },
       ]),
       fill: { usuario: ecommerceDemoUsuario, password: ecommerceDemoPassword },
-      enterLabel: "Entrar a la tienda",
+      enterLabel: "Entrar con demo",
     };
   }
 

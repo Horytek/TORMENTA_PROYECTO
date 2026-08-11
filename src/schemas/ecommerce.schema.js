@@ -6,7 +6,7 @@ export const ecommerceRegisterSchema = z.object({
     .string()
     .min(3)
     .max(80)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug inválido (solo minúsculas, números y guiones)"),
+    .regex(/^[a-z0-9]+(?:[_-][a-z0-9]+)*$/, "Slug inválido (solo minúsculas, números, guiones y guion bajo)"),
   email: z.string().email(),
   telefono: z.string().min(6).max(40).optional().nullable(),
   plan: z.enum(["starter", "pro"]).default("starter"),
@@ -45,13 +45,56 @@ export const ecommerceCheckoutSchema = z.object({
     .array(
       z.object({
         id_producto: z.number().int().positive(),
+        id_variante: z.number().int().positive().optional().nullable(),
         cantidad: z.number().int().positive().max(99),
       })
     )
     .min(1),
+  id_sucursal: z.number().int().positive(),
+  fulfillment: z.literal("pickup").default("pickup"),
   email_comprador: z.string().email(),
   nombre_comprador: z.string().min(1).max(160).optional().nullable(),
   telefono_comprador: z.string().max(40).optional().nullable(),
+  whatsapp_context: z.any().optional().nullable(),
+});
+
+export const ecommerceSucursalSchema = z.object({
+  nombre: z.string().min(1).max(120),
+  direccion: z.string().min(1).max(500),
+  lat: z.number().optional().nullable(),
+  lng: z.number().optional().nullable(),
+  horario_json: z.any().optional().nullable(),
+  whatsapp: z.string().max(40).optional().nullable(),
+  telefono: z.string().max(40).optional().nullable(),
+  allow_pickup: z.boolean().optional().default(true),
+  allow_delivery: z.boolean().optional().default(false),
+  es_default: z.boolean().optional().default(false),
+  activo: z.boolean().optional().default(true),
+});
+
+export const ecommerceInventarioAjusteSchema = z.object({
+  id_variante: z.number().int().positive(),
+  id_sucursal: z.number().int().positive(),
+  delta: z.number().int(),
+  motivo: z.string().max(255).optional().nullable(),
+});
+
+export const ecommerceTransferenciaSchema = z.object({
+  id_sucursal_origen: z.number().int().positive(),
+  id_sucursal_destino: z.number().int().positive(),
+  notas: z.string().max(500).optional().nullable(),
+  lineas: z
+    .array(
+      z.object({
+        id_variante: z.number().int().positive(),
+        cantidad: z.number().int().positive(),
+      })
+    )
+    .min(1),
+});
+
+export const ecommerceTransferenciaEstadoSchema = z.object({
+  estado: z.enum(["en_transito", "recibida", "cancelada"]),
 });
 
 const moduleSchema = z

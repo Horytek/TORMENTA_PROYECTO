@@ -5,14 +5,14 @@
 import { getEcommerceConnection } from "../database/database_ecommerce.js";
 import { hashPassword } from "../utils/passwordUtil.js";
 
-const slug = (process.env.ECOM_DEMO_SLUG || "textiles_creando_moda").trim();
-const email = (process.env.ECOM_DEMO_EMAIL || "admin@textilescreandomoda.local").trim();
-const usua = (process.env.ECOM_DEMO_USUA || "textiles_creando_moda").trim();
-const clave = (process.env.ECOM_DEMO_PASSWORD || "CreandoModa2026!").trim();
+const slug = (process.env.ECOM_DEMO_SLUG || "demo_ecommerce_store").trim();
+const email = (process.env.ECOM_DEMO_EMAIL || "admin@demoecommerce.local").trim();
+const usua = (process.env.ECOM_DEMO_USUA || "ecom_demo").trim();
+const clave = (process.env.ECOM_DEMO_PASSWORD || "DemoEcom2026!").trim();
 
 const TIENDA = {
-  nombre: slug === "textiles_creando_moda" ? "Textiles Creando Moda" : "Textiles Creando Moda (Demo)",
-  descripcion: "Colección femenina · Vestidos, blusas y denim.",
+  nombre: slug === "textiles_creando_moda" ? "Textiles Creando Moda" : "Horytek Ecommerce Demo",
+  descripcion: "Colección demo · Tecnología, hogar y moda.",
   color_primario: "#BE185D",
   logo_url: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=200&h=200&fit=crop",
   telefono: "999000111",
@@ -368,6 +368,29 @@ try {
   }
 
   const id_tienda = tienda.id_tienda;
+
+  // Asegura admin demo con password actual (upsert por usua o email)
+  {
+    const hash = await hashPassword(clave);
+    const [[byKey]] = await c.query(
+      `SELECT id_usuario FROM usuario WHERE usua = ? OR email = ? LIMIT 1`,
+      [usua, email]
+    );
+    if (byKey) {
+      await c.query(
+        `UPDATE usuario SET
+           id_tienda = ?, usua = ?, password_hash = ?, email = ?, nombre = ?, rol = 'admin', estado = 1
+         WHERE id_usuario = ?`,
+        [id_tienda, usua, hash, email, `Admin ${TIENDA.nombre}`, byKey.id_usuario]
+      );
+    } else {
+      await c.query(
+        `INSERT INTO usuario (id_tienda, usua, password_hash, email, nombre, rol, estado)
+         VALUES (?, ?, ?, ?, ?, 'admin', 1)`,
+        [id_tienda, usua, hash, email, `Admin ${TIENDA.nombre}`]
+      );
+    }
+  }
 
   await c.query(
     `UPDATE tienda SET

@@ -10,9 +10,10 @@ import {
   CreditCard,
   CheckCircle2,
   Circle,
+  MapPin,
   ExternalLink,
 } from "lucide-react";
-import { ecommerceDashboard, ecommerceMe } from "../api/ecommerce";
+import { ecommerceDashboard, ecommerceMe, adminInventarioResumen } from "../api/ecommerce";
 import { useEcommerceAuthStore } from "../store/useEcommerceAuthStore";
 import { Button } from "@/components/ui/button";
 
@@ -23,6 +24,7 @@ export default function EcommerceDashboardPage() {
     queryFn: ecommerceDashboard,
   });
   const meQ = useQuery({ queryKey: ["ecom-me"], queryFn: ecommerceMe });
+  const invQ = useQuery({ queryKey: ["ecom-inv-resumen"], queryFn: adminInventarioResumen });
   const stats = data?.data?.stats;
   const recientes = data?.data?.recientes || [];
   const tienda = meQ.data?.data?.tienda;
@@ -48,6 +50,11 @@ export default function EcommerceDashboardPage() {
       ok: Boolean(tienda?.theme_json),
       label: "Tema / vitrina configurada",
       to: "/ecommerce-admin/configuracion",
+    },
+    {
+      ok: Number(invQ.data?.data?.agotados ?? 0) === 0,
+      label: "Inventario multisucursal OK",
+      to: "/ecommerce-admin/inventario",
     },
   ];
 
@@ -115,6 +122,24 @@ export default function EcommerceDashboardPage() {
               <div className="flex items-center justify-between">
                 <div className="text-[11px] uppercase tracking-wider text-stone-400">{c.label}</div>
                 <c.icon className="size-4 text-stone-300" />
+              </div>
+              <div className="text-xl font-semibold mt-1">{c.value}</div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {invQ.data?.data && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { label: "Agotados (sucursal)", value: invQ.data.data.agotados ?? 0, to: "/ecommerce-admin/inventario" },
+            { label: "Stock bajo sucursal", value: invQ.data.data.stock_bajo ?? 0, to: "/ecommerce-admin/inventario" },
+            { label: "Reservado", value: invQ.data.data.reservado_total ?? 0, to: "/ecommerce-admin/inventario" },
+            { label: "Transf. pendientes", value: invQ.data.data.transferencias_pendientes ?? 0, to: "/ecommerce-admin/transferencias" },
+          ].map((c) => (
+            <Link key={c.label} to={c.to} className="rounded-xl border border-stone-200 bg-white p-4 hover:border-teal-600/40">
+              <div className="text-[11px] uppercase tracking-wider text-stone-400 flex items-center gap-1">
+                <MapPin className="size-3" /> {c.label}
               </div>
               <div className="text-xl font-semibold mt-1">{c.value}</div>
             </Link>

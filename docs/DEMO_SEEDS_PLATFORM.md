@@ -71,7 +71,7 @@ En `/login`, la tarjeta **Acceso demostración** rellena credenciales por produc
 | **Atelier** | `npm run seed:atelier-demo` → base `db_atelier` |
 | Catálogo WA | `/catalogo/{SEED_TENANT_ID}` (datos ERP del tenant) |
 | ERP | Credenciales locales del usuario |
-| Ecommerce (demo) | `demo_ecommerce_store` / `DemoEcommerce2026!` — seed específico |
+| Ecommerce (demo) | `ecom_demo` / `DemoEcom2026!` — `node src/scripts/seed_ecommerce_demo.js` |
 | Pocket | `npm run seed:express` → `demo.pocket@horytek.test` / `PocketDemo2026!` |
 | Ecommerce (empresa ERP → tienda) | `npm run sync:empresa-ecommerce` |
 

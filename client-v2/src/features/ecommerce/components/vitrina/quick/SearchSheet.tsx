@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { formatPen, type StoreProducto } from "../../../types/storefront";
+import { searchStore } from "../../../api/ecommerce";
+import { useBranchStore } from "../../../store/useBranchStore";
 
 type Props = {
   open: boolean;
@@ -12,18 +15,29 @@ type Props = {
 
 export function SearchSheet({ open, onClose, productos, slug }: Props) {
   const [q, setQ] = useState("");
+  const id_sucursal = useBranchStore((s) => s.id_sucursal);
 
   useEffect(() => {
     if (open) setQ("");
   }, [open]);
 
+  const serverQ = useQuery({
+    queryKey: ["store-search", slug, q, id_sucursal],
+    queryFn: () => searchStore(slug, q, id_sucursal),
+    enabled: open && q.trim().length >= 2,
+    staleTime: 30_000,
+  });
+
   const results = useMemo(() => {
     const needle = q.trim().toLowerCase();
+    if (needle.length >= 2 && serverQ.data?.success) {
+      return (serverQ.data.data.productos || []) as StoreProducto[];
+    }
     if (!needle) return productos.slice(0, 8);
     return productos
       .filter((p) => `${p.nombre} ${p.sku ?? ""}`.toLowerCase().includes(needle))
       .slice(0, 12);
-  }, [productos, q]);
+  }, [productos, q, serverQ.data]);
 
   if (!open) return null;
 
@@ -44,6 +58,9 @@ export function SearchSheet({ open, onClose, productos, slug }: Props) {
             <X className="size-5" />
           </button>
         </div>
+        {q.trim().length >= 2 && serverQ.isFetching && (
+          <p className="text-xs store-muted mb-2">Buscando…</p>
+        )}
         <ul className="divide-y" style={{ borderColor: "var(--vitrina-border)" }}>
           {results.map((p) => (
             <li key={p.id_producto}>
@@ -62,7 +79,9 @@ export function SearchSheet({ open, onClose, productos, slug }: Props) {
               </Link>
             </li>
           ))}
-          {results.length === 0 && <li className="py-8 text-center text-sm store-muted">Sin resultados</li>}
+          {results.length === 0 && !serverQ.isFetching && (
+            <li className="py-8 text-center text-sm store-muted">Sin resultados</li>
+          )}
         </ul>
       </div>
     </div>

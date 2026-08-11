@@ -62,6 +62,7 @@
     "db:migrate:producto-imagen": "node scripts/migrations/add_producto_imagen.js",
     "db:migrate:caja-turno": "node scripts/migrations/create_caja_turno.js",
     "db:migrate:ecommerce": "node scripts/migrations/create_ecommerce_database.js",
+    "db:migrate:ecommerce-multisucursal": "node scripts/migrations/ecommerce_multisucursal.js",
     "db:migrate:ecommerce-etl": "node src/scripts/migrate_ecommerce_to_dedicated_db.js",
     "db:migrate:ecommerce-drop-tormenta": "node src/scripts/drop_ecommerce_tables_from_tormenta.js",
     "db:migrate:orden-atributo": "node scripts/migrations/add_orden_atributo.js",
@@ -72,6 +73,8 @@
     "seed:platform-demo": "node src/scripts/seed_platform_demo.js",
     "seed:atelier-demo": "node src/scripts/seed_atelier_demo.js",
     "seed:express": "node src/scripts/seed_express_demo.js",
+    "sync:empresa-ecommerce": "node src/scripts/sync_empresa_to_ecommerce.js",
+    "seed:ecommerce-sucursales-erp": "node src/scripts/seed_ecommerce_sucursales_from_erp.js",
     "db:sanear:sku": "node scripts/migrations/sanear_producto_sku.js"
   },
   "engines": {

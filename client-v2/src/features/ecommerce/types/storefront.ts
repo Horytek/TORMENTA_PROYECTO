@@ -1,6 +1,26 @@
 import type { StoreTheme } from "./theme";
 import { resolveTheme } from "./theme";
 
+export type StoreSucursal = {
+  id_sucursal: number;
+  nombre: string;
+  direccion: string;
+  lat?: number | null;
+  lng?: number | null;
+  horario_json?: Record<string, unknown> | null;
+  whatsapp?: string | null;
+  telefono?: string | null;
+  allow_pickup: boolean;
+  allow_delivery: boolean;
+  es_default?: boolean;
+};
+
+export type BranchAvailability = {
+  sucursal: StoreSucursal;
+  disponible: number;
+  variantes?: { id_variante: number; sku?: string | null; talla?: string | null; color?: string | null; disponible: number }[];
+};
+
 export type StoreTienda = {
   slug: string;
   nombre: string;

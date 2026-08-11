@@ -6,8 +6,9 @@ import { monograma, type StoreTienda } from "../../types/storefront";
 import { useStoreColorScheme } from "./StoreShell";
 import { SearchSheet } from "./quick/SearchSheet";
 import { ContactQuick } from "./quick/ContactQuick";
-import type { StoreProducto } from "../../types/storefront";
+import type { StoreProducto, StoreSucursal } from "../../types/storefront";
 import { resolveNavEntries, type NavStyle, type ResolvedNavEntry } from "../../types/theme";
+import { BranchSelector } from "../../design/BranchSelector";
 
 type Props = {
   tienda: StoreTienda;
@@ -17,6 +18,9 @@ type Props = {
   onCategoria: (cat: string | null) => void;
   categoriaActiva: string | null;
   productos?: StoreProducto[];
+  sucursales?: StoreSucursal[];
+  activeBranchId?: number | null;
+  onBranchSelect?: (id: number) => void;
 };
 
 function navItemClass(style: NavStyle, active: boolean, isLightHeader: boolean) {
@@ -64,6 +68,9 @@ export function StoreHeader({
   onCategoria,
   categoriaActiva,
   productos = [],
+  sucursales = [],
+  activeBranchId,
+  onBranchSelect,
 }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -203,7 +210,29 @@ export function StoreHeader({
             </nav>
           )}
 
-          <div className="ml-auto flex items-center gap-0.5">
+          {sucursales.length > 0 && onBranchSelect && (
+            <div className="hidden md:block shrink-0">
+              <BranchSelector
+                sucursales={sucursales}
+                activeId={activeBranchId ?? sucursales[0]?.id_sucursal}
+                onSelect={onBranchSelect}
+                variant="default"
+              />
+            </div>
+          )}
+
+          {sucursales.length > 0 && onBranchSelect && (
+            <div className="md:hidden min-w-0 flex-1 flex justify-end">
+              <BranchSelector
+                sucursales={sucursales}
+                activeId={activeBranchId ?? sucursales[0]?.id_sucursal}
+                onSelect={onBranchSelect}
+                variant="compact"
+              />
+            </div>
+          )}
+
+          <div className="flex items-center gap-0.5 shrink-0">
             <button
               type="button"
               className="store-icon-btn size-11 flex items-center justify-center"

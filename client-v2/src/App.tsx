@@ -154,6 +154,9 @@ const EcommerceDashboardPage = lazy(() => import("@/features/ecommerce/pages/Eco
 const EcommerceProductsPage = lazy(() => import("@/features/ecommerce/pages/EcommerceProductsPage"));
 const EcommerceOrdersPage = lazy(() => import("@/features/ecommerce/pages/EcommerceOrdersPage"));
 const EcommerceSettingsPage = lazy(() => import("@/features/ecommerce/pages/EcommerceSettingsPage"));
+const EcommerceSucursalesPage = lazy(() => import("@/features/ecommerce/pages/EcommerceSucursalesPage"));
+const EcommerceInventarioPage = lazy(() => import("@/features/ecommerce/pages/EcommerceInventarioPage"));
+const EcommerceTransferenciasPage = lazy(() => import("@/features/ecommerce/pages/EcommerceTransferenciasPage"));
 const StorefrontPage = lazy(() => import("@/features/ecommerce/pages/StorefrontPage"));
 const StoreProductPage = lazy(() => import("@/features/ecommerce/pages/StoreProductPage"));
 const StoreCartPage = lazy(() => import("@/features/ecommerce/pages/StoreCartPage"));
@@ -312,6 +315,9 @@ export default function App() {
               <Route path="/ecommerce-admin" element={<EcommerceAdminLayout />}>
                 <Route index element={<EcommerceDashboardPage />} />
                 <Route path="productos" element={<EcommerceProductsPage />} />
+                <Route path="sucursales" element={<EcommerceSucursalesPage />} />
+                <Route path="inventario" element={<EcommerceInventarioPage />} />
+                <Route path="transferencias" element={<EcommerceTransferenciasPage />} />
                 <Route path="ordenes" element={<EcommerceOrdersPage />} />
                 <Route path="configuracion" element={<EcommerceSettingsPage />} />
               </Route>
