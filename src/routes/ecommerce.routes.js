@@ -10,6 +10,10 @@ import {
   ecommerceCheckoutSchema,
   ecommerceTiendaUpdateSchema,
   ecommerceBrandUploadSchema,
+  ecommerceSucursalSchema,
+  ecommerceInventarioAjusteSchema,
+  ecommerceTransferenciaSchema,
+  ecommerceTransferenciaEstadoSchema,
 } from "../schemas/ecommerce.schema.js";
 import {
   registerEcommerce,
@@ -34,6 +38,23 @@ import {
   checkoutStore,
   ecommerceStoreWebhook,
 } from "../controllers/ecommerce.controller.js";
+import {
+  listStoreSucursales,
+  searchStore,
+  getProductAvailability,
+  adminListSucursales,
+  adminCreateSucursal,
+  adminUpdateSucursal,
+  adminDeleteSucursal,
+  adminInventarioResumen,
+  adminInventarioMatriz,
+  adminAjustarInventario,
+  adminListMovimientos,
+  adminListTransferencias,
+  adminSearchVariantes,
+  adminCreateTransferencia,
+  adminUpdateTransferenciaEstado,
+} from "../controllers/ecommerceBranch.controller.js";
 
 const router = Router();
 
@@ -49,7 +70,10 @@ router.post("/auth/login", validateSchema(ecommerceLoginSchema), loginEcommerce)
 
 // Público — storefront
 router.get("/store/:slug", getStoreBySlug);
+router.get("/store/:slug/sucursales", listStoreSucursales);
+router.get("/store/:slug/search", searchStore);
 router.get("/store/:slug/products/:id", getStoreProduct);
+router.get("/store/:slug/products/:id/disponibilidad", getProductAvailability);
 router.post(
   "/store/:slug/checkout",
   validateSchema(ecommerceCheckoutSchema),
@@ -87,5 +111,23 @@ router.delete("/admin/productos/:id", deleteProducto);
 router.post("/admin/productos/:id/imagenes", uploadProductoImagen);
 router.get("/admin/ordenes", listOrdenes);
 router.get("/admin/ordenes/:id", getOrden);
+
+// Admin — sucursales e inventario multisucursal
+router.get("/admin/sucursales", adminListSucursales);
+router.post("/admin/sucursales", validateSchema(ecommerceSucursalSchema), adminCreateSucursal);
+router.put("/admin/sucursales/:id", validateSchema(ecommerceSucursalSchema.partial()), adminUpdateSucursal);
+router.delete("/admin/sucursales/:id", adminDeleteSucursal);
+router.get("/admin/inventario/resumen", adminInventarioResumen);
+router.get("/admin/inventario/matriz", adminInventarioMatriz);
+router.post("/admin/inventario/ajuste", validateSchema(ecommerceInventarioAjusteSchema), adminAjustarInventario);
+router.get("/admin/inventario/movimientos", adminListMovimientos);
+router.get("/admin/variantes/search", adminSearchVariantes);
+router.get("/admin/transferencias", adminListTransferencias);
+router.post("/admin/transferencias", validateSchema(ecommerceTransferenciaSchema), adminCreateTransferencia);
+router.patch(
+  "/admin/transferencias/:id/estado",
+  validateSchema(ecommerceTransferenciaEstadoSchema),
+  adminUpdateTransferenciaEstado
+);
 
 export default router;

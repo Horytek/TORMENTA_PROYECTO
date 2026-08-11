@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { ArrowLeft, Minus, Plus, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
-import { getStore, getStoreProduct } from "../api/ecommerce";
+import { getStore, getStoreProduct, getProductAvailability } from "../api/ecommerce";
 import { useEcommerceCartStore } from "../store/useEcommerceCartStore";
+import { useBranchStore } from "../store/useBranchStore";
 import { StoreShell } from "../components/vitrina/StoreShell";
 import { StoreHeader } from "../components/vitrina/StoreHeader";
 import { StoreFooter } from "../components/vitrina/StoreFooter";
@@ -13,11 +14,15 @@ import { useStorefrontCatalog } from "../components/vitrina/hooks/useStorefrontC
 import { ProductSpecs, StockBadge, StoreSkeleton } from "../components/vitrina/detail/ProductSpecs";
 import { StickyBuyBar } from "../components/vitrina/quick/StickyBuyBar";
 import { CartFab } from "../components/vitrina/quick/CartFab";
+import { ProductAvailabilityPanel } from "../design/ProductAvailabilityPanel";
+import { WhatsAppAssist } from "../design/WhatsAppAssist";
 import {
   formatPen,
   getCategoria,
+  type BranchAvailability,
   type StoreImagen,
   type StoreProducto,
+  type StoreSucursal,
   type StoreTienda,
 } from "../types/storefront";
 
@@ -31,21 +36,40 @@ export default function StoreProductPage() {
   const [qty, setQty] = useState(1);
   const [imgIdx, setImgIdx] = useState(0);
 
+  const id_sucursal = useBranchStore((s) => s.id_sucursal);
+  const setBranch = useBranchStore((s) => s.setBranch);
+  const initForStore = useBranchStore((s) => s.initForStore);
+  const sucursales = useBranchStore((s) => s.sucursales);
+  const activeBranch = useBranchStore((s) => s.activeBranch());
+
   useEffect(() => {
     if (slug) setSlug(slug);
   }, [slug, setSlug]);
 
   const storeQ = useQuery({
-    queryKey: ["store", slug],
-    queryFn: () => getStore(slug),
+    queryKey: ["store", slug, id_sucursal],
+    queryFn: () => getStore(slug, id_sucursal),
     enabled: Boolean(slug),
+    placeholderData: keepPreviousData,
   });
 
   const productQ = useQuery({
-    queryKey: ["store-product", slug, productId],
-    queryFn: () => getStoreProduct(slug, productId),
+    queryKey: ["store-product", slug, productId, id_sucursal],
+    queryFn: () => getStoreProduct(slug, productId, id_sucursal),
+    enabled: Boolean(slug) && Number.isFinite(productId) && productId > 0,
+    placeholderData: keepPreviousData,
+  });
+
+  const availabilityQ = useQuery({
+    queryKey: ["product-availability", slug, productId],
+    queryFn: () => getProductAvailability(slug, productId),
     enabled: Boolean(slug) && Number.isFinite(productId) && productId > 0,
   });
+
+  useEffect(() => {
+    const list = (storeQ.data?.data?.sucursales || productQ.data?.data?.sucursales || []) as StoreSucursal[];
+    if (slug && list.length) initForStore(slug, list);
+  }, [storeQ.data, productQ.data, slug, initForStore]);
 
   const tienda = (productQ.data?.data?.tienda || storeQ.data?.data?.tienda) as StoreTienda | undefined;
   const producto = productQ.data?.data?.producto as StoreProducto | undefined;
@@ -71,8 +95,13 @@ export default function StoreProductPage() {
   }, [catalogo, producto]);
 
   const inCart = Boolean(producto && items.some((i) => i.id_producto === producto.id_producto));
+  const availability = (availabilityQ.data?.data || []) as BranchAvailability[];
 
   const onAdd = (p: StoreProducto, cantidad = 1) => {
+    if (!id_sucursal && sucursales.length) {
+      toast.error("Elige una sucursal de recojo primero");
+      return;
+    }
     add(
       {
         id_producto: p.id_producto,
@@ -111,6 +140,9 @@ export default function StoreProductPage() {
         onCategoria={catalog.setCategoria}
         categoriaActiva={catalog.categoria}
         productos={catalogo}
+        sucursales={sucursales}
+        activeBranchId={id_sucursal}
+        onBranchSelect={setBranch}
       />
 
       <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8 lg:py-12 pb-28 lg:pb-12">
@@ -160,6 +192,23 @@ export default function StoreProductPage() {
               <p className="store-muted leading-relaxed whitespace-pre-line text-sm">{producto.descripcion}</p>
             )}
             <ProductSpecs producto={producto} />
+
+            {availability.length > 0 && (
+              <ProductAvailabilityPanel
+                availability={availability}
+                activeBranchId={id_sucursal}
+                onSelectBranch={setBranch}
+              />
+            )}
+
+            <WhatsAppAssist
+              telefono={tienda.telefono}
+              tiendaNombre={tienda.nombre}
+              branch={activeBranch}
+              product={producto}
+              qty={qty}
+              label="Consultar por WhatsApp"
+            />
 
             <div className="hidden lg:flex flex-wrap items-center gap-4 mt-4">
               <div className="inline-flex items-center border store-hairline bg-[var(--vitrina-elevated)] rounded-[var(--store-radius-pill)] overflow-hidden">

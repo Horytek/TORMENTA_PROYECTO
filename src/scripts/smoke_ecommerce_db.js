@@ -4,9 +4,9 @@ const c = await getEcommerceConnection();
 try {
   const [[t]] = await c.query(
     `SELECT id_tienda, slug, nombre, estado FROM tienda WHERE slug = ? LIMIT 1`,
-    ["demo-horytek"]
+    ["textiles_creando_moda"]
   );
-  if (!t) throw new Error("demo-horytek no encontrada");
+  if (!t) throw new Error("textiles_creando_moda no encontrada");
   const [[p]] = await c.query(
     `SELECT COUNT(*) AS c FROM producto WHERE id_tienda = ? AND activo = 1`,
     [t.id_tienda]

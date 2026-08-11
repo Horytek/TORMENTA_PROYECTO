@@ -1,9 +1,10 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { getStore } from "../api/ecommerce";
 import { useEcommerceCartStore } from "../store/useEcommerceCartStore";
+import { useBranchStore } from "../store/useBranchStore";
 import { StoreShell } from "../components/vitrina/StoreShell";
 import { StoreHeader } from "../components/vitrina/StoreHeader";
 import { StoreFooter } from "../components/vitrina/StoreFooter";
@@ -12,15 +13,24 @@ import { useStorefrontCatalog } from "../components/vitrina/hooks/useStorefrontC
 import { CartFab } from "../components/vitrina/quick/CartFab";
 import { BackToTop } from "../components/vitrina/quick/BackToTop";
 import { StoreSkeleton } from "../components/vitrina/detail/ProductSpecs";
-import { tiendaTheme, type StoreProducto, type StoreTienda } from "../types/storefront";
+import { PickupBranchesBlock } from "../design/PickupBranchesBlock";
+import { StoreBottomNav } from "../design/StoreBottomNav";
+import { tiendaTheme, type StoreProducto, type StoreSucursal, type StoreTienda } from "../types/storefront";
 
 export default function StorefrontPage() {
   const { slug = "" } = useParams();
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["store", slug],
-    queryFn: () => getStore(slug),
+  const id_sucursal = useBranchStore((s) => s.id_sucursal);
+  const initForStore = useBranchStore((s) => s.initForStore);
+  const setBranch = useBranchStore((s) => s.setBranch);
+  const sucursales = useBranchStore((s) => s.sucursales);
+
+  const { data, isLoading, isFetching, error } = useQuery({
+    queryKey: ["store", slug, id_sucursal],
+    queryFn: () => getStore(slug, id_sucursal),
     enabled: Boolean(slug),
+    placeholderData: keepPreviousData,
   });
+
   const setSlug = useEcommerceCartStore((s) => s.setSlug);
   const add = useEcommerceCartStore((s) => s.add);
   const count = useEcommerceCartStore((s) => s.count());
@@ -28,6 +38,15 @@ export default function StorefrontPage() {
   useEffect(() => {
     if (slug) setSlug(slug);
   }, [slug, setSlug]);
+
+  useEffect(() => {
+    const list = (data?.data?.sucursales || []) as StoreSucursal[];
+    if (slug && list.length) initForStore(slug, list);
+  }, [data, slug, initForStore]);
+
+  const handleBranchSelect = (id: number) => {
+    setBranch(id);
+  };
 
   const tienda = data?.data?.tienda as StoreTienda | undefined;
   const productos = (data?.data?.productos || []) as StoreProducto[];
@@ -37,6 +56,10 @@ export default function StorefrontPage() {
   const showFab = theme?.quick_actions?.cart_fab !== false;
 
   const onAdd = (p: StoreProducto) => {
+    if (!id_sucursal && sucursales.length) {
+      toast.error("Elige una sucursal de recojo primero");
+      return;
+    }
     add({
       id_producto: p.id_producto,
       nombre: p.nombre,
@@ -66,6 +89,9 @@ export default function StorefrontPage() {
         onCategoria={catalog.setCategoria}
         categoriaActiva={catalog.categoria}
         productos={productos}
+        sucursales={sucursales}
+        activeBranchId={id_sucursal}
+        onBranchSelect={handleBranchSelect}
       />
 
       {!data?.data?.mp_ready && (
@@ -85,9 +111,17 @@ export default function StorefrontPage() {
         quickAdd={quickAdd}
       />
 
+      {isFetching && !isLoading && (
+        <div className="fixed inset-x-0 top-14 z-30 h-0.5 bg-[var(--vitrina-accent)] animate-pulse" aria-hidden />
+      )}
+
+      <PickupBranchesBlock sucursales={sucursales} />
+
       <StoreFooter tienda={tienda} slug={slug} />
       {showFab && <CartFab slug={slug} count={count} />}
       <BackToTop />
+      <StoreBottomNav slug={slug} cartCount={count} />
+      <div className="h-14 lg:hidden" aria-hidden />
     </StoreShell>
   );
 }

@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet, Navigate, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, Store } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, Settings, LogOut, Store, MapPin, Boxes, ArrowLeftRight } from "lucide-react";
 import { useEcommerceAuthStore } from "../store/useEcommerceAuthStore";
 import { ecommerceMe } from "../api/ecommerce";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,9 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { to: "/ecommerce-admin", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/ecommerce-admin/productos", label: "Productos", icon: Package },
+  { to: "/ecommerce-admin/sucursales", label: "Sucursales", icon: MapPin },
+  { to: "/ecommerce-admin/inventario", label: "Inventario", icon: Boxes },
+  { to: "/ecommerce-admin/transferencias", label: "Transferencias", icon: ArrowLeftRight },
   { to: "/ecommerce-admin/ordenes", label: "Órdenes", icon: ShoppingBag },
   { to: "/ecommerce-admin/configuracion", label: "Configuración", icon: Settings },
 ];

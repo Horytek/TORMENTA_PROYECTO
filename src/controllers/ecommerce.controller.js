@@ -9,6 +9,19 @@ import { getEcommercePlan, validateEcommercePlanPrice } from "../config/ecommerc
 import { hashPassword, verifyPassword } from "../utils/passwordUtil.js";
 import { encryptMpToken, decryptMpToken } from "../utils/ecommerceCrypto.js";
 import { uploadImage as subirAImageKit, deleteImage as borrarDeImageKit } from "../services/imagekit.service.js";
+import {
+  listSucursalesActivas,
+  getSucursal,
+  mapPublicSucursal,
+} from "../services/ecommerce/BranchService.js";
+import {
+  getStockTotalProducto,
+  getStockMapPorProductos,
+  ensureDefaultVariante,
+  reservarStock,
+  liberarReserva,
+  confirmarVenta,
+} from "../services/ecommerce/InventoryService.js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FRONTEND = () => process.env.FRONTEND_URL || "http://localhost:5173";
@@ -866,11 +879,12 @@ export const getOrden = async (req, res) => {
 
 export const getStoreBySlug = async (req, res) => {
   const { slug } = req.params;
+  const id_sucursal = req.query.branch ? Number(req.query.branch) : null;
   let connection;
   try {
     connection = await getEcommerceConnection();
     const [[tienda]] = await connection.query(
-      `SELECT id_tienda, slug, nombre, color_primario, logo_url, descripcion, telefono, estado, theme_json
+      `SELECT id_tienda, slug, nombre, color_primario, logo_url, descripcion, telefono, estado, theme_json, fulfillment_default
        FROM tienda WHERE slug = ? LIMIT 1`,
       [slug]
     );
@@ -878,16 +892,32 @@ export const getStoreBySlug = async (req, res) => {
       return res.status(404).json({ success: false, message: "Tienda no encontrada." });
     }
 
-    const [productos] = await connection.query(
+    const sucursales = await listSucursalesActivas(connection, tienda.id_tienda);
+
+    const [productosRaw] = await connection.query(
       `SELECT p.id_producto, p.nombre, p.descripcion, p.precio, p.stock, p.sku, p.categoria, p.attrs_json,
          (SELECT url FROM producto_imagen i
           WHERE i.id_producto = p.id_producto AND i.id_tienda = p.id_tienda
           ORDER BY i.es_principal DESC, i.orden ASC LIMIT 1) AS imagen_url
        FROM producto p
-       WHERE p.id_tienda = ? AND p.activo = 1 AND p.stock > 0
+       WHERE p.id_tienda = ? AND p.activo = 1
        ORDER BY p.nombre ASC`,
       [tienda.id_tienda]
     );
+
+    const productos = [];
+    if (sucursales.length) {
+      const stockMap = await getStockMapPorProductos(connection, tienda.id_tienda, id_sucursal);
+      for (const p of productosRaw) {
+        const stock = stockMap.get(p.id_producto) ?? 0;
+        if (stock > 0) productos.push({ ...p, stock });
+      }
+    } else {
+      for (const p of productosRaw) {
+        const stock = Number(p.stock);
+        if (stock > 0) productos.push({ ...p, stock });
+      }
+    }
 
     const [[mp]] = await connection.query(
       `SELECT public_key, modo FROM mp_cuenta WHERE id_tienda = ? LIMIT 1`,
@@ -899,6 +929,7 @@ export const getStoreBySlug = async (req, res) => {
       data: {
         tienda: mapPublicTienda(tienda),
         productos,
+        sucursales: sucursales.map(mapPublicSucursal),
         mp_ready: Boolean(mp),
         mp_public_key: mp?.public_key || null,
       },
@@ -913,11 +944,12 @@ export const getStoreBySlug = async (req, res) => {
 
 export const getStoreProduct = async (req, res) => {
   const { slug, id } = req.params;
+  const id_sucursal = req.query.branch ? Number(req.query.branch) : null;
   let connection;
   try {
     connection = await getEcommerceConnection();
     const [[tienda]] = await connection.query(
-      `SELECT id_tienda, slug, nombre, color_primario, logo_url, descripcion, telefono, estado, theme_json FROM tienda WHERE slug = ? LIMIT 1`,
+      `SELECT id_tienda, slug, nombre, color_primario, logo_url, descripcion, telefono, estado, theme_json, fulfillment_default FROM tienda WHERE slug = ? LIMIT 1`,
       [slug]
     );
     if (!tienda || tienda.estado !== "active") {
@@ -930,6 +962,15 @@ export const getStoreProduct = async (req, res) => {
     if (!producto) {
       return res.status(404).json({ success: false, message: "Producto no encontrado." });
     }
+    const sucursales = await listSucursalesActivas(connection, tienda.id_tienda);
+    const stockBranch = await getStockTotalProducto(
+      connection,
+      tienda.id_tienda,
+      producto.id_producto,
+      id_sucursal
+    );
+    producto.stock = sucursales.length ? stockBranch : Number(producto.stock);
+
     const [imagenes] = await connection.query(
       `SELECT id_imagen, url, es_principal, orden FROM producto_imagen
        WHERE id_producto = ? AND id_tienda = ? ORDER BY es_principal DESC, orden ASC`,
@@ -941,6 +982,7 @@ export const getStoreProduct = async (req, res) => {
         tienda: mapPublicTienda(tienda),
         producto,
         imagenes,
+        sucursales: sucursales.map(mapPublicSucursal),
       },
     });
   } catch (error) {
@@ -953,7 +995,15 @@ export const getStoreProduct = async (req, res) => {
 
 export const checkoutStore = async (req, res) => {
   const { slug } = req.params;
-  const { items, email_comprador, nombre_comprador, telefono_comprador } = req.body;
+  const {
+    items,
+    id_sucursal,
+    fulfillment = "pickup",
+    email_comprador,
+    nombre_comprador,
+    telefono_comprador,
+    whatsapp_context,
+  } = req.body;
   let connection;
   try {
     connection = await getEcommerceConnection();
@@ -966,6 +1016,24 @@ export const checkoutStore = async (req, res) => {
     if (!tienda || tienda.estado !== "active") {
       await connection.rollback();
       return res.status(404).json({ success: false, message: "Tienda no encontrada." });
+    }
+
+    if (fulfillment !== "pickup" || !id_sucursal) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: "Debe elegir sucursal de recojo.",
+      });
+    }
+
+    const sucursal = await getSucursal(connection, tienda.id_tienda, id_sucursal);
+    if (!sucursal || !sucursal.allow_pickup) {
+      await connection.rollback();
+      return res.status(400).json({ success: false, message: "Sucursal de recojo inválida." });
+    }
+    if (!sucursal.direccion || !String(sucursal.direccion).trim()) {
+      await connection.rollback();
+      return res.status(400).json({ success: false, message: "La sucursal no tiene dirección configurada." });
     }
 
     const [[creds]] = await connection.query(
@@ -990,6 +1058,9 @@ export const checkoutStore = async (req, res) => {
 
     const lineItems = [];
     let total = 0;
+    const sucursales = await listSucursalesActivas(connection, tienda.id_tienda);
+    const useBranchInv = sucursales.length > 0;
+
     for (const item of items) {
       const [[prod]] = await connection.query(
         `SELECT id_producto, nombre, precio, stock FROM producto
@@ -1000,17 +1071,42 @@ export const checkoutStore = async (req, res) => {
         await connection.rollback();
         return res.status(400).json({ success: false, message: `Producto ${item.id_producto} no disponible.` });
       }
-      if (prod.stock < item.cantidad) {
+
+      let id_variante = item.id_variante;
+      if (useBranchInv) {
+        const variante = id_variante
+          ? { id_variante }
+          : await ensureDefaultVariante(connection, tienda.id_tienda, prod.id_producto);
+        id_variante = variante.id_variante;
+        try {
+          await reservarStock(connection, {
+            id_tienda: tienda.id_tienda,
+            id_variante,
+            id_sucursal,
+            cantidad: item.cantidad,
+            ref_tipo: "checkout",
+            ref_id: null,
+          });
+        } catch (err) {
+          await connection.rollback();
+          return res.status(err.status || 400).json({
+            success: false,
+            message: `Stock insuficiente para ${prod.nombre} en ${sucursal.nombre}.`,
+          });
+        }
+      } else if (prod.stock < item.cantidad) {
         await connection.rollback();
         return res.status(400).json({
           success: false,
           message: `Stock insuficiente para ${prod.nombre}.`,
         });
       }
+
       const sub = Number(prod.precio) * item.cantidad;
       total += sub;
       lineItems.push({
         id_producto: prod.id_producto,
+        id_variante: id_variante || null,
         nombre: prod.nombre,
         cantidad: item.cantidad,
         precio: Number(prod.precio),
@@ -1019,10 +1115,12 @@ export const checkoutStore = async (req, res) => {
 
     const codigo = orderCode();
     const external_reference = `ecom_order:${tienda.id_tienda}:${codigo}`;
+    const pickup_direccion = String(sucursal.direccion).trim();
     const [ord] = await connection.query(
       `INSERT INTO orden
-        (id_tienda, codigo, estado, total, email_comprador, nombre_comprador, telefono_comprador, external_reference)
-       VALUES (?, ?, 'pending', ?, ?, ?, ?, ?)`,
+        (id_tienda, codigo, estado, total, email_comprador, nombre_comprador, telefono_comprador,
+         external_reference, id_sucursal, fulfillment, pickup_direccion, whatsapp_context)
+       VALUES (?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         tienda.id_tienda,
         codigo,
@@ -1031,6 +1129,10 @@ export const checkoutStore = async (req, res) => {
         nombre_comprador || null,
         telefono_comprador || null,
         external_reference,
+        id_sucursal,
+        "pickup",
+        pickup_direccion,
+        whatsapp_context ? JSON.stringify(whatsapp_context) : null,
       ]
     );
     const id_orden = ord.insertId;
@@ -1038,10 +1140,25 @@ export const checkoutStore = async (req, res) => {
     for (const li of lineItems) {
       await connection.query(
         `INSERT INTO orden_item
-          (id_orden, id_tienda, id_producto, nombre_snapshot, cantidad, precio_unitario)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [id_orden, tienda.id_tienda, li.id_producto, li.nombre, li.cantidad, li.precio]
+          (id_orden, id_tienda, id_producto, id_variante, nombre_snapshot, cantidad, precio_unitario)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id_orden,
+          tienda.id_tienda,
+          li.id_producto,
+          li.id_variante,
+          li.nombre,
+          li.cantidad,
+          li.precio,
+        ]
       );
+      if (useBranchInv && li.id_variante) {
+        await connection.query(
+          `UPDATE ecom_inventario_mov SET ref_id = ? WHERE id_tienda = ? AND id_variante = ? AND id_sucursal = ?
+           AND ref_tipo = 'checkout' AND ref_id IS NULL ORDER BY id_mov DESC LIMIT 1`,
+          [id_orden, tienda.id_tienda, li.id_variante, id_sucursal]
+        );
+      }
     }
 
     const origin = FRONTEND();
@@ -1064,7 +1181,13 @@ export const checkoutStore = async (req, res) => {
           pending: `${origin}/tienda/${slug}/pago/resultado?status=pending&orden=${codigo}`,
         },
         notification_url,
-        metadata: { id_orden, id_tienda: tienda.id_tienda, codigo },
+        metadata: {
+          id_orden,
+          id_tienda: tienda.id_tienda,
+          codigo,
+          id_sucursal,
+          fulfillment: "pickup",
+        },
       },
     });
 
@@ -1081,6 +1204,10 @@ export const checkoutStore = async (req, res) => {
         codigo,
         preference_id: result.id,
         init_point: result.init_point || result.sandbox_init_point,
+        pickup: {
+          sucursal: sucursal.nombre,
+          direccion: pickup_direccion,
+        },
       },
     });
   } catch (error) {
@@ -1152,21 +1279,51 @@ export const ecommerceStoreWebhook = async (req, res) => {
     const status = String(payment.status || "").toLowerCase();
     if (status === "approved" && orden.estado !== "approved") {
       const [detalle] = await connection.query(
-        `SELECT id_producto, cantidad FROM orden_item WHERE id_orden = ? AND id_tienda = ?`,
+        `SELECT id_producto, id_variante, cantidad FROM orden_item WHERE id_orden = ? AND id_tienda = ?`,
         [orden.id_orden, id_tienda]
       );
+      const id_sucursal = orden.id_sucursal;
       for (const d of detalle) {
-        await connection.query(
-          `UPDATE producto SET stock = GREATEST(0, stock - ?)
-           WHERE id_producto = ? AND id_tienda = ?`,
-          [d.cantidad, d.id_producto, id_tienda]
-        );
+        if (id_sucursal && d.id_variante) {
+          await confirmarVenta(connection, {
+            id_tienda,
+            id_variante: d.id_variante,
+            id_sucursal,
+            cantidad: d.cantidad,
+            ref_tipo: "orden",
+            ref_id: orden.id_orden,
+          });
+        } else {
+          await connection.query(
+            `UPDATE producto SET stock = GREATEST(0, stock - ?)
+             WHERE id_producto = ? AND id_tienda = ?`,
+            [d.cantidad, d.id_producto, id_tienda]
+          );
+        }
       }
       await connection.query(
         `UPDATE orden SET estado = 'approved', mp_payment_id = ? WHERE id_orden = ? AND id_tienda = ?`,
         [String(payment.id), orden.id_orden, id_tienda]
       );
     } else if (status === "rejected" || status === "cancelled") {
+      if (orden.estado === "pending") {
+        const [detalle] = await connection.query(
+          `SELECT id_producto, id_variante, cantidad FROM orden_item WHERE id_orden = ? AND id_tienda = ?`,
+          [orden.id_orden, id_tienda]
+        );
+        for (const d of detalle) {
+          if (orden.id_sucursal && d.id_variante) {
+            await liberarReserva(connection, {
+              id_tienda,
+              id_variante: d.id_variante,
+              id_sucursal: orden.id_sucursal,
+              cantidad: d.cantidad,
+              ref_tipo: "orden",
+              ref_id: orden.id_orden,
+            });
+          }
+        }
+      }
       await connection.query(
         `UPDATE orden SET estado = ?, mp_payment_id = ? WHERE id_orden = ? AND id_tienda = ? AND estado = 'pending'`,
         [status === "cancelled" ? "cancelled" : "rejected", String(payment.id), orden.id_orden, id_tienda]
