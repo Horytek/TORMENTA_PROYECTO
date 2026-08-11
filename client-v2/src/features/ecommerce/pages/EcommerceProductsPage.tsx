@@ -245,10 +245,10 @@ export default function EcommerceProductsPage() {
                     <div className="size-full flex items-center justify-center text-stone-300 text-sm">Sin foto</div>
                   )}
                   <div className="absolute top-2 left-2 flex gap-1">
-                    {attrs.destacado && (
+                    {Boolean(attrs.destacado) && (
                       <span className="text-[10px] bg-teal-700 text-white px-1.5 py-0.5">Destacado</span>
                     )}
-                    {attrs.story && (
+                    {Boolean(attrs.story) && (
                       <span className="text-[10px] bg-stone-800 text-white px-1.5 py-0.5">Story</span>
                     )}
                     {p.stock <= 3 && p.stock > 0 && (

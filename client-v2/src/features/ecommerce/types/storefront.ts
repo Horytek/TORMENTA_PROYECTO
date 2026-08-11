@@ -57,7 +57,11 @@ export function getCategoria(p: StoreProducto): string | null {
 export function getTags(p: StoreProducto): string[] {
   const attrs = parseAttrs(p.attrs_json);
   const tags = attrs.tags;
-  if (Array.isArray(tags)) return tags.filter((t): t is string => typeof t === "string" && t.trim()).map((t) => t.trim());
+  if (Array.isArray(tags)) {
+    return tags
+      .filter((t): t is string => typeof t === "string" && t.trim().length > 0)
+      .map((t) => t.trim());
+  }
   return [];
 }
 

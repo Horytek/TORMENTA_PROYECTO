@@ -51,7 +51,6 @@ type Props = {
 
 export function ModuleRenderer({
   modules,
-  theme,
   tienda,
   slug,
   productos,
