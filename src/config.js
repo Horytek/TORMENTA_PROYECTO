@@ -23,6 +23,7 @@ export const ACADEMIA_DATABASE = process.env.ACADEMIA_DB_DATABASE || "db_academi
 export const AGENDA_DATABASE = process.env.AGENDA_DB_DATABASE || "db_agenda";
 export const MANTENIMIENTO_DATABASE = process.env.MANTENIMIENTO_DB_DATABASE || "db_mantenimiento";
 export const RECLUTA_DATABASE = process.env.RECLUTA_DB_DATABASE || "db_recluta";
+export const ATELIER_DATABASE = process.env.ATELIER_DB_DATABASE || "db_atelier";
 export const USER = process.env.DB_USERNAME || "";
 export const PASSWORD = process.env.DB_PASSWORD || "";
 export const PORT_DB = process.env.DB_PORT || "3306";

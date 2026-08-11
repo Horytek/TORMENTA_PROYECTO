@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   createMayoristaPedido,
   getMayoristaCatalogo,
@@ -12,8 +13,6 @@ import {
   loginMayorista,
   setMayoristaToken,
 } from "@/features/platform/api/mayorista";
-import { getDemoPortalCreds, isDemoSlug } from "@/features/platform/demo/demoPortalCreds";
-import { useDemoAutoEnter } from "@/features/platform/demo/useDemoAutoEnter";
 import { OpsShell } from "@/features/platform/ui/OpsShell";
 import { EmptyState } from "@/features/platform/ui/EmptyState";
 
@@ -31,7 +30,7 @@ function errMsg(e: unknown, fallback: string) {
 
 export default function MayoristaPortalPage() {
   const { slug = "" } = useParams();
-  const demo = isDemoSlug(slug) ? getDemoPortalCreds("mayorista", "comprador") : null;
+  const navigate = useNavigate();
   const [portal, setPortal] = useState<Portal | null>(null);
   const [loadError, setLoadError] = useState("");
   const [hadToken] = useState(() => Boolean(getMayoristaToken()));
@@ -39,18 +38,10 @@ export default function MayoristaPortalPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [pedidos, setPedidos] = useState<{ id_pedido: number; total: number; estado: string }[]>([]);
-
-  const autoPhase = useDemoAutoEnter(Boolean(demo) && !hadToken, async () => {
-    if (!demo?.email || !demo.password) throw new Error("Sin credenciales demo");
-    const res = await loginMayorista({
-      slug,
-      email: demo.email,
-      password: demo.password,
-    });
-    if (!res.success || !res.data?.token) throw new Error(res.message || "Demo no disponible");
-    setMayoristaToken(res.data.token);
-    setSession(true);
-  });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -95,14 +86,112 @@ export default function MayoristaPortalPage() {
     }, 0);
   }, [cartLines, items]);
 
-  if (loadError || (!session && autoPhase !== "entering") || (!session && autoPhase === "failed")) {
-    return <Navigate to="/login?mode=mayorista" replace />;
+  const doLogin = async (em: string, pass: string) => {
+    setLoginLoading(true);
+    setLoginError("");
+    try {
+      const res = await loginMayorista({
+        slug,
+        email: em.trim(),
+        password: pass,
+      });
+      if (!res.success || !res.data?.token) {
+        throw new Error(res.message || "Credenciales inválidas");
+      }
+      setMayoristaToken(res.data.token);
+      setSession(true);
+    } catch (e: unknown) {
+      setLoginError(errMsg(e, "No se pudo iniciar sesión"));
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  if (loadError) {
+    return (
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 p-8 text-center">
+        <p className="text-sm text-destructive">{loadError}</p>
+        <Link
+          to="/login?mode=mayorista"
+          className="text-sm font-medium underline-offset-4 hover:underline"
+        >
+          Ir al login Mayorista
+        </Link>
+      </div>
+    );
   }
 
-  if (!portal || autoPhase === "entering") {
+  if (!portal) {
     return (
       <div className="flex min-h-dvh items-center justify-center p-12 text-center text-sm text-muted-foreground">
-        {autoPhase === "entering" ? "Entrando a la demo…" : "Cargando portal…"}
+        Cargando portal…
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-[#FFFBEB] px-4 py-10">
+        <form
+          className="w-full max-w-md space-y-4 rounded-2xl border border-black/8 bg-white p-6 shadow-sm"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void doLogin(email, password);
+          }}
+        >
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#B45309]">
+              Portal B2B
+            </p>
+            <h1 className="mt-1 text-xl font-semibold tracking-tight">{portal.nombre}</h1>
+            <p className="mt-1 text-[13px] text-muted-foreground">
+              Slug <span className="font-mono">{slug}</span>
+            </p>
+          </div>
+          {loginError ? (
+            <p className="text-[13px] text-destructive" role="alert">
+              {loginError}
+            </p>
+          ) : null}
+          <div className="space-y-2">
+            <Label htmlFor="b2b_email">Email</Label>
+            <Input
+              id="b2b_email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="comprador@empresa.com"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="b2b_pass">Contraseña</Label>
+            <Input
+              id="b2b_pass"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <Button
+            type="submit"
+            className="min-h-11 w-full bg-[#B45309] hover:bg-[#B45309]/90"
+            disabled={loginLoading}
+          >
+            {loginLoading ? "Entrando…" : "Entrar"}
+          </Button>
+          <p className="text-center text-[12px] text-muted-foreground">
+            ¿Demo? Usa el{" "}
+            <Link
+              to="/login?mode=mayorista"
+              className="font-medium text-[#B45309] underline-offset-4 hover:underline"
+            >
+              login Mayorista
+            </Link>
+            .
+          </p>
+        </form>
       </div>
     );
   }
@@ -118,11 +207,14 @@ export default function MayoristaPortalPage() {
         setMayoristaToken(null);
         setSession(false);
         setCart({});
+        navigate("/login?mode=mayorista", { replace: true });
       }}
     >
       <div className="grid gap-10 lg:grid-cols-[1fr_280px]">
         <section>
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-black/60">Lista de precios</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-black/60">
+            Lista de precios
+          </h2>
           {items.length === 0 ? (
             <div className="mt-4">
               <EmptyState title="Sin productos" body="Tu lista aún no tiene productos." />
@@ -130,7 +222,10 @@ export default function MayoristaPortalPage() {
           ) : (
             <ul className="mt-4 divide-y divide-black/8">
               {items.map((item) => (
-                <li key={item.sku} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                <li
+                  key={item.sku}
+                  className="flex flex-wrap items-center justify-between gap-3 py-3"
+                >
                   <div>
                     <p className="font-medium">{item.nombre}</p>
                     <p className="text-xs text-black/45">
@@ -157,7 +252,9 @@ export default function MayoristaPortalPage() {
           )}
 
           <div className="mt-10">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-black/60">Mis pedidos</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-black/60">
+              Mis pedidos
+            </h2>
             {pedidos.length === 0 ? (
               <div className="mt-3">
                 <EmptyState title="Sin pedidos" body="Aún no has enviado pedidos." />
@@ -165,7 +262,10 @@ export default function MayoristaPortalPage() {
             ) : (
               <ul className="mt-3 space-y-2 text-sm">
                 {pedidos.map((p) => (
-                  <li key={p.id_pedido} className="flex justify-between border-b border-black/8 py-2">
+                  <li
+                    key={p.id_pedido}
+                    className="flex justify-between border-b border-black/8 py-2"
+                  >
                     <span>#{p.id_pedido}</span>
                     <span>
                       S/ {Number(p.total).toFixed(2)} · {p.estado}

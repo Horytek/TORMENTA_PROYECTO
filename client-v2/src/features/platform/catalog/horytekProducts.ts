@@ -130,7 +130,7 @@ export const HORYTEK_PRODUCTS: HorytekProduct[] = [
     surfaces: ["admin", "cliente"],
     wave: "A",
     loginMode: "mayorista",
-    adminPath: "/platform/mayorista",
+    adminPath: "/mayorista-admin",
     clientPath: "/b2b/:slug",
     notIncludes: ["carrito retail ecommerce", "catálogo WA"],
     pitch: "Portal cerrado para distribuidores: listas por volumen y pedidos B2B.",
@@ -345,6 +345,21 @@ export const HORYTEK_PRODUCTS: HorytekProduct[] = [
     notIncludes: ["nómina", "asistencia GPS", "cursos Academia", "master empleados ERP"],
     pitch: "Publica vacantes, recibe postulaciones y avanza candidatos por etapas — sin nómina ni RRHH genérico.",
   },
+  {
+    id: "atelier",
+    slug: "atelier",
+    name: "Atelier",
+    job: "Marketplace de dibujos e ilustraciones por encargo",
+    database: "db_atelier",
+    isolation: "id_user",
+    surfaces: ["admin", "cliente", "operador", "publico"],
+    wave: "E",
+    loginMode: "atelier",
+    adminPath: "/atelier-admin",
+    clientPath: "/atelier",
+    notIncludes: ["stock físico", "facturación SUNAT", "ERP inventario"],
+    pitch: "Descubre artistas, solicita dibujos, cotiza, paga y recibe tu ilustración.",
+  },
 ];
 
 export const HORYTEK_BUNDLES: HorytekBundle[] = [
@@ -455,6 +470,7 @@ const LOGIN_MODE_META: Record<string, { label: string; description: string; prio
   campo: { label: "Campo", description: "Vendedores y check-in", priority: 18 },
   mantenimiento: { label: "Mantenimiento", description: "OT y app técnico", priority: 19 },
   "catalogo-wa": { label: "Catálogo WA", description: "Vitrina WhatsApp por tenant", priority: 20 },
+  atelier: { label: "Atelier", description: "Dibujos e ilustraciones por encargo", priority: 4.5 },
 };
 
 /** Una tarjeta por loginMode distinto, derivada del catálogo. */

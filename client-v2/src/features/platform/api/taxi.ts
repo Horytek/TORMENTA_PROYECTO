@@ -105,8 +105,97 @@ export async function createTaxiConductor(body: {
   nombre: string;
   telefono?: string;
   password: string;
+  placa?: string;
+  vehiculo?: string;
+  notas?: string;
 }) {
   const { data } = await adminApi.client.post("/taxi/admin/conductores", body);
+  return data;
+}
+
+export async function updateTaxiConductor(
+  id: number,
+  body: {
+    nombre?: string;
+    telefono?: string | null;
+    placa?: string | null;
+    vehiculo?: string | null;
+    notas?: string | null;
+    activo?: boolean;
+  }
+) {
+  const { data } = await adminApi.client.patch(`/taxi/admin/conductores/${id}`, body);
+  return data;
+}
+
+export async function setTaxiConductorPassword(id: number, password: string) {
+  const { data } = await adminApi.client.patch(`/taxi/admin/conductores/${id}/password`, {
+    password,
+  });
+  return data;
+}
+
+export async function listTaxiPasajeros() {
+  const { data } = await adminApi.client.get("/taxi/admin/pasajeros");
+  return data;
+}
+
+export async function createTaxiPasajeroAdmin(body: {
+  nombre: string;
+  telefono: string;
+  password: string;
+}) {
+  const { data } = await adminApi.client.post("/taxi/admin/pasajeros", body);
+  return data;
+}
+
+export async function updateTaxiPasajero(
+  id: number,
+  body: { nombre?: string; telefono?: string; activo?: boolean }
+) {
+  const { data } = await adminApi.client.patch(`/taxi/admin/pasajeros/${id}`, body);
+  return data;
+}
+
+export async function setTaxiPasajeroPassword(id: number, password: string) {
+  const { data } = await adminApi.client.patch(`/taxi/admin/pasajeros/${id}/password`, {
+    password,
+  });
+  return data;
+}
+
+export async function listTaxiAdmins() {
+  const { data } = await adminApi.client.get("/taxi/admin/admins");
+  return data;
+}
+
+export async function createTaxiAdminUser(body: { email: string; password: string }) {
+  const { data } = await adminApi.client.post("/taxi/admin/admins", body);
+  return data;
+}
+
+export async function setTaxiAdminPassword(id: number, password: string) {
+  const { data } = await adminApi.client.patch(`/taxi/admin/admins/${id}/password`, {
+    password,
+  });
+  return data;
+}
+
+export async function getTaxiOperador() {
+  const { data } = await adminApi.client.get("/taxi/admin/operador");
+  return data;
+}
+
+export async function updateTaxiOperador(body: { nombre: string }) {
+  const { data } = await adminApi.client.patch("/taxi/admin/operador", body);
+  return data;
+}
+
+export async function patchTaxiViajeAdmin(
+  id: number,
+  body: { estado?: string; id_conductor?: number | null }
+) {
+  const { data } = await adminApi.client.patch(`/taxi/admin/viajes/${id}`, body);
   return data;
 }
 

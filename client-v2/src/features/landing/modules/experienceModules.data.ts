@@ -100,7 +100,7 @@ export const EXPERIENCE_MODULES: LandingProductModule[] = [
       badge: "Catálogo WhatsApp",
       title: "El cliente arma el pedido.",
       titleAccent: "Tú lo cierras en el chat.",
-      body: "Vitrina pública con stock del ERP. El carrito se convierte en mensaje de WhatsApp listo para confirmar.",
+      body: "Vitrina pública con stock del ERP. El carrito se convierte en mensaje de WhatsApp listo para confirmar — sin app del cliente ni checkout forzado.",
       trust: ["Stock del ERP", "Carrito → WhatsApp", "Sin app del cliente"],
       sectionTitles: {
         surfaces: "Tres superficies, un pedido",
@@ -110,9 +110,22 @@ export const EXPERIENCE_MODULES: LandingProductModule[] = [
         cta: "Publica tu vitrina hoy",
       },
       highlights: [
-        { title: "Vitrina pública", body: "El cliente ve categorías y precios sin login." },
-        { title: "Carrito WA", body: "Un tap y el pedido llega a tu chat." },
-        { title: "Stock real", body: "Cantidades del ERP, sin doble carga." },
+        {
+          title: "Vitrina pública",
+          body: "Link con categorías, foto y precio. El cliente entra sin login y ve qué hay.",
+        },
+        {
+          title: "Carrito WA",
+          body: "Un tap y el pedido llega a tu chat con ítems, cantidades y total.",
+        },
+        {
+          title: "Stock real",
+          body: "Cantidades del ERP. Evitas prometer lo que ya se vendió en mostrador.",
+        },
+        {
+          title: "Cierre humano",
+          body: "Tú confirmas pago, delivery y excepciones — el chat sigue siendo el canal.",
+        },
       ],
       surfaces: [
         { label: "Vitrina", body: "Catálogo público con foto, precio y stock." },
@@ -120,9 +133,9 @@ export const EXPERIENCE_MODULES: LandingProductModule[] = [
         { label: "Admin ERP", body: "Productos y reglas desde tu operación." },
       ],
       steps: [
-        { n: "01", title: "Activa el slug", body: "URL pública de tu catálogo." },
-        { n: "02", title: "Elige vitrina", body: "Categorías y productos visibles." },
-        { n: "03", title: "Cierra en chat", body: "Confirmas pago y entrega." },
+        { n: "01", title: "Activa el slug", body: "URL pública de tu catálogo desde el ERP." },
+        { n: "02", title: "Curá la vitrina", body: "Categorías y productos visibles al cliente." },
+        { n: "03", title: "Cierra en chat", body: "Confirmas pago, zona y entrega como siempre." },
       ],
       proofStats: [
         { value: "1 tap", label: "Del carrito al WA" },
@@ -130,11 +143,28 @@ export const EXPERIENCE_MODULES: LandingProductModule[] = [
         { value: "0 app", label: "Sin instalar nada" },
       ],
       faqs: [
-        { q: "¿Es una tienda online?", a: "Es vitrina + cierre por WhatsApp. Para checkout web usa Ecommerce." },
-        { q: "¿Sincroniza stock?", a: "Lee stock del ERP; Sync Stock es otro producto si tienes varios canales." },
-        { q: "¿Pagos en línea?", a: "El cobro lo cierras tú en el chat o con tu flujo habitual." },
+        {
+          q: "¿Es una tienda online?",
+          a: "Es vitrina + cierre por WhatsApp. Para checkout web con pasarela, usa Ecommerce.",
+        },
+        {
+          q: "¿Sincroniza stock?",
+          a: "Lee stock del ERP. Si tienes varios canales (Shopify, marketplace), Sync Stock es el producto de orquestación.",
+        },
+        {
+          q: "¿Pagos en línea?",
+          a: "El cobro lo cierras tú en el chat o con tu flujo habitual (Yape, transferencia, contraentrega).",
+        },
+        {
+          q: "¿Sirve para mayoristas?",
+          a: "No. Mayorista es B2B con listas y mínimos. Catálogo WA es retail consumidor por chat.",
+        },
+        {
+          q: "¿El cliente necesita instalar algo?",
+          a: "No. Abre el link en el navegador y manda el pedido por WhatsApp.",
+        },
       ],
-      notIncludes: ["checkout web", "pipeline CRM", "delivery on-demand"],
+      notIncludes: ["checkout web", "pipeline CRM", "delivery on-demand", "listas B2B"],
     },
     plans(
       "Planes · Catálogo WA",
@@ -1551,6 +1581,77 @@ export const EXPERIENCE_MODULES: LandingProductModule[] = [
       ],
     ),
     "/login?mode=recluta",
+    ["lane-slide", "step-pulse", "counter"],
+    { display: "sans-tight" },
+  ),
+
+  mod(
+    "atelier",
+    "commerce-wa",
+    tone("#DB2777", "#FDF2F8", "#BE185D", "warm"),
+    ["hero", "trust", "flow", "proof", "pricing", "faq", "cta"],
+    {
+      badge: "Atelier",
+      title: "Dibujo por encargo.",
+      titleAccent: "De la idea a la entrega.",
+      body: "Marketplace de ilustración: descubre creadores, cotiza, paga con Mercado Pago y sigue el pedido hasta la reseña.",
+      trust: ["Portafolio", "Cotización", "Escrow lógico"],
+      sectionTitles: {
+        flow: "Del brief al archivo final",
+        proof: "Pedido demo",
+        faq: "Atelier vs catálogo",
+        cta: "Explora Atelier",
+      },
+      highlights: [
+        { title: "Creadores", body: "Perfil, servicios y portafolio." },
+        { title: "Pedidos", body: "Estados claros y chat." },
+        { title: "Wallet", body: "Pending → available al completar." },
+      ],
+      steps: [
+        { n: "01", title: "Descubre", body: "Filtra por estilo." },
+        { n: "02", title: "Cotiza", body: "Acepta y paga." },
+        { n: "03", title: "Aprueba", body: "Revisa y reseña." },
+      ],
+      proofStats: [
+        { value: "3", label: "Roles" },
+        { value: "10%", label: "Fee default" },
+        { value: "MP", label: "Checkout" },
+      ],
+      faqs: [
+        { q: "¿Es multi-tenant SaaS?", a: "MVP es un marketplace único; schema listo para communities." },
+        { q: "¿Dónde se calcula la comisión?", a: "Solo en backend (SettlementService)." },
+        { q: "¿Stripe Connect?", a: "Fase 2; hoy escrow lógico + retiro manual." },
+      ],
+      notIncludes: ["disputas avanzadas", "payouts automáticos"],
+    },
+    plans(
+      "Planes · Atelier",
+      "Comisión sobre el pedido.",
+      "Creadores y clientes sin ERP.",
+      "cards-2",
+      [
+        {
+          id: "creador",
+          name: "Creador",
+          price: 0,
+          unit: "fee %",
+          description: "Publica y cobra por encargo.",
+          features: ["Portafolio", "Servicios", "Wallet"],
+          highlight: true,
+          cta: { label: "Entrar como creador", href: "/login?mode=atelier" },
+        },
+        {
+          id: "cliente",
+          name: "Cliente",
+          price: 0,
+          unit: "pedido",
+          description: "Encarga y paga seguro.",
+          features: ["Discovery", "Chat", "Reseñas"],
+          cta: { label: "Explorar Atelier", href: "/atelier" },
+        },
+      ],
+    ),
+    "/login?mode=atelier",
     ["lane-slide", "step-pulse", "counter"],
     { display: "sans-tight" },
   ),

@@ -21,6 +21,7 @@ type OpsShellProps = {
   roleLabel?: string;
   onLogout?: () => void;
   showHome?: boolean;
+  homeHref?: string;
   /** @deprecated No Login en barra si hay sesión — se ignora */
   loginMode?: string;
   actions?: ReactNode;
@@ -38,6 +39,7 @@ export function OpsShell({
   roleLabel,
   onLogout,
   showHome = true,
+  homeHref,
   actions,
   width = "default",
   children,
@@ -76,6 +78,7 @@ export function OpsShell({
         companyLogoUrl={companyLogoUrl}
         roleLabel={resolvedRole}
         showHome={showHome}
+        homeHref={homeHref}
         onLogout={onLogout}
         actions={actions}
       />

@@ -18,6 +18,8 @@ export type ProductAppBarProps = {
   companyLogoUrl?: string | null;
   roleLabel?: string;
   showHome?: boolean;
+  /** Destino del icono casa / marca. Por defecto: landing del producto (no el ERP). */
+  homeHref?: string;
   onLogout?: () => void;
   actions?: ReactNode;
   className?: string;
@@ -30,12 +32,16 @@ export function ProductAppBar({
   companyLogoUrl,
   roleLabel,
   showHome = false,
+  homeHref,
   onLogout,
   actions,
   className,
 }: ProductAppBarProps) {
   const theme = getProductTheme(productId);
   const company = companyName?.trim() || null;
+  const homeTo =
+    homeHref ||
+    (productId === "erp" ? "/" : `/?product=${productId}`);
 
   return (
     <header
@@ -48,7 +54,7 @@ export function ProductAppBar({
     >
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-3 sm:gap-3 sm:px-5 md:px-6">
         <Link
-          to={`/?product=${productId}`}
+          to={homeTo}
           className="flex min-w-0 shrink items-center gap-1.5 sm:gap-2"
           aria-label={`Horytek ${theme.name}`}
         >
@@ -117,9 +123,9 @@ export function ProductAppBar({
           {actions}
           {showHome ? (
             <Link
-              to="/"
+              to={homeTo}
               className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-black/45 transition-colors hover:bg-black/5 hover:text-foreground"
-              aria-label="Inicio"
+              aria-label="Inicio del producto"
             >
               <Home className="h-4 w-4" />
             </Link>

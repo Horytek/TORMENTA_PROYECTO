@@ -217,6 +217,22 @@ export const taxiConductorSchema = z.object({
   nombre: z.string().min(2).max(120),
   telefono: z.string().max(32).optional().nullable(),
   password: z.string().min(6).max(100),
+  placa: z.string().max(20).optional().nullable(),
+  vehiculo: z.string().max(120).optional().nullable(),
+  notas: z.string().max(255).optional().nullable(),
+});
+
+export const taxiConductorUpdateSchema = z.object({
+  nombre: z.string().min(2).max(120).optional(),
+  telefono: z.string().max(32).optional().nullable(),
+  placa: z.string().max(20).optional().nullable(),
+  vehiculo: z.string().max(120).optional().nullable(),
+  notas: z.string().max(255).optional().nullable(),
+  activo: z.boolean().optional(),
+});
+
+export const taxiPasswordSchema = z.object({
+  password: z.string().min(6).max(100),
 });
 
 export const taxiPasajeroRegisterSchema = z.object({
@@ -238,6 +254,26 @@ export const taxiPasajeroSchema = z.object({
   nombre: z.string().min(2).max(120),
   telefono: z.string().min(6).max(32),
   password: z.string().min(6).max(100),
+});
+
+export const taxiPasajeroUpdateSchema = z.object({
+  nombre: z.string().min(2).max(120).optional(),
+  telefono: z.string().min(6).max(32).optional(),
+  activo: z.boolean().optional(),
+});
+
+export const taxiAdminCreateSchema = z.object({
+  email: z.string().email().max(160),
+  password: z.string().min(6).max(100),
+});
+
+export const taxiOperadorUpdateSchema = z.object({
+  nombre: z.string().min(2).max(160),
+});
+
+export const taxiViajeAdminPatchSchema = z.object({
+  estado: z.enum(["cancelado", "solicitado", "asignado", "en_curso", "finalizado"]).optional(),
+  id_conductor: z.number().int().positive().optional().nullable(),
 });
 
 /* ——— Delivery ——— */
@@ -262,6 +298,24 @@ export const deliveryClienteSchema = z.object({
   nombre: z.string().min(2).max(120),
   telefono: z.string().min(6).max(32),
   password: z.string().min(6).max(100),
+});
+
+export const deliveryRepartidorUpdateSchema = z.object({
+  nombre: z.string().min(2).max(120).optional(),
+  telefono: z.string().max(32).optional().nullable(),
+  activo: z.boolean().optional(),
+});
+
+export const deliveryClienteUpdateSchema = z.object({
+  nombre: z.string().min(2).max(120).optional(),
+  telefono: z.string().min(6).max(32).optional(),
+});
+
+export const deliveryPedidoAdminPatchSchema = z.object({
+  estado: z
+    .enum(["solicitado", "asignado", "en_camino", "entregado", "cancelado"])
+    .optional(),
+  id_repartidor: z.number().int().positive().optional().nullable(),
 });
 
 /* ——— Flotas ——— */

@@ -22,6 +22,7 @@ export const LOGIN_MODE_ACCENT: Record<string, string> = {
   campo: "#65A30D",
   mantenimiento: "#78716C",
   "catalogo-wa": "#0D9488",
+  atelier: "#DB2777",
   validar: "#334155",
 };
 
@@ -36,6 +37,7 @@ export const PRODUCT_AUTH_LOGIN_MODES = new Set([
   "flotas",
   "academia",
   "agenda",
+  "atelier",
 ]);
 
 /** Modos con pestaña portal / ops pública. Taxi/Delivery usan panel multi-rol propio. */

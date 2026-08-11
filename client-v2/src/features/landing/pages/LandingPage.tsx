@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useUserStore } from "@/store/useUserStore";
@@ -35,6 +35,7 @@ const LEGACY_SECTION_IDS = [
 export default function LandingPage() {
   const isAuthenticated = useUserStore((s) => s.isAuthenticated);
   const navigate = useNavigate();
+  const [search] = useSearchParams();
   const { productId, setProductId, legacyMode, isLegacy } = useLandingProduct();
   const landingModule = getLandingModule(productId);
   /** Checkpoints DOM de los layout kits (story/scenario/notFor…), no el sectionOrder legacy. */
@@ -49,8 +50,12 @@ export default function LandingPage() {
   ] as const;
 
   useEffect(() => {
-    if (isAuthenticated) navigate("/dashboard", { replace: true });
-  }, [isAuthenticated, navigate]);
+    // Home genérica → ERP. Landing de producto (?product= / ?mode=) no debe saltar al dashboard.
+    const explicitProduct = search.get("product") || search.get("mode");
+    if (isAuthenticated && !explicitProduct) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, navigate, search]);
 
   return (
     <div className="min-h-screen w-full bg-background">

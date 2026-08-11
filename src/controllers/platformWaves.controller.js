@@ -2127,8 +2127,16 @@ export async function taxiListConductores(req, res) {
     const id_operador = req.operator.ownerId;
     connection = await getTaxi();
     const [rows] = await connection.query(
-      `SELECT id_conductor, nombre, telefono, activo
-       FROM taxi_conductor WHERE id_operador = ? ORDER BY id_conductor DESC LIMIT 200`,
+      `SELECT c.id_conductor, c.nombre, c.telefono, c.placa, c.vehiculo, c.notas, c.activo,
+              COALESCE(SUM(CASE WHEN v.estado IN ('asignado','en_curso') THEN 1 ELSE 0 END), 0) AS viajes_activos,
+              COALESCE(COUNT(v.id_viaje), 0) AS viajes_total
+       FROM taxi_conductor c
+       LEFT JOIN taxi_viaje v
+         ON v.id_conductor = c.id_conductor AND v.id_operador = c.id_operador
+       WHERE c.id_operador = ?
+       GROUP BY c.id_conductor, c.nombre, c.telefono, c.placa, c.vehiculo, c.notas, c.activo
+       ORDER BY c.id_conductor DESC
+       LIMIT 200`,
       [id_operador]
     );
     return res.json({ success: true, data: rows });
@@ -2144,13 +2152,22 @@ export async function taxiCreateConductor(req, res) {
   let connection;
   try {
     const id_operador = req.operator.ownerId;
-    const { nombre, telefono, password } = req.body;
+    const { nombre, telefono, password, placa, vehiculo, notas } = req.body;
     connection = await getTaxi();
     const password_hash = await hashPassword(password);
     const [result] = await connection.query(
-      `INSERT INTO taxi_conductor (id_operador, nombre, telefono, password_hash)
-       VALUES (?, ?, ?, ?)`,
-      [id_operador, nombre, telefono ?? null, password_hash]
+      `INSERT INTO taxi_conductor
+         (id_operador, nombre, telefono, placa, vehiculo, notas, password_hash)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id_operador,
+        nombre,
+        telefono ?? null,
+        placa ?? null,
+        vehiculo ?? null,
+        notas ?? null,
+        password_hash,
+      ]
     );
     return res.status(201).json({
       success: true,
@@ -2159,6 +2176,337 @@ export async function taxiCreateConductor(req, res) {
   } catch (error) {
     console.error("taxi.createConductor", error.message);
     return res.status(500).json({ success: false, message: "Error al crear conductor" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function taxiUpdateConductor(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_conductor = Number(req.params.id_conductor);
+    const { nombre, telefono, placa, vehiculo, notas, activo } = req.body;
+    connection = await getTaxi();
+    const fields = [];
+    const params = [];
+    if (nombre !== undefined) {
+      fields.push("nombre = ?");
+      params.push(nombre);
+    }
+    if (telefono !== undefined) {
+      fields.push("telefono = ?");
+      params.push(telefono);
+    }
+    if (placa !== undefined) {
+      fields.push("placa = ?");
+      params.push(placa);
+    }
+    if (vehiculo !== undefined) {
+      fields.push("vehiculo = ?");
+      params.push(vehiculo);
+    }
+    if (notas !== undefined) {
+      fields.push("notas = ?");
+      params.push(notas);
+    }
+    if (activo !== undefined) {
+      fields.push("activo = ?");
+      params.push(activo ? 1 : 0);
+    }
+    if (!fields.length) {
+      return res.status(400).json({ success: false, message: "Sin campos para actualizar" });
+    }
+    params.push(id_conductor, id_operador);
+    const [result] = await connection.query(
+      `UPDATE taxi_conductor SET ${fields.join(", ")}
+       WHERE id_conductor = ? AND id_operador = ?`,
+      params
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ success: false, message: "Conductor no encontrado" });
+    }
+    return res.json({ success: true, data: { id_conductor } });
+  } catch (error) {
+    console.error("taxi.updateConductor", error.message);
+    return res.status(500).json({ success: false, message: "Error al actualizar conductor" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function taxiSetConductorPassword(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_conductor = Number(req.params.id_conductor);
+    const { password } = req.body;
+    connection = await getTaxi();
+    const password_hash = await hashPassword(password);
+    const [result] = await connection.query(
+      `UPDATE taxi_conductor SET password_hash = ?
+       WHERE id_conductor = ? AND id_operador = ?`,
+      [password_hash, id_conductor, id_operador]
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ success: false, message: "Conductor no encontrado" });
+    }
+    return res.json({ success: true, data: { id_conductor } });
+  } catch (error) {
+    console.error("taxi.setConductorPassword", error.message);
+    return res.status(500).json({ success: false, message: "Error al actualizar contraseña" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function taxiListPasajeros(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    connection = await getTaxi();
+    const [rows] = await connection.query(
+      `SELECT p.id_pasajero, p.nombre, p.telefono, p.activo,
+              COALESCE(COUNT(v.id_viaje), 0) AS viajes_total
+       FROM taxi_pasajero p
+       LEFT JOIN taxi_viaje v
+         ON v.id_pasajero = p.id_pasajero AND v.id_operador = p.id_operador
+       WHERE p.id_operador = ?
+       GROUP BY p.id_pasajero, p.nombre, p.telefono, p.activo
+       ORDER BY p.id_pasajero DESC
+       LIMIT 200`,
+      [id_operador]
+    );
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("taxi.listPasajeros", error.message);
+    return res.status(500).json({ success: false, message: "Error al listar pasajeros" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function taxiUpdatePasajero(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_pasajero = Number(req.params.id_pasajero);
+    const { nombre, telefono, activo } = req.body;
+    connection = await getTaxi();
+    const fields = [];
+    const params = [];
+    if (nombre !== undefined) {
+      fields.push("nombre = ?");
+      params.push(nombre);
+    }
+    if (telefono !== undefined) {
+      fields.push("telefono = ?");
+      params.push(telefono);
+    }
+    if (activo !== undefined) {
+      fields.push("activo = ?");
+      params.push(activo ? 1 : 0);
+    }
+    if (!fields.length) {
+      return res.status(400).json({ success: false, message: "Sin campos para actualizar" });
+    }
+    params.push(id_pasajero, id_operador);
+    const [result] = await connection.query(
+      `UPDATE taxi_pasajero SET ${fields.join(", ")}
+       WHERE id_pasajero = ? AND id_operador = ?`,
+      params
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ success: false, message: "Pasajero no encontrado" });
+    }
+    return res.json({ success: true, data: { id_pasajero } });
+  } catch (error) {
+    console.error("taxi.updatePasajero", error.message);
+    return res.status(500).json({ success: false, message: "Error al actualizar pasajero" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function taxiSetPasajeroPassword(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_pasajero = Number(req.params.id_pasajero);
+    const { password } = req.body;
+    connection = await getTaxi();
+    const password_hash = await hashPassword(password);
+    const [result] = await connection.query(
+      `UPDATE taxi_pasajero SET password_hash = ?
+       WHERE id_pasajero = ? AND id_operador = ?`,
+      [password_hash, id_pasajero, id_operador]
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ success: false, message: "Pasajero no encontrado" });
+    }
+    return res.json({ success: true, data: { id_pasajero } });
+  } catch (error) {
+    console.error("taxi.setPasajeroPassword", error.message);
+    return res.status(500).json({ success: false, message: "Error al actualizar contraseña" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function taxiListAdmins(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    connection = await getTaxi();
+    const [rows] = await connection.query(
+      `SELECT id_admin, email FROM taxi_admin
+       WHERE id_operador = ? ORDER BY id_admin ASC LIMIT 50`,
+      [id_operador]
+    );
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("taxi.listAdmins", error.message);
+    return res.status(500).json({ success: false, message: "Error al listar equipo" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function taxiCreateAdmin(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const { email, password } = req.body;
+    connection = await getTaxi();
+    const password_hash = await hashPassword(password);
+    const [result] = await connection.query(
+      `INSERT INTO taxi_admin (id_operador, email, password_hash) VALUES (?, ?, ?)`,
+      [id_operador, email.trim().toLowerCase(), password_hash]
+    );
+    return res.status(201).json({
+      success: true,
+      data: { id_admin: result.insertId, email: email.trim().toLowerCase() },
+    });
+  } catch (error) {
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({ success: false, message: "Ese email ya está en el equipo" });
+    }
+    console.error("taxi.createAdmin", error.message);
+    return res.status(500).json({ success: false, message: "Error al crear admin" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function taxiSetAdminPassword(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_admin = Number(req.params.id_admin);
+    const { password } = req.body;
+    connection = await getTaxi();
+    const password_hash = await hashPassword(password);
+    const [result] = await connection.query(
+      `UPDATE taxi_admin SET password_hash = ?
+       WHERE id_admin = ? AND id_operador = ?`,
+      [password_hash, id_admin, id_operador]
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ success: false, message: "Admin no encontrado" });
+    }
+    return res.json({ success: true, data: { id_admin } });
+  } catch (error) {
+    console.error("taxi.setAdminPassword", error.message);
+    return res.status(500).json({ success: false, message: "Error al actualizar contraseña" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function taxiGetOperador(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    connection = await getTaxi();
+    const [[row]] = await connection.query(
+      `SELECT id_operador, slug, nombre, activo, plan_flag
+       FROM taxi_entitlement WHERE id_operador = ? LIMIT 1`,
+      [id_operador]
+    );
+    if (!row) {
+      return res.status(404).json({ success: false, message: "Operador no encontrado" });
+    }
+    return res.json({
+      success: true,
+      data: {
+        ...row,
+        portal_pasajero: `/taxi/${row.slug}`,
+        portal_conductor: `/taxi/${row.slug}/conductor`,
+      },
+    });
+  } catch (error) {
+    console.error("taxi.getOperador", error.message);
+    return res.status(500).json({ success: false, message: "Error al cargar operador" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function taxiUpdateOperador(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const { nombre } = req.body;
+    connection = await getTaxi();
+    const [result] = await connection.query(
+      `UPDATE taxi_entitlement SET nombre = ? WHERE id_operador = ?`,
+      [nombre, id_operador]
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ success: false, message: "Operador no encontrado" });
+    }
+    return res.json({ success: true, data: { id_operador, nombre } });
+  } catch (error) {
+    console.error("taxi.updateOperador", error.message);
+    return res.status(500).json({ success: false, message: "Error al actualizar operador" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function taxiAdminPatchViaje(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_viaje = Number(req.params.id_viaje);
+    const { estado, id_conductor } = req.body;
+    connection = await getTaxi();
+    const fields = [];
+    const params = [];
+    if (estado !== undefined) {
+      fields.push("estado = ?");
+      params.push(estado);
+    }
+    if (id_conductor !== undefined) {
+      fields.push("id_conductor = ?");
+      params.push(id_conductor);
+    }
+    if (!fields.length) {
+      return res.status(400).json({ success: false, message: "Sin campos" });
+    }
+    params.push(id_viaje, id_operador);
+    const [result] = await connection.query(
+      `UPDATE taxi_viaje SET ${fields.join(", ")}
+       WHERE id_viaje = ? AND id_operador = ?`,
+      params
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ success: false, message: "Viaje no encontrado" });
+    }
+    return res.json({ success: true, data: { id_viaje, estado, id_conductor } });
+  } catch (error) {
+    console.error("taxi.adminPatchViaje", error.message);
+    return res.status(500).json({ success: false, message: "Error al actualizar viaje" });
   } finally {
     connection?.release();
   }
@@ -2330,8 +2678,8 @@ export async function taxiCreatePasajero(req, res) {
     connection = await getTaxi();
     const password_hash = await hashPassword(password);
     const [result] = await connection.query(
-      `INSERT INTO taxi_pasajero (id_operador, nombre, telefono, password_hash)
-       VALUES (?, ?, ?, ?)`,
+      `INSERT INTO taxi_pasajero (id_operador, nombre, telefono, password_hash, activo)
+       VALUES (?, ?, ?, ?, 1)`,
       [id_operador, nombre, telefono, password_hash]
     );
     return res.status(201).json({
@@ -2635,8 +2983,16 @@ export async function deliveryListRepartidores(req, res) {
     const id_operador = req.operator.ownerId;
     connection = await getDelivery();
     const [rows] = await connection.query(
-      `SELECT id_repartidor, nombre, telefono, activo
-       FROM delivery_repartidor WHERE id_operador = ? ORDER BY id_repartidor DESC LIMIT 200`,
+      `SELECT r.id_repartidor, r.nombre, r.telefono, r.activo,
+              COALESCE(SUM(CASE WHEN p.estado IN ('asignado','en_camino') THEN 1 ELSE 0 END), 0) AS pedidos_activos,
+              COALESCE(COUNT(p.id_pedido), 0) AS pedidos_total
+       FROM delivery_repartidor r
+       LEFT JOIN delivery_pedido p
+         ON p.id_repartidor = r.id_repartidor AND p.id_operador = r.id_operador
+       WHERE r.id_operador = ?
+       GROUP BY r.id_repartidor, r.nombre, r.telefono, r.activo
+       ORDER BY r.id_repartidor DESC
+       LIMIT 200`,
       [id_operador]
     );
     return res.json({ success: true, data: rows });
@@ -2806,6 +3162,321 @@ export async function deliveryCreateCliente(req, res) {
   } catch (error) {
     console.error("delivery.createCliente", error.message);
     return res.status(500).json({ success: false, message: "Error al crear cliente" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function deliveryUpdateRepartidor(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_repartidor = Number(req.params.id_repartidor);
+    const { nombre, telefono, activo } = req.body;
+    connection = await getDelivery();
+    const fields = [];
+    const params = [];
+    if (nombre !== undefined) {
+      fields.push("nombre = ?");
+      params.push(nombre);
+    }
+    if (telefono !== undefined) {
+      fields.push("telefono = ?");
+      params.push(telefono);
+    }
+    if (activo !== undefined) {
+      fields.push("activo = ?");
+      params.push(activo ? 1 : 0);
+    }
+    if (!fields.length) {
+      return res.status(400).json({ success: false, message: "Sin campos para actualizar" });
+    }
+    params.push(id_repartidor, id_operador);
+    const [result] = await connection.query(
+      `UPDATE delivery_repartidor SET ${fields.join(", ")}
+       WHERE id_repartidor = ? AND id_operador = ?`,
+      params
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ success: false, message: "Repartidor no encontrado" });
+    }
+    return res.json({ success: true, data: { id_repartidor } });
+  } catch (error) {
+    console.error("delivery.updateRepartidor", error.message);
+    return res.status(500).json({ success: false, message: "Error al actualizar repartidor" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function deliverySetRepartidorPassword(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_repartidor = Number(req.params.id_repartidor);
+    const { password } = req.body;
+    connection = await getDelivery();
+    const password_hash = await hashPassword(password);
+    const [result] = await connection.query(
+      `UPDATE delivery_repartidor SET password_hash = ?
+       WHERE id_repartidor = ? AND id_operador = ?`,
+      [password_hash, id_repartidor, id_operador]
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ success: false, message: "Repartidor no encontrado" });
+    }
+    return res.json({ success: true, data: { id_repartidor } });
+  } catch (error) {
+    console.error("delivery.setRepartidorPassword", error.message);
+    return res.status(500).json({ success: false, message: "Error al actualizar contraseña" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function deliveryListClientes(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    connection = await getDelivery();
+    const [rows] = await connection.query(
+      `SELECT c.id_cliente, c.nombre, c.telefono,
+              COALESCE(COUNT(p.id_pedido), 0) AS pedidos_total
+       FROM delivery_cliente c
+       LEFT JOIN delivery_pedido p
+         ON p.id_cliente = c.id_cliente AND p.id_operador = c.id_operador
+       WHERE c.id_operador = ?
+       GROUP BY c.id_cliente, c.nombre, c.telefono
+       ORDER BY c.id_cliente DESC
+       LIMIT 200`,
+      [id_operador]
+    );
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("delivery.listClientes", error.message);
+    return res.status(500).json({ success: false, message: "Error al listar clientes" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function deliveryUpdateCliente(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_cliente = Number(req.params.id_cliente);
+    const { nombre, telefono } = req.body;
+    connection = await getDelivery();
+    const fields = [];
+    const params = [];
+    if (nombre !== undefined) {
+      fields.push("nombre = ?");
+      params.push(nombre);
+    }
+    if (telefono !== undefined) {
+      fields.push("telefono = ?");
+      params.push(telefono);
+    }
+    if (!fields.length) {
+      return res.status(400).json({ success: false, message: "Sin campos para actualizar" });
+    }
+    params.push(id_cliente, id_operador);
+    const [result] = await connection.query(
+      `UPDATE delivery_cliente SET ${fields.join(", ")}
+       WHERE id_cliente = ? AND id_operador = ?`,
+      params
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ success: false, message: "Cliente no encontrado" });
+    }
+    return res.json({ success: true, data: { id_cliente } });
+  } catch (error) {
+    console.error("delivery.updateCliente", error.message);
+    return res.status(500).json({ success: false, message: "Error al actualizar cliente" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function deliverySetClientePassword(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_cliente = Number(req.params.id_cliente);
+    const { password } = req.body;
+    connection = await getDelivery();
+    const password_hash = await hashPassword(password);
+    const [result] = await connection.query(
+      `UPDATE delivery_cliente SET password_hash = ?
+       WHERE id_cliente = ? AND id_operador = ?`,
+      [password_hash, id_cliente, id_operador]
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ success: false, message: "Cliente no encontrado" });
+    }
+    return res.json({ success: true, data: { id_cliente } });
+  } catch (error) {
+    console.error("delivery.setClientePassword", error.message);
+    return res.status(500).json({ success: false, message: "Error al actualizar contraseña" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function deliveryListAdmins(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    connection = await getDelivery();
+    const [rows] = await connection.query(
+      `SELECT id_admin, email FROM delivery_admin
+       WHERE id_operador = ? ORDER BY id_admin ASC LIMIT 50`,
+      [id_operador]
+    );
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("delivery.listAdmins", error.message);
+    return res.status(500).json({ success: false, message: "Error al listar equipo" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function deliveryCreateAdmin(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const { email, password } = req.body;
+    connection = await getDelivery();
+    const password_hash = await hashPassword(password);
+    const [result] = await connection.query(
+      `INSERT INTO delivery_admin (id_operador, email, password_hash) VALUES (?, ?, ?)`,
+      [id_operador, email.trim().toLowerCase(), password_hash]
+    );
+    return res.status(201).json({
+      success: true,
+      data: { id_admin: result.insertId, email: email.trim().toLowerCase() },
+    });
+  } catch (error) {
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({ success: false, message: "Ese email ya está en el equipo" });
+    }
+    console.error("delivery.createAdmin", error.message);
+    return res.status(500).json({ success: false, message: "Error al crear admin" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function deliverySetAdminPassword(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_admin = Number(req.params.id_admin);
+    const { password } = req.body;
+    connection = await getDelivery();
+    const password_hash = await hashPassword(password);
+    const [result] = await connection.query(
+      `UPDATE delivery_admin SET password_hash = ?
+       WHERE id_admin = ? AND id_operador = ?`,
+      [password_hash, id_admin, id_operador]
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ success: false, message: "Admin no encontrado" });
+    }
+    return res.json({ success: true, data: { id_admin } });
+  } catch (error) {
+    console.error("delivery.setAdminPassword", error.message);
+    return res.status(500).json({ success: false, message: "Error al actualizar contraseña" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function deliveryGetOperador(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    connection = await getDelivery();
+    const [[row]] = await connection.query(
+      `SELECT id_operador, slug, nombre, activo, plan_flag
+       FROM delivery_entitlement WHERE id_operador = ? LIMIT 1`,
+      [id_operador]
+    );
+    if (!row) {
+      return res.status(404).json({ success: false, message: "Operador no encontrado" });
+    }
+    return res.json({
+      success: true,
+      data: {
+        ...row,
+        portal_cliente: `/delivery/${row.slug}`,
+        portal_repartidor: `/delivery/${row.slug}/repartidor`,
+      },
+    });
+  } catch (error) {
+    console.error("delivery.getOperador", error.message);
+    return res.status(500).json({ success: false, message: "Error al cargar operador" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function deliveryUpdateOperador(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const { nombre } = req.body;
+    connection = await getDelivery();
+    const [result] = await connection.query(
+      `UPDATE delivery_entitlement SET nombre = ? WHERE id_operador = ?`,
+      [nombre, id_operador]
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ success: false, message: "Operador no encontrado" });
+    }
+    return res.json({ success: true, data: { id_operador, nombre } });
+  } catch (error) {
+    console.error("delivery.updateOperador", error.message);
+    return res.status(500).json({ success: false, message: "Error al actualizar operador" });
+  } finally {
+    connection?.release();
+  }
+}
+
+export async function deliveryAdminPatchPedido(req, res) {
+  let connection;
+  try {
+    const id_operador = req.operator.ownerId;
+    const id_pedido = Number(req.params.id_pedido);
+    const { estado, id_repartidor } = req.body;
+    connection = await getDelivery();
+    const fields = [];
+    const params = [];
+    if (estado !== undefined) {
+      fields.push("estado = ?");
+      params.push(estado);
+    }
+    if (id_repartidor !== undefined) {
+      fields.push("id_repartidor = ?");
+      params.push(id_repartidor);
+    }
+    if (!fields.length) {
+      return res.status(400).json({ success: false, message: "Sin campos" });
+    }
+    params.push(id_pedido, id_operador);
+    const [result] = await connection.query(
+      `UPDATE delivery_pedido SET ${fields.join(", ")}
+       WHERE id_pedido = ? AND id_operador = ?`,
+      params
+    );
+    if (!result.affectedRows) {
+      return res.status(404).json({ success: false, message: "Pedido no encontrado" });
+    }
+    return res.json({ success: true, data: { id_pedido, estado, id_repartidor } });
+  } catch (error) {
+    console.error("delivery.adminPatchPedido", error.message);
+    return res.status(500).json({ success: false, message: "Error al actualizar pedido" });
   } finally {
     connection?.release();
   }

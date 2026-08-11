@@ -88,27 +88,34 @@ export async function createDeliveryPedido(body: {
   recojo: string;
   entrega: string;
   detalle?: string;
+  id_cliente?: number;
 }) {
   const { data } = await adminApi.client.post("/delivery/admin/pedidos", body);
   return data;
 }
 
 export async function assignDeliveryPedido(id: number, id_repartidor: number) {
-  const { data } = await adminApi.client.patch(
-    `/delivery/admin/pedidos/${id}/asignar`,
-    { id_repartidor }
-  );
+  const { data } = await adminApi.client.patch(`/delivery/admin/pedidos/${id}/asignar`, {
+    id_repartidor,
+  });
   return data;
 }
 
-/** @deprecated usar assignDeliveryPedido */
+export async function patchDeliveryPedidoAdmin(
+  id: number,
+  body: { estado?: string; id_repartidor?: number | null }
+) {
+  const { data } = await adminApi.client.patch(`/delivery/admin/pedidos/${id}`, body);
+  return data;
+}
+
+/** @deprecated usar assignDeliveryPedido / patchDeliveryPedidoAdmin */
 export async function patchDeliveryPedido(
   id: number,
   body: { estado: string; id_repartidor?: number }
 ) {
   if (body.id_repartidor) return assignDeliveryPedido(id, body.id_repartidor);
-  const { data } = await adminApi.client.patch(`/delivery/admin/pedidos/${id}/asignar`, body);
-  return data;
+  return patchDeliveryPedidoAdmin(id, body);
 }
 
 export async function listDeliveryRepartidores() {
@@ -122,6 +129,77 @@ export async function createDeliveryRepartidor(body: {
   password: string;
 }) {
   const { data } = await adminApi.client.post("/delivery/admin/repartidores", body);
+  return data;
+}
+
+export async function updateDeliveryRepartidor(
+  id: number,
+  body: { nombre?: string; telefono?: string | null; activo?: boolean }
+) {
+  const { data } = await adminApi.client.patch(`/delivery/admin/repartidores/${id}`, body);
+  return data;
+}
+
+export async function setDeliveryRepartidorPassword(id: number, password: string) {
+  const { data } = await adminApi.client.patch(`/delivery/admin/repartidores/${id}/password`, {
+    password,
+  });
+  return data;
+}
+
+export async function listDeliveryClientes() {
+  const { data } = await adminApi.client.get("/delivery/admin/clientes");
+  return data;
+}
+
+export async function createDeliveryCliente(body: {
+  nombre: string;
+  telefono: string;
+  password: string;
+}) {
+  const { data } = await adminApi.client.post("/delivery/admin/clientes", body);
+  return data;
+}
+
+export async function updateDeliveryCliente(
+  id: number,
+  body: { nombre?: string; telefono?: string }
+) {
+  const { data } = await adminApi.client.patch(`/delivery/admin/clientes/${id}`, body);
+  return data;
+}
+
+export async function setDeliveryClientePassword(id: number, password: string) {
+  const { data } = await adminApi.client.patch(`/delivery/admin/clientes/${id}/password`, {
+    password,
+  });
+  return data;
+}
+
+export async function listDeliveryAdmins() {
+  const { data } = await adminApi.client.get("/delivery/admin/admins");
+  return data;
+}
+
+export async function createDeliveryAdminUser(body: { email: string; password: string }) {
+  const { data } = await adminApi.client.post("/delivery/admin/admins", body);
+  return data;
+}
+
+export async function setDeliveryAdminPassword(id: number, password: string) {
+  const { data } = await adminApi.client.patch(`/delivery/admin/admins/${id}/password`, {
+    password,
+  });
+  return data;
+}
+
+export async function getDeliveryOperador() {
+  const { data } = await adminApi.client.get("/delivery/admin/operador");
+  return data;
+}
+
+export async function updateDeliveryOperador(body: { nombre: string }) {
+  const { data } = await adminApi.client.patch("/delivery/admin/operador", body);
   return data;
 }
 

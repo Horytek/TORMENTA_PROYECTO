@@ -23,10 +23,11 @@ export const PRODUCT_NARRATIVES: Record<string, ProductNarrative> = {
       "En el barrio el pedido no nace en un checkout: nace en un chat. El cliente quiere ver foto, precio y si hay stock — y cerrar por WhatsApp sin instalar nada.",
       "Catálogo WA pone una vitrina pública alimentada por el ERP. El carrito se transforma en un mensaje listo para confirmar, con ítems y total.",
       "No reemplaza Ecommerce ni Mayorista: es el atajo retail por chat cuando tu operación ya vive en Horytek.",
+      "Sirve para abarrotes, ropa de barrio, ferretería chica o cualquier comercio que ya vende respondiendo mensajes — no para montar un marketplace.",
     ],
     scenario: {
       title: "Doña Rosa, abarrotes en Comas",
-      body: "Publica 180 SKUs. El viernes recibe 40 mensajes con carrito armado; confirma stock y coordina delivery por zona.",
+      body: "Publica 180 SKUs desde el ERP. El viernes recibe ~40 mensajes con carrito armado; confirma stock, arma bolsas y coordina delivery por zona sin Excel paralelo.",
       metrics: [
         { label: "Mensajes con carrito / viernes", value: "40" },
         { label: "SKUs en vitrina", value: "180" },
@@ -418,6 +419,28 @@ export const PRODUCT_NARRATIVES: Record<string, ProductNarrative> = {
       { other: "CRM", difference: "CRM vende; Recluta contrata." },
       { other: "Academia", difference: "Academia forma después del hire." },
       { other: "Nómina", difference: "No calcula sueldos." },
+    ],
+  },
+  atelier: {
+    layoutKitId: "commerce",
+    story: [
+      "Atelier conecta clientes con ilustradores: portafolio, cotización, pago y entrega en un solo flujo.",
+      "La comisión y el escrow lógico viven en el backend; el creador ve pending/available al completar.",
+      "No es un ERP ni un catálogo B2B: es marketplace de dibujos por encargo.",
+    ],
+    scenario: {
+      title: "Retrato de mascota en acuarela",
+      body: "El cliente descubre a Luna Ink, pide un servicio, acepta la cotización, paga con Mercado Pago y aprueba la entrega final.",
+      metrics: [
+        { label: "Roles", value: "3" },
+        { label: "Base", value: "db_atelier" },
+        { label: "Fee default", value: "10%" },
+      ],
+    },
+    antiConfusion: [
+      { other: "Catálogo WA", difference: "Catálogo WA vende SKUs del ERP; Atelier cotiza arte a medida." },
+      { other: "Mayorista", difference: "Mayorista es B2B de listas de precio." },
+      { other: "Academia", difference: "Academia enseña; Atelier encarga." },
     ],
   },
 };

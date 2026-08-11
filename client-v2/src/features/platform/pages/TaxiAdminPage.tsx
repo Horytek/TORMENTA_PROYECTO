@@ -1,22 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   assignTaxiViaje,
-  createTaxiConductor,
   getTaxiAdminToken,
   listTaxiConductores,
   listTaxiViajes,
-  setTaxiAdminToken,
+  patchTaxiViajeAdmin,
 } from "@/features/platform/api/taxi";
-import { PlatformShell } from "@/features/platform/ui/PlatformShell";
 import { KpiStrip } from "@/features/platform/ui/KpiStrip";
 import { StatusChip } from "@/features/platform/ui/StatusChip";
 import { FilterBar } from "@/features/platform/ui/FilterBar";
 import { EmptyState } from "@/features/platform/ui/EmptyState";
 import { PlatformMapPanel, LIMA_POINTS } from "@/features/platform/maps/PlatformMapPanel";
+import { TaxiAdminShell, taxiErr } from "./taxi/TaxiAdminShell";
 
 type Viaje = {
   id_viaje: number;
@@ -27,14 +25,6 @@ type Viaje = {
 };
 type Conductor = { id_conductor: number; nombre: string; telefono?: string; activo: number };
 
-function errMsg(e: unknown, fallback: string) {
-  return (
-    (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-    (e as Error).message ||
-    fallback
-  );
-}
-
 const STATUSES = ["solicitado", "asignado", "en_curso", "finalizado", "cancelado"];
 
 export default function TaxiAdminPage() {
@@ -43,9 +33,6 @@ export default function TaxiAdminPage() {
   const [conductores, setConductores] = useState<Conductor[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [condNombre, setCondNombre] = useState("");
-  const [condTel, setCondTel] = useState("");
-  const [condPass, setCondPass] = useState("");
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string | "all">("all");
   const [assignFor, setAssignFor] = useState<number | null>(null);
@@ -58,10 +45,9 @@ export default function TaxiAdminPage() {
       const [v, c] = await Promise.all([listTaxiViajes(), listTaxiConductores()]);
       if (!v.success) throw new Error(v.message || "Sin acceso");
       setViajes(v.data || []);
-      setConductores(c.data || []);
+      setConductores((c.data || []).filter((x: Conductor) => Number(x.activo) === 1));
     } catch (e: unknown) {
-      setError(errMsg(e, "Error al cargar Taxi"));
-      setTaxiAdminToken(null);
+      setError(taxiErr(e, "Error al cargar Taxi"));
       setSession(false);
     } finally {
       setLoading(false);
@@ -100,37 +86,29 @@ export default function TaxiAdminPage() {
     ];
   }, [viajes, conductores]);
 
-  if (!session) {
-    return <Navigate to="/login?mode=taxi" replace />;
-  }
+  if (!session) return <Navigate to="/login?mode=taxi" replace />;
 
   if (loading && viajes.length === 0) {
     return (
-      <PlatformShell productId="taxi" companyName="Operador Demo Taxi" title="Sala de control">
+      <TaxiAdminShell title="Sala de control" onLogout={() => setSession(false)}>
         <p className="text-sm text-black/50">Cargando…</p>
-      </PlatformShell>
+      </TaxiAdminShell>
     );
   }
 
   if (error) {
     return (
-      <PlatformShell productId="taxi" companyName="Operador Demo Taxi" title="Taxi">
+      <TaxiAdminShell title="Viajes" onLogout={() => setSession(false)}>
         <p className="text-sm text-destructive">{error}</p>
-      </PlatformShell>
+      </TaxiAdminShell>
     );
   }
 
   return (
-    <PlatformShell
-      productId="taxi"
-      companyName="Operador Demo Taxi"
-      roleLabel="Admin"
+    <TaxiAdminShell
       title="Sala de control"
       subtitle="Asigna viajes y monitorea la flota"
-      onLogout={() => {
-        setTaxiAdminToken(null);
-        setSession(false);
-      }}
+      onLogout={() => setSession(false)}
     >
       <KpiStrip items={kpis} />
 
@@ -140,175 +118,126 @@ export default function TaxiAdminPage() {
             query={query}
             onQueryChange={setQuery}
             placeholder="Buscar origen, destino o #"
-            statuses={STATUSES}
             activeStatus={statusFilter}
             onStatusChange={setStatusFilter}
+            statuses={STATUSES}
           />
-
           {filtered.length === 0 ? (
-            <EmptyState
-              title="No hay viajes con este filtro"
-              body="Ajusta el filtro o espera nuevas solicitudes."
-            />
+            <EmptyState title="Sin viajes" body="No hay viajes con ese filtro." />
           ) : (
             <ul className="space-y-2">
               {filtered.map((v) => (
                 <li
                   key={v.id_viaje}
-                  className="flex flex-wrap items-center justify-between gap-3 bg-white/80 px-3 py-3"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-black/10 bg-white/70 px-3 py-2.5 text-sm"
                 >
-                  <div>
-                    <p className="text-[14px] font-medium">
+                  <div className="min-w-0">
+                    <p className="font-medium">
                       #{v.id_viaje} · {v.origen} → {v.destino}
                     </p>
-                    <div className="mt-1">
-                      <StatusChip status={v.estado} />
-                    </div>
                   </div>
-                  {v.estado === "solicitado" ? (
-                    assignFor === v.id_viaje ? (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <select
-                          className="rounded border border-black/15 bg-white px-2 py-1.5 text-sm"
-                          value={pickConductor}
-                          onChange={(e) =>
-                            setPickConductor(e.target.value ? Number(e.target.value) : "")
-                          }
-                        >
-                          <option value="">Elegir conductor</option>
-                          {conductores.map((c) => (
-                            <option key={c.id_conductor} value={c.id_conductor}>
-                              {c.nombre}
-                            </option>
-                          ))}
-                        </select>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusChip status={v.estado} />
+                    {v.estado === "solicitado" ? (
+                      assignFor === v.id_viaje ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <select
+                            className="rounded border px-2 py-1 text-sm"
+                            value={pickConductor}
+                            onChange={(e) =>
+                              setPickConductor(e.target.value ? Number(e.target.value) : "")
+                            }
+                          >
+                            <option value="">Elegir conductor</option>
+                            {conductores.map((c) => (
+                              <option key={c.id_conductor} value={c.id_conductor}>
+                                {c.nombre}
+                              </option>
+                            ))}
+                          </select>
+                          <Button
+                            size="sm"
+                            disabled={!pickConductor}
+                            onClick={async () => {
+                              try {
+                                if (!pickConductor) return;
+                                const res = await assignTaxiViaje(v.id_viaje, Number(pickConductor));
+                                if (!res.success) throw new Error(res.message);
+                                toast.success("Asignado");
+                                setAssignFor(null);
+                                await load();
+                              } catch (err: unknown) {
+                                toast.error(taxiErr(err, "Error"));
+                              }
+                            }}
+                          >
+                            Confirmar
+                          </Button>
+                        </div>
+                      ) : (
                         <Button
                           size="sm"
-                          disabled={!pickConductor}
-                          style={{ backgroundColor: "var(--platform-accent)" }}
-                          onClick={async () => {
-                            try {
-                              if (!pickConductor) return;
-                              const res = await assignTaxiViaje(v.id_viaje, Number(pickConductor));
-                              if (!res.success) throw new Error(res.message);
-                              toast.success("Viaje asignado");
-                              setAssignFor(null);
-                              setPickConductor("");
-                              await load();
-                            } catch (err: unknown) {
-                              toast.error(errMsg(err, "Error"));
-                            }
+                          variant="outline"
+                          disabled={conductores.length === 0}
+                          onClick={() => {
+                            setAssignFor(v.id_viaje);
+                            setPickConductor(conductores[0]?.id_conductor ?? "");
                           }}
                         >
-                          Confirmar
+                          Asignar
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setAssignFor(null)}>
-                          Cancelar
-                        </Button>
-                      </div>
-                    ) : (
+                      )
+                    ) : null}
+                    {v.estado !== "cancelado" && v.estado !== "finalizado" ? (
                       <Button
                         size="sm"
-                        variant="outline"
-                        disabled={conductores.length === 0}
-                        onClick={() => {
-                          setAssignFor(v.id_viaje);
-                          setPickConductor(conductores[0]?.id_conductor ?? "");
+                        variant="ghost"
+                        className="text-destructive"
+                        onClick={async () => {
+                          try {
+                            const res = await patchTaxiViajeAdmin(v.id_viaje, {
+                              estado: "cancelado",
+                            });
+                            if (!res.success) throw new Error(res.message);
+                            toast.success("Viaje cancelado");
+                            await load();
+                          } catch (err: unknown) {
+                            toast.error(taxiErr(err, "Error"));
+                          }
                         }}
                       >
-                        Asignar
+                        Cancelar
                       </Button>
-                    )
-                  ) : null}
+                    ) : null}
+                  </div>
                 </li>
               ))}
             </ul>
           )}
+          <p className="text-[12px] text-black/45">
+            Gestiona la flota en{" "}
+            <Link to="/taxi-admin/conductores" className="font-medium underline-offset-2 hover:underline">
+              Conductores
+            </Link>
+            .
+          </p>
         </section>
 
-        <aside className="space-y-4">
-          <PlatformMapPanel
-            title="Mapa operativo"
-            footnote="Demo Lima — pins de referencia"
-            markers={[
-              {
-                id: "base",
-                label: "Base",
-                lng: LIMA_POINTS.sanIsidro[0],
-                lat: LIMA_POINTS.sanIsidro[1],
-              },
-              {
-                id: "hot",
-                label: "Zona caliente",
-                lng: LIMA_POINTS.miraflores[0],
-                lat: LIMA_POINTS.miraflores[1],
-              },
-            ]}
-            className="h-[240px]"
-          />
-
-          <form
-            className="space-y-2 bg-white/80 p-4"
-            onSubmit={async (e) => {
-              e.preventDefault();
-              try {
-                const res = await createTaxiConductor({
-                  nombre: condNombre,
-                  telefono: condTel || undefined,
-                  password: condPass,
-                });
-                if (!res.success) throw new Error(res.message);
-                toast.success("Conductor creado");
-                setCondNombre("");
-                setCondTel("");
-                setCondPass("");
-                await load();
-              } catch (err: unknown) {
-                toast.error(errMsg(err, "Error"));
-              }
-            }}
-          >
-            <h2 className="text-sm font-semibold">Nuevo conductor</h2>
-            <Input
-              placeholder="Nombre"
-              value={condNombre}
-              onChange={(e) => setCondNombre(e.target.value)}
-              required
-            />
-            <Input
-              placeholder="Teléfono"
-              value={condTel}
-              onChange={(e) => setCondTel(e.target.value)}
-            />
-            <Input
-              type="password"
-              placeholder="Contraseña"
-              value={condPass}
-              onChange={(e) => setCondPass(e.target.value)}
-              required
-            />
-            <Button type="submit" size="sm" style={{ backgroundColor: "var(--platform-accent)" }}>
-              Crear
-            </Button>
-          </form>
-
-          <div className="bg-white/80 p-4">
-            <h2 className="text-sm font-semibold">Conductores</h2>
-            {conductores.length === 0 ? (
-              <EmptyState title="Sin conductores" body="Crea uno para poder asignar viajes." />
-            ) : (
-              <ul className="mt-2 divide-y divide-black/8 text-sm">
-                {conductores.map((c) => (
-                  <li key={c.id_conductor} className="py-2">
-                    {c.nombre}
-                    {c.telefono ? ` · ${c.telefono}` : ""}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </aside>
+        <PlatformMapPanel
+          title="Mapa operativo"
+          footnote="Demo geo Lima"
+          center={LIMA_POINTS.sanIsidro}
+          markers={[
+            {
+              id: "hub",
+              label: "Hub",
+              lng: LIMA_POINTS.sanIsidro[0],
+              lat: LIMA_POINTS.sanIsidro[1],
+              popup: "Operador demo",
+            },
+          ]}
+        />
       </div>
-    </PlatformShell>
+    </TaxiAdminShell>
   );
 }

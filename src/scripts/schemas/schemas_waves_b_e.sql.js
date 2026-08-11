@@ -233,6 +233,9 @@ CREATE TABLE IF NOT EXISTS taxi_conductor (
   id_operador INT NOT NULL,
   nombre VARCHAR(120) NOT NULL,
   telefono VARCHAR(32) NULL,
+  placa VARCHAR(20) NULL,
+  vehiculo VARCHAR(120) NULL,
+  notas VARCHAR(255) NULL,
   activo TINYINT(1) NOT NULL DEFAULT 1,
   password_hash VARCHAR(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -241,7 +244,8 @@ CREATE TABLE IF NOT EXISTS taxi_pasajero (
   id_operador INT NOT NULL,
   nombre VARCHAR(120) NOT NULL,
   telefono VARCHAR(32) NOT NULL,
-  password_hash VARCHAR(255) NOT NULL
+  password_hash VARCHAR(255) NOT NULL,
+  activo TINYINT(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 CREATE TABLE IF NOT EXISTS taxi_viaje (
   id_viaje INT AUTO_INCREMENT PRIMARY KEY,

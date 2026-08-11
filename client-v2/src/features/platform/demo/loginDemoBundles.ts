@@ -68,7 +68,8 @@ export function bundleFromPortalCreds(
   };
 }
 
-const ERP_USER = (import.meta.env.VITE_DEMO_ERP_USER as string | undefined)?.trim() || "admin";
+const ERP_USER =
+  (import.meta.env.VITE_DEMO_ERP_USER as string | undefined)?.trim() || "platform.demo";
 const ERP_PASS =
   (import.meta.env.VITE_DEMO_ERP_PASSWORD as string | undefined)?.trim() || DEMO_PASSWORD;
 
@@ -178,8 +179,26 @@ export function getLoginDemoBundle(
 
   if (surface === "portal") {
     switch (mode) {
-      case "mayorista":
-        return portalSlug(mode, "/b2b/demo", "Portal B2B de demostración listo para explorar.");
+      case "mayorista": {
+        const c = getDemoPortalCreds("mayorista", "comprador")!;
+        return {
+          mode,
+          surface: "portal",
+          hint: "Portal B2B demo: entra como comprador con el slug demo.",
+          lines: publicLines([
+            { label: "Slug", value: DEMO_SLUG },
+            { label: "Email", value: c.email! },
+            { label: "Contraseña", value: c.password! },
+          ]),
+          fill: {
+            slug: DEMO_SLUG,
+            email: c.email,
+            password: c.password,
+          },
+          openHref: "/b2b/demo",
+          enterLabel: "Entrar al portal demo",
+        };
+      }
       case "recluta":
         return portalSlug(mode, "/recluta/demo", "Vacantes públicas de demostración.");
       case "academia":
@@ -247,6 +266,10 @@ export function getLoginDemoBundle(
         "Cuenta de demostración del ERP. Usa los botones para rellenar e ingresar."
       );
     case "mayorista":
+      return erpAdmin(
+        mode,
+        "Panel Mayorista: entra con platform.demo / Demo1234! (seed:platform-demo). Consola en /mayorista-admin."
+      );
     case "recluta":
     case "sync":
     case "taller":

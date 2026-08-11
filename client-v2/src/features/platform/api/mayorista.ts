@@ -87,6 +87,11 @@ export async function createMayoristaComprador(body: {
   return data;
 }
 
+export async function listMayoristaCompradores() {
+  const { data } = await api.get("/mayorista/admin/compradores");
+  return data;
+}
+
 export async function listMayoristaPedidos() {
   const { data } = await api.get("/mayorista/admin/pedidos");
   return data;
@@ -97,14 +102,14 @@ export async function updateMayoristaPedidoEstado(id_pedido: number, estado: str
   return data;
 }
 
-/* Portal B2B */
+/* Portal B2B — cliente sin JWT ERP (evita interferir con sesión ERP) */
 export async function getMayoristaPortal(slug: string) {
-  const { data } = await api.get(`/mayorista/portal/${slug}`);
+  const { data } = await mayoristaClient.get(`/mayorista/portal/${slug}`);
   return data;
 }
 
 export async function loginMayorista(body: { slug: string; email: string; password: string }) {
-  const { data } = await api.post("/mayorista/auth/login", body);
+  const { data } = await mayoristaClient.post("/mayorista/auth/login", body);
   return data;
 }
 

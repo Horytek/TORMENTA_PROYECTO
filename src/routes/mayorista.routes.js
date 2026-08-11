@@ -17,6 +17,7 @@ import {
   addListaItem,
   listListaItems,
   createComprador,
+  listCompradores,
   listPedidosAdmin,
   updatePedidoEstado,
   getPortalPublic,
@@ -43,6 +44,7 @@ router.get("/admin/listas", auth, listListas);
 router.post("/admin/listas", auth, validateSchema(mayoristaListaSchema), createLista);
 router.get("/admin/listas/:id_lista/items", auth, listListaItems);
 router.post("/admin/items", auth, validateSchema(mayoristaItemSchema), addListaItem);
+router.get("/admin/compradores", auth, listCompradores);
 router.post("/admin/compradores", auth, validateSchema(mayoristaCompradorSchema), createComprador);
 router.get("/admin/pedidos", auth, listPedidosAdmin);
 router.patch("/admin/pedidos/:id_pedido", auth, updatePedidoEstado);

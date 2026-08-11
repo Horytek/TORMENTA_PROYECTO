@@ -14,6 +14,13 @@ const TONE: Record<string, string> = {
   creada: "bg-slate-100 text-slate-800",
   en_transito: "bg-sky-100 text-sky-900",
   entregada: "bg-emerald-100 text-emerald-900",
+  activo: "bg-emerald-100 text-emerald-900",
+  inactivo: "bg-slate-100 text-slate-600",
+  borrador: "bg-slate-100 text-slate-700",
+  enviado: "bg-amber-100 text-amber-900",
+  confirmado: "bg-sky-100 text-sky-900",
+  rechazado: "bg-rose-100 text-rose-900",
+  despachado: "bg-emerald-100 text-emerald-900",
 };
 
 export function StatusChip({ status }: { status: string }) {

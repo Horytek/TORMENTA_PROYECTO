@@ -72,6 +72,7 @@ import {
   agendaRouter,
 } from "./routes/platformWaves.routes.js";
 import horytekProductsRoutes from "./routes/horytekProducts.routes.js";
+import atelierRouter from "./routes/atelier.routes.js";
 
 const app = express();
 app.set('trust proxy', 1);
@@ -313,6 +314,7 @@ app.use("/api/flotas", flotasRouter);
 app.use("/api/academia", academiaRouter);
 app.use("/api/agenda", agendaRouter);
 app.use("/api/horytek-products", horytekProductsRoutes);
+app.use("/api/atelier", atelierRouter);
 app.use("/api/gastos", gastosRoutes);
 app.use("/api/contabilidad/cuentas", cuentaContableRoutes);
 app.use("/api/contabilidad/centros-costo", centroCostoRoutes);

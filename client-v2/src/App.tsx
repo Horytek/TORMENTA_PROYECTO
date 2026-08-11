@@ -36,6 +36,18 @@ const SolucionProductoPage = lazy(() => import("@/features/landing/pages/Solucio
 const SolucionBundlePage = lazy(() => import("@/features/landing/pages/SolucionBundlePage"));
 const SyncStockAdminPage = lazy(() => import("@/features/platform/pages/SyncStockAdminPage"));
 const MayoristaAdminPage = lazy(() => import("@/features/platform/pages/MayoristaAdminPage"));
+const MayoristaPedidosPage = lazy(
+  () => import("@/features/platform/pages/mayorista/MayoristaPedidosPage")
+);
+const MayoristaPortalesPage = lazy(
+  () => import("@/features/platform/pages/mayorista/MayoristaPortalesPage")
+);
+const MayoristaListasPage = lazy(
+  () => import("@/features/platform/pages/mayorista/MayoristaListasPage")
+);
+const MayoristaCompradoresPage = lazy(
+  () => import("@/features/platform/pages/mayorista/MayoristaCompradoresPage")
+);
 const MayoristaPortalPage = lazy(() => import("@/features/platform/pages/MayoristaPortalPage"));
 const TallerAdminPage = lazy(() => import("@/features/platform/pages/TallerAdminPage"));
 const TallerPlantaPage = lazy(() => import("@/features/platform/pages/TallerPlantaPage"));
@@ -49,11 +61,36 @@ const WmsOperarioPage = lazy(() => import("@/features/platform/pages/WmsOperario
 const DespachoAdminPage = lazy(() => import("@/features/platform/pages/DespachoAdminPage"));
 const DespachoChoferPage = lazy(() => import("@/features/platform/pages/DespachoChoferPage"));
 const TaxiAdminPage = lazy(() => import("@/features/platform/pages/TaxiAdminPage"));
+const TaxiConductoresPage = lazy(
+  () => import("@/features/platform/pages/taxi/TaxiConductoresPage")
+);
+const TaxiPasajerosPage = lazy(
+  () => import("@/features/platform/pages/taxi/TaxiPasajerosPage")
+);
+const TaxiEquipoPage = lazy(() => import("@/features/platform/pages/taxi/TaxiEquipoPage"));
+const TaxiOperadorPage = lazy(() => import("@/features/platform/pages/taxi/TaxiOperadorPage"));
 const TaxiPasajeroPage = lazy(() => import("@/features/platform/pages/TaxiPasajeroPage"));
 const TaxiConductorPage = lazy(() => import("@/features/platform/pages/TaxiConductorPage"));
 const DeliveryAdminPage = lazy(() => import("@/features/platform/pages/DeliveryAdminPage"));
+const DeliveryRepartidoresPage = lazy(
+  () => import("@/features/platform/pages/delivery/DeliveryRepartidoresPage")
+);
+const DeliveryClientesPage = lazy(
+  () => import("@/features/platform/pages/delivery/DeliveryClientesPage")
+);
+const DeliveryEquipoPage = lazy(
+  () => import("@/features/platform/pages/delivery/DeliveryEquipoPage")
+);
+const DeliveryOperadorPage = lazy(
+  () => import("@/features/platform/pages/delivery/DeliveryOperadorPage")
+);
 const DeliveryClientePage = lazy(() => import("@/features/platform/pages/DeliveryClientePage"));
 const DeliveryRepartidorPage = lazy(() => import("@/features/platform/pages/DeliveryRepartidorPage"));
+const AtelierHomePage = lazy(() => import("@/features/platform/pages/AtelierHomePage"));
+const AtelierCreatorPublicPage = lazy(() => import("@/features/platform/pages/AtelierCreatorPublicPage"));
+const AtelierClientePages = lazy(() => import("@/features/platform/pages/atelier/AtelierClientePages"));
+const AtelierCreadorPages = lazy(() => import("@/features/platform/pages/atelier/AtelierCreadorPages"));
+const AtelierAdminPages = lazy(() => import("@/features/platform/pages/atelier/AtelierAdminPages"));
 const FlotasAdminPage = lazy(() => import("@/features/platform/pages/FlotasAdminPage"));
 const CampoAdminPage = lazy(() => import("@/features/platform/pages/CampoAdminPage"));
 const CampoVendedorPage = lazy(() => import("@/features/platform/pages/CampoVendedorPage"));
@@ -230,6 +267,24 @@ export default function App() {
               <Route path="/taxi/:slug/conductor" element={<TaxiConductorPage />} />
               <Route path="/delivery/:slug" element={<DeliveryClientePage />} />
               <Route path="/delivery/:slug/repartidor" element={<DeliveryRepartidorPage />} />
+              <Route path="/atelier" element={<AtelierHomePage />} />
+              <Route path="/atelier/c/:slug" element={<AtelierCreatorPublicPage />} />
+              <Route path="/atelier/cliente" element={<AtelierClientePages />} />
+              <Route path="/atelier/cliente/solicitudes" element={<AtelierClientePages />} />
+              <Route path="/atelier/cliente/pedidos" element={<AtelierClientePages />} />
+              <Route path="/atelier/cliente/pedidos/:id" element={<AtelierClientePages />} />
+              <Route path="/atelier/cliente/favoritos" element={<AtelierClientePages />} />
+              <Route path="/atelier/creador" element={<AtelierCreadorPages />} />
+              <Route path="/atelier/creador/solicitudes" element={<AtelierCreadorPages />} />
+              <Route path="/atelier/creador/pedidos" element={<AtelierCreadorPages />} />
+              <Route path="/atelier/creador/pedidos/:id" element={<AtelierCreadorPages />} />
+              <Route path="/atelier/creador/servicios" element={<AtelierCreadorPages />} />
+              <Route path="/atelier/creador/portafolio" element={<AtelierCreadorPages />} />
+              <Route path="/atelier/creador/ganancias" element={<AtelierCreadorPages />} />
+              <Route path="/atelier-admin" element={<AtelierAdminPages />} />
+              <Route path="/atelier-admin/pedidos" element={<AtelierAdminPages />} />
+              <Route path="/atelier-admin/usuarios" element={<AtelierAdminPages />} />
+              <Route path="/atelier-admin/comision" element={<AtelierAdminPages />} />
               <Route path="/academia/:slug" element={<AcademiaAlumnoPage />} />
               <Route path="/agenda/:slug" element={<AgendaPublicPage />} />
               <Route path="/campo/vendedor" element={<CampoVendedorPage />} />
@@ -276,7 +331,15 @@ export default function App() {
 
               {/* Admins de producto con JWT propio (no requieren sesión ERP) */}
               <Route path="/taxi-admin" element={<TaxiAdminPage />} />
+              <Route path="/taxi-admin/conductores" element={<TaxiConductoresPage />} />
+              <Route path="/taxi-admin/pasajeros" element={<TaxiPasajerosPage />} />
+              <Route path="/taxi-admin/equipo" element={<TaxiEquipoPage />} />
+              <Route path="/taxi-admin/operador" element={<TaxiOperadorPage />} />
               <Route path="/delivery-admin" element={<DeliveryAdminPage />} />
+              <Route path="/delivery-admin/repartidores" element={<DeliveryRepartidoresPage />} />
+              <Route path="/delivery-admin/clientes" element={<DeliveryClientesPage />} />
+              <Route path="/delivery-admin/equipo" element={<DeliveryEquipoPage />} />
+              <Route path="/delivery-admin/operador" element={<DeliveryOperadorPage />} />
               <Route path="/flotas-admin" element={<FlotasAdminPage />} />
               <Route path="/academia-admin" element={<AcademiaAdminPage />} />
               <Route path="/agenda-admin" element={<AgendaAdminPage />} />
@@ -290,6 +353,15 @@ export default function App() {
 
               {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
+                {/* Mayorista — consola de producto fuera del DashboardLayout ERP */}
+                <Route path="/mayorista-admin" element={<MayoristaPedidosPage />} />
+                <Route path="/mayorista-admin/portales" element={<MayoristaPortalesPage />} />
+                <Route path="/mayorista-admin/listas" element={<MayoristaListasPage />} />
+                <Route
+                  path="/mayorista-admin/compradores"
+                  element={<MayoristaCompradoresPage />}
+                />
+
                 {/* Main Dashboard Layout */}
                 <Route element={<DashboardLayout />}>
                   {/* "Inicio" no requiere capability — visible para cualquier usuario autenticado. */}

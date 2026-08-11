@@ -255,12 +255,86 @@ taxiRouter.post(
   validateSchema(schema.taxiConductorSchema),
   ctrl.taxiCreateConductor
 );
+taxiRouter.patch(
+  "/admin/conductores/:id_conductor",
+  ctrl.authTaxiAdmin,
+  ctrl.requireTaxiAdmin,
+  validateSchema(schema.taxiConductorUpdateSchema),
+  ctrl.taxiUpdateConductor
+);
+taxiRouter.patch(
+  "/admin/conductores/:id_conductor/password",
+  ctrl.authTaxiAdmin,
+  ctrl.requireTaxiAdmin,
+  validateSchema(schema.taxiPasswordSchema),
+  ctrl.taxiSetConductorPassword
+);
+taxiRouter.get(
+  "/admin/pasajeros",
+  ctrl.authTaxiAdmin,
+  ctrl.requireTaxiAdmin,
+  ctrl.taxiListPasajeros
+);
 taxiRouter.post(
   "/admin/pasajeros",
   ctrl.authTaxiAdmin,
   ctrl.requireTaxiAdmin,
   validateSchema(schema.taxiPasajeroSchema),
   ctrl.taxiCreatePasajero
+);
+taxiRouter.patch(
+  "/admin/pasajeros/:id_pasajero",
+  ctrl.authTaxiAdmin,
+  ctrl.requireTaxiAdmin,
+  validateSchema(schema.taxiPasajeroUpdateSchema),
+  ctrl.taxiUpdatePasajero
+);
+taxiRouter.patch(
+  "/admin/pasajeros/:id_pasajero/password",
+  ctrl.authTaxiAdmin,
+  ctrl.requireTaxiAdmin,
+  validateSchema(schema.taxiPasswordSchema),
+  ctrl.taxiSetPasajeroPassword
+);
+taxiRouter.get(
+  "/admin/admins",
+  ctrl.authTaxiAdmin,
+  ctrl.requireTaxiAdmin,
+  ctrl.taxiListAdmins
+);
+taxiRouter.post(
+  "/admin/admins",
+  ctrl.authTaxiAdmin,
+  ctrl.requireTaxiAdmin,
+  validateSchema(schema.taxiAdminCreateSchema),
+  ctrl.taxiCreateAdmin
+);
+taxiRouter.patch(
+  "/admin/admins/:id_admin/password",
+  ctrl.authTaxiAdmin,
+  ctrl.requireTaxiAdmin,
+  validateSchema(schema.taxiPasswordSchema),
+  ctrl.taxiSetAdminPassword
+);
+taxiRouter.get(
+  "/admin/operador",
+  ctrl.authTaxiAdmin,
+  ctrl.requireTaxiAdmin,
+  ctrl.taxiGetOperador
+);
+taxiRouter.patch(
+  "/admin/operador",
+  ctrl.authTaxiAdmin,
+  ctrl.requireTaxiAdmin,
+  validateSchema(schema.taxiOperadorUpdateSchema),
+  ctrl.taxiUpdateOperador
+);
+taxiRouter.patch(
+  "/admin/viajes/:id_viaje",
+  ctrl.authTaxiAdmin,
+  ctrl.requireTaxiAdmin,
+  validateSchema(schema.taxiViajeAdminPatchSchema),
+  ctrl.taxiAdminPatchViaje
 );
 taxiRouter.get(
   "/pasajero/viajes",
@@ -339,12 +413,86 @@ deliveryRouter.post(
   validateSchema(schema.deliveryRepartidorSchema),
   ctrl.deliveryCreateRepartidor
 );
+deliveryRouter.patch(
+  "/admin/repartidores/:id_repartidor",
+  ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryAdmin,
+  validateSchema(schema.deliveryRepartidorUpdateSchema),
+  ctrl.deliveryUpdateRepartidor
+);
+deliveryRouter.patch(
+  "/admin/repartidores/:id_repartidor/password",
+  ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryAdmin,
+  validateSchema(schema.taxiPasswordSchema),
+  ctrl.deliverySetRepartidorPassword
+);
+deliveryRouter.get(
+  "/admin/clientes",
+  ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryAdmin,
+  ctrl.deliveryListClientes
+);
 deliveryRouter.post(
   "/admin/clientes",
   ctrl.authDeliveryAdmin,
   ctrl.requireDeliveryAdmin,
   validateSchema(schema.deliveryClienteSchema),
   ctrl.deliveryCreateCliente
+);
+deliveryRouter.patch(
+  "/admin/clientes/:id_cliente",
+  ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryAdmin,
+  validateSchema(schema.deliveryClienteUpdateSchema),
+  ctrl.deliveryUpdateCliente
+);
+deliveryRouter.patch(
+  "/admin/clientes/:id_cliente/password",
+  ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryAdmin,
+  validateSchema(schema.taxiPasswordSchema),
+  ctrl.deliverySetClientePassword
+);
+deliveryRouter.get(
+  "/admin/admins",
+  ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryAdmin,
+  ctrl.deliveryListAdmins
+);
+deliveryRouter.post(
+  "/admin/admins",
+  ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryAdmin,
+  validateSchema(schema.taxiAdminCreateSchema),
+  ctrl.deliveryCreateAdmin
+);
+deliveryRouter.patch(
+  "/admin/admins/:id_admin/password",
+  ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryAdmin,
+  validateSchema(schema.taxiPasswordSchema),
+  ctrl.deliverySetAdminPassword
+);
+deliveryRouter.get(
+  "/admin/operador",
+  ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryAdmin,
+  ctrl.deliveryGetOperador
+);
+deliveryRouter.patch(
+  "/admin/operador",
+  ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryAdmin,
+  validateSchema(schema.taxiOperadorUpdateSchema),
+  ctrl.deliveryUpdateOperador
+);
+deliveryRouter.patch(
+  "/admin/pedidos/:id_pedido",
+  ctrl.authDeliveryAdmin,
+  ctrl.requireDeliveryAdmin,
+  validateSchema(schema.deliveryPedidoAdminPatchSchema),
+  ctrl.deliveryAdminPatchPedido
 );
 deliveryRouter.get(
   "/cliente/pedidos",

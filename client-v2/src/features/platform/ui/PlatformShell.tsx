@@ -11,6 +11,7 @@ type PlatformShellProps = {
   roleLabel?: string;
   onLogout?: () => void;
   actions?: ReactNode;
+  homeHref?: string;
   children: ReactNode;
 };
 
@@ -23,6 +24,7 @@ export function PlatformShell({
   roleLabel = "Admin",
   onLogout,
   actions,
+  homeHref,
   children,
 }: PlatformShellProps) {
   const theme = getProductTheme(productId);
@@ -47,6 +49,7 @@ export function PlatformShell({
         roleLabel={roleLabel}
         onLogout={onLogout}
         actions={actions}
+        homeHref={homeHref}
       />
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-5 md:space-y-8 md:px-6 md:py-8">
         <div className="min-w-0">

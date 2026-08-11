@@ -24,15 +24,17 @@ Re-ejecutar es seguro.
 | Rol | Identificador | Password / PIN |
 |-----|---------------|----------------|
 | Admin operador | slug `demo` + email `admin@demo.local` | `Demo1234!` |
-| Pasajero / cliente delivery | tel `999111222`, `999111223` | `Demo1234!` |
-| Conductor / repartidor | tel `999333444`…`999333446` | `Demo1234!` |
+| Equipo Taxi (2.º admin) | `ops@demo.local` | `Demo1234!` |
+| Pasajero / cliente delivery | tel `999111222`, `999111223` (+ Taxi `999111224`; inactivo `999111299`) | `Demo1234!` |
+| Conductor / repartidor | tel `999333444`…`999333446` (Taxi inactivo `999333499`) | `Demo1234!` |
 | Alumno academia | `alumno1@demo.local` (…2, …3) | `Demo1234!` |
 | Comprador B2B | `comprador@demo.local` | `Demo1234!` |
+| ERP platform (`/platform/*`) | `platform.demo` (o `SEED_ERP_USER` / `VITE_DEMO_ERP_USER`) | `Demo1234!` |
 | Campo / taller / despacho / mantto | PIN por operador | `1234` (o `5678` en el 2.º) |
 
-**Tenant ERP** para paneles `/platform/*`: `SEED_TENANT_ID` (default `1`). Login con usuario ERP local de ese tenant.
+**Tenant ERP** para paneles `/platform/*`: `SEED_TENANT_ID` (default `1`). El seed crea el usuario `platform.demo` en ese tenant.
 
-En `/login`, la tarjeta **Acceso demostración** rellena credenciales por producto. Para paneles ERP (Recluta, Sync, CRM, …) usa `VITE_DEMO_ERP_USER` / `VITE_DEMO_ERP_PASSWORD` (default `admin` / `Demo1234!`).
+En `/login`, la tarjeta **Acceso demostración** rellena credenciales por producto. Para paneles ERP (Mayorista admin, Recluta, Sync, CRM, …) usa `VITE_DEMO_ERP_USER` / `VITE_DEMO_ERP_PASSWORD` (default `platform.demo` / `Demo1234!`).
 
 ## Matriz URLs
 
@@ -40,8 +42,8 @@ En `/login`, la tarjeta **Acceso demostración** rellena credenciales por produc
 
 | Producto | Admin | Portal / ops |
 |----------|-------|----------------|
-| Taxi | `/login?mode=taxi` → rol **Operador** | `/login?mode=taxi` → Pasajero / Conductor, o `/taxi/demo` · `/taxi/demo/conductor` |
-| Delivery | `/login?mode=delivery` | `/delivery/demo`, `/delivery/demo/repartidor` |
+| Taxi | `/login?mode=taxi` → rol **Operador** → `/taxi-admin` (Viajes / Conductores / Pasajeros / Equipo / Operador) | `/login?mode=taxi` → Pasajero / Conductor, o `/taxi/demo` · `/taxi/demo/conductor` |
+| Delivery | `/login?mode=delivery` → `/delivery-admin` (Pedidos / Repartidores / Clientes / Equipo / Operador) | `/delivery/demo`, `/delivery/demo/repartidor` |
 | Flotas | `/login?mode=flotas` | panel flotas-admin |
 | Academia | `/login?mode=academia` | `/academia/demo` (alumno) |
 | Agenda | `/login?mode=agenda` | `/agenda/demo` |
@@ -51,7 +53,7 @@ En `/login`, la tarjeta **Acceso demostración** rellena credenciales por produc
 | Producto | Admin | Cliente / ops |
 |----------|-------|----------------|
 | Sync | `/platform/sync` | — |
-| Mayorista | `/platform/mayorista` | `/b2b/demo` |
+| Mayorista | `/login?mode=mayorista` → **Administrador** → `/mayorista-admin` (Pedidos / Portales / Listas / Compradores) | `/login?mode=mayorista` → **Portal**: slug `demo` + `comprador@demo.local` / `Demo1234!` → `/b2b/demo` |
 | Taller | `/platform/taller` | `/taller/planta` PIN `1234` |
 | Preventa | `/platform/preventa` | `/preventa/demo` |
 | CRM | `/platform/crm` | — |
@@ -66,14 +68,30 @@ En `/login`, la tarjeta **Acceso demostración** rellena credenciales por produc
 
 | Producto | Nota |
 |----------|------|
+| **Atelier** | `npm run seed:atelier-demo` → base `db_atelier` |
 | Catálogo WA | `/catalogo/{SEED_TENANT_ID}` (datos ERP del tenant) |
 | ERP | Credenciales locales del usuario |
 | Ecommerce | `ecom_demo` / `DemoEcom2026!` (script ecommerce) |
 | Pocket | `npm run seed:express` → `demo.pocket@horytek.test` / `PocketDemo2026!` |
 
+### Atelier (marketplace de dibujos)
+
+```bash
+npm run seed:atelier-demo
+```
+
+| Rol | Login | Destino |
+|-----|-------|---------|
+| Admin | `atelier.admin@demo.local` / `Demo1234!` | `/login?mode=atelier` → `/atelier-admin` |
+| Creador | `luna.ink@demo.local` o `pixel.fox@demo.local` / `Demo1234!` | `/atelier/creador` |
+| Cliente | `cliente.demo@demo.local` / `Demo1234!` | `/atelier/cliente` |
+
+Público: `/atelier` · ficha `/atelier/c/luna.ink` · API `/api/atelier/*` · DB `db_atelier` (`ATELIER_DB_DATABASE`).
+
 ## Volumen sembrado (resumen)
 
-- Taxi: 2 pasajeros, 3 conductores, ~10 viajes multi-estado  
+- Taxi: 4 pasajeros (1 inactivo), 4 conductores con placa/vehículo/notas (1 inactivo), 2 admins (`admin@` + `ops@`), ≥10 viajes multi-estado  
+
 - Delivery: 2 clientes, 3 repartidores, ~10 pedidos  
 - Flotas: 5 vehículos, 6 combustibles, 2 conductores  
 - Academia: 4 cursos, 3 alumnos, inscripciones  
@@ -87,7 +105,8 @@ En `/login`, la tarjeta **Acceso demostración** rellena credenciales por produc
 | Síntoma | Qué hacer |
 |---------|-----------|
 | Operador no encontrado | Correr `npm run seed:platform-demo` |
-| Credenciales inválidas | Mismo; password admin se refresca en cada seed |
+| Credenciales inválidas (ERP admin) | Usuario canónico `platform.demo` / `Demo1234!` tras el seed (no uses `admin` a menos que exista en tu BD) |
+| Credenciales inválidas (portal B2B) | `comprador@demo.local` / `Demo1234!` + slug `demo`; seed mayorista |
 | Tracking 404 | Código exacto `DEMO01`…`DEMO05` (tenant del seed) |
 | `/b2b/demo` vacío | Seed mayorista; slug `demo` |
 | Error de conexión MySQL | `.env` con `HOST`/`USER`/`PASSWORD` locales |

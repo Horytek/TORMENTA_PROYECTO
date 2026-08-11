@@ -7,6 +7,7 @@
  *
  * Credenciales:
  *   Admin operadores: slug demo / admin@demo.local / Demo1234!
+ *   ERP paneles /platform/*: platform.demo / Demo1234! (usuario dedicado en db_tormenta)
  *   Cliente/pasajero: ver log final
  */
 import mysql from "mysql2/promise";
@@ -15,6 +16,7 @@ import {
   USER,
   PASSWORD,
   PORT_DB,
+  DATABASE,
   SYNC_DATABASE,
   MAYORISTA_DATABASE,
   TALLER_DATABASE,
@@ -192,6 +194,31 @@ async function countWhere(c, table, where, params) {
 }
 
 /* ——— Taxi ——— */
+async function ensureTaxiColumns(c) {
+  const alters = [
+    ["taxi_conductor", "placa", "ADD COLUMN placa VARCHAR(20) NULL"],
+    ["taxi_conductor", "vehiculo", "ADD COLUMN vehiculo VARCHAR(120) NULL"],
+    ["taxi_conductor", "notas", "ADD COLUMN notas VARCHAR(255) NULL"],
+    ["taxi_pasajero", "activo", "ADD COLUMN activo TINYINT(1) NOT NULL DEFAULT 1"],
+  ];
+  for (const [table, col, clause] of alters) {
+    try {
+      const [cols] = await c.query(
+        `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?`,
+        [table, col]
+      );
+      if (!cols.length) {
+        await c.query(`ALTER TABLE \`${table}\` ${clause}`);
+      }
+    } catch (e) {
+      if (e.code !== "ER_DUP_FIELDNAME") {
+        console.warn(`taxi DDL ${table}.${col}:`, e.message);
+      }
+    }
+  }
+}
+
 async function seedTaxi() {
   const ownerId = await ensureOperator({
     database: TAXI_DATABASE,
@@ -203,58 +230,86 @@ async function seedTaxi() {
   const hash = await hashPassword(PASS);
   const c = await dbConn(TAXI_DATABASE);
   try {
+    await ensureTaxiColumns(c);
+
+    // Equipo: segundo admin
+    const [[opsAdmin]] = await c.query(
+      `SELECT id_admin FROM taxi_admin WHERE id_operador = ? AND email = ? LIMIT 1`,
+      [ownerId, "ops@demo.local"]
+    );
+    if (opsAdmin) {
+      await c.query(`UPDATE taxi_admin SET password_hash = ? WHERE id_admin = ?`, [
+        hash,
+        opsAdmin.id_admin,
+      ]);
+    } else {
+      await c.query(
+        `INSERT INTO taxi_admin (id_operador, email, password_hash) VALUES (?, ?, ?)`,
+        [ownerId, "ops@demo.local", hash]
+      );
+    }
+
     const pasajeros = [
-      ["Ana Pasajera", "999111222"],
-      ["Luis Cliente", "999111223"],
+      ["Ana Pasajera", "999111222", 1],
+      ["Luis Cliente", "999111223", 1],
+      ["Rosa Viajera", "999111224", 1],
+      ["Cuenta Inactiva", "999111299", 0],
     ];
-    for (const [nombre, telefono] of pasajeros) {
+    for (const [nombre, telefono, activo] of pasajeros) {
       const [[ex]] = await c.query(
         `SELECT id_pasajero FROM taxi_pasajero WHERE id_operador = ? AND telefono = ? LIMIT 1`,
         [ownerId, telefono]
       );
       if (!ex) {
         await c.query(
-          `INSERT INTO taxi_pasajero (id_operador, nombre, telefono, password_hash) VALUES (?, ?, ?, ?)`,
-          [ownerId, nombre, telefono, hash]
+          `INSERT INTO taxi_pasajero (id_operador, nombre, telefono, password_hash, activo)
+           VALUES (?, ?, ?, ?, ?)`,
+          [ownerId, nombre, telefono, hash, activo]
         );
       } else {
-        await c.query(`UPDATE taxi_pasajero SET password_hash = ? WHERE id_pasajero = ?`, [
-          hash,
-          ex.id_pasajero,
-        ]);
+        await c.query(
+          `UPDATE taxi_pasajero SET password_hash = ?, nombre = ?, activo = ? WHERE id_pasajero = ?`,
+          [hash, nombre, activo, ex.id_pasajero]
+        );
       }
     }
+
     const conductores = [
-      ["Carlos Conductor", "999333444"],
-      ["María Conductora", "999333445"],
-      ["Pedro Conductor", "999333446"],
+      ["Carlos Conductor", "999333444", "ABC-101", "Toyota Yaris", "Turno mañana", 1],
+      ["María Conductora", "999333445", "ABC-202", "Hyundai Accent", "Zona sur", 1],
+      ["Pedro Conductor", "999333446", "ABC-303", "Kia Rio", "Noche", 1],
+      ["Diego Pausado", "999333499", "ABC-404", "Nissan Versa", "Licencia en trámite", 0],
     ];
-    for (const [nombre, telefono] of conductores) {
+    for (const [nombre, telefono, placa, vehiculo, notas, activo] of conductores) {
       const [[ex]] = await c.query(
         `SELECT id_conductor FROM taxi_conductor WHERE id_operador = ? AND telefono = ? LIMIT 1`,
         [ownerId, telefono]
       );
       if (!ex) {
         await c.query(
-          `INSERT INTO taxi_conductor (id_operador, nombre, telefono, activo, password_hash) VALUES (?, ?, ?, 1, ?)`,
-          [ownerId, nombre, telefono, hash]
+          `INSERT INTO taxi_conductor
+             (id_operador, nombre, telefono, placa, vehiculo, notas, activo, password_hash)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [ownerId, nombre, telefono, placa, vehiculo, notas, activo, hash]
         );
       } else {
-        await c.query(`UPDATE taxi_conductor SET password_hash = ?, activo = 1 WHERE id_conductor = ?`, [
-          hash,
-          ex.id_conductor,
-        ]);
+        await c.query(
+          `UPDATE taxi_conductor
+           SET password_hash = ?, nombre = ?, placa = ?, vehiculo = ?, notas = ?, activo = ?
+           WHERE id_conductor = ?`,
+          [hash, nombre, placa, vehiculo, notas, activo, ex.id_conductor]
+        );
       }
     }
 
     const n = await countWhere(c, "taxi_viaje", "id_operador = ?", [ownerId]);
-    if (n < 8) {
+    if (n < 10) {
       const [pas] = await c.query(
-        `SELECT id_pasajero FROM taxi_pasajero WHERE id_operador = ? ORDER BY id_pasajero`,
+        `SELECT id_pasajero FROM taxi_pasajero WHERE id_operador = ? AND activo = 1 ORDER BY id_pasajero`,
         [ownerId]
       );
       const [conds] = await c.query(
-        `SELECT id_conductor FROM taxi_conductor WHERE id_operador = ? ORDER BY id_conductor`,
+        `SELECT id_conductor FROM taxi_conductor WHERE id_operador = ? AND activo = 1 ORDER BY id_conductor`,
         [ownerId]
       );
       const trips = [
@@ -263,11 +318,13 @@ async function seedTaxi() {
         ["Callao", "Jesús María", "en_curso", pas[1]?.id_pasajero, conds[1]?.id_conductor],
         ["Miraflores", "Barranco", "finalizado", pas[0]?.id_pasajero, conds[0]?.id_conductor],
         ["San Borja", "Surquillo", "cancelado", pas[1]?.id_pasajero, null],
-        ["Pueblo Libre", "Magdalena", "asignado", pas[0]?.id_pasajero, conds[2]?.id_conductor],
+        ["Pueblo Libre", "Magdalena", "asignado", pas[2]?.id_pasajero, conds[2]?.id_conductor],
         ["Lince", "Breña", "solicitado", pas[1]?.id_pasajero, null],
         ["Chorrillos", "Surco", "finalizado", pas[0]?.id_pasajero, conds[1]?.id_conductor],
-        ["San Miguel", "Callao", "en_curso", pas[1]?.id_pasajero, conds[0]?.id_conductor],
+        ["San Miguel", "Callao", "en_curso", pas[2]?.id_pasajero, conds[0]?.id_conductor],
         ["Ate", "Santa Anita", "solicitado", pas[0]?.id_pasajero, null],
+        ["Barranco", "Miraflores", "finalizado", pas[1]?.id_pasajero, conds[2]?.id_conductor],
+        ["La Molina", "Surco", "asignado", pas[2]?.id_pasajero, conds[1]?.id_conductor],
       ];
       for (const [origen, destino, estado, idp, idc] of trips) {
         await c.query(
@@ -1290,11 +1347,63 @@ async function seedRecluta() {
   }
 }
 
+/**
+ * Usuario ERP dedicado para demos de /platform/* (no toca cuentas reales como tormenta/admin).
+ * Override: SEED_ERP_USER=mi.usuario
+ */
+async function seedErpDemoUser() {
+  if (!DATABASE) {
+    log("SKIP ERP demo user: DB_DATABASE vacío");
+    return;
+  }
+  const usua = (process.env.SEED_ERP_USER || "platform.demo").trim().slice(0, 30);
+  const hash = await hashPassword(PASS);
+  const c = await dbConn(DATABASE);
+  try {
+    const [[anchor]] = await c.query(
+      `SELECT id_empresa, id_rol, plan_pago
+       FROM usuario
+       WHERE id_tenant = ? AND estado_usuario = 1
+       ORDER BY CASE WHEN id_rol = 1 THEN 0 ELSE 1 END, id_usuario ASC
+       LIMIT 1`,
+      [TENANT]
+    );
+    if (!anchor?.id_empresa) {
+      log(`SKIP ERP demo user: no hay usuarios activos en tenant ${TENANT}`);
+      return;
+    }
+    const [[existing]] = await c.query(
+      `SELECT id_usuario FROM usuario WHERE usua = ? LIMIT 1`,
+      [usua]
+    );
+    if (existing) {
+      await c.query(
+        `UPDATE usuario
+         SET contra = ?, estado_usuario = 1, id_tenant = ?, id_empresa = ?, id_rol = 1
+         WHERE id_usuario = ?`,
+        [hash, TENANT, anchor.id_empresa, existing.id_usuario]
+      );
+      log(`OK ERP demo user actualizado usua=${usua} tenant=${TENANT}`);
+    } else {
+      await c.query(
+        `INSERT INTO usuario
+         (usua, contra, id_rol, estado_usuario, id_tenant, id_empresa, plan_pago)
+         VALUES (?, ?, 1, 1, ?, ?, ?)`,
+        [usua, hash, TENANT, anchor.id_empresa, anchor.plan_pago ?? 1]
+      );
+      log(`OK ERP demo user creado usua=${usua} tenant=${TENANT}`);
+    }
+  } finally {
+    await c.end();
+  }
+}
+
 async function main() {
   log(`=== seed_platform_demo SEED_TENANT_ID=${TENANT} ===`);
   await ensureDatabases();
   await applySchemas();
 
+  await seedErpDemoUser();
   await seedTaxi();
   await seedDelivery();
   await seedFlotas();
@@ -1314,7 +1423,9 @@ async function main() {
   await seedRecluta();
 
   log("\n=== Credenciales ===");
+  log(`ERP platform demo: ${(process.env.SEED_ERP_USER || "platform.demo")} / ${PASS} (tenant ${TENANT})`);
   log(`Admin operadores: slug=${SLUG} email=${ADMIN_EMAIL} pass=${PASS}`);
+  log(`Taxi equipo (2.º admin): ops@demo.local / ${PASS}`);
   log(`Taxi/Delivery pasajero-cliente: tel 999111222 / ${PASS}`);
   log(`Taxi/Delivery conductor-repartidor: tel 999333444 / ${PASS}`);
   log(`Academia alumno: alumno1@demo.local / ${PASS}`);
@@ -1322,12 +1433,12 @@ async function main() {
   log(`Campo vendedor PIN: 1234 (Vendedor Norte)`);
   log(`Mantto/Despacho/Taller PIN: ${PIN}`);
   log("\n=== URLs ===");
-  log("/login?mode=taxi → admin");
+  log("/login?mode=taxi → /taxi-admin (viajes, conductores, pasajeros, equipo, operador)");
   log("/taxi/demo · /taxi/demo/conductor");
   log("/delivery/demo · /delivery/demo/repartidor");
   log("/flotas-admin · /academia/demo · /agenda/demo");
-  log(`/b2b/demo · /preventa/demo · /recluta/demo · /tracking/DEMO01`);
-  log(`/platform/* con sesión ERP tenant ${TENANT}`);
+  log(`/mayorista-admin · /b2b/demo · /preventa/demo · /recluta/demo · /tracking/DEMO01`);
+  log(`/platform/* con sesión ERP ${process.env.SEED_ERP_USER || "platform.demo"} tenant ${TENANT}`);
   log(`/catalogo/${TENANT} (Catálogo WA / ERP)`);
   log("=== seed OK ===");
 }

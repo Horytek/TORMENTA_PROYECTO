@@ -32,6 +32,7 @@ import {
 } from "@/features/auth/productAdminAuth";
 import { TaxiLoginPanel } from "@/features/auth/components/TaxiLoginPanel";
 import { DeliveryLoginPanel } from "@/features/auth/components/DeliveryLoginPanel";
+import { AtelierLoginPanel } from "@/features/auth/components/AtelierLoginPanel";
 import {
   ERP_SESSION_LOGIN_MODES,
   getLoginDemoBundle,
@@ -134,6 +135,7 @@ export default function LoginPage() {
     }
     if (mode === "taxi") return "Elige tu rol: operador, pasajero o conductor.";
     if (mode === "delivery") return "Elige tu rol: operador, cliente o repartidor.";
+    if (mode === "atelier") return "Elige tu acceso para encargar, crear o administrar arte.";
     if (PRODUCT_AUTH_LOGIN_MODES.has(mode)) {
       return surfaceTab === "portal"
         ? "Indica el slug u operador para abrir el portal del producto."
@@ -180,6 +182,38 @@ export default function LoginPage() {
     const b = getLoginDemoBundle(mode, surfaceTab);
     if (!b) return;
     applyLoginDemo();
+    if (mode === "mayorista" && surfaceTab === "portal" && b.fill.email && b.fill.password) {
+      const slug = (b.fill.slug || "demo").toLowerCase();
+      setProductLoading(true);
+      setProductError("");
+      try {
+        const { loginMayorista, setMayoristaToken } = await import(
+          "@/features/platform/api/mayorista"
+        );
+        const res = await loginMayorista({
+          slug,
+          email: b.fill.email,
+          password: b.fill.password,
+        });
+        if (!res.success || !res.data?.token) {
+          throw new Error(
+            res.message ||
+              "No se pudo entrar al portal. ¿Corriste npm run seed:platform-demo?"
+          );
+        }
+        setMayoristaToken(res.data.token);
+        navigate(`/b2b/${slug}`);
+      } catch (err: unknown) {
+        setProductError(
+          (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+            (err as Error).message ||
+            "Error al entrar al portal B2B."
+        );
+      } finally {
+        setProductLoading(false);
+      }
+      return;
+    }
     if (b.openHref && surfaceTab === "portal") {
       navigate(b.openHref);
       return;
@@ -278,12 +312,19 @@ export default function LoginPage() {
             "/dashboard";
           navigate(dest);
         } else {
-          setError(message || "Usuario o contraseña incorrectos.");
+          setError(
+            message ||
+              (mode === "mayorista"
+                ? "Usuario o contraseña incorrectos. Demo ERP: platform.demo / Demo1234! (corre seed:platform-demo o VITE_DEMO_ERP_*)."
+                : "Usuario o contraseña incorrectos.")
+          );
         }
       } catch (err: unknown) {
         setError(
           (err as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-            "No pudimos conectar con el servidor. Intenta de nuevo."
+            (mode === "mayorista"
+              ? "No pudimos conectar. Revisa el backend y que exista platform.demo (seed:platform-demo)."
+              : "No pudimos conectar con el servidor. Intenta de nuevo.")
         );
       } finally {
         setLoading(false);
@@ -551,6 +592,7 @@ export default function LoginPage() {
 
           {mode === "taxi" ? <TaxiLoginPanel /> : null}
           {mode === "delivery" ? <DeliveryLoginPanel /> : null}
+          {mode === "atelier" ? <AtelierLoginPanel /> : null}
 
           {PORTAL_SLUG_LOGIN_MODES.has(mode) && mode !== "mayorista" ? (
             <div className="mb-5">
@@ -840,11 +882,42 @@ export default function LoginPage() {
           ) : mode === "mayorista" && surfaceTab === "portal" ? (
             <form
               className="space-y-5"
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
                 const s = mayoristaSlug.trim().toLowerCase();
-                if (!s) return;
-                navigate(`/b2b/${s}`);
+                if (!s || !productEmail.trim() || !productPassword) {
+                  setProductError("Completa slug, email y contraseña del comprador.");
+                  return;
+                }
+                setProductLoading(true);
+                setProductError("");
+                try {
+                  const { loginMayorista, setMayoristaToken } = await import(
+                    "@/features/platform/api/mayorista"
+                  );
+                  const res = await loginMayorista({
+                    slug: s,
+                    email: productEmail.trim(),
+                    password: productPassword,
+                  });
+                  if (!res.success || !res.data?.token) {
+                    throw new Error(
+                      res.message ||
+                        "Credenciales inválidas. Demo: comprador@demo.local / Demo1234! (seed:platform-demo)."
+                    );
+                  }
+                  setMayoristaToken(res.data.token);
+                  navigate(`/b2b/${s}`);
+                } catch (err: unknown) {
+                  setProductError(
+                    (err as { response?: { data?: { message?: string } } })?.response?.data
+                      ?.message ||
+                      (err as Error).message ||
+                      "Error al iniciar sesión B2B."
+                  );
+                } finally {
+                  setProductLoading(false);
+                }
               }}
             >
               <LoginRoleTabs
@@ -864,6 +937,14 @@ export default function LoginPage() {
                   onEnter={() => void enterLoginDemo()}
                 />
               ) : null}
+              {productError ? (
+                <div
+                  role="alert"
+                  className="animate-shake rounded-md border border-destructive/25 bg-destructive/10 px-3 py-2.5 text-sm font-medium text-destructive"
+                >
+                  {productError}
+                </div>
+              ) : null}
               <div className="space-y-2">
                 <Label htmlFor="mayorista_slug">Slug del portal</Label>
                 <Input
@@ -871,19 +952,45 @@ export default function LoginPage() {
                   className={portalInputClass}
                   value={mayoristaSlug}
                   onChange={(e) => setMayoristaSlug(e.target.value)}
-                  placeholder="distribuidora-norte"
+                  placeholder="demo"
                   required
                 />
               </div>
-              <AccentSubmitButton accent={loginAccent}>Ir al portal B2B</AccentSubmitButton>
+              <div className="space-y-2">
+                <Label htmlFor="mayorista_email">Email comprador</Label>
+                <Input
+                  id="mayorista_email"
+                  type="email"
+                  className={portalInputClass}
+                  value={productEmail}
+                  onChange={(e) => setProductEmail(e.target.value)}
+                  placeholder="comprador@demo.local"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mayorista_pass">Contraseña</Label>
+                <Input
+                  id="mayorista_pass"
+                  type="password"
+                  className={portalInputClass}
+                  value={productPassword}
+                  onChange={(e) => setProductPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <AccentSubmitButton accent={loginAccent} loading={productLoading}>
+                Entrar al portal B2B
+              </AccentSubmitButton>
               <p className="text-center text-xs text-muted-foreground">
-                El administrador del ERP te crea usuario y te da el slug.{" "}
+                Demo seed: slug <span className="font-mono">demo</span>,{" "}
+                <span className="font-mono">comprador@demo.local</span>.{" "}
                 <Link to="/?product=mayorista" className="underline-offset-4 hover:underline">
                   Ver producto
                 </Link>
               </p>
             </form>
-          ) : mode === "taxi" || mode === "delivery" ? null : PRODUCT_AUTH_LOGIN_MODES.has(mode) && surfaceTab === "admin" ? (
+          ) : mode === "taxi" || mode === "delivery" || mode === "atelier" ? null : PRODUCT_AUTH_LOGIN_MODES.has(mode) && surfaceTab === "admin" ? (
             <form onSubmit={handleProductAdminLogin} className="space-y-5">
               {demoBundle ? (
                 <DemoAccessCard

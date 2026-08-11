@@ -95,6 +95,21 @@ const CATALOG: Record<string, DemoPortalCreds> = {
       { label: "Contraseña", value: DEMO_PASSWORD },
     ],
   },
+  "atelier/cliente": {
+    productId: "atelier", role: "cliente", slug: DEMO_SLUG, email: "cliente.demo@demo.local", password: DEMO_PASSWORD,
+    nombre: "Cliente Demo", hint: "Cliente con encargos de demostración.",
+    lines: [{ label: "Email", value: "cliente.demo@demo.local" }, { label: "Contraseña", value: DEMO_PASSWORD }],
+  },
+  "atelier/creador": {
+    productId: "atelier", role: "creador", slug: DEMO_SLUG, email: "luna.ink@demo.local", password: DEMO_PASSWORD,
+    nombre: "Luna Ink", hint: "Creadora con portafolio y pedidos de demostración.",
+    lines: [{ label: "Email", value: "luna.ink@demo.local" }, { label: "Contraseña", value: DEMO_PASSWORD }],
+  },
+  "atelier/admin": {
+    productId: "atelier", role: "admin", slug: DEMO_SLUG, email: "atelier.admin@demo.local", password: DEMO_PASSWORD,
+    nombre: "Admin Atelier", hint: "Administración del marketplace de demostración.",
+    lines: [{ label: "Email", value: "atelier.admin@demo.local" }, { label: "Contraseña", value: DEMO_PASSWORD }],
+  },
   "flotas/admin": adminCreds("flotas"),
   "academia/admin": adminCreds("academia"),
   "academia/alumno": {

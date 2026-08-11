@@ -264,6 +264,35 @@ export async function createComprador(req, res) {
   }
 }
 
+export async function listCompradores(req, res) {
+  let connection;
+  try {
+    const id_tenant = req.id_tenant;
+    if (!id_tenant) return res.status(401).json({ success: false, message: "Sesión inválida" });
+    connection = await getConnection();
+    if (!(await ensureEntitlement(connection, id_tenant))) return denyEntitlement(res);
+
+    const [rows] = await connection.query(
+      `SELECT c.id_comprador, c.email, c.razon_social, c.ruc, c.activo, c.id_lista, c.creado_en,
+              t.id_tienda, t.slug AS tienda_slug, t.nombre AS tienda_nombre,
+              l.nombre AS lista_nombre
+       FROM mayorista_comprador c
+       INNER JOIN mayorista_tienda t ON t.id_tienda = c.id_tienda AND t.id_tenant = c.id_tenant
+       LEFT JOIN mayorista_lista_precio l ON l.id_lista = c.id_lista AND l.id_tenant = c.id_tenant
+       WHERE c.id_tenant = ?
+       ORDER BY c.razon_social ASC, c.email ASC
+       LIMIT 500`,
+      [id_tenant]
+    );
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("mayorista.listCompradores", error.message);
+    return res.status(500).json({ success: false, message: "Error al listar compradores" });
+  } finally {
+    connection?.release();
+  }
+}
+
 export async function listPedidosAdmin(req, res) {
   let connection;
   try {

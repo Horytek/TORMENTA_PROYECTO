@@ -1,12 +1,5 @@
 import type { LandingProductModule } from "../modules/landingModule.types";
-import { MapMobilityLayout } from "../layouts/MapMobilityLayout";
-import { MapFleetLayout } from "../layouts/MapFleetLayout";
-import { RailOpsLayout } from "../layouts/RailOpsLayout";
-import { PlantLayout } from "../layouts/PlantLayout";
-import { CommerceLayout } from "../layouts/CommerceLayout";
-import { PipelineLayout } from "../layouts/PipelineLayout";
-import { LearnBookLayout } from "../layouts/LearnBookLayout";
-import { ShipLayout } from "../layouts/ShipLayout";
+import { PRODUCT_LAYOUTS } from "../layouts/products/registry";
 import { ExperienceDemoCta } from "./ExperienceDemoCta";
 
 export interface ExperienceLandingProps {
@@ -14,42 +7,19 @@ export interface ExperienceLandingProps {
 }
 
 /**
- * Switch por layoutKitId — cada familia tiene compositor propio (no plantilla tintada).
+ * Cada producto tiene layout interactivo propio (registry).
+ * Sin fallback a kits genéricos Story/Feature/Case.
  */
 export function ExperienceLanding({ module }: ExperienceLandingProps) {
-  let body;
-  switch (module.layoutKitId) {
-    case "map-mobility":
-      body = <MapMobilityLayout module={module} />;
-      break;
-    case "map-fleet":
-      body = <MapFleetLayout module={module} />;
-      break;
-    case "rail-ops":
-      body = <RailOpsLayout module={module} />;
-      break;
-    case "plant":
-      body = <PlantLayout module={module} />;
-      break;
-    case "commerce":
-      body = <CommerceLayout module={module} />;
-      break;
-    case "pipeline":
-      body = <PipelineLayout module={module} />;
-      break;
-    case "learn-book":
-      body = <LearnBookLayout module={module} />;
-      break;
-    case "ship":
-      body = <ShipLayout module={module} />;
-      break;
-    default:
-      body = <CommerceLayout module={module} />;
+  const Layout = PRODUCT_LAYOUTS[module.productId];
+  if (!Layout) {
+    console.error(`ExperienceLanding: sin layout para productId=${module.productId}`);
+    return null;
   }
 
   return (
     <>
-      {body}
+      <Layout module={module} />
       <ExperienceDemoCta productId={module.productId} />
     </>
   );

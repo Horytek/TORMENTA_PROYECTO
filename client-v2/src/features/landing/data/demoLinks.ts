@@ -27,7 +27,7 @@ export const DEMO_LINKS: Record<
   ],
   mayorista: [
     { label: "Portal B2B", href: "/b2b/demo", kind: "portal" },
-    { label: "Admin mayorista", href: "/platform/mayorista", kind: "admin" },
+    { label: "Admin mayorista", href: "/mayorista-admin", kind: "admin" },
   ],
   preventa: [
     { label: "Campaña pública", href: "/preventa/demo", kind: "portal" },

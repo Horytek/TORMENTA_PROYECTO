@@ -57,6 +57,7 @@ export const PRODUCT_THEMES: Record<string, ProductTheme> = {
   agenda: theme("agenda", "Agenda", "#14B8A6", "#CCFBF1"),
   mantenimiento: theme("mantenimiento", "Mantenimiento", "#78716C", "#FAFAF9"),
   recluta: theme("recluta", "Recluta", "#BE123C", "#FFF1F2"),
+  atelier: theme("atelier", "Atelier", "#DB2777", "#FDF2F8"),
 };
 
 export function getProductTheme(id: string): ProductTheme {

@@ -70,6 +70,7 @@
     "db:migrate:puntos": "node scripts/migrations/create_puntos_fidelizacion.js",
     "db:seed:catalogo-ropa": "node scripts/migrations/sembrar_catalogo_ropa.js",
     "seed:platform-demo": "node src/scripts/seed_platform_demo.js",
+    "seed:atelier-demo": "node src/scripts/seed_atelier_demo.js",
     "seed:express": "node src/scripts/seed_express_demo.js",
     "db:sanear:sku": "node scripts/migrations/sanear_producto_sku.js"
   },

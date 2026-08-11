@@ -188,7 +188,7 @@ export const MODULE_REGISTRY = [
     defineModule({
         id: "mayorista", domain: "plataforma", name: "Mayorista B2B",
         slug: "mayorista", verified: true,
-        backendRoutes: ["/api/mayorista"], frontendRoute: "/platform/mayorista",
+        backendRoutes: ["/api/mayorista"], frontendRoute: "/mayorista-admin",
         riskLevel: "sensible",
         description: "Producto Mayorista — BD db_mayorista. Admin ERP + portal /b2b/:slug.",
     }),
