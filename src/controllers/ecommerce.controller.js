@@ -80,6 +80,15 @@ function sellerMpClient(accessToken) {
   return new MercadoPagoConfig({ accessToken });
 }
 
+/** Preferencia sandbox vs live según modo de la cuenta seller. */
+function pickMpCheckoutUrl(result, modo) {
+  const isTest = String(modo || "").toLowerCase() === "test";
+  if (isTest) {
+    return result.sandbox_init_point || result.init_point || null;
+  }
+  return result.init_point || result.sandbox_init_point || null;
+}
+
 /**
  * Resuelve access_token del seller.
  * Si el TOKEN_SECRET del runtime no coincide con el usado al cifrar (típico Vercel vs seed local),
@@ -1233,7 +1242,9 @@ export const checkoutStore = async (req, res) => {
         id_orden,
         codigo,
         preference_id: result.id,
-        init_point: result.init_point || result.sandbox_init_point,
+        modo: creds.modo || "test",
+        init_point: pickMpCheckoutUrl(result, creds.modo),
+        sandbox_init_point: result.sandbox_init_point || null,
         pickup: {
           sucursal: sucursal.nombre,
           direccion: pickup_direccion,
