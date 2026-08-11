@@ -478,7 +478,7 @@ export function resolveTheme(partial?: Partial<StoreTheme> | null): StoreTheme {
   const preset = (partial.preset as ThemePreset) || DEFAULT_THEME.preset;
   const validPresets: ThemePreset[] = ["nocturna", "clara", "retail", "store"];
   const navStyles: NavStyle[] = ["text", "pill", "soft", "underline"];
-  const navPartial = partial.nav || {};
+  const navPartial: Partial<NavConfig> = partial.nav || {};
   const navStyle = navStyles.includes(navPartial.style as NavStyle)
     ? (navPartial.style as NavStyle)
     : DEFAULT_NAV.style;
