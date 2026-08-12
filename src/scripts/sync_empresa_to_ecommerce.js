@@ -329,6 +329,14 @@ async function main() {
     );
     await ecom.query(`DELETE FROM usuario WHERE id_tienda = ? AND usua = ?`, [id_tienda, LEGACY_USUA]);
 
+    // No pisar credenciales de producción con las de test.
+    const [[mpExisting]] = await ecom.query(
+      `SELECT modo FROM mp_cuenta WHERE id_tienda = ? LIMIT 1`,
+      [id_tienda]
+    );
+    if (String(mpExisting?.modo || "").toLowerCase() === "prod") {
+      console.log("[sync] mp_cuenta ya está en modo prod — se conserva");
+    } else {
     const enc = encryptMpToken(MP_TEST_ACCESS_TOKEN);
     await ecom.query(
       `INSERT INTO mp_cuenta (id_tienda, public_key, access_token_enc, modo, conectado_en)
@@ -340,6 +348,7 @@ async function main() {
          conectado_en = NOW()`,
       [id_tienda, MP_TEST_PUBLIC_KEY, enc, MP_TEST_MODO]
     );
+    }
 
     let inserted = 0;
     for (const p of PRODUCTOS) {

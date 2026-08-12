@@ -599,6 +599,17 @@ export async function getOpinionesGenerales(slug: string, limit = 20) {
   return data;
 }
 
+export async function syncStoreOrderPayment(
+  slug: string,
+  codigo: string,
+  params?: { payment_id?: string; collection_id?: string }
+) {
+  const { data } = await api.get(`/ecommerce/store/${slug}/ordenes/${codigo}/sync-pago`, {
+    params,
+  });
+  return data;
+}
+
 export async function getReviewEligibilidad(
   slug: string,
   params: {

@@ -112,6 +112,11 @@ function resolveSellerAccessToken(creds) {
         return fallback;
       }
     }
+    // En producción no hay fallback: un TOKEN_SECRET distinto rompe el cobro real.
+    console.error(
+      "[ecommerce.mp] No se pudo descifrar access_token (modo=%s). TOKEN_SECRET del runtime debe coincidir con el usado al guardar mp_cuenta.",
+      modo || "unknown"
+    );
     throw err;
   }
 }
@@ -1393,6 +1398,7 @@ export const checkoutStore = async (req, res) => {
           failure: `${origin}/tienda/${slug}/pago/resultado?status=failure&orden=${codigo}`,
           pending: `${origin}/tienda/${slug}/pago/resultado?status=pending&orden=${codigo}`,
         },
+        auto_return: "approved",
         notification_url,
         metadata: {
           id_orden,
@@ -1444,6 +1450,129 @@ export const checkoutStore = async (req, res) => {
   }
 };
 
+/** Aplica un payment de MP a una orden (idempotente). Asume transacción abierta + FOR UPDATE. */
+async function applyStorePaymentToOrden(connection, { id_tienda, orden, payment, notas }) {
+  if (!orden || !payment) return { applied: false, reason: "missing" };
+
+  if (
+    orden.mp_payment_id &&
+    String(orden.mp_payment_id) === String(payment.id) &&
+    orden.estado === "approved"
+  ) {
+    if (
+      orden.estado_fulfillment === "pago_pendiente" ||
+      orden.estado_fulfillment === "pendiente_confirmacion" ||
+      !orden.estado_fulfillment
+    ) {
+      await connection.query(
+        `UPDATE orden SET estado_fulfillment = 'pago_confirmado'
+         WHERE id_orden = ? AND id_tienda = ?`,
+        [orden.id_orden, id_tienda]
+      );
+      await registrarHistFulfillment(connection, {
+        id_orden: orden.id_orden,
+        id_tienda,
+        estado_anterior: orden.estado_fulfillment || "pago_pendiente",
+        estado_nuevo: "pago_confirmado",
+        notas: notas || "Sincronizado: pago MP ya aprobado",
+      });
+      return { applied: true, status: "approved", repaired: true };
+    }
+    return { applied: false, status: "approved", reason: "already" };
+  }
+
+  const status = String(payment.status || "").toLowerCase();
+  if (status === "approved" && orden.estado !== "approved") {
+    const [detalle] = await connection.query(
+      `SELECT id_producto, id_variante, cantidad FROM orden_item WHERE id_orden = ? AND id_tienda = ?`,
+      [orden.id_orden, id_tienda]
+    );
+    const id_sucursal = orden.id_sucursal;
+    for (const d of detalle) {
+      if (id_sucursal && d.id_variante) {
+        await confirmarVenta(connection, {
+          id_tienda,
+          id_variante: d.id_variante,
+          id_sucursal,
+          cantidad: d.cantidad,
+          ref_tipo: "orden",
+          ref_id: orden.id_orden,
+        });
+      } else {
+        await connection.query(
+          `UPDATE producto SET stock = GREATEST(0, stock - ?)
+           WHERE id_producto = ? AND id_tienda = ?`,
+          [d.cantidad, d.id_producto, id_tienda]
+        );
+      }
+    }
+    const prevFulfillment = orden.estado_fulfillment || "pago_pendiente";
+    await connection.query(
+      `UPDATE orden SET estado = 'approved', mp_payment_id = ?, estado_fulfillment = 'pago_confirmado'
+       WHERE id_orden = ? AND id_tienda = ?`,
+      [String(payment.id), orden.id_orden, id_tienda]
+    );
+    if (prevFulfillment !== "pago_confirmado") {
+      await registrarHistFulfillment(connection, {
+        id_orden: orden.id_orden,
+        id_tienda,
+        estado_anterior: prevFulfillment,
+        estado_nuevo: "pago_confirmado",
+        notas: notas || "Pago aprobado (Mercado Pago)",
+      });
+    }
+    return { applied: true, status: "approved" };
+  }
+
+  if (status === "rejected" || status === "cancelled") {
+    if (orden.estado === "pending") {
+      const [detalle] = await connection.query(
+        `SELECT id_producto, id_variante, cantidad FROM orden_item WHERE id_orden = ? AND id_tienda = ?`,
+        [orden.id_orden, id_tienda]
+      );
+      for (const d of detalle) {
+        if (orden.id_sucursal && d.id_variante) {
+          await liberarReserva(connection, {
+            id_tienda,
+            id_variante: d.id_variante,
+            id_sucursal: orden.id_sucursal,
+            cantidad: d.cantidad,
+            ref_tipo: "orden",
+            ref_id: orden.id_orden,
+          });
+        }
+      }
+    }
+    const prevFulfillment = orden.estado_fulfillment || "pago_pendiente";
+    await connection.query(
+      `UPDATE orden SET estado = ?, mp_payment_id = ?, estado_fulfillment = 'cancelado'
+       WHERE id_orden = ? AND id_tienda = ? AND estado = 'pending'`,
+      [
+        status === "cancelled" ? "cancelled" : "rejected",
+        String(payment.id),
+        orden.id_orden,
+        id_tienda,
+      ]
+    );
+    if (prevFulfillment !== "cancelado") {
+      await registrarHistFulfillment(connection, {
+        id_orden: orden.id_orden,
+        id_tienda,
+        estado_anterior: prevFulfillment,
+        estado_nuevo: "cancelado",
+        notas: notas || `Pago ${status} (Mercado Pago)`,
+      });
+    }
+    return { applied: true, status };
+  }
+
+  await connection.query(
+    `UPDATE orden SET mp_payment_id = ? WHERE id_orden = ? AND id_tienda = ?`,
+    [String(payment.id), orden.id_orden, id_tienda]
+  );
+  return { applied: false, status, reason: "not_final" };
+}
+
 /** Webhook de pagos del carrito (token del comerciante). */
 export const ecommerceStoreWebhook = async (req, res) => {
   const id_tienda = Number(req.query.id_tienda ?? req.query.id_tenant);
@@ -1493,112 +1622,12 @@ export const ecommerceStoreWebhook = async (req, res) => {
       return res.sendStatus(200);
     }
 
-    // Idempotencia: mismo pago ya aprobado. Aún así repara fulfillment si quedó desfasado.
-    if (orden.mp_payment_id && String(orden.mp_payment_id) === String(payment.id) && orden.estado === "approved") {
-      if (
-        orden.estado_fulfillment === "pago_pendiente" ||
-        orden.estado_fulfillment === "pendiente_confirmacion" ||
-        !orden.estado_fulfillment
-      ) {
-        await connection.query(
-          `UPDATE orden SET estado_fulfillment = 'pago_confirmado'
-           WHERE id_orden = ? AND id_tienda = ?`,
-          [orden.id_orden, id_tienda]
-        );
-        await registrarHistFulfillment(connection, {
-          id_orden: orden.id_orden,
-          id_tienda,
-          estado_anterior: orden.estado_fulfillment || "pago_pendiente",
-          estado_nuevo: "pago_confirmado",
-          notas: "Sincronizado: pago MP ya aprobado",
-        });
-        await connection.commit();
-      } else {
-        await connection.rollback();
-      }
-      return res.sendStatus(200);
-    }
-
-    const status = String(payment.status || "").toLowerCase();
-    if (status === "approved" && orden.estado !== "approved") {
-      const [detalle] = await connection.query(
-        `SELECT id_producto, id_variante, cantidad FROM orden_item WHERE id_orden = ? AND id_tienda = ?`,
-        [orden.id_orden, id_tienda]
-      );
-      const id_sucursal = orden.id_sucursal;
-      for (const d of detalle) {
-        if (id_sucursal && d.id_variante) {
-          await confirmarVenta(connection, {
-            id_tienda,
-            id_variante: d.id_variante,
-            id_sucursal,
-            cantidad: d.cantidad,
-            ref_tipo: "orden",
-            ref_id: orden.id_orden,
-          });
-        } else {
-          await connection.query(
-            `UPDATE producto SET stock = GREATEST(0, stock - ?)
-             WHERE id_producto = ? AND id_tienda = ?`,
-            [d.cantidad, d.id_producto, id_tienda]
-          );
-        }
-      }
-      const prevFulfillment = orden.estado_fulfillment || "pago_pendiente";
-      await connection.query(
-        `UPDATE orden SET estado = 'approved', mp_payment_id = ?, estado_fulfillment = 'pago_confirmado'
-         WHERE id_orden = ? AND id_tienda = ?`,
-        [String(payment.id), orden.id_orden, id_tienda]
-      );
-      if (prevFulfillment !== "pago_confirmado") {
-        await registrarHistFulfillment(connection, {
-          id_orden: orden.id_orden,
-          id_tienda,
-          estado_anterior: prevFulfillment,
-          estado_nuevo: "pago_confirmado",
-          notas: "Pago aprobado (Mercado Pago)",
-        });
-      }
-    } else if (status === "rejected" || status === "cancelled") {
-      if (orden.estado === "pending") {
-        const [detalle] = await connection.query(
-          `SELECT id_producto, id_variante, cantidad FROM orden_item WHERE id_orden = ? AND id_tienda = ?`,
-          [orden.id_orden, id_tienda]
-        );
-        for (const d of detalle) {
-          if (orden.id_sucursal && d.id_variante) {
-            await liberarReserva(connection, {
-              id_tienda,
-              id_variante: d.id_variante,
-              id_sucursal: orden.id_sucursal,
-              cantidad: d.cantidad,
-              ref_tipo: "orden",
-              ref_id: orden.id_orden,
-            });
-          }
-        }
-      }
-      const prevFulfillment = orden.estado_fulfillment || "pago_pendiente";
-      await connection.query(
-        `UPDATE orden SET estado = ?, mp_payment_id = ?, estado_fulfillment = 'cancelado'
-         WHERE id_orden = ? AND id_tienda = ? AND estado = 'pending'`,
-        [status === "cancelled" ? "cancelled" : "rejected", String(payment.id), orden.id_orden, id_tienda]
-      );
-      if (prevFulfillment !== "cancelado") {
-        await registrarHistFulfillment(connection, {
-          id_orden: orden.id_orden,
-          id_tienda,
-          estado_anterior: prevFulfillment,
-          estado_nuevo: "cancelado",
-          notas: `Pago ${status} (Mercado Pago)`,
-        });
-      }
-    } else {
-      await connection.query(
-        `UPDATE orden SET mp_payment_id = ? WHERE id_orden = ? AND id_tienda = ?`,
-        [String(payment.id), orden.id_orden, id_tienda]
-      );
-    }
+    await applyStorePaymentToOrden(connection, {
+      id_tienda,
+      orden,
+      payment,
+      notas: "Pago aprobado (Mercado Pago webhook)",
+    });
 
     await connection.commit();
     return res.sendStatus(200);
@@ -1606,6 +1635,136 @@ export const ecommerceStoreWebhook = async (req, res) => {
     if (connection) try { await connection.rollback(); } catch { /* noop */ }
     console.error("[ecommerce.webhook]", error.message);
     return res.sendStatus(200);
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+/**
+ * Confirmación al volver del checkout MP (fallback si el webhook no llegó).
+ * GET /store/:slug/ordenes/:codigo/sync-pago
+ */
+export const syncStoreOrderPayment = async (req, res) => {
+  const { slug, codigo } = req.params;
+  const paymentId =
+    req.query.payment_id || req.query.collection_id || req.query["data.id"] || null;
+
+  let connection;
+  try {
+    connection = await getEcommerceConnection();
+    const [[tienda]] = await connection.query(
+      `SELECT id_tienda, slug, estado FROM tienda WHERE slug = ? LIMIT 1`,
+      [slug]
+    );
+    if (!tienda || tienda.estado !== "active") {
+      return res.status(404).json({ success: false, message: "Tienda no encontrada." });
+    }
+
+    const [[orden]] = await connection.query(
+      `SELECT id_orden, codigo, estado, estado_fulfillment, external_reference, mp_preference_id, mp_payment_id
+       FROM orden WHERE id_tienda = ? AND codigo = ? LIMIT 1`,
+      [tienda.id_tienda, codigo]
+    );
+    if (!orden) {
+      return res.status(404).json({ success: false, message: "Orden no encontrada." });
+    }
+
+    if (orden.estado === "approved" && orden.estado_fulfillment === "pago_confirmado") {
+      return res.json({
+        success: true,
+        data: {
+          codigo: orden.codigo,
+          estado: orden.estado,
+          estado_fulfillment: orden.estado_fulfillment,
+          synced: false,
+          reason: "already_confirmed",
+        },
+      });
+    }
+
+    const [[creds]] = await connection.query(
+      `SELECT access_token_enc, modo FROM mp_cuenta WHERE id_tienda = ? LIMIT 1`,
+      [tienda.id_tienda]
+    );
+    if (!creds) {
+      return res.status(400).json({ success: false, message: "Tienda sin Mercado Pago." });
+    }
+
+    let accessToken;
+    try {
+      accessToken = resolveSellerAccessToken(creds);
+    } catch {
+      return res.status(500).json({ success: false, message: "Credenciales MP inválidas." });
+    }
+
+    let payment = null;
+    if (paymentId) {
+      const { data } = await axios.get(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      payment = data;
+    } else if (orden.external_reference) {
+      const { data } = await axios.get("https://api.mercadopago.com/v1/payments/search", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: {
+          external_reference: orden.external_reference,
+          sort: "date_created",
+          criteria: "desc",
+        },
+      });
+      const results = data?.results || [];
+      payment =
+        results.find((p) => String(p.status).toLowerCase() === "approved") || results[0] || null;
+    }
+
+    if (!payment) {
+      return res.json({
+        success: true,
+        data: {
+          codigo: orden.codigo,
+          estado: orden.estado,
+          estado_fulfillment: orden.estado_fulfillment,
+          synced: false,
+          reason: "payment_not_found",
+        },
+      });
+    }
+
+    if (payment.external_reference && payment.external_reference !== orden.external_reference) {
+      return res.status(400).json({ success: false, message: "Pago no corresponde a esta orden." });
+    }
+
+    await connection.beginTransaction();
+    const [[locked]] = await connection.query(
+      `SELECT * FROM orden WHERE id_orden = ? AND id_tienda = ? FOR UPDATE`,
+      [orden.id_orden, tienda.id_tienda]
+    );
+    const result = await applyStorePaymentToOrden(connection, {
+      id_tienda: tienda.id_tienda,
+      orden: locked,
+      payment,
+      notas: "Pago sincronizado al volver de Mercado Pago",
+    });
+    await connection.commit();
+
+    const [[fresh]] = await connection.query(
+      `SELECT codigo, estado, estado_fulfillment FROM orden WHERE id_orden = ? AND id_tienda = ?`,
+      [orden.id_orden, tienda.id_tienda]
+    );
+
+    return res.json({
+      success: true,
+      data: {
+        ...fresh,
+        synced: Boolean(result.applied),
+        mp_status: result.status || String(payment.status || ""),
+        reason: result.reason || null,
+      },
+    });
+  } catch (error) {
+    if (connection) try { await connection.rollback(); } catch { /* noop */ }
+    console.error("[ecommerce.syncPago]", error.message);
+    return res.status(500).json({ success: false, message: "No se pudo sincronizar el pago." });
   } finally {
     if (connection) connection.release();
   }

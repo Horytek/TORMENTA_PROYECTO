@@ -2,24 +2,66 @@ import type { TonalidadAttr } from "../../utils/productoAttrs";
 import { normalizeHex } from "../../utils/productoAttrs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Trash2 } from "lucide-react";
+import { Copy, ClipboardPaste, Plus, Trash2 } from "lucide-react";
 
 export function TonalidadEditor({
   values,
   onChange,
   disabled,
+  onCopy,
+  onPaste,
+  pasteLabel,
+  canPaste,
 }: {
   values: TonalidadAttr[];
   onChange: (next: TonalidadAttr[]) => void;
   disabled?: boolean;
+  onCopy?: () => void;
+  onPaste?: () => void;
+  pasteLabel?: string;
+  canPaste?: boolean;
 }) {
   const updateAt = (idx: number, patch: Partial<TonalidadAttr>) => {
     onChange(values.map((t, i) => (i === idx ? { ...t, ...patch } : t)));
   };
 
+  const hasNamed = values.some((t) => t.nombre.trim());
+
   return (
     <div className="space-y-2">
-      <p className="text-[11px] font-medium text-stone-500">Tonalidades</p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[11px] font-medium text-stone-500">Tonalidades</p>
+        <div className="flex flex-wrap gap-1">
+          {onCopy && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2 text-[11px]"
+              disabled={disabled || !hasNamed}
+              onClick={onCopy}
+              title="Copiar tonalidades de este producto"
+            >
+              <Copy className="size-3 mr-1" />
+              Copiar
+            </Button>
+          )}
+          {onPaste && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2 text-[11px]"
+              disabled={disabled || !canPaste}
+              onClick={onPaste}
+              title={pasteLabel || "Pegar tonalidades"}
+            >
+              <ClipboardPaste className="size-3 mr-1" />
+              Pegar
+            </Button>
+          )}
+        </div>
+      </div>
       {values.length === 0 && (
         <p className="text-[11px] text-stone-300">Sin tonalidades — agrega color + nombre</p>
       )}

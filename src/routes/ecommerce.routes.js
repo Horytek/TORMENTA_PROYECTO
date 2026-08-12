@@ -55,6 +55,7 @@ import {
   getStoreProduct,
   checkoutStore,
   ecommerceStoreWebhook,
+  syncStoreOrderPayment,
 } from "../controllers/ecommerce.controller.js";
 import {
   registerBuyer,
@@ -216,6 +217,7 @@ router.post(
 // Webhook carrito (token comerciante)
 router.post("/webhook", ecommerceStoreWebhook);
 router.get("/webhook", ecommerceStoreWebhook);
+router.get("/store/:slug/ordenes/:codigo/sync-pago", syncStoreOrderPayment);
 
 // Admin
 router.use("/admin", ecommerceAuth);

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Tags, Search, Save, RotateCcw, Package } from "lucide-react";
+import { Tags, Search, Save, RotateCcw, Package, X } from "lucide-react";
 import { toast } from "sonner";
 import { ecommerceListProductos, ecommerceUpdateProducto } from "../api/ecommerce";
 import { useEcommerceAuthStore } from "../store/useEcommerceAuthStore";
@@ -11,11 +11,25 @@ import {
   attrsEqual,
   getProductoAtributos,
   mergeProductoAtributos,
+  normalizeHex,
   parseProductoAttrs,
+  type TonalidadAttr,
   type VitrinaAtributosAdmin,
 } from "../utils/productoAttrs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+type TonosClipboard = {
+  fromId: number;
+  fromNombre: string;
+  tonalidad: TonalidadAttr[];
+};
+
+function cloneTonalidades(list: TonalidadAttr[]): TonalidadAttr[] {
+  return list
+    .filter((t) => t.nombre.trim())
+    .map((t) => ({ nombre: t.nombre.trim(), hex: normalizeHex(t.hex) }));
+}
 
 type Producto = {
   id_producto: number;
@@ -37,6 +51,7 @@ export default function EcommerceAtributosPage() {
   const [q, setQ] = useState("");
   const [filtro, setFiltro] = useState<"todos" | "con" | "sin">("todos");
   const [drafts, setDrafts] = useState<DraftMap>({});
+  const [tonosClip, setTonosClip] = useState<TonosClipboard | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["ecom-productos", tid],
@@ -111,6 +126,25 @@ export default function EcommerceAtributosPage() {
     }));
   };
 
+  const copyTonos = (p: Producto, tonalidad: TonalidadAttr[]) => {
+    const cloned = cloneTonalidades(tonalidad);
+    if (!cloned.length) {
+      toast.message("Este producto no tiene tonalidades con nombre para copiar");
+      return;
+    }
+    setTonosClip({ fromId: p.id_producto, fromNombre: p.nombre, tonalidad: cloned });
+    toast.success(`Tonalidades copiadas de “${p.nombre}” (${cloned.length})`);
+  };
+
+  const pasteTonos = (p: Producto) => {
+    if (!tonosClip?.tonalidad.length) {
+      toast.message("Primero copia las tonalidades de otro producto");
+      return;
+    }
+    setDraft(p.id_producto, { tonalidad: cloneTonalidades(tonosClip.tonalidad) });
+    toast.success(`Tonalidades pegadas en “${p.nombre}” — recuerda Guardar`);
+  };
+
   const dirtyCount = useMemo(() => {
     let n = 0;
     for (const p of productos) {
@@ -151,6 +185,36 @@ export default function EcommerceAtributosPage() {
           </span>
         )}
       </div>
+
+      {tonosClip && (
+        <div className="rounded-xl border border-teal-200 bg-teal-50/80 px-4 py-3 flex flex-wrap items-center gap-3 justify-between">
+          <div className="min-w-0 text-sm text-teal-950">
+            <p className="font-medium">Tonalidades en portapapeles</p>
+            <p className="text-xs text-teal-900/70 mt-0.5 truncate">
+              De “{tonosClip.fromNombre}” · {tonosClip.tonalidad.length} color
+              {tonosClip.tonalidad.length === 1 ? "" : "es"}
+            </p>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {tonosClip.tonalidad.map((t) => (
+                <span
+                  key={`${t.nombre}-${t.hex}`}
+                  className="inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full bg-white/80 border border-teal-200"
+                >
+                  <span
+                    className="size-3 rounded-full border border-black/10 shrink-0"
+                    style={{ backgroundColor: t.hex }}
+                  />
+                  {t.nombre}
+                </span>
+              ))}
+            </div>
+          </div>
+          <Button type="button" size="sm" variant="ghost" onClick={() => setTonosClip(null)}>
+            <X className="size-3.5 mr-1" />
+            Limpiar
+          </Button>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2 items-center">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
@@ -272,6 +336,14 @@ export default function EcommerceAtributosPage() {
                         values={draft.tonalidad}
                         disabled={saving}
                         onChange={(tonalidad) => setDraft(p.id_producto, { tonalidad })}
+                        onCopy={() => copyTonos(p, draft.tonalidad)}
+                        onPaste={() => pasteTonos(p)}
+                        canPaste={Boolean(tonosClip?.tonalidad.length)}
+                        pasteLabel={
+                          tonosClip
+                            ? `Pegar tonalidades de ${tonosClip.fromNombre}`
+                            : "Copia tonalidades de otro producto primero"
+                        }
                       />
                     </div>
                   </div>
