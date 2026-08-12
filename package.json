@@ -77,6 +77,7 @@
     "seed:atelier-demo": "node src/scripts/seed_atelier_demo.js",
     "seed:express": "node src/scripts/seed_express_demo.js",
     "sync:empresa-ecommerce": "node src/scripts/sync_empresa_to_ecommerce.js",
+    "seed:ecommerce-mp-prod": "node src/scripts/set_ecommerce_mp_prod.js",
     "seed:ecommerce-sucursales-erp": "node src/scripts/seed_ecommerce_sucursales_from_erp.js",
     "db:sanear:sku": "node scripts/migrations/sanear_producto_sku.js"
   },
