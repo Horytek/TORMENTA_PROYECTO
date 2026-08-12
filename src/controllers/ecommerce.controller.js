@@ -15,16 +15,20 @@ import { uploadImage as subirAImageKit, deleteImage as borrarDeImageKit } from "
 import {
   listSucursalesActivas,
   getSucursal,
+  getSucursalDefault,
   mapPublicSucursal,
 } from "../services/ecommerce/BranchService.js";
 import {
   getStockTotalProducto,
   getStockMapPorProductos,
   ensureDefaultVariante,
+  ensureInventarioProducto,
   reservarStock,
   liberarReserva,
   confirmarVenta,
 } from "../services/ecommerce/InventoryService.js";
+import { registrarHistFulfillment, registrarOrdenCreada } from "../services/ecommerce/PickupService.js";
+import { cotizarEntrega, getOrCreateEntregaConfig } from "../services/ecommerce/DeliveryQuoteService.js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FRONTEND = () => process.env.FRONTEND_URL || "http://localhost:5173";
@@ -720,6 +724,9 @@ export const createProducto = async (req, res) => {
         attrs_json ? JSON.stringify(attrs_json) : null,
       ]
     );
+    if (activo !== false) {
+      await ensureInventarioProducto(connection, req.id_tienda, r.insertId);
+    }
     return res.status(201).json({ success: true, data: { id_producto: r.insertId } });
   } catch (error) {
     console.error("[ecommerce.createProducto]", error);
@@ -763,6 +770,9 @@ export const updateProducto = async (req, res) => {
     );
     if (!r.affectedRows) {
       return res.status(404).json({ success: false, message: "Producto no encontrado." });
+    }
+    if (activo === true) {
+      await ensureInventarioProducto(connection, req.id_tienda, id);
     }
     return res.json({ success: true });
   } catch (error) {
@@ -871,7 +881,7 @@ export const listOrdenes = async (req, res) => {
   try {
     connection = await getEcommerceConnection();
     const [rows] = await connection.query(
-      `SELECT id_orden, codigo, estado, total, moneda, email_comprador, nombre_comprador, mp_payment_id, created_at
+      `SELECT id_orden, codigo, estado, estado_fulfillment, total, moneda, email_comprador, nombre_comprador, mp_payment_id, created_at
        FROM orden WHERE id_tienda = ?
        ORDER BY created_at DESC LIMIT 100`,
       [req.id_tienda]
@@ -1032,13 +1042,24 @@ export const checkoutStore = async (req, res) => {
   const { slug } = req.params;
   const {
     items,
-    id_sucursal,
+    id_sucursal: idSucursalBody,
     fulfillment = "pickup",
-    email_comprador,
-    nombre_comprador,
     telefono_comprador,
     whatsapp_context,
+    id_zona,
+    id_destino,
+    id_agencia,
+    lat,
+    lng,
+    entrega,
   } = req.body;
+  const buyer = req.storefrontUser;
+  if (!buyer) {
+    return res.status(401).json({ success: false, message: "Inicia sesión para comprar." });
+  }
+  const email_comprador = buyer.email;
+  const nombre_comprador = buyer.nombre;
+  const id_cliente = buyer.id_cliente;
   let connection;
   try {
     connection = await getEcommerceConnection();
@@ -1053,22 +1074,174 @@ export const checkoutStore = async (req, res) => {
       return res.status(404).json({ success: false, message: "Tienda no encontrada." });
     }
 
-    if (fulfillment !== "pickup" || !id_sucursal) {
+    const config = await getOrCreateEntregaConfig(connection, tienda.id_tienda);
+    if (fulfillment === "pickup" && !config.retiro_activo) {
       await connection.rollback();
-      return res.status(400).json({
-        success: false,
-        message: "Debe elegir sucursal de recojo.",
+      return res.status(400).json({ success: false, message: "El retiro en tienda no está activo." });
+    }
+    if (fulfillment === "delivery" && !config.delivery_activo) {
+      await connection.rollback();
+      return res.status(400).json({ success: false, message: "El delivery no está activo." });
+    }
+    if (fulfillment === "provincia" && !config.provincia_activo) {
+      await connection.rollback();
+      return res.status(400).json({ success: false, message: "El envío a provincia no está activo." });
+    }
+
+    // Calcular subtotal productos primero (precios server-side)
+    const lineItems = [];
+    let subtotal = 0;
+    const allSucursales = await listSucursalesActivas(connection, tienda.id_tienda);
+    const useBranchInv = allSucursales.length > 0;
+
+    for (const item of items) {
+      const [[prod]] = await connection.query(
+        `SELECT id_producto, nombre, precio, stock FROM producto
+         WHERE id_producto = ? AND id_tienda = ? AND activo = 1 FOR UPDATE`,
+        [item.id_producto, tienda.id_tienda]
+      );
+      if (!prod) {
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: `Producto ${item.id_producto} no disponible.` });
+      }
+      const sub = Number(prod.precio) * item.cantidad;
+      subtotal += sub;
+      lineItems.push({
+        id_producto: prod.id_producto,
+        id_variante: item.id_variante || null,
+        nombre: prod.nombre,
+        cantidad: item.cantidad,
+        precio: Number(prod.precio),
+        stock_legacy: prod.stock,
       });
     }
 
-    const sucursal = await getSucursal(connection, tienda.id_tienda, id_sucursal);
-    if (!sucursal || !sucursal.allow_pickup) {
+    // Resolver sucursal + cotización
+    let sucursal = null;
+    let id_sucursal = idSucursalBody ? Number(idSucursalBody) : null;
+    let costo_envio = 0;
+    let quoteMeta = {};
+    let entrega_json = entrega || null;
+    let finalZona = id_zona || null;
+    let finalDestino = id_destino || null;
+    let finalAgencia = id_agencia || null;
+
+    if (fulfillment === "pickup") {
+      if (!id_sucursal) {
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: "Debe elegir sucursal de recojo." });
+      }
+      sucursal = await getSucursal(connection, tienda.id_tienda, id_sucursal);
+      if (!sucursal || !sucursal.allow_pickup) {
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: "Sucursal de recojo inválida." });
+      }
+      if (!sucursal.direccion || !String(sucursal.direccion).trim()) {
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: "La sucursal no tiene dirección configurada." });
+      }
+      const quote = await cotizarEntrega(connection, {
+        id_tienda: tienda.id_tienda,
+        fulfillment: "pickup",
+        subtotal,
+        id_sucursal,
+      });
+      if (!quote.disponible) {
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: quote.motivo || "Retiro no disponible." });
+      }
+      costo_envio = 0;
+    } else if (fulfillment === "delivery") {
+      if (!entrega?.direccion) {
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: "Indica la dirección de entrega." });
+      }
+      const quote = await cotizarEntrega(connection, {
+        id_tienda: tienda.id_tienda,
+        fulfillment: "delivery",
+        subtotal,
+        id_zona: id_zona || null,
+        punto: lat != null && lng != null ? { lat: Number(lat), lng: Number(lng) } : null,
+      });
+      if (!quote.disponible) {
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: quote.motivo || "Delivery no disponible." });
+      }
+      costo_envio = Number(quote.costo || 0);
+      finalZona = quote.zona?.id_zona || id_zona || null;
+      id_sucursal = quote.id_sucursal || id_sucursal;
+      if (!id_sucursal) {
+        await connection.rollback();
+        return res.status(400).json({
+          success: false,
+          message: "No se pudo determinar la sucursal que atiende el delivery.",
+        });
+      }
+      sucursal = await getSucursal(connection, tienda.id_tienda, id_sucursal);
+      if (!sucursal || !sucursal.allow_delivery) {
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: "Sucursal de despacho inválida." });
+      }
+      quoteMeta = { zona: quote.zona, tiempo_estimado: quote.tiempo_estimado };
+      entrega_json = {
+        ...(entrega || {}),
+        lat: lat ?? null,
+        lng: lng ?? null,
+        id_zona: finalZona,
+      };
+    } else if (fulfillment === "provincia") {
+      if (!id_destino) {
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: "Elige un destino de provincia." });
+      }
+      if (config.provincia_requiere_agencia && !id_agencia) {
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: "Elige una agencia de transporte." });
+      }
+      if (id_agencia) {
+        const [[ag]] = await connection.query(
+          `SELECT id_agencia FROM ecom_envio_agencia
+           WHERE id_agencia = ? AND id_tienda = ? AND activo = 1 LIMIT 1`,
+          [id_agencia, tienda.id_tienda]
+        );
+        if (!ag) {
+          await connection.rollback();
+          return res.status(400).json({ success: false, message: "Agencia inválida." });
+        }
+      }
+      const quote = await cotizarEntrega(connection, {
+        id_tienda: tienda.id_tienda,
+        fulfillment: "provincia",
+        subtotal,
+        id_destino,
+      });
+      if (!quote.disponible) {
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: quote.motivo || "Envío no disponible." });
+      }
+      costo_envio = Number(quote.costo || 0);
+      finalDestino = id_destino;
+      finalAgencia = id_agencia || null;
+      sucursal = id_sucursal
+        ? await getSucursal(connection, tienda.id_tienda, id_sucursal)
+        : await getSucursalDefault(connection, tienda.id_tienda);
+      if (!sucursal) {
+        await connection.rollback();
+        return res.status(400).json({
+          success: false,
+          message: "Configura una sucursal para despachar envíos a provincia.",
+        });
+      }
+      id_sucursal = sucursal.id_sucursal;
+      quoteMeta = { destino: quote.destino, tiempo_estimado: quote.tiempo_estimado };
+      entrega_json = {
+        ...(entrega || {}),
+        id_destino: finalDestino,
+        id_agencia: finalAgencia,
+      };
+    } else {
       await connection.rollback();
-      return res.status(400).json({ success: false, message: "Sucursal de recojo inválida." });
-    }
-    if (!sucursal.direccion || !String(sucursal.direccion).trim()) {
-      await connection.rollback();
-      return res.status(400).json({ success: false, message: "La sucursal no tiene dirección configurada." });
+      return res.status(400).json({ success: false, message: "Método de entrega inválido." });
     }
 
     const [[creds]] = await connection.query(
@@ -1095,34 +1268,19 @@ export const checkoutStore = async (req, res) => {
       });
     }
 
-    const lineItems = [];
-    let total = 0;
-    const sucursales = await listSucursalesActivas(connection, tienda.id_tienda);
-    const useBranchInv = sucursales.length > 0;
-
-    for (const item of items) {
-      const [[prod]] = await connection.query(
-        `SELECT id_producto, nombre, precio, stock FROM producto
-         WHERE id_producto = ? AND id_tienda = ? AND activo = 1 FOR UPDATE`,
-        [item.id_producto, tienda.id_tienda]
-      );
-      if (!prod) {
-        await connection.rollback();
-        return res.status(400).json({ success: false, message: `Producto ${item.id_producto} no disponible.` });
-      }
-
-      let id_variante = item.id_variante;
+    // Reservar stock en la sucursal resuelta
+    for (const li of lineItems) {
       if (useBranchInv) {
-        const variante = id_variante
-          ? { id_variante }
-          : await ensureDefaultVariante(connection, tienda.id_tienda, prod.id_producto);
-        id_variante = variante.id_variante;
+        const variante = li.id_variante
+          ? { id_variante: li.id_variante }
+          : await ensureDefaultVariante(connection, tienda.id_tienda, li.id_producto);
+        li.id_variante = variante.id_variante;
         try {
           await reservarStock(connection, {
             id_tienda: tienda.id_tienda,
-            id_variante,
+            id_variante: li.id_variante,
             id_sucursal,
-            cantidad: item.cantidad,
+            cantidad: li.cantidad,
             ref_tipo: "checkout",
             ref_id: null,
           });
@@ -1130,51 +1288,56 @@ export const checkoutStore = async (req, res) => {
           await connection.rollback();
           return res.status(err.status || 400).json({
             success: false,
-            message: `Stock insuficiente para ${prod.nombre} en ${sucursal.nombre}.`,
+            message: `Stock insuficiente para ${li.nombre} en ${sucursal.nombre}.`,
           });
         }
-      } else if (prod.stock < item.cantidad) {
+      } else if (li.stock_legacy < li.cantidad) {
         await connection.rollback();
         return res.status(400).json({
           success: false,
-          message: `Stock insuficiente para ${prod.nombre}.`,
+          message: `Stock insuficiente para ${li.nombre}.`,
         });
       }
-
-      const sub = Number(prod.precio) * item.cantidad;
-      total += sub;
-      lineItems.push({
-        id_producto: prod.id_producto,
-        id_variante: id_variante || null,
-        nombre: prod.nombre,
-        cantidad: item.cantidad,
-        precio: Number(prod.precio),
-      });
     }
 
+    const total = Math.round((subtotal + costo_envio) * 100) / 100;
     const codigo = orderCode();
     const external_reference = `ecom_order:${tienda.id_tienda}:${codigo}`;
-    const pickup_direccion = String(sucursal.direccion).trim();
+    const pickup_direccion =
+      fulfillment === "pickup" ? String(sucursal.direccion).trim() : null;
+    const telFinal = telefono_comprador || buyer.telefono || entrega?.telefono || null;
+
     const [ord] = await connection.query(
       `INSERT INTO orden
-        (id_tienda, codigo, estado, total, email_comprador, nombre_comprador, telefono_comprador,
-         external_reference, id_sucursal, fulfillment, pickup_direccion, whatsapp_context)
-       VALUES (?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (id_tienda, id_cliente, codigo, estado, estado_fulfillment, total, costo_envio,
+         email_comprador, nombre_comprador, telefono_comprador,
+         external_reference, id_sucursal, fulfillment, pickup_direccion, whatsapp_context,
+         id_zona, id_destino, id_agencia, entrega_json, estado_entrega)
+       VALUES (?, ?, ?, 'pending', 'pago_pendiente', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         tienda.id_tienda,
+        id_cliente,
         codigo,
         total,
+        costo_envio,
         email_comprador,
         nombre_comprador || null,
-        telefono_comprador || null,
+        telFinal,
         external_reference,
         id_sucursal,
-        "pickup",
+        fulfillment,
         pickup_direccion,
         whatsapp_context ? JSON.stringify(whatsapp_context) : null,
+        finalZona,
+        finalDestino,
+        finalAgencia,
+        entrega_json ? JSON.stringify(entrega_json) : null,
+        "pendiente",
       ]
     );
     const id_orden = ord.insertId;
+
+    await registrarOrdenCreada(connection, id_orden, tienda.id_tienda);
 
     for (const li of lineItems) {
       await connection.query(
@@ -1203,15 +1366,26 @@ export const checkoutStore = async (req, res) => {
     const origin = FRONTEND();
     const notification_url = `${WEBHOOK_BASE()}/api/ecommerce/webhook?id_tienda=${tienda.id_tienda}`;
     const preference = new Preference(sellerMpClient(accessToken));
+    const mpItems = lineItems.map((li) => ({
+      id: String(li.id_producto),
+      title: li.nombre,
+      quantity: li.cantidad,
+      unit_price: li.precio,
+      currency_id: "PEN",
+    }));
+    if (costo_envio > 0) {
+      mpItems.push({
+        id: "envio",
+        title: fulfillment === "provincia" ? "Envío a provincia" : "Delivery",
+        quantity: 1,
+        unit_price: costo_envio,
+        currency_id: "PEN",
+      });
+    }
+
     const result = await preference.create({
       body: {
-        items: lineItems.map((li) => ({
-          id: String(li.id_producto),
-          title: li.nombre,
-          quantity: li.cantidad,
-          unit_price: li.precio,
-          currency_id: "PEN",
-        })),
+        items: mpItems,
         payer: { email: email_comprador, name: nombre_comprador || undefined },
         external_reference,
         back_urls: {
@@ -1225,7 +1399,8 @@ export const checkoutStore = async (req, res) => {
           id_tienda: tienda.id_tienda,
           codigo,
           id_sucursal,
-          fulfillment: "pickup",
+          fulfillment,
+          costo_envio,
         },
       },
     });
@@ -1245,10 +1420,16 @@ export const checkoutStore = async (req, res) => {
         modo: creds.modo || "test",
         init_point: pickMpCheckoutUrl(result, creds.modo),
         sandbox_init_point: result.sandbox_init_point || null,
-        pickup: {
-          sucursal: sucursal.nombre,
-          direccion: pickup_direccion,
-        },
+        subtotal,
+        costo_envio,
+        total,
+        fulfillment,
+        pickup:
+          fulfillment === "pickup"
+            ? { sucursal: sucursal.nombre, direccion: pickup_direccion }
+            : null,
+        entrega: entrega_json,
+        quote: quoteMeta,
       },
     });
   } catch (error) {
@@ -1312,8 +1493,29 @@ export const ecommerceStoreWebhook = async (req, res) => {
       return res.sendStatus(200);
     }
 
+    // Idempotencia: mismo pago ya aprobado. Aún así repara fulfillment si quedó desfasado.
     if (orden.mp_payment_id && String(orden.mp_payment_id) === String(payment.id) && orden.estado === "approved") {
-      await connection.rollback();
+      if (
+        orden.estado_fulfillment === "pago_pendiente" ||
+        orden.estado_fulfillment === "pendiente_confirmacion" ||
+        !orden.estado_fulfillment
+      ) {
+        await connection.query(
+          `UPDATE orden SET estado_fulfillment = 'pago_confirmado'
+           WHERE id_orden = ? AND id_tienda = ?`,
+          [orden.id_orden, id_tienda]
+        );
+        await registrarHistFulfillment(connection, {
+          id_orden: orden.id_orden,
+          id_tienda,
+          estado_anterior: orden.estado_fulfillment || "pago_pendiente",
+          estado_nuevo: "pago_confirmado",
+          notas: "Sincronizado: pago MP ya aprobado",
+        });
+        await connection.commit();
+      } else {
+        await connection.rollback();
+      }
       return res.sendStatus(200);
     }
 
@@ -1342,10 +1544,21 @@ export const ecommerceStoreWebhook = async (req, res) => {
           );
         }
       }
+      const prevFulfillment = orden.estado_fulfillment || "pago_pendiente";
       await connection.query(
-        `UPDATE orden SET estado = 'approved', mp_payment_id = ? WHERE id_orden = ? AND id_tienda = ?`,
+        `UPDATE orden SET estado = 'approved', mp_payment_id = ?, estado_fulfillment = 'pago_confirmado'
+         WHERE id_orden = ? AND id_tienda = ?`,
         [String(payment.id), orden.id_orden, id_tienda]
       );
+      if (prevFulfillment !== "pago_confirmado") {
+        await registrarHistFulfillment(connection, {
+          id_orden: orden.id_orden,
+          id_tienda,
+          estado_anterior: prevFulfillment,
+          estado_nuevo: "pago_confirmado",
+          notas: "Pago aprobado (Mercado Pago)",
+        });
+      }
     } else if (status === "rejected" || status === "cancelled") {
       if (orden.estado === "pending") {
         const [detalle] = await connection.query(
@@ -1365,10 +1578,21 @@ export const ecommerceStoreWebhook = async (req, res) => {
           }
         }
       }
+      const prevFulfillment = orden.estado_fulfillment || "pago_pendiente";
       await connection.query(
-        `UPDATE orden SET estado = ?, mp_payment_id = ? WHERE id_orden = ? AND id_tienda = ? AND estado = 'pending'`,
+        `UPDATE orden SET estado = ?, mp_payment_id = ?, estado_fulfillment = 'cancelado'
+         WHERE id_orden = ? AND id_tienda = ? AND estado = 'pending'`,
         [status === "cancelled" ? "cancelled" : "rejected", String(payment.id), orden.id_orden, id_tienda]
       );
+      if (prevFulfillment !== "cancelado") {
+        await registrarHistFulfillment(connection, {
+          id_orden: orden.id_orden,
+          id_tienda,
+          estado_anterior: prevFulfillment,
+          estado_nuevo: "cancelado",
+          notas: `Pago ${status} (Mercado Pago)`,
+        });
+      }
     } else {
       await connection.query(
         `UPDATE orden SET mp_payment_id = ? WHERE id_orden = ? AND id_tienda = ?`,

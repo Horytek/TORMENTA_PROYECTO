@@ -9,6 +9,7 @@ import {
   ecommerceUploadBanner,
   ecommerceUploadLogo,
 } from "../api/ecommerce";
+import { useEcommerceAuthStore } from "../store/useEcommerceAuthStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -133,10 +134,16 @@ function PresetCard({
 
 export default function EcommerceSettingsPage() {
   const qc = useQueryClient();
-  const { data, isLoading } = useQuery({ queryKey: ["ecom-me"], queryFn: ecommerceMe });
+  const tid = useEcommerceAuthStore((s) => s.user?.id_tienda);
+  const { data, isLoading } = useQuery({
+    queryKey: ["ecom-me", tid],
+    queryFn: ecommerceMe,
+    enabled: Boolean(tid),
+  });
   const { data: productosData } = useQuery({
-    queryKey: ["ecom-productos"],
+    queryKey: ["ecom-productos", tid],
     queryFn: ecommerceListProductos,
+    enabled: Boolean(tid),
   });
   const tienda = data?.data?.tienda;
 
@@ -220,7 +227,7 @@ export default function EcommerceSettingsPage() {
       }),
     onSuccess: () => {
       toast.success("Identidad de tienda guardada");
-      qc.invalidateQueries({ queryKey: ["ecom-me"] });
+      qc.invalidateQueries({ queryKey: ["ecom-me", tid] });
       if (tienda?.slug) qc.invalidateQueries({ queryKey: ["store", tienda.slug] });
     },
     onError: () => toast.error("No se pudo guardar la tienda"),
@@ -230,7 +237,7 @@ export default function EcommerceSettingsPage() {
     mutationFn: () => ecommerceSaveMpCredentials(mp),
     onSuccess: () => {
       toast.success("Credenciales Mercado Pago guardadas");
-      qc.invalidateQueries({ queryKey: ["ecom-me"] });
+      qc.invalidateQueries({ queryKey: ["ecom-me", tid] });
       setMp((s) => ({ ...s, access_token: "" }));
     },
     onError: () => toast.error("No se pudieron guardar"),
@@ -245,7 +252,7 @@ export default function EcommerceSettingsPage() {
       if (res.success && res.data?.url) {
         setLogoUrl(res.data.url);
         toast.success("Logo actualizado");
-        qc.invalidateQueries({ queryKey: ["ecom-me"] });
+        qc.invalidateQueries({ queryKey: ["ecom-me", tid] });
       }
     },
     onError: () => toast.error("Error al subir logo"),
@@ -261,7 +268,7 @@ export default function EcommerceSettingsPage() {
         patchTheme({ banner_url: res.data.url });
         if (res.data.theme_json) setTheme(resolveTheme(res.data.theme_json));
         toast.success("Banner del Stage actualizado");
-        qc.invalidateQueries({ queryKey: ["ecom-me"] });
+        qc.invalidateQueries({ queryKey: ["ecom-me", tid] });
       }
     },
     onError: () => toast.error("Error al subir banner"),

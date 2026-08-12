@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useUserStore } from "@/store/useUserStore";
 import { loginRequest, sendAuthCodeRequest } from "@/api/auth";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Eye, EyeOff, Loader2, Check, Store } from "lucide-react";
 import { expressLogin, expressRegister } from "@/features/express/api/express";
 import { loginEcommerce } from "@/features/ecommerce/api/ecommerce";
 import { useEcommerceAuthStore } from "@/features/ecommerce/store/useEcommerceAuthStore";
+import { resetEcommerceAdminCache } from "@/features/ecommerce/utils/resetEcommerceCache";
 import { createPreference } from "@/features/account/api/billing";
 import { setPendingPaymentFlow } from "@/features/landing/utils/paymentFlow";
 import { POCKET_PLANS } from "@/features/landing/data/landing.data";
@@ -107,6 +108,7 @@ export default function LoginPage() {
   const [ecomLoading, setEcomLoading] = useState(false);
   const [ecomError, setEcomError] = useState("");
   const setEcomSession = useEcommerceAuthStore((s) => s.setSession);
+  const queryClient = useQueryClient();
 
   // Mayorista B2B — redirige al portal por slug
   const [mayoristaSlug, setMayoristaSlug] = useState("");
@@ -247,6 +249,7 @@ export default function LoginPage() {
           setEcomError(res.message || "Credenciales inválidas.");
           return;
         }
+        resetEcommerceAdminCache(queryClient);
         setEcomSession(res.data.token, {
           usuario: res.data.usuario,
           email: res.data.email,
@@ -424,6 +427,7 @@ export default function LoginPage() {
         setEcomError(res.message || "Credenciales inválidas.");
         return;
       }
+      resetEcommerceAdminCache(queryClient);
       setEcomSession(res.data.token, {
         usuario: res.data.usuario,
         email: res.data.email,

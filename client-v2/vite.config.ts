@@ -49,8 +49,9 @@ export default defineConfig({
     }
   },
   // maplibre-gl v6 es ESM puro (sin default export); evita interop roto en deps prebundle
+  // @zxing/browser se pre-bundlea para evitar 504 Outdated Optimize Dep al escanear QR
   optimizeDeps: {
-    include: ['maplibre-gl'],
+    include: ['maplibre-gl', '@zxing/browser', '@zxing/library'],
   },
   assetsInclude: ['**/*.ogg', '**/*.mp3', '**/*.wav'],
   build: {
