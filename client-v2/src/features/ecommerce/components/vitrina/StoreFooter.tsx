@@ -35,6 +35,9 @@ export function StoreFooter({ tienda, slug }: Props) {
           <Link to={`/tienda/${slug}/carrito`} className="store-nav-btn px-2.5 py-1.5 hover:text-[var(--vitrina-accent)]">
             Carrito
           </Link>
+          <Link to={`/tienda/${slug}/opiniones`} className="store-nav-btn px-2.5 py-1.5 hover:text-[var(--vitrina-accent)]">
+            Opiniones
+          </Link>
           {tienda.telefono && (
             <a href={`tel:${tienda.telefono}`} className="store-nav-btn inline-flex items-center gap-1 px-2.5 py-1.5 hover:text-[var(--vitrina-accent)]">
               <Phone className="size-3.5" />

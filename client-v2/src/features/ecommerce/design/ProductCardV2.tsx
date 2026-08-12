@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
-import { formatPen, type StoreProducto } from "../types/storefront";
+import { formatPen, getCategoria, getMarca, type StoreProducto } from "../types/storefront";
 import { BranchAvailabilityBadge } from "./BranchAvailabilityBadge";
 import { WhatsAppAssist } from "./WhatsAppAssist";
+import { VitrinaAttrsPreview } from "../components/vitrina/detail/VitrinaAttrsPreview";
 import type { StoreSucursal } from "../types/storefront";
 
 type Props = {
@@ -24,6 +25,8 @@ export function ProductCardV2({
   onAdd,
   quickAdd = true,
 }: Props) {
+  const marca = getMarca(producto);
+  const cat = getCategoria(producto);
   return (
     <article className="vitrina-card group relative flex flex-col overflow-hidden border store-hairline bg-[var(--vitrina-elevated)]">
       <Link to={`/tienda/${slug}/producto/${producto.id_producto}`} className="block aspect-[4/5] bg-[var(--vitrina-fog)] overflow-hidden">
@@ -35,11 +38,19 @@ export function ProductCardV2({
       </Link>
       <div className="p-3 flex flex-col gap-2 flex-1">
         <div className="flex items-start justify-between gap-2">
-          <Link to={`/tienda/${slug}/producto/${producto.id_producto}`} className="font-semibold text-sm leading-snug line-clamp-2 hover:underline">
-            {producto.nombre}
-          </Link>
+          <div className="min-w-0">
+            {(marca || cat) && (
+              <p className="text-[10px] uppercase tracking-wider store-muted mb-0.5">
+                {[marca, cat].filter(Boolean).join(" · ")}
+              </p>
+            )}
+            <Link to={`/tienda/${slug}/producto/${producto.id_producto}`} className="font-semibold text-sm leading-snug line-clamp-2 hover:underline">
+              {producto.nombre}
+            </Link>
+          </div>
           <BranchAvailabilityBadge disponible={producto.stock} />
         </div>
+        <VitrinaAttrsPreview producto={producto} compact className="min-h-[18px]" />
         <p className="text-sm font-semibold" style={{ color: "var(--vitrina-accent)" }}>
           {formatPen(Number(producto.precio))}
         </p>

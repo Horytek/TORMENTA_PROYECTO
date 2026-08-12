@@ -7,7 +7,7 @@ export async function listSucursalesActivas(connection, id_tienda) {
     `SELECT id_sucursal, id_tienda, nombre, direccion, lat, lng, horario_json,
             whatsapp, telefono, allow_pickup, allow_delivery, es_default, activo
      FROM ecom_sucursal
-     WHERE id_tienda = ? AND activo = 1 AND allow_pickup = 1
+     WHERE id_tienda = ? AND activo = 1
      ORDER BY es_default DESC, nombre ASC`,
     [id_tienda]
   );
@@ -25,11 +25,23 @@ export async function getSucursal(connection, id_tienda, id_sucursal) {
 export async function getSucursalDefault(connection, id_tienda) {
   const [[row]] = await connection.query(
     `SELECT * FROM ecom_sucursal
-     WHERE id_tienda = ? AND activo = 1 AND allow_pickup = 1
+     WHERE id_tienda = ? AND activo = 1
      ORDER BY es_default DESC, id_sucursal ASC LIMIT 1`,
     [id_tienda]
   );
   return row || null;
+}
+
+export async function listSucursalesPickup(connection, id_tienda) {
+  const [rows] = await connection.query(
+    `SELECT id_sucursal, id_tienda, nombre, direccion, lat, lng, horario_json,
+            whatsapp, telefono, allow_pickup, allow_delivery, es_default, activo
+     FROM ecom_sucursal
+     WHERE id_tienda = ? AND activo = 1 AND allow_pickup = 1
+     ORDER BY es_default DESC, nombre ASC`,
+    [id_tienda]
+  );
+  return rows;
 }
 
 export function mapPublicSucursal(s) {

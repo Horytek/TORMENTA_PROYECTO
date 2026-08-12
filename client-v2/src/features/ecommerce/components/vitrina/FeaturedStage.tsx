@@ -69,8 +69,9 @@ export function FeaturedStage({ tienda, slug, productos, ctaLabel, autoplayMs = 
           className="absolute inset-0 size-full object-cover opacity-25 pointer-events-none"
         />
       )}
-      <div className="relative max-w-7xl mx-auto px-4 lg:px-8 min-h-[min(92vh,820px)] grid lg:grid-cols-[1.55fr_1fr] gap-8 lg:gap-12 py-10 lg:py-14 items-stretch">
-        <div className="relative min-h-[320px] lg:min-h-0 store-stage-frame">
+      <div className="relative max-w-7xl mx-auto px-4 lg:px-8 min-h-0 lg:min-h-[min(92vh,820px)] grid lg:grid-cols-[1.55fr_1fr] gap-6 lg:gap-12 py-6 sm:py-10 lg:py-14 items-stretch">
+        {/* Hero visual — altura contenida en móvil */}
+        <div className="relative min-h-[240px] sm:min-h-[300px] lg:min-h-0 aspect-[4/5] sm:aspect-[16/11] lg:aspect-auto store-stage-frame max-h-[52vh] lg:max-h-none">
           <AnimatePresence mode="wait">
             <motion.div
               key={current?.id_producto}
@@ -83,41 +84,51 @@ export function FeaturedStage({ tienda, slug, productos, ctaLabel, autoplayMs = 
               {current?.imagen_url ? (
                 <img src={current.imagen_url} alt={current.nombre} className="size-full object-cover" />
               ) : (
-                <div className="size-full bg-slate-800 flex items-center justify-center text-white/30">Sin imagen</div>
+                <div
+                  className="size-full flex items-center justify-center"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, color-mix(in srgb, var(--vitrina-accent) 35%, #1a1a1a), #0f0f0f)",
+                  }}
+                />
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-[var(--vitrina-ink)] via-[var(--vitrina-ink)]/35 to-transparent opacity-80" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--vitrina-ink)] via-[var(--vitrina-ink)]/40 to-transparent opacity-85" />
             </motion.div>
           </AnimatePresence>
 
-          <div className="relative z-10 flex flex-col justify-end h-full min-h-[320px] p-6 sm:p-10 text-white">
+          <div className="relative z-10 flex flex-col justify-end h-full p-5 sm:p-8 lg:p-10 text-white">
             <motion.div
               initial={reduce ? false : { opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15, duration: 0.5 }}
             >
-              <p className="text-[11px] uppercase tracking-[0.28em] text-white/55 mb-3">En escena</p>
-              <h1 className="vitrina-display text-4xl sm:text-6xl lg:text-7xl max-w-2xl">{headline}</h1>
+              <p className="text-[10px] sm:text-[11px] uppercase tracking-[0.28em] text-white/55 mb-2 sm:mb-3">
+                En escena
+              </p>
+              <h1 className="vitrina-display text-[1.85rem] leading-[1.15] sm:text-5xl lg:text-7xl max-w-2xl">
+                {headline}
+              </h1>
               {tagline && (
-                <p className="mt-4 text-base sm:text-lg text-white/70 max-w-lg leading-relaxed line-clamp-2">
+                <p className="mt-2.5 sm:mt-4 text-sm sm:text-lg text-white/70 max-w-lg leading-relaxed line-clamp-2">
                   {tagline}
                 </p>
               )}
-              <div className="mt-8 flex flex-wrap gap-3">
+              <div className="mt-5 sm:mt-8 flex flex-col sm:flex-row flex-wrap gap-2.5 sm:gap-3">
                 <button
                   type="button"
                   onClick={scrollCatalogo}
-                  className="vitrina-pill store-focus-ring inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold text-white"
+                  className="vitrina-pill store-focus-ring inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold text-white w-full sm:w-auto"
                   style={{ background: "var(--vitrina-accent)" }}
                 >
                   {ctaLabel || "Explorar catálogo"}
-                  <ArrowRight className="size-4" />
+                  <ArrowRight className="size-4 shrink-0" />
                 </button>
                 {current && (
                   <Link
                     to={`/tienda/${slug}/producto/${current.id_producto}`}
-                    className="vitrina-pill store-focus-ring inline-flex items-center gap-2 px-6 py-3 text-sm font-semibold border border-white/30 text-white hover:bg-white/10 transition"
+                    className="vitrina-pill store-focus-ring inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-semibold border border-white/30 text-white hover:bg-white/10 transition w-full sm:w-auto min-w-0"
                   >
-                    Ver {current.nombre}
+                    <span className="truncate">Ver {current.nombre}</span>
                   </Link>
                 )}
               </div>
@@ -125,12 +136,12 @@ export function FeaturedStage({ tienda, slug, productos, ctaLabel, autoplayMs = 
           </div>
         </div>
 
-        {/* Rail creativo: timeline + card activa expandida */}
-        <div className="flex flex-col justify-center relative py-2">
-          <div className="flex items-end justify-between mb-5 px-1">
+        {/* Rail creativo: en móvil, lista compacta sin timeline ancha */}
+        <div className="flex flex-col justify-center relative py-1 lg:py-2">
+          <div className="flex items-end justify-between mb-3 sm:mb-5 px-0.5">
             <div>
               <p className={`text-[10px] uppercase tracking-[0.3em] ${textSoft}`}>Curaduría</p>
-              <p className="text-lg font-semibold tracking-tight mt-1">En foco</p>
+              <p className="text-base sm:text-lg font-semibold tracking-tight mt-0.5 sm:mt-1">En foco</p>
             </div>
             <div className="flex gap-1.5 items-center pb-1">
               {featured.map((_, i) => (
@@ -142,14 +153,70 @@ export function FeaturedStage({ tienda, slug, productos, ctaLabel, autoplayMs = 
                   className="h-1.5 rounded-full transition-all store-focus-ring"
                   style={{
                     width: i === active ? 22 : 8,
-                    background: i === active ? "var(--vitrina-accent)" : isClara ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.25)",
+                    background:
+                      i === active
+                        ? "var(--vitrina-accent)"
+                        : isClara
+                          ? "rgba(0,0,0,0.15)"
+                          : "rgba(255,255,255,0.25)",
                   }}
                 />
               ))}
             </div>
           </div>
 
-          <div className="relative pl-5">
+          {/* Móvil: scroll horizontal de cards */}
+          <div className="lg:hidden -mx-4 px-4 overflow-x-auto snap-x snap-mandatory scrollbar-none">
+            <ul className="flex gap-3 pb-1 w-max">
+              {featured.map((p, i) => {
+                const isActive = i === active;
+                return (
+                  <li key={p.id_producto} className="snap-start w-[min(78vw,17rem)]">
+                    <button
+                      type="button"
+                      onClick={() => setActive(i)}
+                      className={`store-focus-ring w-full text-left rounded-2xl p-3 transition-all ${
+                        isActive
+                          ? isClara
+                            ? "bg-white/80 shadow-sm ring-1 ring-black/5"
+                            : "bg-white/10 ring-1 ring-white/15"
+                          : isClara
+                            ? "bg-white/40 ring-1 ring-black/5 opacity-70"
+                            : "bg-white/5 ring-1 ring-white/10 opacity-70"
+                      }`}
+                    >
+                      <div className="flex gap-3">
+                        <div className="size-14 rounded-xl overflow-hidden bg-black/10 shrink-0">
+                          {p.imagen_url ? (
+                            <img src={p.imagen_url} alt="" className="size-full object-cover" />
+                          ) : (
+                            <div className="size-full bg-slate-700/80" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-[10px] tabular-nums ${textSoft}`}>
+                            {String(i + 1).padStart(2, "0")}
+                          </p>
+                          <p className="font-semibold text-sm leading-snug line-clamp-2 mt-0.5">
+                            {p.nombre}
+                          </p>
+                          <p
+                            className="text-sm font-semibold mt-1"
+                            style={{ color: "var(--vitrina-accent)" }}
+                          >
+                            {formatPen(Number(p.precio))}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          {/* Desktop: timeline vertical */}
+          <div className="hidden lg:block relative pl-5">
             <div
               className="absolute left-[7px] top-3 bottom-3 w-px"
               style={{ background: isClara ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.12)" }}
@@ -182,7 +249,11 @@ export function FeaturedStage({ tienda, slug, productos, ctaLabel, autoplayMs = 
                       <span
                         className="absolute -left-5 top-1/2 -translate-y-1/2 size-2.5 rounded-full border-2"
                         style={{
-                          borderColor: isActive ? "var(--vitrina-accent)" : isClara ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.35)",
+                          borderColor: isActive
+                            ? "var(--vitrina-accent)"
+                            : isClara
+                              ? "rgba(0,0,0,0.2)"
+                              : "rgba(255,255,255,0.35)",
                           background: isActive ? "var(--vitrina-accent)" : "transparent",
                         }}
                       />
@@ -196,11 +267,13 @@ export function FeaturedStage({ tienda, slug, productos, ctaLabel, autoplayMs = 
                             exit={reduce ? undefined : { opacity: 0, y: -6 }}
                             transition={{ duration: 0.28 }}
                             className={`flex gap-3 p-3 rounded-[1.1rem] backdrop-blur-md ${
-                              isClara ? "bg-white/70 shadow-sm ring-1 ring-black/5" : "bg-white/10 ring-1 ring-white/15"
+                              isClara
+                                ? "bg-white/70 shadow-sm ring-1 ring-black/5"
+                                : "bg-white/10 ring-1 ring-white/15"
                             }`}
                           >
                             <div className="relative shrink-0">
-                              <div className="size-16 sm:size-[4.5rem] rounded-2xl overflow-hidden bg-black/10 rotate-[-3deg] shadow-md">
+                              <div className="size-[4.5rem] rounded-2xl overflow-hidden bg-black/10 rotate-[-3deg] shadow-md">
                                 {p.imagen_url ? (
                                   <img src={p.imagen_url} alt="" className="size-full object-cover" />
                                 ) : (
@@ -215,10 +288,13 @@ export function FeaturedStage({ tienda, slug, productos, ctaLabel, autoplayMs = 
                               </span>
                             </div>
                             <div className="min-w-0 flex-1 py-0.5">
-                              <p className="font-semibold text-sm sm:text-[15px] leading-snug line-clamp-2">
+                              <p className="font-semibold text-[15px] leading-snug line-clamp-2">
                                 {p.nombre}
                               </p>
-                              <p className="text-sm font-semibold mt-1.5" style={{ color: "var(--vitrina-accent)" }}>
+                              <p
+                                className="text-sm font-semibold mt-1.5"
+                                style={{ color: "var(--vitrina-accent)" }}
+                              >
                                 {formatPen(Number(p.precio))}
                               </p>
                               <Link

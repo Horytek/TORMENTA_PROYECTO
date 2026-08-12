@@ -152,15 +152,35 @@ const EcommerceAdminLayout = lazy(() =>
 );
 const EcommerceDashboardPage = lazy(() => import("@/features/ecommerce/pages/EcommerceDashboardPage"));
 const EcommerceProductsPage = lazy(() => import("@/features/ecommerce/pages/EcommerceProductsPage"));
+const EcommerceAtributosPage = lazy(() => import("@/features/ecommerce/pages/EcommerceAtributosPage"));
 const EcommerceOrdersPage = lazy(() => import("@/features/ecommerce/pages/EcommerceOrdersPage"));
 const EcommerceSettingsPage = lazy(() => import("@/features/ecommerce/pages/EcommerceSettingsPage"));
 const EcommerceSucursalesPage = lazy(() => import("@/features/ecommerce/pages/EcommerceSucursalesPage"));
+const EcommerceEntregasPage = lazy(() => import("@/features/ecommerce/pages/EcommerceEntregasPage"));
 const EcommerceInventarioPage = lazy(() => import("@/features/ecommerce/pages/EcommerceInventarioPage"));
 const EcommerceTransferenciasPage = lazy(() => import("@/features/ecommerce/pages/EcommerceTransferenciasPage"));
 const StorefrontPage = lazy(() => import("@/features/ecommerce/pages/StorefrontPage"));
 const StoreProductPage = lazy(() => import("@/features/ecommerce/pages/StoreProductPage"));
 const StoreCartPage = lazy(() => import("@/features/ecommerce/pages/StoreCartPage"));
 const StorePaymentResultPage = lazy(() => import("@/features/ecommerce/pages/StorePaymentResultPage"));
+const StoreLoginPage = lazy(() => import("@/features/ecommerce/pages/StoreLoginPage"));
+const StoreRegisterPage = lazy(() => import("@/features/ecommerce/pages/StoreRegisterPage"));
+const StoreAccountLayout = lazy(() => import("@/features/ecommerce/pages/StoreAccountLayout"));
+const StoreAccountHomePage = lazy(() =>
+  import("@/features/ecommerce/pages/StoreAccountLayout").then((m) => ({
+    default: m.StoreAccountHomePage,
+  }))
+);
+const StoreOrdersPage = lazy(() => import("@/features/ecommerce/pages/StoreOrdersPage"));
+const StoreOrderDetailPage = lazy(() => import("@/features/ecommerce/pages/StoreOrderDetailPage"));
+const StoreOrderQrPage = lazy(() => import("@/features/ecommerce/pages/StoreOrderQrPage"));
+const StoreFavoritesPage = lazy(() => import("@/features/ecommerce/pages/StoreFavoritesPage"));
+const StoreProfilePage = lazy(() => import("@/features/ecommerce/pages/StoreProfilePage"));
+const StoreOpinionesPage = lazy(() => import("@/features/ecommerce/pages/StoreOpinionesPage"));
+const StoreMisReviewsPage = lazy(() => import("@/features/ecommerce/pages/StoreMisReviewsPage"));
+const EcommercePedidosRetiroPage = lazy(() => import("@/features/ecommerce/pages/EcommercePedidosRetiroPage"));
+const EcommerceValidarRetiroPage = lazy(() => import("@/features/ecommerce/pages/EcommerceValidarRetiroPage"));
+const EcommerceReviewsPage = lazy(() => import("@/features/ecommerce/pages/EcommerceReviewsPage"));
 
 const InventoryMovementsPage = lazy(() => import("@/features/inventory-movements/pages/InventoryMovementsPage"));
 
@@ -304,7 +324,19 @@ export default function App() {
               <Route path="/registro-plataforma" element={<RegisterPlatformPage />} />
               <Route path="/tienda/:slug" element={<StorefrontPage />} />
               <Route path="/tienda/:slug/producto/:id" element={<StoreProductPage />} />
+              <Route path="/tienda/:slug/opiniones" element={<StoreOpinionesPage />} />
               <Route path="/tienda/:slug/carrito" element={<StoreCartPage />} />
+              <Route path="/tienda/:slug/login" element={<StoreLoginPage />} />
+              <Route path="/tienda/:slug/registro" element={<StoreRegisterPage />} />
+              <Route path="/tienda/:slug/cuenta/pedidos/:id/qr" element={<StoreOrderQrPage />} />
+              <Route path="/tienda/:slug/cuenta" element={<StoreAccountLayout />}>
+                <Route index element={<StoreAccountHomePage />} />
+                <Route path="pedidos" element={<StoreOrdersPage />} />
+                <Route path="pedidos/:id" element={<StoreOrderDetailPage />} />
+                <Route path="favoritos" element={<StoreFavoritesPage />} />
+                <Route path="opiniones" element={<StoreMisReviewsPage />} />
+                <Route path="perfil" element={<StoreProfilePage />} />
+              </Route>
               <Route path="/tienda/:slug/pago/resultado" element={<StorePaymentResultPage />} />
               <Route path="/catalogo/:idTenant" element={<CatalogoPublicoPage />} />
               <Route path="/status" element={<StatusPage />} />
@@ -315,10 +347,16 @@ export default function App() {
               <Route path="/ecommerce-admin" element={<EcommerceAdminLayout />}>
                 <Route index element={<EcommerceDashboardPage />} />
                 <Route path="productos" element={<EcommerceProductsPage />} />
+                <Route path="atributos" element={<EcommerceAtributosPage />} />
                 <Route path="sucursales" element={<EcommerceSucursalesPage />} />
+                <Route path="entregas" element={<EcommerceEntregasPage />} />
                 <Route path="inventario" element={<EcommerceInventarioPage />} />
                 <Route path="transferencias" element={<EcommerceTransferenciasPage />} />
                 <Route path="ordenes" element={<EcommerceOrdersPage />} />
+                <Route path="pedidos-retiro" element={<EcommercePedidosRetiroPage />} />
+                <Route path="validar-retiro" element={<EcommerceValidarRetiroPage />} />
+                <Route path="recojo" element={<EcommerceValidarRetiroPage />} />
+                <Route path="resenas" element={<EcommerceReviewsPage />} />
                 <Route path="configuracion" element={<EcommerceSettingsPage />} />
               </Route>
               {/* Pocket POS (Express) tiene su propio sistema de auth, independiente del ERP */}

@@ -74,6 +74,12 @@ export function getCategoria(p: StoreProducto): string | null {
   return typeof cat === "string" && cat.trim() ? cat.trim() : null;
 }
 
+export function getMarca(p: StoreProducto): string | null {
+  const attrs = parseAttrs(p.attrs_json);
+  const marca = attrs.marca;
+  return typeof marca === "string" && marca.trim() ? marca.trim() : null;
+}
+
 export function getTags(p: StoreProducto): string[] {
   const attrs = parseAttrs(p.attrs_json);
   const tags = attrs.tags;
@@ -91,6 +97,56 @@ export function isDestacado(p: StoreProducto): boolean {
 
 export function isStory(p: StoreProducto): boolean {
   return Boolean(parseAttrs(p.attrs_json).story);
+}
+
+/** Atributos informativos de vitrina (no afectan stock). */
+export type VitrinaTonalidad = { nombre: string; hex: string };
+
+export type VitrinaAtributos = {
+  talla: string[];
+  tonalidad: VitrinaTonalidad[];
+  /** @deprecated usar tonalidad */
+  color: string[];
+};
+
+export function getVitrinaAtributos(p: StoreProducto): VitrinaAtributos {
+  const attrs = parseAttrs(p.attrs_json);
+  const raw =
+    attrs.atributos && typeof attrs.atributos === "object"
+      ? (attrs.atributos as Record<string, unknown>)
+      : attrs;
+  const asList = (v: unknown): string[] => {
+    if (!Array.isArray(v)) return [];
+    return v
+      .filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+      .map((x) => x.trim());
+  };
+  const asTonalidad = (v: unknown): VitrinaTonalidad[] => {
+    if (!Array.isArray(v)) return [];
+    const out: VitrinaTonalidad[] = [];
+    for (const item of v) {
+      if (typeof item === "string" && item.trim()) {
+        out.push({ nombre: item.trim(), hex: "#94a3b8" });
+        continue;
+      }
+      if (item && typeof item === "object") {
+        const o = item as Record<string, unknown>;
+        const nombre = typeof o.nombre === "string" ? o.nombre.trim() : "";
+        if (!nombre) continue;
+        let hex = typeof o.hex === "string" ? o.hex.trim() : "#94a3b8";
+        if (!/^#[0-9a-fA-F]{6}$/.test(hex)) hex = "#94a3b8";
+        out.push({ nombre, hex: hex.toLowerCase() });
+      }
+    }
+    return out;
+  };
+  let tonalidad = asTonalidad(raw.tonalidad);
+  if (tonalidad.length === 0) tonalidad = asTonalidad(raw.color);
+  return {
+    talla: asList(raw.talla),
+    tonalidad,
+    color: tonalidad.map((t) => t.nombre),
+  };
 }
 
 export function monograma(nombre: string): string {

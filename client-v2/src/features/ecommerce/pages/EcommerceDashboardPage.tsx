@@ -12,19 +12,42 @@ import {
   Circle,
   MapPin,
   ExternalLink,
+  Tags,
+  PackageCheck,
+  ScanLine,
 } from "lucide-react";
-import { ecommerceDashboard, ecommerceMe, adminInventarioResumen } from "../api/ecommerce";
+import { ecommerceDashboard, ecommerceMe, adminInventarioResumen, pickupDashboardKpis, adminEntregaKpis } from "../api/ecommerce";
 import { useEcommerceAuthStore } from "../store/useEcommerceAuthStore";
 import { Button } from "@/components/ui/button";
 
 export default function EcommerceDashboardPage() {
   const user = useEcommerceAuthStore((s) => s.user);
+  const tid = user?.id_tienda;
   const { data, isLoading } = useQuery({
-    queryKey: ["ecom-dashboard"],
+    queryKey: ["ecom-dashboard", tid],
     queryFn: ecommerceDashboard,
+    enabled: Boolean(tid),
   });
-  const meQ = useQuery({ queryKey: ["ecom-me"], queryFn: ecommerceMe });
-  const invQ = useQuery({ queryKey: ["ecom-inv-resumen"], queryFn: adminInventarioResumen });
+  const meQ = useQuery({
+    queryKey: ["ecom-me", tid],
+    queryFn: ecommerceMe,
+    enabled: Boolean(tid),
+  });
+  const invQ = useQuery({
+    queryKey: ["ecom-inv-resumen", tid],
+    queryFn: adminInventarioResumen,
+    enabled: Boolean(tid),
+  });
+  const pickupQ = useQuery({
+    queryKey: ["ecom-pickup-kpis", tid],
+    queryFn: pickupDashboardKpis,
+    enabled: Boolean(tid),
+  });
+  const entregaKpiQ = useQuery({
+    queryKey: ["ecom-entrega-kpis", tid],
+    queryFn: adminEntregaKpis,
+    enabled: Boolean(tid),
+  });
   const stats = data?.data?.stats;
   const recientes = data?.data?.recientes || [];
   const tienda = meQ.data?.data?.tienda;
@@ -129,6 +152,114 @@ export default function EcommerceDashboardPage() {
         </div>
       )}
 
+      {pickupQ.data?.data && (
+        <div>
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <h2 className="text-sm font-semibold text-stone-700">Retiro en tienda</h2>
+            <Link
+              to="/ecommerce-admin/validar-retiro"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-teal-700 hover:text-teal-900"
+            >
+              <ScanLine className="size-3.5" />
+              Abrir recojos
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {[
+              {
+                label: "Por preparar",
+                value: pickupQ.data.data.pago_confirmado ?? 0,
+                icon: PackageCheck,
+                to: "/ecommerce-admin/pedidos-retiro",
+              },
+              {
+                label: "Preparando",
+                value: pickupQ.data.data.preparando ?? 0,
+                icon: PackageCheck,
+                to: "/ecommerce-admin/pedidos-retiro",
+              },
+              {
+                label: "Listos retiro",
+                value: pickupQ.data.data.listos_retiro ?? 0,
+                icon: ScanLine,
+                to: "/ecommerce-admin/validar-retiro",
+              },
+              {
+                label: "Entregados hoy",
+                value: pickupQ.data.data.entregados_hoy ?? 0,
+                icon: ShoppingBag,
+                to: "/ecommerce-admin/pedidos-retiro",
+              },
+              {
+                label: "Activos",
+                value: pickupQ.data.data.activos ?? 0,
+                icon: PackageCheck,
+                to: "/ecommerce-admin/pedidos-retiro",
+              },
+            ].map((c) => (
+              <Link
+                key={c.label}
+                to={c.to}
+                className="rounded-xl border border-stone-200 bg-white p-4 hover:border-teal-600/40 transition"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="text-[11px] uppercase tracking-wider text-stone-400">{c.label}</div>
+                  <c.icon className="size-4 text-stone-300" />
+                </div>
+                <div className="text-xl font-semibold mt-1">{c.value}</div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {entregaKpiQ.data?.data && (
+        <div>
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <h2 className="text-sm font-semibold text-stone-700">Métodos de entrega</h2>
+            <Link
+              to="/ecommerce-admin/entregas"
+              className="text-xs font-medium text-teal-700 hover:text-teal-900"
+            >
+              Configurar
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              {
+                label: "Pedidos retiro",
+                value: entregaKpiQ.data.data.pickup_total ?? 0,
+                to: "/ecommerce-admin/pedidos-retiro?fulfillment=pickup",
+              },
+              {
+                label: "Pedidos delivery",
+                value: entregaKpiQ.data.data.delivery_total ?? 0,
+                to: "/ecommerce-admin/pedidos-retiro",
+              },
+              {
+                label: "Pedidos provincia",
+                value: entregaKpiQ.data.data.provincia_total ?? 0,
+                to: "/ecommerce-admin/pedidos-retiro",
+              },
+              {
+                label: "Envío cobrado hoy",
+                value: Number(entregaKpiQ.data.data.costo_envio_hoy || 0).toFixed(2),
+                to: "/ecommerce-admin/entregas",
+              },
+            ].map((c) => (
+              <Link
+                key={c.label}
+                to={c.to}
+                className="rounded-xl border border-stone-200 bg-white p-4 hover:border-teal-600/40 transition"
+              >
+                <div className="text-[11px] uppercase tracking-wider text-stone-400">{c.label}</div>
+                <div className="text-xl font-semibold mt-1">{c.value}</div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {invQ.data?.data && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
@@ -176,6 +307,7 @@ export default function EcommerceDashboardPage() {
           <div className="grid grid-cols-2 gap-2">
             {[
               { to: "/ecommerce-admin/productos", label: "Productos", icon: Package },
+              { to: "/ecommerce-admin/atributos", label: "Atributos", icon: Tags },
               { to: "/ecommerce-admin/ordenes", label: "Órdenes", icon: ShoppingBag },
               { to: "/ecommerce-admin/configuracion", label: "Configuración", icon: Settings },
               { to: "/ecommerce-admin/configuracion", label: "Mercado Pago", icon: CreditCard },
@@ -225,20 +357,51 @@ export default function EcommerceDashboardPage() {
               email_comprador?: string;
               created_at?: string;
             }) => (
-              <li key={o.id_orden} className="px-4 py-3 flex justify-between text-sm gap-3">
-                <span className="min-w-0">
-                  <span className="font-medium">{o.codigo}</span>
-                  <span className="text-stone-400 ml-2 truncate">{o.email_comprador}</span>
-                  {o.created_at && (
-                    <span className="block text-[11px] text-stone-400 mt-0.5">
-                      {new Date(o.created_at).toLocaleString("es-PE")}
+              <li key={o.id_orden} className="px-4 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium font-mono text-sm truncate">{o.codigo}</p>
+                    {o.email_comprador && (
+                      <p className="text-xs text-stone-500 truncate mt-0.5">{o.email_comprador}</p>
+                    )}
+                    {o.created_at && (
+                      <p className="text-[11px] text-stone-400 mt-1">
+                        {new Date(o.created_at).toLocaleString("es-PE", {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    )}
+                  </div>
+                  <div className="shrink-0 text-right space-y-1">
+                    <p className="text-sm font-semibold tabular-nums">
+                      S/ {Number(o.total).toFixed(2)}
+                    </p>
+                    <span
+                      className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${
+                        o.estado === "approved"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : o.estado === "pending"
+                            ? "bg-amber-50 text-amber-800"
+                            : o.estado === "rejected" || o.estado === "cancelled"
+                              ? "bg-red-50 text-red-700"
+                              : "bg-stone-100 text-stone-600"
+                      }`}
+                    >
+                      {o.estado === "approved"
+                        ? "Aprobado"
+                        : o.estado === "pending"
+                          ? "Pendiente"
+                          : o.estado === "rejected"
+                            ? "Rechazado"
+                            : o.estado === "cancelled"
+                              ? "Cancelado"
+                              : o.estado}
                     </span>
-                  )}
-                </span>
-                <span className="shrink-0 text-right">
-                  <span className="text-stone-500 mr-3">{o.estado}</span>
-                  S/ {Number(o.total).toFixed(2)}
-                </span>
+                  </div>
+                </div>
               </li>
             )
           )}

@@ -7,6 +7,7 @@ import {
   adminListSucursales,
   adminUpdateTransferenciaEstado,
 } from "../api/ecommerce";
+import { useEcommerceAuthStore } from "../store/useEcommerceAuthStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,9 +22,11 @@ const TRANSICIONES: Record<string, string[]> = {
 
 export default function EcommerceTransferenciasPage() {
   const qc = useQueryClient();
+  const tid = useEcommerceAuthStore((s) => s.user?.id_tienda);
   const { data: sucQ } = useQuery({
-    queryKey: ["ecom-sucursales"],
-    queryFn: adminListSucursales,
+    queryKey: ["ecom-sucursales", tid],
+    queryFn: () => adminListSucursales(),
+    enabled: Boolean(tid),
   });
   const sucursales = sucQ?.data || [];
   const sucursalesActivas = useMemo(
@@ -48,15 +51,16 @@ export default function EcommerceTransferenciasPage() {
   const [busquedaProducto, setBusquedaProducto] = useState("");
 
   const { data, isError, error } = useQuery({
-    queryKey: ["ecom-transferencias"],
+    queryKey: ["ecom-transferencias", tid],
     queryFn: adminListTransferencias,
+    enabled: Boolean(tid),
   });
   const transferencias = data?.data || [];
 
   const varianteSearchQ = useQuery({
-    queryKey: ["ecom-var-search", busquedaProducto],
+    queryKey: ["ecom-var-search", tid, busquedaProducto],
     queryFn: () => adminSearchVariantes(busquedaProducto),
-    enabled: busquedaProducto.trim().length >= 2,
+    enabled: Boolean(tid) && busquedaProducto.trim().length >= 2,
     placeholderData: keepPreviousData,
   });
   const variantesEncontradas = varianteSearchQ.data?.data || [];
@@ -66,7 +70,7 @@ export default function EcommerceTransferenciasPage() {
       adminUpdateTransferenciaEstado(id, estado),
     onSuccess: () => {
       toast.success("Estado actualizado");
-      qc.invalidateQueries({ queryKey: ["ecom-transferencias"] });
+      qc.invalidateQueries({ queryKey: ["ecom-transferencias", tid] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -89,7 +93,7 @@ export default function EcommerceTransferenciasPage() {
         notas: "",
       });
       setBusquedaProducto("");
-      qc.invalidateQueries({ queryKey: ["ecom-transferencias"] });
+      qc.invalidateQueries({ queryKey: ["ecom-transferencias", tid] });
     },
     onError: (e: Error) => toast.error(e.message),
   });

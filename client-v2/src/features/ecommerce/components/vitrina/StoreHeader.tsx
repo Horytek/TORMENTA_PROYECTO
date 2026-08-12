@@ -1,6 +1,7 @@
 import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Search, ShoppingBag, Menu, Moon, Sun, Monitor } from "lucide-react";
+import { Search, ShoppingBag, Menu, Moon, Sun, Monitor, User, Heart } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { monograma, type StoreTienda } from "../../types/storefront";
 import { useStoreColorScheme } from "./StoreShell";
@@ -9,6 +10,7 @@ import { ContactQuick } from "./quick/ContactQuick";
 import type { StoreProducto, StoreSucursal } from "../../types/storefront";
 import { resolveNavEntries, type NavStyle, type ResolvedNavEntry } from "../../types/theme";
 import { BranchSelector } from "../../design/BranchSelector";
+import { useStorefrontAuthStore } from "../../store/useStorefrontAuthStore";
 
 type Props = {
   tienda: StoreTienda;
@@ -75,6 +77,12 @@ export function StoreHeader({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const { pref, cycle, allowToggle, theme } = useStoreColorScheme();
+  const buyerToken = useStorefrontAuthStore((s) => s.token);
+  const hydrate = useStorefrontAuthStore((s) => s.hydrate);
+
+  useEffect(() => {
+    if (slug) hydrate(slug);
+  }, [slug, hydrate]);
   const headerStyle = theme.header_style;
   const nav = theme.nav;
 
@@ -161,10 +169,14 @@ export function StoreHeader({
   return (
     <>
       <header className={`sticky top-0 z-40 ${headerBg}`}>
-        <div className="flex items-center gap-2 px-4 lg:px-8 h-14">
+        <div className="flex items-center gap-1 sm:gap-2 px-2.5 sm:px-4 lg:px-8 h-14">
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
-              <button type="button" className="store-icon-btn lg:hidden size-11 flex items-center justify-center" aria-label="Menú">
+              <button
+                type="button"
+                className="store-icon-btn lg:hidden size-10 sm:size-11 flex items-center justify-center shrink-0"
+                aria-label="Menú"
+              >
                 <Menu className="size-5" />
               </button>
             </SheetTrigger>
@@ -179,6 +191,18 @@ export function StoreHeader({
                     {entries.map((e) => renderEntry(e, "mobile"))}
                   </>
                 )}
+                {allowToggle && (
+                  <button
+                    type="button"
+                    className="store-nav-btn w-full text-left px-3 py-3 min-h-11 text-sm flex items-center gap-2 mt-2"
+                    onClick={() => {
+                      cycle();
+                    }}
+                  >
+                    <SchemeIcon className="size-4" />
+                    Tema: {pref}
+                  </button>
+                )}
                 {theme.quick_actions?.whatsapp !== false && (
                   <div className={`pt-4 border-t store-hairline ${showNav ? "mt-4" : ""}`}>
                     <ContactQuick telefono={tienda.telefono} />
@@ -188,18 +212,18 @@ export function StoreHeader({
             </SheetContent>
           </Sheet>
 
-          <Link to={`/tienda/${slug}`} className="flex items-center gap-2.5 min-w-0 shrink-0">
+          <Link to={`/tienda/${slug}`} className="flex items-center gap-2 min-w-0 shrink">
             {tienda.logo_url ? (
-              <img src={tienda.logo_url} alt="" className="store-logo size-8 object-cover" />
+              <img src={tienda.logo_url} alt="" className="store-logo size-8 object-cover shrink-0" />
             ) : (
               <span
-                className="store-logo size-8 flex items-center justify-center text-[10px] font-bold text-white"
+                className="store-logo size-8 flex items-center justify-center text-[10px] font-bold text-white shrink-0"
                 style={{ background: isAccent ? "rgba(0,0,0,0.25)" : "var(--vitrina-accent)" }}
               >
                 {monograma(tienda.nombre)}
               </span>
             )}
-            <span className="font-semibold text-sm sm:text-base truncate max-w-[9rem] sm:max-w-[14rem]">
+            <span className="font-semibold text-sm truncate max-w-[7rem] sm:max-w-[12rem] md:max-w-[14rem]">
               {tienda.nombre}
             </span>
           </Link>
@@ -210,47 +234,71 @@ export function StoreHeader({
             </nav>
           )}
 
-          {sucursales.length > 0 && onBranchSelect && (
-            <div className="hidden md:block shrink-0">
-              <BranchSelector
-                sucursales={sucursales}
-                activeId={activeBranchId ?? sucursales[0]?.id_sucursal}
-                onSelect={onBranchSelect}
-                variant="default"
-              />
-            </div>
-          )}
+          <div className="flex-1 min-w-0" aria-hidden />
 
-          {sucursales.length > 0 && onBranchSelect && (
-            <div className="md:hidden min-w-0 flex-1 flex justify-end">
-              <BranchSelector
-                sucursales={sucursales}
-                activeId={activeBranchId ?? sucursales[0]?.id_sucursal}
-                onSelect={onBranchSelect}
-                variant="compact"
-              />
-            </div>
-          )}
+          <div className="flex items-center gap-0 shrink-0">
+            {sucursales.length > 0 && onBranchSelect && (
+              <>
+                <div className="hidden md:block">
+                  <BranchSelector
+                    sucursales={sucursales}
+                    activeId={activeBranchId ?? sucursales[0]?.id_sucursal}
+                    onSelect={onBranchSelect}
+                    variant="default"
+                  />
+                </div>
+                <div className="md:hidden">
+                  <BranchSelector
+                    sucursales={sucursales}
+                    activeId={activeBranchId ?? sucursales[0]?.id_sucursal}
+                    onSelect={onBranchSelect}
+                    variant="icon"
+                  />
+                </div>
+              </>
+            )}
 
-          <div className="flex items-center gap-0.5 shrink-0">
             <button
               type="button"
-              className="store-icon-btn size-11 flex items-center justify-center"
+              className="store-icon-btn size-10 sm:size-11 flex items-center justify-center"
               onClick={() => setSearchOpen(true)}
               aria-label="Buscar"
             >
               <Search className="size-5" />
             </button>
             {allowToggle && (
-              <button type="button" className="store-icon-btn size-11 flex items-center justify-center" onClick={cycle} aria-label={`Tema: ${pref}`}>
+              <button
+                type="button"
+                className="store-icon-btn size-10 sm:size-11 hidden sm:flex items-center justify-center"
+                onClick={cycle}
+                aria-label={`Tema: ${pref}`}
+              >
                 <SchemeIcon className="size-4" />
               </button>
             )}
-            <Link to={`/tienda/${slug}/carrito`} className="store-icon-btn relative size-11 flex items-center justify-center" aria-label="Carrito">
+            <Link
+              to={buyerToken ? `/tienda/${slug}/cuenta/favoritos` : `/tienda/${slug}/login`}
+              className="store-icon-btn size-10 sm:size-11 items-center justify-center hidden sm:flex"
+              aria-label="Favoritos"
+            >
+              <Heart className="size-5" />
+            </Link>
+            <Link
+              to={buyerToken ? `/tienda/${slug}/cuenta` : `/tienda/${slug}/login`}
+              className="store-icon-btn size-10 sm:size-11 flex items-center justify-center"
+              aria-label="Mi cuenta"
+            >
+              <User className="size-5" />
+            </Link>
+            <Link
+              to={`/tienda/${slug}/carrito`}
+              className="store-icon-btn relative size-10 sm:size-11 flex items-center justify-center"
+              aria-label="Carrito"
+            >
               <ShoppingBag className="size-5" />
               {cartCount > 0 && (
                 <span
-                  className="absolute top-1.5 right-1.5 min-w-4 h-4 px-1 text-[10px] font-bold flex items-center justify-center text-white rounded-full"
+                  className="absolute top-1 right-1 min-w-4 h-4 px-1 text-[10px] font-bold flex items-center justify-center text-white rounded-full"
                   style={{ background: isAccent ? "rgba(0,0,0,0.35)" : "var(--vitrina-accent)" }}
                 >
                   {cartCount > 99 ? "99+" : cartCount}

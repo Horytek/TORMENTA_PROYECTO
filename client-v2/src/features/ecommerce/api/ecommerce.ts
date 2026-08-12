@@ -2,6 +2,24 @@ import api from "@/api/axios";
 import type { BranchAvailability, StoreSucursal } from "../types/storefront";
 
 const ecomTokenKey = "horytek_ecommerce_token";
+const storefrontTokenPrefix = "horytek_storefront_token_";
+
+export function getStorefrontToken(slug: string) {
+  return localStorage.getItem(`${storefrontTokenPrefix}${slug}`);
+}
+
+export function setStorefrontToken(slug: string, token: string) {
+  localStorage.setItem(`${storefrontTokenPrefix}${slug}`, token);
+}
+
+export function clearStorefrontToken(slug: string) {
+  localStorage.removeItem(`${storefrontTokenPrefix}${slug}`);
+}
+
+function storefrontAuthHeaders(slug: string) {
+  const token = getStorefrontToken(slug);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 export function getEcommerceToken() {
   return localStorage.getItem(ecomTokenKey);
@@ -156,21 +174,302 @@ export async function checkoutStore(
   slug: string,
   body: {
     items: { id_producto: number; id_variante?: number | null; cantidad: number }[];
-    id_sucursal: number;
-    fulfillment?: "pickup";
-    email_comprador: string;
-    nombre_comprador?: string;
+    id_sucursal?: number | null;
+    fulfillment?: "pickup" | "delivery" | "provincia";
     telefono_comprador?: string;
     whatsapp_context?: Record<string, unknown>;
+    id_zona?: number | null;
+    id_destino?: number | null;
+    id_agencia?: number | null;
+    lat?: number | null;
+    lng?: number | null;
+    entrega?: {
+      direccion?: string;
+      referencia?: string;
+      distrito?: string;
+      receptor?: string;
+      documento?: string;
+      telefono?: string;
+      notas?: string;
+    } | null;
   }
 ) {
-  const { data } = await api.post(`/ecommerce/store/${slug}/checkout`, body);
+  const { data } = await api.post(`/ecommerce/store/${slug}/checkout`, body, {
+    headers: storefrontAuthHeaders(slug),
+  });
+  return data;
+}
+
+// ——— Comprador (vitrina) ———
+
+export async function buyerRegister(
+  slug: string,
+  body: { email: string; password: string; nombre: string; telefono?: string }
+) {
+  const { data } = await api.post(`/ecommerce/store/${slug}/auth/register`, body);
+  return data;
+}
+
+export async function buyerLogin(slug: string, body: { email: string; password: string }) {
+  const { data } = await api.post(`/ecommerce/store/${slug}/auth/login`, body);
+  return data;
+}
+
+export async function buyerMe(slug: string) {
+  const { data } = await api.get(`/ecommerce/store/${slug}/auth/me`, {
+    headers: storefrontAuthHeaders(slug),
+  });
+  return data;
+}
+
+export async function buyerUpdateProfile(
+  slug: string,
+  body: { nombre: string; telefono?: string | null }
+) {
+  const { data } = await api.patch(`/ecommerce/store/${slug}/auth/me`, body, {
+    headers: storefrontAuthHeaders(slug),
+  });
+  return data;
+}
+
+export async function buyerChangePassword(
+  slug: string,
+  body: { password_actual: string; password_nueva: string }
+) {
+  const { data } = await api.patch(`/ecommerce/store/${slug}/auth/me/password`, body, {
+    headers: storefrontAuthHeaders(slug),
+  });
+  return data;
+}
+
+export async function buyerListFavoritos(slug: string) {
+  const { data } = await api.get(`/ecommerce/store/${slug}/favoritos`, {
+    headers: storefrontAuthHeaders(slug),
+  });
+  return data;
+}
+
+export async function buyerToggleFavorito(slug: string, id_producto: number) {
+  const { data } = await api.post(`/ecommerce/store/${slug}/favoritos/${id_producto}`, null, {
+    headers: storefrontAuthHeaders(slug),
+  });
+  return data;
+}
+
+export async function buyerListPedidos(slug: string, estado?: string) {
+  const { data } = await api.get(`/ecommerce/store/${slug}/mis-pedidos`, {
+    headers: storefrontAuthHeaders(slug),
+    params: estado ? { estado_fulfillment: estado } : undefined,
+  });
+  return data;
+}
+
+export async function buyerGetPedido(slug: string, id_orden: number) {
+  const { data } = await api.get(`/ecommerce/store/${slug}/mis-pedidos/${id_orden}`, {
+    headers: storefrontAuthHeaders(slug),
+  });
+  return data;
+}
+
+// ——— Admin pickup ———
+
+export async function pickupListOrdenes(params?: {
+  q?: string;
+  estado_fulfillment?: string;
+  sucursal?: number;
+  fulfillment?: string;
+}) {
+  const { data } = await api.get("/ecommerce/admin/pickup/ordenes", {
+    headers: authHeaders(),
+    params,
+  });
+  return data as {
+    success: boolean;
+    data: {
+      ordenes: Record<string, unknown>[];
+      kpis: {
+        pendientes: number;
+        preparando: number;
+        listos: number;
+        en_camino?: number;
+        entregados_hoy: number;
+      };
+    };
+  };
+}
+
+export async function pickupGetOrden(id: number) {
+  const { data } = await api.get(`/ecommerce/admin/pickup/ordenes/${id}`, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function pickupPatchEstado(
+  id: number,
+  body: { estado_fulfillment: string; notas?: string }
+) {
+  const { data } = await api.patch(`/ecommerce/admin/pickup/ordenes/${id}/estado`, body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function pickupValidar(body: {
+  token?: string;
+  codigo?: string;
+  id_sucursal?: number | null;
+}) {
+  const { data } = await api.post("/ecommerce/admin/pickup/validar", body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function pickupConfirmarEntrega(
+  id_orden: number,
+  delivery_method?: "qr_scan" | "manual_code" | "admin_panel"
+) {
+  const { data } = await api.post(
+    `/ecommerce/admin/pickup/confirmar-entrega/${id_orden}`,
+    { delivery_method },
+    { headers: authHeaders() }
+  );
+  return data;
+}
+
+export async function pickupDashboardKpis() {
+  const { data } = await api.get("/ecommerce/admin/pickup/kpis", { headers: authHeaders() });
+  return data;
+}
+
+// ——— Admin entregas ———
+
+export async function adminGetEntregaConfig() {
+  const { data } = await api.get("/ecommerce/admin/entregas/config", { headers: authHeaders() });
+  return data;
+}
+
+export async function adminPatchEntregaConfig(body: Record<string, unknown>) {
+  const { data } = await api.patch("/ecommerce/admin/entregas/config", body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminListZonas() {
+  const { data } = await api.get("/ecommerce/admin/entregas/zonas", { headers: authHeaders() });
+  return data;
+}
+
+export async function adminCreateZona(body: Record<string, unknown>) {
+  const { data } = await api.post("/ecommerce/admin/entregas/zonas", body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminUpdateZona(id: number, body: Record<string, unknown>) {
+  const { data } = await api.put(`/ecommerce/admin/entregas/zonas/${id}`, body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminDeleteZona(id: number) {
+  const { data } = await api.delete(`/ecommerce/admin/entregas/zonas/${id}`, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminListDestinos() {
+  const { data } = await api.get("/ecommerce/admin/entregas/destinos", { headers: authHeaders() });
+  return data;
+}
+
+export async function adminCreateDestino(body: Record<string, unknown>) {
+  const { data } = await api.post("/ecommerce/admin/entregas/destinos", body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminUpdateDestino(id: number, body: Record<string, unknown>) {
+  const { data } = await api.put(`/ecommerce/admin/entregas/destinos/${id}`, body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminDeleteDestino(id: number) {
+  const { data } = await api.delete(`/ecommerce/admin/entregas/destinos/${id}`, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminListAgencias() {
+  const { data } = await api.get("/ecommerce/admin/entregas/agencias", { headers: authHeaders() });
+  return data;
+}
+
+export async function adminCreateAgencia(body: Record<string, unknown>) {
+  const { data } = await api.post("/ecommerce/admin/entregas/agencias", body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminUpdateAgencia(id: number, body: Record<string, unknown>) {
+  const { data } = await api.put(`/ecommerce/admin/entregas/agencias/${id}`, body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminDeleteAgencia(id: number) {
+  const { data } = await api.delete(`/ecommerce/admin/entregas/agencias/${id}`, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminEntregaKpis() {
+  const { data } = await api.get("/ecommerce/admin/entregas/kpis", { headers: authHeaders() });
+  return data;
+}
+
+export async function storeEntregaOpciones(
+  slug: string,
+  params?: { subtotal?: number; id_sucursal?: number }
+) {
+  const { data } = await api.get(`/ecommerce/store/${slug}/entregas/opciones`, { params });
+  return data;
+}
+
+export async function storeEntregaCotizar(
+  slug: string,
+  body: {
+    fulfillment: "pickup" | "delivery" | "provincia";
+    subtotal?: number;
+    id_sucursal?: number | null;
+    id_zona?: number | null;
+    id_destino?: number | null;
+    lat?: number | null;
+    lng?: number | null;
+  }
+) {
+  const { data } = await api.post(`/ecommerce/store/${slug}/entregas/cotizar`, body);
   return data;
 }
 
 // Admin multisucursal
-export async function adminListSucursales() {
-  const { data } = await api.get("/ecommerce/admin/sucursales", { headers: authHeaders() });
+export async function adminListSucursales(opts?: { incluirInactivas?: boolean }) {
+  const { data } = await api.get("/ecommerce/admin/sucursales", {
+    headers: authHeaders(),
+    params: opts?.incluirInactivas ? { incluir_inactivas: 1 } : undefined,
+  });
   return data;
 }
 
@@ -269,6 +568,115 @@ export async function adminUpdateTransferenciaEstado(id: number, estado: string)
   const { data } = await api.patch(
     `/ecommerce/admin/transferencias/${id}/estado`,
     { estado },
+    { headers: authHeaders() }
+  );
+  return data;
+}
+
+/* ——— Reseñas ——— */
+
+export async function getProductReviews(
+  slug: string,
+  id_producto: number,
+  params?: { sort?: string; page?: number; limit?: number }
+) {
+  const { data } = await api.get(`/ecommerce/store/${slug}/products/${id_producto}/reviews`, {
+    params,
+  });
+  return data;
+}
+
+export async function getReviewSummary(
+  slug: string,
+  params: { tipo: string; id_producto?: number; id_sucursal?: number }
+) {
+  const { data } = await api.get(`/ecommerce/store/${slug}/reviews/summary`, { params });
+  return data;
+}
+
+export async function getOpinionesGenerales(slug: string, limit = 20) {
+  const { data } = await api.get(`/ecommerce/store/${slug}/opiniones`, { params: { limit } });
+  return data;
+}
+
+export async function getReviewEligibilidad(
+  slug: string,
+  params: {
+    tipo: string;
+    id_producto?: number;
+    id_orden?: number;
+    id_sucursal?: number;
+  }
+) {
+  const { data } = await api.get(`/ecommerce/store/${slug}/reviews/eligibilidad`, {
+    params,
+    headers: storefrontAuthHeaders(slug),
+  });
+  return data;
+}
+
+export async function createReview(slug: string, body: Record<string, unknown>) {
+  const { data } = await api.post(`/ecommerce/store/${slug}/reviews`, body, {
+    headers: storefrontAuthHeaders(slug),
+  });
+  return data;
+}
+
+export async function uploadReviewMedia(
+  slug: string,
+  body: { data_base64: string; file_name?: string }
+) {
+  const { data } = await api.post(`/ecommerce/store/${slug}/reviews/media`, body, {
+    headers: storefrontAuthHeaders(slug),
+  });
+  return data;
+}
+
+export async function listMisReviews(slug: string) {
+  const { data } = await api.get(`/ecommerce/store/${slug}/mis-reviews`, {
+    headers: storefrontAuthHeaders(slug),
+  });
+  return data;
+}
+
+export async function adminGetReviewConfig() {
+  const { data } = await api.get("/ecommerce/admin/reviews/config", { headers: authHeaders() });
+  return data;
+}
+
+export async function adminPatchReviewConfig(body: Record<string, unknown>) {
+  const { data } = await api.patch("/ecommerce/admin/reviews/config", body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminListReviews(params?: Record<string, string | number | undefined>) {
+  const { data } = await api.get("/ecommerce/admin/reviews", {
+    params,
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminReviewStats() {
+  const { data } = await api.get("/ecommerce/admin/reviews/stats", { headers: authHeaders() });
+  return data;
+}
+
+export async function adminPatchReviewEstado(id: number, estado: string) {
+  const { data } = await api.patch(
+    `/ecommerce/admin/reviews/${id}/estado`,
+    { estado },
+    { headers: authHeaders() }
+  );
+  return data;
+}
+
+export async function adminReplyReview(id: number, cuerpo: string) {
+  const { data } = await api.post(
+    `/ecommerce/admin/reviews/${id}/reply`,
+    { cuerpo },
     { headers: authHeaders() }
   );
   return data;

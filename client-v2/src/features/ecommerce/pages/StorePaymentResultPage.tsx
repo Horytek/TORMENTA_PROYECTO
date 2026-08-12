@@ -58,9 +58,16 @@ export default function StorePaymentResultPage() {
             </div>
           </div>
         )}
-        <Button asChild className="mt-6">
-          <Link to={`/tienda/${slug}`}>Volver a la tienda</Link>
-        </Button>
+        <div className="mt-6 flex flex-col gap-2">
+          {status === "success" && (
+            <Button asChild variant="default">
+              <Link to={`/tienda/${slug}/cuenta/pedidos`}>Ver mis pedidos</Link>
+            </Button>
+          )}
+          <Button asChild variant={status === "success" ? "outline" : "default"}>
+            <Link to={`/tienda/${slug}`}>Volver a la tienda</Link>
+          </Button>
+        </div>
       </div>
     </div>
   );

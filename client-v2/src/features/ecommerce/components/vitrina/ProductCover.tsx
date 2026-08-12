@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { Plus } from "lucide-react";
-import { formatPen, getCategoria, type StoreProducto } from "../../types/storefront";
+import { formatPen, getCategoria, getMarca, type StoreProducto } from "../../types/storefront";
+import { FavoriteHeartButton } from "./FavoriteHeartButton";
+import { VitrinaAttrsPreview } from "./detail/VitrinaAttrsPreview";
 
 type Props = {
   producto: StoreProducto;
@@ -26,6 +28,7 @@ export function ProductCover({
   className = "",
 }: Props) {
   const cat = getCategoria(producto);
+  const marca = getMarca(producto);
   const lowStock = producto.stock > 0 && producto.stock <= 3;
 
   return (
@@ -44,6 +47,9 @@ export function ProductCover({
             Últimas
           </span>
         )}
+        <div className="absolute top-2 right-2 z-10">
+          <FavoriteHeartButton id_producto={producto.id_producto} />
+        </div>
         {quickAdd && onAdd && producto.stock > 0 && (
           <button
             type="button"
@@ -60,15 +66,20 @@ export function ProductCover({
           </button>
         )}
       </Link>
-      <div className="mt-2 space-y-0.5">
-        {cat && <p className="text-[10px] uppercase tracking-wider store-muted">{cat}</p>}
+      <div className="mt-2 space-y-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] uppercase tracking-wider store-muted">
+          {marca && <span className="font-medium text-[var(--vitrina-accent)]">{marca}</span>}
+          {marca && cat && <span aria-hidden>·</span>}
+          {cat && <span>{cat}</span>}
+        </div>
         <Link
           to={`/tienda/${slug}/producto/${producto.id_producto}`}
-          className="text-sm font-medium leading-snug line-clamp-2 hover:text-[var(--vitrina-accent)]"
+          className="text-sm font-medium leading-snug line-clamp-2 hover:text-[var(--vitrina-accent)] block"
         >
           {producto.nombre}
         </Link>
-        <p className="text-sm font-semibold" style={{ color: "var(--vitrina-accent)" }}>
+        <VitrinaAttrsPreview producto={producto} compact />
+        <p className="text-sm font-semibold pt-0.5" style={{ color: "var(--vitrina-accent)" }}>
           {formatPen(Number(producto.precio))}
         </p>
       </div>

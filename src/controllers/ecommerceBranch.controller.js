@@ -14,6 +14,9 @@ import {
   confirmarVenta,
   registrarMovimiento,
   getInventario,
+  ensureInventarioProducto,
+  ensureInventarioTienda,
+  ensureInventarioSucursal,
 } from "../services/ecommerce/InventoryService.js";
 import {
   crearTransferencia,
@@ -152,8 +155,13 @@ export const adminListSucursales = async (req, res) => {
   let connection;
   try {
     connection = await getEcommerceConnection();
+    const incluirInactivas =
+      req.query.incluir_inactivas === "1" ||
+      req.query.incluir_inactivas === "true";
     const [rows] = await connection.query(
-      `SELECT * FROM ecom_sucursal WHERE id_tienda = ? ORDER BY es_default DESC, nombre ASC`,
+      incluirInactivas
+        ? `SELECT * FROM ecom_sucursal WHERE id_tienda = ? ORDER BY es_default DESC, nombre ASC`
+        : `SELECT * FROM ecom_sucursal WHERE id_tienda = ? AND activo = 1 ORDER BY es_default DESC, nombre ASC`,
       [req.id_tienda]
     );
     return res.json({ success: true, data: rows });
@@ -195,6 +203,9 @@ export const adminCreateSucursal = async (req, res) => {
         `UPDATE ecom_sucursal SET es_default = 0 WHERE id_tienda = ? AND id_sucursal != ?`,
         [req.id_tienda, ins.insertId]
       );
+    }
+    if (body.activo !== false) {
+      await ensureInventarioSucursal(connection, req.id_tienda, ins.insertId);
     }
     return res.status(201).json({ success: true, data: { id_sucursal: ins.insertId } });
   } catch (error) {
@@ -248,6 +259,9 @@ export const adminUpdateSucursal = async (req, res) => {
         `UPDATE ecom_sucursal SET es_default = 0 WHERE id_tienda = ? AND id_sucursal != ?`,
         [req.id_tienda, id]
       );
+    }
+    if (body.activo === true) {
+      await ensureInventarioSucursal(connection, req.id_tienda, id);
     }
     return res.json({ success: true, message: "Actualizado." });
   } catch (error) {
@@ -322,6 +336,9 @@ export const adminInventarioMatriz = async (req, res) => {
   let connection;
   try {
     connection = await getEcommerceConnection();
+    // Materializa stock producto×sucursal si faltaba (idempotente).
+    await ensureInventarioTienda(connection, req.id_tienda);
+
     let where = ` WHERE p.id_tienda = ? AND p.activo = 1 AND s.activo = 1`;
     const params = [req.id_tienda];
     if (id_sucursal) {

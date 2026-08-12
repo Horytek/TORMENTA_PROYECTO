@@ -7,6 +7,7 @@ import {
   adminListSucursales,
   adminUpdateSucursal,
 } from "../api/ecommerce";
+import { useEcommerceAuthStore } from "../store/useEcommerceAuthStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,10 +19,10 @@ type Sucursal = {
   direccion: string;
   telefono?: string | null;
   whatsapp?: string | null;
-  allow_pickup: number;
-  allow_delivery: number;
-  es_default: number;
-  activo: number;
+  allow_pickup: number | boolean;
+  allow_delivery: number | boolean;
+  es_default: number | boolean;
+  activo: number | boolean;
 };
 
 const emptyForm = {
@@ -30,37 +31,34 @@ const emptyForm = {
   telefono: "",
   whatsapp: "",
   es_default: false,
+  allow_pickup: true,
+  allow_delivery: false,
 };
 
 export default function EcommerceSucursalesPage() {
   const qc = useQueryClient();
+  const tid = useEcommerceAuthStore((s) => s.user?.id_tienda);
   const [form, setForm] = useState(emptyForm);
   const [editing, setEditing] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["ecom-sucursales"],
-    queryFn: adminListSucursales,
+    queryKey: ["ecom-sucursales-admin", tid],
+    queryFn: () => adminListSucursales({ incluirInactivas: true }),
+    enabled: Boolean(tid),
   });
   const sucursales = (data?.data || []) as Sucursal[];
 
   const createMut = useMutation({
     mutationFn: () =>
       editing
-        ? adminUpdateSucursal(editing, {
-            ...form,
-            allow_pickup: true,
-            allow_delivery: false,
-          })
-        : adminCreateSucursal({
-            ...form,
-            allow_pickup: true,
-            allow_delivery: false,
-          }),
+        ? adminUpdateSucursal(editing, { ...form })
+        : adminCreateSucursal({ ...form }),
     onSuccess: () => {
       toast.success(editing ? "Sucursal actualizada" : "Sucursal creada");
       setForm(emptyForm);
       setEditing(null);
-      qc.invalidateQueries({ queryKey: ["ecom-sucursales"] });
+      qc.invalidateQueries({ queryKey: ["ecom-sucursales-admin", tid] });
+      qc.invalidateQueries({ queryKey: ["ecom-sucursales", tid] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -69,7 +67,8 @@ export default function EcommerceSucursalesPage() {
     mutationFn: (id: number) => adminDeleteSucursal(id),
     onSuccess: () => {
       toast.success("Sucursal desactivada");
-      qc.invalidateQueries({ queryKey: ["ecom-sucursales"] });
+      qc.invalidateQueries({ queryKey: ["ecom-sucursales-admin", tid] });
+      qc.invalidateQueries({ queryKey: ["ecom-sucursales", tid] });
     },
   });
 
@@ -77,21 +76,39 @@ export default function EcommerceSucursalesPage() {
     mutationFn: (id: number) =>
       adminUpdateSucursal(id, {
         activo: true,
-        allow_pickup: true,
-        allow_delivery: false,
       }),
     onSuccess: () => {
       toast.success("Sucursal reactivada");
-      qc.invalidateQueries({ queryKey: ["ecom-sucursales"] });
+      qc.invalidateQueries({ queryKey: ["ecom-sucursales-admin", tid] });
+      qc.invalidateQueries({ queryKey: ["ecom-sucursales", tid] });
     },
     onError: (e: Error) => toast.error(e.message),
+  });
+
+  const toggleFlag = useMutation({
+    mutationFn: ({
+      id,
+      allow_pickup,
+      allow_delivery,
+    }: {
+      id: number;
+      allow_pickup?: boolean;
+      allow_delivery?: boolean;
+    }) => adminUpdateSucursal(id, { allow_pickup, allow_delivery }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["ecom-sucursales-admin", tid] });
+    },
+    onError: (e: Error & { response?: { data?: { message?: string } } }) =>
+      toast.error(e.response?.data?.message || e.message),
   });
 
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
         <h1 className="text-2xl font-semibold">Sucursales</h1>
-        <p className="text-sm text-stone-500 mt-1">Puntos de recojo en tienda (sin delivery en MVP)</p>
+        <p className="text-sm text-stone-500 mt-1">
+          Recojo y/o despacho delivery por sucursal
+        </p>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -118,6 +135,38 @@ export default function EcommerceSucursalesPage() {
                     </span>
                   ) : null}
                 </div>
+                {Boolean(s.activo) && (
+                  <div className="mt-3 space-y-1.5 text-xs">
+                    <label className="flex items-center justify-between gap-2">
+                      <span>Recojo</span>
+                      <input
+                        type="checkbox"
+                        className="accent-teal-700"
+                        checked={Boolean(s.allow_pickup)}
+                        onChange={(e) =>
+                          toggleFlag.mutate({
+                            id: s.id_sucursal,
+                            allow_pickup: e.target.checked,
+                          })
+                        }
+                      />
+                    </label>
+                    <label className="flex items-center justify-between gap-2">
+                      <span>Delivery</span>
+                      <input
+                        type="checkbox"
+                        className="accent-teal-700"
+                        checked={Boolean(s.allow_delivery)}
+                        onChange={(e) =>
+                          toggleFlag.mutate({
+                            id: s.id_sucursal,
+                            allow_delivery: e.target.checked,
+                          })
+                        }
+                      />
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex gap-2 mt-4">
@@ -132,6 +181,8 @@ export default function EcommerceSucursalesPage() {
                     telefono: s.telefono || "",
                     whatsapp: s.whatsapp || "",
                     es_default: Boolean(s.es_default),
+                    allow_pickup: Boolean(s.allow_pickup),
+                    allow_delivery: Boolean(s.allow_delivery),
                   });
                 }}
               >
@@ -167,7 +218,7 @@ export default function EcommerceSucursalesPage() {
             <Input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
           </div>
           <div className="sm:col-span-2">
-            <Label>Dirección (recojo)</Label>
+            <Label>Dirección</Label>
             <Input value={form.direccion} onChange={(e) => setForm({ ...form, direccion: e.target.value })} />
           </div>
           <div>
@@ -186,6 +237,22 @@ export default function EcommerceSucursalesPage() {
             onChange={(e) => setForm({ ...form, es_default: e.target.checked })}
           />
           Sucursal por defecto
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={form.allow_pickup}
+            onChange={(e) => setForm({ ...form, allow_pickup: e.target.checked })}
+          />
+          Permite recojo
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={form.allow_delivery}
+            onChange={(e) => setForm({ ...form, allow_delivery: e.target.checked })}
+          />
+          Atiende delivery
         </label>
         <div className="flex gap-2">
           <Button

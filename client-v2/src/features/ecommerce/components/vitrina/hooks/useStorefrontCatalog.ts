@@ -2,6 +2,7 @@ import { useMemo, useCallback } from "react";
 import { parseAsString, parseAsStringEnum, useQueryState } from "nuqs";
 import {
   getCategoria,
+  getMarca,
   getTags,
   isDestacado,
   isStory,
@@ -95,7 +96,7 @@ export function useStorefrontCatalog(productos: StoreProducto[]) {
     const q = (busqueda || "").trim().toLowerCase();
     if (q) {
       lista = lista.filter((p) => {
-        const hay = `${p.nombre} ${p.descripcion ?? ""} ${p.sku ?? ""} ${getCategoria(p) ?? ""} ${getTags(p).join(" ")}`.toLowerCase();
+        const hay = `${p.nombre} ${p.descripcion ?? ""} ${p.sku ?? ""} ${getCategoria(p) ?? ""} ${getMarca(p) ?? ""} ${getTags(p).join(" ")}`.toLowerCase();
         return hay.includes(q);
       });
     }

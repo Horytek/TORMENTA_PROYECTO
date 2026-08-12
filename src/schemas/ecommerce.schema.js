@@ -50,12 +50,132 @@ export const ecommerceCheckoutSchema = z.object({
       })
     )
     .min(1),
-  id_sucursal: z.number().int().positive(),
-  fulfillment: z.literal("pickup").default("pickup"),
-  email_comprador: z.string().email(),
-  nombre_comprador: z.string().min(1).max(160).optional().nullable(),
+  id_sucursal: z.number().int().positive().optional().nullable(),
+  fulfillment: z.enum(["pickup", "delivery", "provincia"]).default("pickup"),
   telefono_comprador: z.string().max(40).optional().nullable(),
   whatsapp_context: z.any().optional().nullable(),
+  id_zona: z.number().int().positive().optional().nullable(),
+  id_destino: z.number().int().positive().optional().nullable(),
+  id_agencia: z.number().int().positive().optional().nullable(),
+  lat: z.number().optional().nullable(),
+  lng: z.number().optional().nullable(),
+  entrega: z
+    .object({
+      direccion: z.string().max(500).optional().nullable(),
+      referencia: z.string().max(255).optional().nullable(),
+      distrito: z.string().max(120).optional().nullable(),
+      receptor: z.string().max(160).optional().nullable(),
+      documento: z.string().max(40).optional().nullable(),
+      telefono: z.string().max(40).optional().nullable(),
+      notas: z.string().max(500).optional().nullable(),
+    })
+    .optional()
+    .nullable(),
+});
+
+export const ecommerceEntregaConfigSchema = z.object({
+  retiro_activo: z.boolean().optional(),
+  delivery_activo: z.boolean().optional(),
+  provincia_activo: z.boolean().optional(),
+  retiro_prep_minutos: z.number().int().min(0).max(10080).optional().nullable(),
+  retiro_instrucciones: z.string().max(2000).optional().nullable(),
+  delivery_modelo: z.enum(["fija", "zona", "base_recargo"]).optional(),
+  delivery_costo_base: z.number().min(0).optional(),
+  delivery_recargo: z.number().min(0).optional(),
+  delivery_pedido_min: z.number().min(0).optional().nullable(),
+  delivery_gratis_desde: z.number().min(0).optional().nullable(),
+  delivery_tiempo_texto: z.string().max(120).optional().nullable(),
+  provincia_pedido_min: z.number().min(0).optional().nullable(),
+  provincia_condiciones: z.string().max(2000).optional().nullable(),
+  provincia_requiere_agencia: z.boolean().optional(),
+});
+
+export const ecommerceZonaSchema = z.object({
+  id_sucursal: z.number().int().positive(),
+  nombre: z.string().min(1).max(120),
+  costo: z.number().min(0),
+  tiempo_estimado: z.string().max(80).optional().nullable(),
+  pedido_min: z.number().min(0).optional().nullable(),
+  activo: z.boolean().optional(),
+  orden: z.number().int().optional(),
+  geojson: z.any(),
+  distritos_json: z.any().optional().nullable(),
+  observaciones: z.string().max(500).optional().nullable(),
+});
+
+export const ecommerceDestinoSchema = z.object({
+  departamento: z.string().min(1).max(80),
+  provincia: z.string().max(80).optional().nullable(),
+  costo: z.number().min(0),
+  tiempo_estimado: z.string().max(80).optional().nullable(),
+  activo: z.boolean().optional(),
+});
+
+export const ecommerceAgenciaSchema = z.object({
+  nombre: z.string().min(1).max(120),
+  telefono: z.string().max(40).optional().nullable(),
+  direccion: z.string().max(500).optional().nullable(),
+  cobertura_texto: z.string().max(255).optional().nullable(),
+  observaciones: z.string().max(500).optional().nullable(),
+  activo: z.boolean().optional(),
+});
+
+export const ecommerceCotizarSchema = z.object({
+  fulfillment: z.enum(["pickup", "delivery", "provincia"]),
+  subtotal: z.number().min(0).optional().default(0),
+  id_sucursal: z.number().int().positive().optional().nullable(),
+  id_zona: z.number().int().positive().optional().nullable(),
+  id_destino: z.number().int().positive().optional().nullable(),
+  lat: z.number().optional().nullable(),
+  lng: z.number().optional().nullable(),
+});
+
+export const ecommerceBuyerRegisterSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6).max(128),
+  nombre: z.string().min(2).max(160),
+  telefono: z.string().max(40).optional().nullable(),
+});
+
+export const ecommerceBuyerLoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+});
+
+export const ecommerceBuyerProfileSchema = z.object({
+  nombre: z.string().min(2).max(160),
+  telefono: z.string().max(40).optional().nullable(),
+});
+
+export const ecommerceBuyerPasswordSchema = z.object({
+  password_actual: z.string().min(1),
+  password_nueva: z.string().min(6).max(128),
+});
+
+export const ecommercePickupEstadoSchema = z.object({
+  estado_fulfillment: z.enum([
+    "pago_confirmado",
+    "preparando",
+    "listo_recoger",
+    "en_camino",
+    "entregado",
+    "cancelado",
+  ]),
+  notas: z.string().max(500).optional().nullable(),
+});
+
+export const ecommercePickupValidarSchema = z
+  .object({
+    token: z.string().min(8).optional(),
+    codigo: z.string().min(4).optional(),
+    id_sucursal: z.coerce.number().int().positive().optional().nullable(),
+  })
+  .refine((d) => Boolean(d.token || d.codigo), {
+    message: "Indica token o código",
+  });
+
+export const ecommercePickupConfirmarSchema = z.object({
+  delivery_method: z.enum(["qr_scan", "manual_code", "admin_panel"]).optional(),
 });
 
 export const ecommerceSucursalSchema = z.object({
@@ -200,4 +320,68 @@ export const ecommerceTiendaUpdateSchema = z.object({
 export const ecommerceBrandUploadSchema = z.object({
   file: z.string().min(1),
   fileName: z.string().max(180).optional().nullable(),
+});
+
+export const ecommerceReviewConfigSchema = z.object({
+  activo: z.boolean().optional(),
+  allow_producto: z.boolean().optional(),
+  allow_sucursal: z.boolean().optional(),
+  allow_pedido: z.boolean().optional(),
+  allow_general: z.boolean().optional(),
+  solo_compradores: z.boolean().optional(),
+  moderacion: z.enum(["auto", "manual"]).optional(),
+  allow_imagenes: z.boolean().optional(),
+  max_imagenes: z.number().int().min(0).max(20).optional(),
+  allow_respuestas: z.boolean().optional(),
+  solicitar_post_entrega: z.boolean().optional(),
+  dias_espera_solicitud: z.number().int().min(0).max(90).optional(),
+});
+
+export const ecommerceReviewCreateSchema = z.object({
+  tipo: z.enum(["producto", "sucursal", "pedido", "general"]),
+  rating: z.number().int().min(1).max(5),
+  titulo: z.string().max(160).optional().nullable(),
+  comentario: z.string().max(4000).optional().nullable(),
+  tema_general: z
+    .enum([
+      "producto",
+      "atencion",
+      "sucursal",
+      "delivery",
+      "recojo",
+      "ecommerce",
+      "pago",
+      "sugerencia",
+      "otro",
+    ])
+    .optional()
+    .nullable(),
+  ratings_json: z.record(z.number().int().min(1).max(5)).optional().nullable(),
+  id_producto: z.number().int().positive().optional().nullable(),
+  id_variante: z.number().int().positive().optional().nullable(),
+  id_orden: z.number().int().positive().optional().nullable(),
+  id_sucursal: z.number().int().positive().optional().nullable(),
+  media: z
+    .array(
+      z.object({
+        url: z.string().min(1).max(500),
+        file_id: z.string().max(120).optional().nullable(),
+      })
+    )
+    .max(10)
+    .optional()
+    .nullable(),
+});
+
+export const ecommerceReviewMediaUploadSchema = z.object({
+  data_base64: z.string().min(1),
+  file_name: z.string().max(180).optional().nullable(),
+});
+
+export const ecommerceReviewEstadoSchema = z.object({
+  estado: z.enum(["pendiente", "publicada", "ocultada", "rechazada"]),
+});
+
+export const ecommerceReviewReplySchema = z.object({
+  cuerpo: z.string().min(1).max(4000),
 });

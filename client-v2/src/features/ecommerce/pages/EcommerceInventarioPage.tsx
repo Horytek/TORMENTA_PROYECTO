@@ -9,6 +9,7 @@ import {
   adminListMovimientos,
   adminListSucursales,
 } from "../api/ecommerce";
+import { useEcommerceAuthStore } from "../store/useEcommerceAuthStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -233,6 +234,7 @@ function patchMatrizCache(
 
 export default function EcommerceInventarioPage() {
   const qc = useQueryClient();
+  const tid = useEcommerceAuthStore((s) => s.user?.id_tienda);
   const [filtroSucursal, setFiltroSucursal] = useState<number | "">("");
   const [busqueda, setBusqueda] = useState("");
   const [busquedaAplicada, setBusquedaAplicada] = useState("");
@@ -240,12 +242,20 @@ export default function EcommerceInventarioPage() {
   const [movOpen, setMovOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const queryKeyMatriz = useMemo(
-    () => ["ecom-inv-matriz", filtroSucursal, page, busquedaAplicada] as const,
-    [filtroSucursal, page, busquedaAplicada]
+    () => ["ecom-inv-matriz", tid, filtroSucursal, page, busquedaAplicada] as const,
+    [tid, filtroSucursal, page, busquedaAplicada]
   );
 
-  const resumenQ = useQuery({ queryKey: ["ecom-inv-resumen"], queryFn: adminInventarioResumen });
-  const sucQ = useQuery({ queryKey: ["ecom-sucursales"], queryFn: adminListSucursales });
+  const resumenQ = useQuery({
+    queryKey: ["ecom-inv-resumen", tid],
+    queryFn: adminInventarioResumen,
+    enabled: Boolean(tid),
+  });
+  const sucQ = useQuery({
+    queryKey: ["ecom-sucursales", tid],
+    queryFn: () => adminListSucursales(),
+    enabled: Boolean(tid),
+  });
   const matrizQ = useQuery({
     queryKey: queryKeyMatriz,
     queryFn: () =>
@@ -257,8 +267,13 @@ export default function EcommerceInventarioPage() {
       }),
     placeholderData: keepPreviousData,
     refetchOnWindowFocus: false,
+    enabled: Boolean(tid),
   });
-  const movQ = useQuery({ queryKey: ["ecom-inv-mov"], queryFn: () => adminListMovimientos(30) });
+  const movQ = useQuery({
+    queryKey: ["ecom-inv-mov", tid],
+    queryFn: () => adminListMovimientos(30),
+    enabled: Boolean(tid),
+  });
 
   const kpis = resumenQ.data?.data;
   const matriz = (matrizQ.data?.data || []) as MatrizRow[];
@@ -295,7 +310,7 @@ export default function EcommerceInventarioPage() {
       <div>
         <h1 className="text-2xl font-semibold">Inventario</h1>
         <p className="text-sm text-stone-500">
-          Agrupado por producto — ajusta stock por sucursal con +/− o click en la cantidad
+          Stock por producto y sucursal — ajusta con +/− o click en la cantidad
         </p>
       </div>
 
@@ -407,11 +422,6 @@ export default function EcommerceInventarioPage() {
                               <tr key={rowKey(r)} className="border-t border-stone-100">
                                 <td className="px-3 py-2.5">
                                   <span className="font-medium">{r.sucursal_nombre}</span>
-                                  {(r.talla || r.color) && (
-                                    <span className="ml-2 text-xs text-stone-400">
-                                      {[r.talla, r.color].filter(Boolean).join(" · ")}
-                                    </span>
-                                  )}
                                 </td>
                                 <td className="px-3 py-2.5">
                                   <StockCell

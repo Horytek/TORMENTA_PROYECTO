@@ -12,13 +12,16 @@ import { StoreFooter } from "../components/vitrina/StoreFooter";
 import { ProductRail } from "../components/vitrina/ProductRail";
 import { useStorefrontCatalog } from "../components/vitrina/hooks/useStorefrontCatalog";
 import { ProductSpecs, StockBadge, StoreSkeleton } from "../components/vitrina/detail/ProductSpecs";
+import { FavoriteHeartButton } from "../components/vitrina/FavoriteHeartButton";
 import { StickyBuyBar } from "../components/vitrina/quick/StickyBuyBar";
 import { CartFab } from "../components/vitrina/quick/CartFab";
 import { ProductAvailabilityPanel } from "../design/ProductAvailabilityPanel";
 import { WhatsAppAssist } from "../design/WhatsAppAssist";
+import { ProductReviewsSection } from "../components/reviews/ProductReviewsSection";
 import {
   formatPen,
   getCategoria,
+  getMarca,
   type BranchAvailability,
   type StoreImagen,
   type StoreProducto,
@@ -128,6 +131,7 @@ export default function StoreProductPage() {
   }
 
   const cat = getCategoria(producto);
+  const marca = getMarca(producto);
   const activeImg = galeria[imgIdx] || galeria[0];
 
   return (
@@ -172,7 +176,10 @@ export default function StoreProductPage() {
                 ))}
               </div>
             )}
-            <div className="flex-1 aspect-square bg-[var(--vitrina-fog)] overflow-hidden rounded-[var(--store-radius-lg)]">
+            <div className="flex-1 aspect-square bg-[var(--vitrina-fog)] overflow-hidden rounded-[var(--store-radius-lg)] relative">
+              <div className="absolute top-3 right-3 z-10">
+                <FavoriteHeartButton id_producto={producto.id_producto} />
+              </div>
               {activeImg ? (
                 <img src={activeImg} alt={producto.nombre} className="size-full object-cover" />
               ) : (
@@ -182,7 +189,15 @@ export default function StoreProductPage() {
           </div>
 
           <div className="flex flex-col gap-4">
-            {cat && <span className="text-[11px] uppercase tracking-wider store-muted">{cat}</span>}
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] uppercase tracking-wider store-muted">
+              {marca && (
+                <span className="font-semibold" style={{ color: "var(--vitrina-accent)" }}>
+                  {marca}
+                </span>
+              )}
+              {marca && cat && <span aria-hidden>·</span>}
+              {cat && <span>{cat}</span>}
+            </div>
             <h1 className="vitrina-display text-4xl sm:text-5xl">{producto.nombre}</h1>
             <p className="text-2xl font-semibold" style={{ color: "var(--vitrina-accent)" }}>
               {formatPen(Number(producto.precio))}
@@ -246,6 +261,8 @@ export default function StoreProductPage() {
         inCart={inCart}
         slug={slug}
       />
+
+      <ProductReviewsSection slug={slug} id_producto={productId} />
 
       <ProductRail
         title="También te puede interesar"
