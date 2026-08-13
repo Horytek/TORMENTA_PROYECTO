@@ -253,7 +253,9 @@ export const listFavoritos = async (req, res) => {
     connection = await getEcommerceConnection();
     const [rows] = await connection.query(
       `SELECT p.id_producto, p.nombre, p.precio, p.stock, p.activo, p.attrs_json,
-              (SELECT url FROM producto_imagen WHERE id_producto = p.id_producto ORDER BY orden LIMIT 1) AS imagen_url,
+              (SELECT url FROM producto_imagen i
+               WHERE i.id_producto = p.id_producto AND i.id_tienda = p.id_tienda AND i.tipo = 'galeria'
+               ORDER BY i.es_principal DESC, i.orden ASC LIMIT 1) AS imagen_url,
               f.created_at
        FROM ecom_favorito f
        INNER JOIN producto p ON p.id_producto = f.id_producto AND p.id_tienda = f.id_tienda

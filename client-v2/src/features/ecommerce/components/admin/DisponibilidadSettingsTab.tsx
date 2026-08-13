@@ -48,11 +48,21 @@ export function DisponibilidadSettingsTab() {
         metodo_default: form.metodo_default,
         umbral_consulta: Number(form.umbral_consulta),
         umbral_agotado: Number(form.umbral_agotado),
+        umbral_limitado: Number(form.umbral_limitado),
+        umbral_confirmacion: Number(form.umbral_confirmacion),
         mostrar_boton_producto: form.mostrar_boton_producto,
         mostrar_boton_variante: form.mostrar_boton_variante,
         mensaje_confianza: form.mensaje_confianza,
+        mensaje_leyenda_stock: form.mensaje_leyenda_stock,
         mensaje_intro: form.mensaje_intro,
         validez_confirmacion_min: Number(form.validez_confirmacion_min),
+        reserva_checkout_min: Number(form.reserva_checkout_min),
+        permitir_checkout_parcial: Boolean(form.permitir_checkout_parcial),
+        solicitudes_activas: Boolean(form.solicitudes_activas),
+        reserva_al_aprobar: Boolean(form.reserva_al_aprobar),
+        reserva_minutos: Number(form.reserva_minutos),
+        permitir_aprobacion_parcial: Boolean(form.permitir_aprobacion_parcial),
+        congelar_precio_al_aprobar: Boolean(form.congelar_precio_al_aprobar),
       }),
     onSuccess: () => {
       toast.success("Configuración de disponibilidad guardada");
@@ -68,6 +78,8 @@ export function DisponibilidadSettingsTab() {
     variantes?: { id_variante: number; nombre: string; sku?: string | null; consultas: number }[];
     sucursales?: { id_sucursal: number; nombre: string | null; consultas: number }[];
     alerta?: { id_producto: number; nombre: string; consultas: number; stock: number }[];
+    reservas_por_expirar?: { id_reserva: number; producto_nombre?: string; expires_at?: string }[];
+    intentos_sin_stock?: number;
   } | undefined;
   const telefonoGeneral = (cfgQ.data?.data as { telefono_general?: string | null } | undefined)?.telefono_general;
 
@@ -105,7 +117,7 @@ export function DisponibilidadSettingsTab() {
           </select>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div>
             <Label>Umbral de consulta</Label>
             <Input
@@ -115,7 +127,19 @@ export function DisponibilidadSettingsTab() {
               onChange={(e) => setForm({ ...form, umbral_consulta: Number(e.target.value) || 0 })}
             />
             <p className="text-[11px] text-stone-400 mt-1">
-              Stock 1–{form.umbral_consulta || 0} → consultar. Por encima → compra directa.
+              Stock ≤ {form.umbral_consulta || 0} → consultar (si la consulta está activa).
+            </p>
+          </div>
+          <div>
+            <Label>Umbral limitado</Label>
+            <Input
+              className="mt-1 min-h-11"
+              inputMode="numeric"
+              value={form.umbral_limitado}
+              onChange={(e) => setForm({ ...form, umbral_limitado: Number(e.target.value) || 0 })}
+            />
+            <p className="text-[11px] text-stone-400 mt-1">
+              Stock ≤ {form.umbral_limitado || 0} → disponibilidad limitada (aún permite carrito).
             </p>
           </div>
           <div>
@@ -139,10 +163,93 @@ export function DisponibilidadSettingsTab() {
               }
             />
             <p className="text-[11px] text-stone-400 mt-1">
-              Para reservas futuras. Abrir WhatsApp no reserva stock.
+              Tiempo de validez de la autorización tras aprobar una solicitud.
             </p>
           </div>
         </div>
+
+        <div className="rounded-lg border border-teal-100 bg-teal-50/50 p-3 space-y-3">
+          <h3 className="text-sm font-medium text-teal-900">Solicitudes de confirmación</h3>
+          <label className="flex items-center justify-between gap-3 min-h-11 rounded-lg border border-teal-100 bg-white px-3">
+            <span className="text-sm">Activar solicitudes de disponibilidad</span>
+            <Switch
+              checked={form.solicitudes_activas !== false}
+              onCheckedChange={(v) => setForm({ ...form, solicitudes_activas: v })}
+            />
+          </label>
+          <div>
+            <Label>Umbral de confirmación (stock bajo)</Label>
+            <Input
+              className="mt-1 min-h-11"
+              inputMode="numeric"
+              value={form.umbral_confirmacion}
+              onChange={(e) =>
+                setForm({ ...form, umbral_confirmacion: Number(e.target.value) || 0 })
+              }
+            />
+          </div>
+          <div>
+            <Label>Minutos de reserva al aprobar</Label>
+            <Input
+              className="mt-1 min-h-11"
+              inputMode="numeric"
+              value={form.reserva_minutos}
+              onChange={(e) => setForm({ ...form, reserva_minutos: Number(e.target.value) || 30 })}
+            />
+          </div>
+          <label className="flex items-center justify-between gap-3 min-h-11 rounded-lg border border-teal-100 bg-white px-3">
+            <span className="text-sm">Reservar stock al aprobar</span>
+            <Switch
+              checked={form.reserva_al_aprobar !== false}
+              onCheckedChange={(v) => setForm({ ...form, reserva_al_aprobar: v })}
+            />
+          </label>
+          <label className="flex items-center justify-between gap-3 min-h-11 rounded-lg border border-teal-100 bg-white px-3">
+            <span className="text-sm">Permitir aprobación parcial</span>
+            <Switch
+              checked={form.permitir_aprobacion_parcial !== false}
+              onCheckedChange={(v) => setForm({ ...form, permitir_aprobacion_parcial: v })}
+            />
+          </label>
+          <label className="flex items-center justify-between gap-3 min-h-11 rounded-lg border border-teal-100 bg-white px-3">
+            <span className="text-sm">Congelar precio al aprobar</span>
+            <Switch
+              checked={Boolean(form.congelar_precio_al_aprobar)}
+              onCheckedChange={(v) => setForm({ ...form, congelar_precio_al_aprobar: v })}
+            />
+          </label>
+          <p className="text-xs text-teal-800">
+            Operadores de tienda atienden solicitudes en Pedidos → Solicitudes de stock.
+          </p>
+        </div>
+
+        <div>
+          <Label>Reserva en checkout (min)</Label>
+          <Input
+            className="mt-1 min-h-11 max-w-xs"
+            inputMode="numeric"
+            value={form.reserva_checkout_min}
+            onChange={(e) =>
+              setForm({ ...form, reserva_checkout_min: Number(e.target.value) || 15 })
+            }
+          />
+          <p className="text-[11px] text-stone-400 mt-1">
+            Tras este tiempo, órdenes pending abandonadas liberan el stock reservado (cron cada 5 min).
+          </p>
+        </div>
+
+        <label className="flex items-center justify-between gap-3 min-h-11 rounded-lg border border-stone-100 px-3">
+          <span>
+            <span className="text-sm block">Checkout parcial (carrito mixto)</span>
+            <span className="text-[11px] text-stone-400">
+              Permite pagar solo ítems de compra directa y dejar los de consulta en el carrito
+            </span>
+          </span>
+          <Switch
+            checked={Boolean(form.permitir_checkout_parcial)}
+            onCheckedChange={(v) => setForm({ ...form, permitir_checkout_parcial: v })}
+          />
+        </label>
 
         <label className="flex items-center justify-between gap-3 min-h-11 rounded-lg border border-stone-100 px-3">
           <span className="text-sm">Mostrar botón de WhatsApp en productos</span>
@@ -166,6 +273,17 @@ export function DisponibilidadSettingsTab() {
             value={form.mensaje_confianza}
             onChange={(e) => setForm({ ...form, mensaje_confianza: e.target.value })}
           />
+        </div>
+        <div>
+          <Label>Leyenda de stock</Label>
+          <Textarea
+            className="mt-1 min-h-20"
+            value={form.mensaje_leyenda_stock}
+            onChange={(e) => setForm({ ...form, mensaje_leyenda_stock: e.target.value })}
+          />
+          <p className="text-[11px] text-stone-400 mt-1">
+            Texto de respaldo en estado «disponibilidad limitada» si no hay mensaje de confianza.
+          </p>
         </div>
         <div>
           <Label>Inicio del mensaje de WhatsApp</Label>
@@ -215,6 +333,22 @@ export function DisponibilidadSettingsTab() {
           </p>
         </div>
         <p className="text-2xl font-semibold">{stats?.total ?? 0}</p>
+        {(stats?.intentos_sin_stock ?? 0) > 0 && (
+          <p className="text-sm text-red-700">
+            Intentos de compra sin stock (7 días): {stats?.intentos_sin_stock}
+          </p>
+        )}
+        {!!stats?.reservas_por_expirar?.length && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-1">
+            <p className="text-sm font-medium text-amber-900">Reservas por expirar (&lt; 30 min)</p>
+            {stats.reservas_por_expirar.map((r) => (
+              <p key={r.id_reserva} className="text-sm text-amber-800">
+                #{r.id_reserva} · {r.producto_nombre || "Producto"} · expira{" "}
+                {r.expires_at ? new Date(r.expires_at).toLocaleString() : "—"}
+              </p>
+            ))}
+          </div>
+        )}
         {!!stats?.alerta?.length && (
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-1">
             <p className="text-sm font-medium text-amber-900">Alta demanda / baja disponibilidad</p>

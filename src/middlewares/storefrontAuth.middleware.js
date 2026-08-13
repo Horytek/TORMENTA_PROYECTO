@@ -77,12 +77,68 @@ export const storefrontAuth = async (req, res, next) => {
   }
 };
 
+/** Auth opcional: si hay JWT buyer válido, setea req.id_cliente; si no, sigue sin bloquear. */
+export const storefrontAuthOptional = async (req, _res, next) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(" ")[1];
+  if (!token) return next();
+
+  let connection;
+  try {
+    let decoded;
+    try {
+      decoded = jwt.verify(token, TOKEN_SECRET, {
+        algorithms: ["HS256"],
+        audience: "horytek-ecommerce-buyer",
+        issuer: "horytek-backend",
+      });
+    } catch {
+      return next();
+    }
+
+    const id_cliente = Number(decoded.sub);
+    const id_tienda = Number(decoded.ten ?? decoded.id_tienda);
+    if (!Number.isFinite(id_cliente) || !Number.isFinite(id_tienda)) return next();
+
+    connection = await getEcommerceConnection();
+    const [[cliente]] = await connection.query(
+      `SELECT c.id_cliente, c.id_tienda, c.email, c.nombre, c.telefono, c.activo,
+              t.slug, t.estado AS tienda_estado, t.nombre AS tienda_nombre
+       FROM ecom_cliente c
+       INNER JOIN tienda t ON t.id_tienda = c.id_tienda
+       WHERE c.id_cliente = ? AND c.id_tienda = ? LIMIT 1`,
+      [id_cliente, id_tienda]
+    );
+    if (!cliente || !cliente.activo || cliente.tienda_estado !== "active") return next();
+    const slugParam = req.params.slug;
+    if (slugParam && slugParam !== cliente.slug) return next();
+
+    req.id_tienda = id_tienda;
+    req.id_cliente = id_cliente;
+    req.storefrontUser = {
+      id_cliente,
+      id_tienda,
+      email: cliente.email,
+      nombre: cliente.nombre,
+      telefono: cliente.telefono,
+      slug: cliente.slug,
+      tienda_nombre: cliente.tienda_nombre,
+    };
+    return next();
+  } catch (err) {
+    console.error("[storefrontAuthOptional]", err.message);
+    return next();
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 /** Resuelve tienda por slug sin auth (para register/login) */
 export async function resolveTiendaBySlug(slug) {
   const connection = await getEcommerceConnection();
   try {
     const [[tienda]] = await connection.query(
-      `SELECT id_tienda, slug, nombre, estado FROM tienda WHERE slug = ? LIMIT 1`,
+      `SELECT id_tienda, slug, nombre, estado, theme_json FROM tienda WHERE slug = ? LIMIT 1`,
       [slug]
     );
     return tienda || null;

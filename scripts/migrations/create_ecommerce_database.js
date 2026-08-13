@@ -196,9 +196,11 @@ const ejecutar = async () => {
           file_id VARCHAR(128) NULL,
           orden INT NOT NULL DEFAULT 0,
           es_principal TINYINT(1) NOT NULL DEFAULT 0,
+          tipo ENUM('galeria','informativa') NOT NULL DEFAULT 'galeria',
           created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
           PRIMARY KEY (id_imagen),
           KEY idx_img_prod (id_tienda, id_producto),
+          KEY idx_img_tipo (id_tienda, id_producto, tipo),
           CONSTRAINT fk_img_producto FOREIGN KEY (id_producto) REFERENCES producto (id_producto) ON DELETE CASCADE,
           CONSTRAINT fk_img_tienda FOREIGN KEY (id_tienda) REFERENCES tienda (id_tienda) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci

@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
-import { User, Package, Heart, Settings, LogOut, MessageSquareText } from "lucide-react";
+import { User, Package, Heart, Settings, LogOut, MessageSquareText, ClipboardList } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { buyerMe, getStore } from "../api/ecommerce";
 import { useStorefrontAuthStore } from "../store/useStorefrontAuthStore";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 const NAV = [
   { to: "", label: "Resumen", icon: User, end: true },
   { to: "pedidos", label: "Mis pedidos", icon: Package },
+  { to: "solicitudes", label: "Solicitudes", icon: ClipboardList },
   { to: "favoritos", label: "Favoritos", icon: Heart },
   { to: "opiniones", label: "Mis opiniones", icon: MessageSquareText },
   { to: "perfil", label: "Perfil", icon: Settings },

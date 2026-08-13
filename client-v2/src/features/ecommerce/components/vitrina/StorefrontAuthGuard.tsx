@@ -1,32 +1,28 @@
 import { Navigate, useLocation, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useStorefrontAuthStore } from "../../store/useStorefrontAuthStore";
-import { buyerMe } from "../../api/ecommerce";
+import { refreshStorefrontSession } from "../../utils/refreshStorefrontSession";
 
 export function StorefrontAuthGuard({ children }: { children: React.ReactNode }) {
   const { slug = "" } = useParams();
   const location = useLocation();
-  const { token, user, hydrate, setSession, clear } = useStorefrontAuthStore();
+  const token = useStorefrontAuthStore((s) => s.token);
+  const user = useStorefrontAuthStore((s) => s.user);
+  const hydrate = useStorefrontAuthStore((s) => s.hydrate);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (slug) hydrate(slug);
-    const t = useStorefrontAuthStore.getState().token;
-    if (!t) {
-      setReady(true);
-      return;
-    }
-    buyerMe(slug)
-      .then((res) => {
-        if (res.success && res.data?.user) {
-          setSession(t, res.data.user, slug);
-        } else {
-          clear();
-        }
-      })
-      .catch(() => clear())
-      .finally(() => setReady(true));
-  }, [slug, hydrate, setSession, clear]);
+    let cancelled = false;
+    setReady(false);
+    (async () => {
+      if (slug) hydrate(slug);
+      await refreshStorefrontSession(slug);
+      if (!cancelled) setReady(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [slug, hydrate]);
 
   if (!ready) return null;
   if (!token || !user) {

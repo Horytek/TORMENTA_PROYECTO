@@ -563,19 +563,27 @@ export async function resolveVarianteYSnapshot(connection, id_tienda, id_product
       wanted[String(d.id_atributo)] = Number(idv);
     }
     const [vars] = await connection.query(
-      `SELECT id_variante, attrs_json FROM ecom_variante
+      `SELECT id_variante, attrs_json, color, talla FROM ecom_variante
        WHERE id_producto = ? AND id_tienda = ? AND activo = 1`,
       [id_producto, id_tienda]
     );
+    const withAttrs = [];
     for (const v of vars) {
       const json = parseJson(v.attrs_json) || {};
-      const ok = Object.entries(wanted).every(
-        ([k, val]) => Number(json[k]) === Number(val)
-      );
-      if (ok) {
-        id_variante = v.id_variante;
-        break;
+      if (json && typeof json === "object" && Object.keys(json).length) {
+        withAttrs.push(v);
+        const ok = Object.entries(wanted).every(
+          ([k, val]) => Number(json[k]) === Number(val)
+        );
+        if (ok) {
+          id_variante = v.id_variante;
+          break;
+        }
       }
+    }
+    // Atributo marcado es_variante pero aún no hay cartesianas: usar variante default (stock global).
+    if (!id_variante && withAttrs.length === 0 && vars.length) {
+      id_variante = vars[0].id_variante;
     }
     if (!id_variante) {
       throw Object.assign(new Error("Combinación no disponible."), { status: 400 });

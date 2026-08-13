@@ -1,8 +1,8 @@
 import { useMemo, useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { SlidersHorizontal, Store } from "lucide-react";
-import { getCatalogoPublico } from "../api/catalogoPublico";
+import { getCatalogoPublico, getStoreBySlug } from "../api/catalogoPublico";
 import { construirEnlaceWhatsApp, formatearMensajePedido, normalizarTelefono } from "../lib/whatsapp";
 import { CatalogShell } from "../components/CatalogShell";
 import { CatalogHeader } from "../components/CatalogHeader";
@@ -14,10 +14,20 @@ import { ProductGrid, ProductGridSkeleton } from "../components/ProductGrid";
 import { CartSheet } from "../components/CartSheet";
 import { CheckoutBar } from "../components/CheckoutBar";
 import { QuickViewModal } from "../components/QuickViewModal";
-import type { CarritoItem, CatalogoProducto } from "../types";
+import { useCatalogCartStore } from "../store/useCatalogCartStore";
+import { useCatalogBranchStore } from "../store/useCatalogBranchStore";
+import type { CarritoItem, CatalogoProducto, CatalogoPublico } from "../types";
 
-export default function CatalogoPublicoPage() {
+type PageProps = { slugOverride?: string; storeBootstrap?: CatalogoPublico | null };
+
+export default function CatalogoPublicoPage({ slugOverride, storeBootstrap }: PageProps = {}) {
   const { idTenant } = useParams<{ idTenant: string }>();
+  const navigate = useNavigate();
+  const slug = slugOverride || storeBootstrap?.store?.slug;
+  const setCartSlug = useCatalogCartStore((st) => st.setSlug);
+  const syncAdd = useCatalogCartStore((st) => st.addItem);
+  const id_sucursal = useCatalogBranchStore((st) => st.id_sucursal);
+  const setSucursal = useCatalogBranchStore((st) => st.setSucursal);
 
   const [busqueda, setBusqueda] = useState("");
   const [filters, setFilters] = useState<CatalogFiltersState>({
@@ -35,11 +45,22 @@ export default function CatalogoPublicoPage() {
   const [quickViewProducto, setQuickViewProducto] = useState<CatalogoProducto | null>(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ["catalogo-publico", idTenant],
-    queryFn: () => getCatalogoPublico(idTenant!),
-    enabled: !!idTenant,
+  useEffect(() => { if (slug) setCartSlug(slug); }, [slug, setCartSlug]);
+
+  const { data: fetched, isLoading, isError } = useQuery({
+    queryKey: ["catalogo-publico", slug || idTenant],
+    queryFn: () => (slug ? getStoreBySlug(slug) : getCatalogoPublico(idTenant!)),
+    enabled: !storeBootstrap && (!!slug || !!idTenant),
   });
+  const data = storeBootstrap || fetched;
+
+  useEffect(() => {
+    if (!id_sucursal && data?.sucursales?.[0]) setSucursal(data.sucursales[0].id_sucursal);
+  }, [data?.sucursales, id_sucursal, setSucursal]);
+
+  useEffect(() => {
+    if (data?.negocio?.nombre) document.title = `${data.negocio.nombre} · Tienda`;
+  }, [data?.negocio?.nombre]);
 
   useEffect(() => {
     setPaginaActual(1);
@@ -151,6 +172,17 @@ export default function CatalogoPublicoPage() {
       }
       return [...prev, { producto, cantidad: 1 }];
     });
+    if (slug) syncAdd(producto);
+  };
+
+  const openProduct = (p: CatalogoProducto) => {
+    if (slug) navigate(`/c/${slug}/p/${p.slug || p.codigo}`);
+    else setQuickViewProducto(p);
+  };
+
+  const openCartOrCheckout = () => {
+    if (slug) navigate(`/c/${slug}/carrito`);
+    else setCarritoAbierto(true);
   };
 
   const cambiarCantidad = (codigo: number, delta: number) => {
@@ -198,7 +230,7 @@ export default function CatalogoPublicoPage() {
     document.getElementById("cx-catalogo")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  if (isLoading) {
+  if (isLoading && !storeBootstrap) {
     return (
       <CatalogShell>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 space-y-8">
@@ -209,7 +241,7 @@ export default function CatalogoPublicoPage() {
     );
   }
 
-  if (isError || !data) {
+  if ((isError && !storeBootstrap) || !data) {
     return (
       <CatalogShell>
         <div className="flex min-h-dvh flex-col items-center justify-center gap-3 px-4 text-center">
@@ -239,7 +271,7 @@ export default function CatalogoPublicoPage() {
 
   const chips = [
     busqueda.trim()
-      ? { key: "q", label: `“${busqueda}”`, onClear: () => setBusqueda("") }
+      ? { key: "q", label: `"${busqueda}"`, onClear: () => setBusqueda("") }
       : null,
     filters.categoria
       ? { key: "cat", label: filters.categoria, onClear: () => setFilters((s) => ({ ...s, categoria: null })) }
@@ -277,7 +309,7 @@ export default function CatalogoPublicoPage() {
         onBusqueda={setBusqueda}
         cartCount={totalItemsCarrito}
         cartTotal={totalMontoCarrito}
-        onOpenCart={() => setCarritoAbierto(true)}
+        onOpenCart={openCartOrCheckout}
         hasWhatsApp={hasWhatsApp}
       />
 
@@ -289,6 +321,21 @@ export default function CatalogoPublicoPage() {
         hasWhatsApp={hasWhatsApp}
         previewImages={previewImages}
       />
+
+      {(data.sucursales?.length ?? 0) > 0 && (
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-3">
+          <select
+            value={id_sucursal ?? ""}
+            onChange={(e) => setSucursal(Number(e.target.value) || null)}
+            className="h-9 text-sm border cx-hairline rounded-full px-3"
+          >
+            <option value="">Todas las sucursales</option>
+            {data.sucursales!.map((su) => (
+              <option key={su.id_sucursal} value={su.id_sucursal}>{su.nombre}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <CategoryVisualRail
         categorias={categoriasConCount}
@@ -347,7 +394,7 @@ export default function CatalogoPublicoPage() {
               productos={paginados}
               carrito={carrito}
               onAdd={agregar}
-              onQuickView={setQuickViewProducto}
+              onQuickView={openProduct}
               hasFilters={numFiltrosActivos > 0}
               emptyAction={limpiarFiltros}
             />
@@ -364,8 +411,8 @@ export default function CatalogoPublicoPage() {
       <CheckoutBar
         itemCount={totalItemsCarrito}
         total={totalMontoCarrito}
-        enlaceWhatsApp={enlaceWhatsApp}
-        onOpenCart={() => setCarritoAbierto(true)}
+        enlaceWhatsApp={slug ? null : enlaceWhatsApp}
+        onOpenCart={openCartOrCheckout}
       />
 
       <CartSheet

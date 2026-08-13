@@ -14,15 +14,17 @@ import {
   confirmarVenta,
   registrarMovimiento,
   getInventario,
-  ensureInventarioProducto,
-  ensureInventarioTienda,
   ensureInventarioSucursal,
 } from "../services/ecommerce/InventoryService.js";
 import {
   crearTransferencia,
   cambiarEstadoTransferencia,
 } from "../services/ecommerce/TransferService.js";
-import { parseConfig, buildDisponibilidad } from "../services/ecommerce/DisponibilidadService.js";
+import {
+  parseConfig,
+  buildDisponibilidad,
+  productHasSeleccionAttrs,
+} from "../services/ecommerce/DisponibilidadService.js";
 
 // ─── Público ─────────────────────────────────────────────────────────────
 
@@ -70,6 +72,7 @@ export const searchStore = async (req, res) => {
       `SELECT p.id_producto, p.nombre, p.precio, p.categoria, p.sku,
          (SELECT url FROM producto_imagen i
           WHERE i.id_producto = p.id_producto AND i.id_tienda = p.id_tienda
+            AND i.tipo = 'galeria'
           ORDER BY i.es_principal DESC, i.orden ASC LIMIT 1) AS imagen_url
        FROM producto p
        WHERE p.id_tienda = ? AND p.activo = 1
@@ -127,6 +130,11 @@ export const getProductAvailability = async (req, res) => {
     }
     const sucursales = await listSucursalesActivas(connection, tienda.id_tienda);
     const dispCfg = parseConfig(tienda.theme_json);
+    const hasSeleccion = await productHasSeleccionAttrs(
+      connection,
+      tienda.id_tienda,
+      producto.id_producto
+    );
     const availability = [];
     for (const s of sucursales) {
       const variantes = await getStockPorProductoSucursal(
@@ -136,13 +144,14 @@ export const getProductAvailability = async (req, res) => {
         s.id_sucursal
       );
       const disponible = variantes.reduce((acc, v) => acc + v.disponible, 0);
+      const extras = { hasSeleccionAttrs: hasSeleccion };
       availability.push({
         sucursal: mapPublicSucursal(s),
         disponible,
-        disponibilidad: buildDisponibilidad(disponible, producto.attrs_json, dispCfg),
+        disponibilidad: buildDisponibilidad(disponible, producto.attrs_json, dispCfg, extras),
         variantes: variantes.map((v) => ({
           ...v,
-          disponibilidad: buildDisponibilidad(v.disponible, producto.attrs_json, dispCfg),
+          disponibilidad: buildDisponibilidad(v.disponible, producto.attrs_json, dispCfg, extras),
         })),
       });
     }
@@ -342,8 +351,7 @@ export const adminInventarioMatriz = async (req, res) => {
   let connection;
   try {
     connection = await getEcommerceConnection();
-    // Materializa stock producto×sucursal si faltaba (idempotente).
-    await ensureInventarioTienda(connection, req.id_tienda);
+    // No backfill en lectura: ensureInventarioProducto/Sucursal al crear; matriz solo consulta.
 
     let where = ` WHERE p.id_tienda = ? AND p.activo = 1 AND s.activo = 1`;
     const params = [req.id_tienda];

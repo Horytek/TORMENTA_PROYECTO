@@ -38,9 +38,13 @@ import {
 import { loadUserAccess, resolveSucursalFilter, assertOrdenSucursal } from "../services/ecommerce/RbacService.js";
 import {
   parseConfig,
+  parseJsonSafe,
   attachDisponibilidad,
   buildDisponibilidad,
+  registrarIntentoSinStock,
+  productHasSeleccionAttrs,
 } from "../services/ecommerce/DisponibilidadService.js";
+import { assertAutorizacionVigente } from "../services/ecommerce/SolicitudDisponibilidadService.js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FRONTEND = () => process.env.FRONTEND_URL || "http://localhost:5173";
@@ -710,6 +714,7 @@ export const listProductos = async (req, res) => {
       `SELECT p.*,
          (SELECT url FROM producto_imagen i
           WHERE i.id_producto = p.id_producto AND i.id_tienda = p.id_tienda
+            AND i.tipo = 'galeria'
           ORDER BY i.es_principal DESC, i.orden ASC LIMIT 1) AS imagen_url
        FROM producto p
        WHERE p.id_tienda = ?
@@ -838,7 +843,8 @@ export const deleteProducto = async (req, res) => {
 
 export const uploadProductoImagen = async (req, res) => {
   const id_producto = Number(req.params.id);
-  const { file, fileName } = req.body || {};
+  const { file, fileName, tipo: tipoRaw } = req.body || {};
+  const tipo = tipoRaw === "informativa" ? "informativa" : "galeria";
   if (!file) {
     return res.status(400).json({ success: false, message: "Archivo requerido (base64)." });
   }
@@ -865,13 +871,13 @@ export const uploadProductoImagen = async (req, res) => {
     }
 
     const [[count]] = await connection.query(
-      `SELECT COUNT(*) AS c FROM producto_imagen WHERE id_producto = ? AND id_tienda = ?`,
-      [id_producto, req.id_tienda]
+      `SELECT COUNT(*) AS c FROM producto_imagen
+       WHERE id_producto = ? AND id_tienda = ? AND tipo = ?`,
+      [id_producto, req.id_tienda, tipo]
     );
     connection.release();
     connection = null;
 
-    // Subida externa sin retener conexión del pool.
     const uploaded = await subirAImageKit({
       file,
       fileName: `ecom_${id_producto}_${Date.now()}.${extension}`,
@@ -879,12 +885,12 @@ export const uploadProductoImagen = async (req, res) => {
     });
 
     connection = await getEcommerceConnection();
-    const es_principal = count.c === 0 ? 1 : 0;
+    const es_principal = tipo === "galeria" && count.c === 0 ? 1 : 0;
     const [ins] = await connection.query(
       `INSERT INTO producto_imagen
-        (id_tienda, id_producto, url, file_id, orden, es_principal)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [req.id_tienda, id_producto, uploaded.url, uploaded.fileId, count.c, es_principal]
+        (id_tienda, id_producto, url, file_id, orden, es_principal, tipo)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [req.id_tienda, id_producto, uploaded.url, uploaded.fileId, count.c, es_principal, tipo]
     );
 
     return res.status(201).json({
@@ -894,6 +900,7 @@ export const uploadProductoImagen = async (req, res) => {
         url: uploaded.url,
         file_id: uploaded.fileId,
         es_principal: Boolean(es_principal),
+        tipo,
       },
     });
   } catch (error) {
@@ -906,15 +913,19 @@ export const uploadProductoImagen = async (req, res) => {
 
 export const listProductoImagenes = async (req, res) => {
   const id_producto = Number(req.params.id);
+  const tipo = req.query.tipo === "informativa" ? "informativa" : req.query.tipo === "galeria" ? "galeria" : null;
   let connection;
   try {
     connection = await getEcommerceConnection();
-    const [rows] = await connection.query(
-      `SELECT id_imagen, url, file_id, orden, es_principal, id_variante
-       FROM producto_imagen WHERE id_producto = ? AND id_tienda = ?
-       ORDER BY es_principal DESC, orden ASC, id_imagen ASC`,
-      [id_producto, req.id_tienda]
-    );
+    let sql = `SELECT id_imagen, url, file_id, orden, es_principal, id_variante, tipo
+       FROM producto_imagen WHERE id_producto = ? AND id_tienda = ?`;
+    const params = [id_producto, req.id_tienda];
+    if (tipo) {
+      sql += ` AND tipo = ?`;
+      params.push(tipo);
+    }
+    sql += ` ORDER BY es_principal DESC, orden ASC, id_imagen ASC`;
+    const [rows] = await connection.query(sql, params);
     return res.json({ success: true, data: rows });
   } catch (error) {
     console.error("[ecommerce.listImagenes]", error);
@@ -931,13 +942,20 @@ export const setProductoImagenPrincipal = async (req, res) => {
   try {
     connection = await getEcommerceConnection();
     const [[img]] = await connection.query(
-      `SELECT id_imagen FROM producto_imagen
+      `SELECT id_imagen, tipo FROM producto_imagen
        WHERE id_imagen = ? AND id_producto = ? AND id_tienda = ? LIMIT 1`,
       [id_imagen, id_producto, req.id_tienda]
     );
     if (!img) return res.status(404).json({ success: false, message: "Imagen no encontrada." });
+    if (img.tipo !== "galeria") {
+      return res.status(400).json({
+        success: false,
+        message: "Solo las imágenes de galería pueden ser principales.",
+      });
+    }
     await connection.query(
-      `UPDATE producto_imagen SET es_principal = 0 WHERE id_producto = ? AND id_tienda = ?`,
+      `UPDATE producto_imagen SET es_principal = 0
+       WHERE id_producto = ? AND id_tienda = ? AND tipo = 'galeria'`,
       [id_producto, req.id_tienda]
     );
     await connection.query(
@@ -956,14 +974,16 @@ export const setProductoImagenPrincipal = async (req, res) => {
 export const reorderProductoImagenes = async (req, res) => {
   const id_producto = Number(req.params.id);
   const ids = Array.isArray(req.body.ids) ? req.body.ids.map(Number) : [];
+  const tipo = req.body.tipo === "informativa" ? "informativa" : "galeria";
   let connection;
   try {
     connection = await getEcommerceConnection();
     let orden = 0;
     for (const id_imagen of ids) {
       await connection.query(
-        `UPDATE producto_imagen SET orden = ? WHERE id_imagen = ? AND id_producto = ? AND id_tienda = ?`,
-        [orden++, id_imagen, id_producto, req.id_tienda]
+        `UPDATE producto_imagen SET orden = ?
+         WHERE id_imagen = ? AND id_producto = ? AND id_tienda = ? AND tipo = ?`,
+        [orden++, id_imagen, id_producto, req.id_tienda, tipo]
       );
     }
     return res.json({ success: true });
@@ -982,7 +1002,7 @@ export const deleteProductoImagen = async (req, res) => {
   try {
     connection = await getEcommerceConnection();
     const [[img]] = await connection.query(
-      `SELECT id_imagen, file_id, es_principal FROM producto_imagen
+      `SELECT id_imagen, file_id, es_principal, tipo FROM producto_imagen
        WHERE id_imagen = ? AND id_producto = ? AND id_tienda = ? LIMIT 1`,
       [id_imagen, id_producto, req.id_tienda]
     );
@@ -998,10 +1018,11 @@ export const deleteProductoImagen = async (req, res) => {
       `DELETE FROM producto_imagen WHERE id_imagen = ? AND id_tienda = ?`,
       [id_imagen, req.id_tienda]
     );
-    if (img.es_principal) {
+    if (img.es_principal && img.tipo === "galeria") {
       const [[next]] = await connection.query(
         `SELECT id_imagen FROM producto_imagen
-         WHERE id_producto = ? AND id_tienda = ? ORDER BY orden ASC, id_imagen ASC LIMIT 1`,
+         WHERE id_producto = ? AND id_tienda = ? AND tipo = 'galeria'
+         ORDER BY orden ASC, id_imagen ASC LIMIT 1`,
         [id_producto, req.id_tienda]
       );
       if (next) {
@@ -1199,6 +1220,7 @@ export const getStoreBySlug = async (req, res) => {
       `SELECT p.id_producto, p.nombre, p.descripcion, p.precio, p.stock, p.sku, p.categoria, p.attrs_json,
          (SELECT url FROM producto_imagen i
           WHERE i.id_producto = p.id_producto AND i.id_tienda = p.id_tienda
+            AND i.tipo = 'galeria'
           ORDER BY i.es_principal DESC, i.orden ASC LIMIT 1) AS imagen_url
        FROM producto p
        WHERE p.id_tienda = ? AND p.activo = 1
@@ -1273,11 +1295,26 @@ export const getStoreProduct = async (req, res) => {
     );
     producto.stock = sucursales.length ? stockBranch : Number(producto.stock);
     const dispCfg = parseConfig(tienda.theme_json);
-    Object.assign(producto, attachDisponibilidad(producto, dispCfg));
+    const hasSeleccion = await productHasSeleccionAttrs(
+      connection,
+      tienda.id_tienda,
+      producto.id_producto
+    );
+    Object.assign(
+      producto,
+      attachDisponibilidad(producto, dispCfg, { hasSeleccionAttrs: hasSeleccion })
+    );
 
     const [imagenes] = await connection.query(
       `SELECT id_imagen, url, es_principal, orden FROM producto_imagen
-       WHERE id_producto = ? AND id_tienda = ? ORDER BY es_principal DESC, orden ASC`,
+       WHERE id_producto = ? AND id_tienda = ? AND tipo = 'galeria'
+       ORDER BY es_principal DESC, orden ASC`,
+      [producto.id_producto, tienda.id_tienda]
+    );
+    const [imagenes_informativas] = await connection.query(
+      `SELECT id_imagen, url, orden FROM producto_imagen
+       WHERE id_producto = ? AND id_tienda = ? AND tipo = 'informativa'
+       ORDER BY orden ASC, id_imagen ASC`,
       [producto.id_producto, tienda.id_tienda]
     );
     const attrPack = await getStorefrontProductoAttrs(
@@ -1291,6 +1328,7 @@ export const getStoreProduct = async (req, res) => {
         tienda: mapPublicTienda(tienda),
         producto,
         imagenes,
+        imagenes_informativas,
         sucursales: sucursales.map(mapPublicSucursal),
         atributos: attrPack.atributos,
         variantes: attrPack.variantes,
@@ -1299,6 +1337,161 @@ export const getStoreProduct = async (req, res) => {
   } catch (error) {
     console.error("[ecommerce.getStoreProduct]", error);
     return res.status(500).json({ success: false, message: "Error." });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+/**
+ * Valida disponibilidad/stock del carrito sin reservar (solo lectura + check).
+ * POST /store/:slug/cart/validate
+ */
+export const validateCartStore = async (req, res) => {
+  const { slug } = req.params;
+  const items = Array.isArray(req.body?.items) ? req.body.items : [];
+  const id_sucursal = req.body?.id_sucursal ? Number(req.body.id_sucursal) : null;
+  if (!items.length) {
+    return res.status(400).json({ success: false, message: "Carrito vacío." });
+  }
+  let connection;
+  try {
+    connection = await getEcommerceConnection();
+    const [[tienda]] = await connection.query(
+      `SELECT id_tienda, estado, theme_json FROM tienda WHERE slug = ? LIMIT 1`,
+      [slug]
+    );
+    if (!tienda || tienda.estado !== "active") {
+      return res.status(404).json({ success: false, message: "Tienda no encontrada." });
+    }
+    const cfg = parseConfig(tienda.theme_json);
+    const allSucursales = await listSucursalesActivas(connection, tienda.id_tienda);
+    const useBranchInv = allSucursales.length > 0;
+    const results = [];
+    let ok = true;
+
+    for (const item of items) {
+      const id_producto = Number(item.id_producto);
+      const cantidad = Math.max(1, Number(item.cantidad) || 1);
+      const [[prod]] = await connection.query(
+        `SELECT id_producto, nombre, stock, attrs_json, activo FROM producto
+         WHERE id_producto = ? AND id_tienda = ? LIMIT 1`,
+        [id_producto, tienda.id_tienda]
+      );
+      if (!prod || !Number(prod.activo)) {
+        ok = false;
+        results.push({
+          id_producto,
+          ok: false,
+          estado: "agotado",
+          disponible: 0,
+          message: "Producto no disponible.",
+        });
+        continue;
+      }
+      let resolved;
+      try {
+        resolved = await resolveVarianteYSnapshot(
+          connection,
+          tienda.id_tienda,
+          prod.id_producto,
+          item.selecciones || []
+        );
+      } catch (err) {
+        ok = false;
+        results.push({
+          id_producto,
+          ok: false,
+          estado: "consultar",
+          disponible: 0,
+          message: err.message || "Selección inválida.",
+        });
+        continue;
+      }
+
+      let disponible = useBranchInv
+        ? await getStockTotalProducto(connection, tienda.id_tienda, prod.id_producto, id_sucursal)
+        : Number(prod.stock) || 0;
+      if (useBranchInv && resolved.id_variante && id_sucursal) {
+        const rows = await getStockPorProductoSucursal(
+          connection,
+          tienda.id_tienda,
+          prod.id_producto,
+          id_sucursal
+        );
+        const vRow = rows.find((r) => Number(r.id_variante) === Number(resolved.id_variante));
+        disponible = vRow ? Number(vRow.disponible) || 0 : 0;
+      }
+
+      const hasSeleccion = await productHasSeleccionAttrs(
+        connection,
+        tienda.id_tienda,
+        id_producto
+      );
+      const id_solicitud = item.id_solicitud ? Number(item.id_solicitud) : null;
+      let tieneAuth = false;
+      if (id_solicitud && req.id_cliente) {
+        try {
+          await assertAutorizacionVigente(connection, {
+            id_tienda: tienda.id_tienda,
+            id_solicitud,
+            id_usuario: req.id_cliente,
+            id_producto,
+            id_sucursal,
+            cantidad,
+          });
+          tieneAuth = true;
+        } catch {
+          tieneAuth = false;
+        }
+      }
+
+      const disp = buildDisponibilidad(disponible, prod.attrs_json, cfg, {
+        tieneAutorizacionVigente: tieneAuth,
+        hasSeleccionAttrs: hasSeleccion,
+      });
+      const lineOk =
+        Boolean(disp.cta.allowAddToCart) && disponible >= cantidad;
+      if (!lineOk) {
+        ok = false;
+        await registrarIntentoSinStock(connection, {
+          id_tienda: tienda.id_tienda,
+          id_producto,
+          id_variante: resolved.id_variante || null,
+          id_sucursal,
+          cantidad,
+          origen: "cart_validate",
+          mensaje: !disp.cta.allowAddToCart
+            ? disp.cta.requiresSolicitud
+              ? "requiere_solicitud"
+              : "requiere_consulta"
+            : "sin_stock",
+        });
+      }
+      results.push({
+        id_producto,
+        id_variante: resolved.id_variante || null,
+        id_solicitud: id_solicitud || null,
+        ok: lineOk,
+        estado: disp.estado,
+        label: disp.label,
+        disponible,
+        cantidad,
+        allowAddToCart: disp.cta.allowAddToCart,
+        requiresSolicitud: Boolean(disp.cta.requiresSolicitud),
+        message: lineOk
+          ? null
+          : !disp.cta.allowAddToCart
+            ? disp.cta.requiresSolicitud
+              ? `Envía una solicitud de disponibilidad para ${prod.nombre} antes de comprar.`
+              : `Confirma la disponibilidad de ${prod.nombre} antes de comprar.`
+            : `Este producto ya no está disponible en la cantidad seleccionada (${prod.nombre}).`,
+      });
+    }
+
+    return res.json({ success: true, data: { ok, items: results } });
+  } catch (error) {
+    console.error("[ecommerce.validateCartStore]", error);
+    return res.status(500).json({ success: false, message: "Error al validar carrito." });
   } finally {
     if (connection) connection.release();
   }
@@ -1385,42 +1578,18 @@ export const checkoutStore = async (req, res) => {
           message: err.message || `No se pudo resolver ${prod.nombre}.`,
         });
       }
-      let stockForDisp = useBranchInv
-        ? await getStockTotalProducto(
-            connection,
-            tienda.id_tienda,
-            prod.id_producto,
-            idSucursalBody || null
-          )
-        : Number(prod.stock);
-      if (useBranchInv && resolved.id_variante && idSucursalBody) {
-        const rows = await getStockPorProductoSucursal(
-          connection,
-          tienda.id_tienda,
-          prod.id_producto,
-          idSucursalBody
-        );
-        const vRow = rows.find((r) => Number(r.id_variante) === Number(resolved.id_variante));
-        if (vRow) stockForDisp = Number(vRow.disponible) || 0;
-      }
-      const disp = buildDisponibilidad(stockForDisp, prod.attrs_json, parseConfig(tienda.theme_json));
-      if (!disp.cta.allowAddToCart) {
-        await connection.rollback();
-        return res.status(400).json({
-          success: false,
-          message: `Confirma la disponibilidad de ${prod.nombre} por WhatsApp antes de comprar.`,
-        });
-      }
       const sub = Number(prod.precio) * item.cantidad;
       subtotal += sub;
       lineItems.push({
         id_producto: prod.id_producto,
         id_variante: resolved.id_variante || item.id_variante || null,
+        id_solicitud: item.id_solicitud ? Number(item.id_solicitud) : null,
         attrs_snapshot: resolved.attrs_snapshot,
         nombre: prod.nombre,
         cantidad: item.cantidad,
         precio: Number(prod.precio),
         stock_legacy: prod.stock,
+        attrs_json: prod.attrs_json,
       });
     }
 
@@ -1550,6 +1719,77 @@ export const checkoutStore = async (req, res) => {
     } else {
       await connection.rollback();
       return res.status(400).json({ success: false, message: "Método de entrega inválido." });
+    }
+
+    // Validar disponibilidad/stock en la sucursal FINAL (antes de reservar)
+    const dispCfg = parseConfig(tienda.theme_json);
+    for (const li of lineItems) {
+      let stockForDisp = useBranchInv
+        ? await getStockTotalProducto(connection, tienda.id_tienda, li.id_producto, id_sucursal)
+        : Number(li.stock_legacy);
+      if (useBranchInv && li.id_variante && id_sucursal) {
+        const rows = await getStockPorProductoSucursal(
+          connection,
+          tienda.id_tienda,
+          li.id_producto,
+          id_sucursal
+        );
+        const vRow = rows.find((r) => Number(r.id_variante) === Number(li.id_variante));
+        stockForDisp = vRow ? Number(vRow.disponible) || 0 : 0;
+      }
+      let tieneAuth = false;
+      if (li.id_solicitud && id_cliente) {
+        try {
+          await assertAutorizacionVigente(connection, {
+            id_tienda: tienda.id_tienda,
+            id_solicitud: li.id_solicitud,
+            id_usuario: id_cliente,
+            id_producto: li.id_producto,
+            id_sucursal,
+            cantidad: li.cantidad,
+          });
+          tieneAuth = true;
+        } catch (err) {
+          await connection.rollback();
+          return res.status(err.status || 400).json({
+            success: false,
+            message: err.message || `Solicitud inválida para ${li.nombre}.`,
+          });
+        }
+      }
+      const hasSeleccion = await productHasSeleccionAttrs(
+        connection,
+        tienda.id_tienda,
+        li.id_producto
+      );
+      const [[sucRow]] = id_sucursal
+        ? await connection.query(
+            `SELECT requiere_confirmacion FROM ecom_sucursal
+             WHERE id_sucursal = ? AND id_tienda = ? LIMIT 1`,
+            [id_sucursal, tienda.id_tienda]
+          )
+        : [[{}]];
+      const disp = buildDisponibilidad(stockForDisp, li.attrs_json, dispCfg, {
+        sucursalRequiereConfirmacion: Boolean(sucRow?.requiere_confirmacion),
+        tieneAutorizacionVigente: tieneAuth,
+        hasSeleccionAttrs: hasSeleccion,
+      });
+      if (!disp.cta.allowAddToCart) {
+        await connection.rollback();
+        return res.status(400).json({
+          success: false,
+          message: disp.cta.requiresSolicitud
+            ? `Envía una solicitud de disponibilidad para ${li.nombre} antes de comprar.`
+            : `Confirma la disponibilidad de ${li.nombre} antes de comprar.`,
+        });
+      }
+      if (stockForDisp < li.cantidad) {
+        await connection.rollback();
+        return res.status(400).json({
+          success: false,
+          message: `Este producto ya no está disponible en la cantidad seleccionada (${li.nombre}).`,
+        });
+      }
     }
 
     const [[creds]] = await connection.query(

@@ -73,7 +73,7 @@ export async function reservarStock(connection, { id_tienda, id_variante, id_suc
   });
 }
 
-export async function liberarReserva(connection, { id_tienda, id_variante, id_sucursal, cantidad, ref_tipo, ref_id }) {
+export async function liberarReserva(connection, { id_tienda, id_variante, id_sucursal, cantidad, ref_tipo, ref_id, motivo }) {
   const inv = await getInventario(connection, id_tienda, id_variante, id_sucursal, true);
   if (!inv) return;
   const stock_antes = Number(inv.reservado);
@@ -90,10 +90,39 @@ export async function liberarReserva(connection, { id_tienda, id_variante, id_su
     cantidad,
     stock_antes,
     stock_despues,
-    motivo: "Liberación reserva",
+    motivo: motivo || "Liberación reserva",
     ref_tipo,
     ref_id,
   });
+}
+
+/** Soft-hold (WhatsApp confirmado): suma a comprometido sin tocar reservado de checkout. */
+export async function comprometerStock(connection, { id_tienda, id_variante, id_sucursal, cantidad }) {
+  const inv = await getInventario(connection, id_tienda, id_variante, id_sucursal, true);
+  if (!inv) {
+    throw Object.assign(new Error("Sin inventario en esta sucursal."), { status: 400 });
+  }
+  const disponible = calcDisponible(inv);
+  if (disponible < cantidad) {
+    throw Object.assign(new Error("Stock insuficiente en sucursal."), { status: 400 });
+  }
+  const despues = Number(inv.comprometido || 0) + cantidad;
+  await connection.query(
+    `UPDATE ecom_inventario SET comprometido = ? WHERE id_inventario = ? AND id_tienda = ?`,
+    [despues, inv.id_inventario, id_tienda]
+  );
+  return { comprometido: despues };
+}
+
+export async function liberarComprometido(connection, { id_tienda, id_variante, id_sucursal, cantidad }) {
+  const inv = await getInventario(connection, id_tienda, id_variante, id_sucursal, true);
+  if (!inv) return;
+  const despues = Math.max(0, Number(inv.comprometido || 0) - cantidad);
+  await connection.query(
+    `UPDATE ecom_inventario SET comprometido = ? WHERE id_inventario = ? AND id_tienda = ?`,
+    [despues, inv.id_inventario, id_tienda]
+  );
+  return { comprometido: despues };
 }
 
 export async function confirmarVenta(connection, { id_tienda, id_variante, id_sucursal, cantidad, ref_tipo, ref_id }) {
@@ -220,6 +249,7 @@ export async function ensureDefaultVariante(connection, id_tienda, id_producto, 
 /**
  * Asegura 1 variante técnica default + filas ecom_inventario (producto × sucursales activas).
  * Stock inicial: producto.stock en la sucursal default (o la primera), 0 en el resto.
+ * Usa INSERT…SELECT bulk (sin N+1).
  */
 export async function ensureInventarioProducto(connection, id_tienda, id_producto) {
   const [[prod]] = await connection.query(
@@ -229,75 +259,105 @@ export async function ensureInventarioProducto(connection, id_tienda, id_product
   if (!prod) return null;
 
   const variante = await ensureDefaultVariante(connection, id_tienda, id_producto, prod.sku);
-  const [sucursales] = await connection.query(
-    `SELECT id_sucursal, es_default FROM ecom_sucursal
+  const [[def]] = await connection.query(
+    `SELECT id_sucursal FROM ecom_sucursal
      WHERE id_tienda = ? AND activo = 1
-     ORDER BY es_default DESC, id_sucursal ASC`,
+     ORDER BY es_default DESC, id_sucursal ASC LIMIT 1`,
     [id_tienda]
   );
-  if (!sucursales.length) return { id_variante: variante.id_variante, filas: 0 };
+  if (!def) return { id_variante: variante.id_variante, filas: 0 };
 
   const stockInicial = Math.max(0, Number(prod.stock) || 0);
-  let defaultId = sucursales.find((s) => Number(s.es_default) === 1)?.id_sucursal ?? sucursales[0].id_sucursal;
-  let created = 0;
-
-  for (const s of sucursales) {
-    const [[exists]] = await connection.query(
-      `SELECT id_inventario FROM ecom_inventario
-       WHERE id_tienda = ? AND id_variante = ? AND id_sucursal = ? LIMIT 1`,
-      [id_tienda, variante.id_variante, s.id_sucursal]
-    );
-    if (exists) continue;
-    const stock = s.id_sucursal === defaultId ? stockInicial : 0;
-    await connection.query(
-      `INSERT INTO ecom_inventario
-        (id_tienda, id_variante, id_sucursal, stock_fisico, reservado, comprometido, en_transito, stock_min)
-       VALUES (?, ?, ?, ?, 0, 0, 0, 5)`,
-      [id_tienda, variante.id_variante, s.id_sucursal, stock]
-    );
-    created += 1;
-  }
-  return { id_variante: variante.id_variante, filas: created };
+  const [result] = await connection.query(
+    `INSERT INTO ecom_inventario
+      (id_tienda, id_variante, id_sucursal, stock_fisico, reservado, comprometido, en_transito, stock_min)
+     SELECT ?, ?, s.id_sucursal,
+            CASE WHEN s.id_sucursal = ? THEN ? ELSE 0 END,
+            0, 0, 0, 5
+     FROM ecom_sucursal s
+     WHERE s.id_tienda = ? AND s.activo = 1
+       AND NOT EXISTS (
+         SELECT 1 FROM ecom_inventario i
+         WHERE i.id_tienda = ? AND i.id_variante = ? AND i.id_sucursal = s.id_sucursal
+       )`,
+    [id_tienda, variante.id_variante, def.id_sucursal, stockInicial, id_tienda, id_tienda, variante.id_variante]
+  );
+  return { id_variante: variante.id_variante, filas: result.affectedRows || 0 };
 }
 
-/** Backfill idempotente: todos los productos activos de la tienda. */
+/**
+ * Backfill idempotente de toda la tienda en pocas queries (no N+1).
+ * 1) Crea variantes default faltantes para productos activos.
+ * 2) Inserta filas inventario faltantes variante × sucursal.
+ */
 export async function ensureInventarioTienda(connection, id_tienda) {
-  const [productos] = await connection.query(
-    `SELECT id_producto FROM producto WHERE id_tienda = ? AND activo = 1`,
+  await connection.query(
+    `INSERT INTO ecom_variante (id_tienda, id_producto, sku, activo)
+     SELECT p.id_tienda, p.id_producto, COALESCE(NULLIF(p.sku, ''), CONCAT('P-', p.id_producto)), 1
+     FROM producto p
+     WHERE p.id_tienda = ? AND p.activo = 1
+       AND NOT EXISTS (
+         SELECT 1 FROM ecom_variante v
+         WHERE v.id_tienda = p.id_tienda AND v.id_producto = p.id_producto AND v.activo = 1
+       )`,
     [id_tienda]
   );
-  let productosOk = 0;
-  for (const p of productos) {
-    await ensureInventarioProducto(connection, id_tienda, p.id_producto);
-    productosOk += 1;
-  }
-  return { productos: productosOk };
+
+  const [[def]] = await connection.query(
+    `SELECT id_sucursal FROM ecom_sucursal
+     WHERE id_tienda = ? AND activo = 1
+     ORDER BY es_default DESC, id_sucursal ASC LIMIT 1`,
+    [id_tienda]
+  );
+  if (!def) return { productos: 0, filas: 0 };
+
+  const [result] = await connection.query(
+    `INSERT INTO ecom_inventario
+      (id_tienda, id_variante, id_sucursal, stock_fisico, reservado, comprometido, en_transito, stock_min)
+     SELECT v.id_tienda, v.id_variante, s.id_sucursal,
+            CASE
+              WHEN s.id_sucursal = ?
+                   AND v.id_variante = (
+                     SELECT MIN(v2.id_variante) FROM ecom_variante v2
+                     WHERE v2.id_tienda = v.id_tienda AND v2.id_producto = v.id_producto AND v2.activo = 1
+                   )
+              THEN GREATEST(0, COALESCE(p.stock, 0))
+              ELSE 0
+            END,
+            0, 0, 0, 5
+     FROM ecom_variante v
+     JOIN producto p ON p.id_producto = v.id_producto AND p.id_tienda = v.id_tienda AND p.activo = 1
+     CROSS JOIN ecom_sucursal s
+     WHERE v.id_tienda = ? AND v.activo = 1
+       AND s.id_tienda = ? AND s.activo = 1
+       AND NOT EXISTS (
+         SELECT 1 FROM ecom_inventario i
+         WHERE i.id_tienda = v.id_tienda AND i.id_variante = v.id_variante AND i.id_sucursal = s.id_sucursal
+       )`,
+    [def.id_sucursal, id_tienda, id_tienda]
+  );
+
+  const [[{ productos }]] = await connection.query(
+    `SELECT COUNT(*) AS productos FROM producto WHERE id_tienda = ? AND activo = 1`,
+    [id_tienda]
+  );
+  return { productos: Number(productos) || 0, filas: result.affectedRows || 0 };
 }
 
-/** Al activar/crear una sucursal: filas inventario 0 para cada variante default existente. */
+/** Al activar/crear una sucursal: filas inventario 0 para cada variante activa existente. */
 export async function ensureInventarioSucursal(connection, id_tienda, id_sucursal) {
-  const [variantes] = await connection.query(
-    `SELECT v.id_variante
+  const [result] = await connection.query(
+    `INSERT INTO ecom_inventario
+      (id_tienda, id_variante, id_sucursal, stock_fisico, reservado, comprometido, en_transito, stock_min)
+     SELECT v.id_tienda, v.id_variante, ?, 0, 0, 0, 0, 5
      FROM ecom_variante v
      JOIN producto p ON p.id_producto = v.id_producto AND p.id_tienda = v.id_tienda
-     WHERE v.id_tienda = ? AND v.activo = 1 AND p.activo = 1`,
-    [id_tienda]
+     WHERE v.id_tienda = ? AND v.activo = 1 AND p.activo = 1
+       AND NOT EXISTS (
+         SELECT 1 FROM ecom_inventario i
+         WHERE i.id_tienda = v.id_tienda AND i.id_variante = v.id_variante AND i.id_sucursal = ?
+       )`,
+    [id_sucursal, id_tienda, id_sucursal]
   );
-  let created = 0;
-  for (const v of variantes) {
-    const [[exists]] = await connection.query(
-      `SELECT id_inventario FROM ecom_inventario
-       WHERE id_tienda = ? AND id_variante = ? AND id_sucursal = ? LIMIT 1`,
-      [id_tienda, v.id_variante, id_sucursal]
-    );
-    if (exists) continue;
-    await connection.query(
-      `INSERT INTO ecom_inventario
-        (id_tienda, id_variante, id_sucursal, stock_fisico, reservado, comprometido, en_transito, stock_min)
-       VALUES (?, ?, ?, 0, 0, 0, 0, 5)`,
-      [id_tienda, v.id_variante, id_sucursal]
-    );
-    created += 1;
-  }
-  return { created };
+  return { created: result.affectedRows || 0 };
 }

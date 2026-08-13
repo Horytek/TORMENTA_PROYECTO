@@ -9,9 +9,10 @@ type Props = {
   inCart?: boolean;
   slug: string;
   whatsapp?: ReactNode;
+  addLabel?: string;
 };
 
-export function StickyBuyBar({ precio, disabled, onAdd, inCart, slug, whatsapp }: Props) {
+export function StickyBuyBar({ precio, disabled, onAdd, inCart, slug, whatsapp, addLabel }: Props) {
   return (
     <div className="store-sticky-bar lg:hidden px-4 py-3 flex items-center gap-3">
       <div className="shrink-0">
@@ -22,7 +23,7 @@ export function StickyBuyBar({ precio, disabled, onAdd, inCart, slug, whatsapp }
       </div>
       {whatsapp ? (
         <div className="flex-1 min-w-0">{whatsapp}</div>
-      ) : inCart ? (
+      ) : inCart && !addLabel ? (
         <Link
           to={`/tienda/${slug}/carrito`}
           className="vitrina-pill h-11 px-5 inline-flex items-center justify-center text-sm font-semibold text-white"
@@ -35,10 +36,10 @@ export function StickyBuyBar({ precio, disabled, onAdd, inCart, slug, whatsapp }
           type="button"
           disabled={disabled}
           onClick={onAdd}
-          className="vitrina-pill h-11 px-5 text-sm font-semibold text-white disabled:opacity-40"
+          className="vitrina-pill flex-1 h-11 px-5 text-sm font-semibold text-white disabled:opacity-40"
           style={{ background: "var(--vitrina-accent)" }}
         >
-          Agregar
+          {addLabel || "Agregar"}
         </button>
       )}
     </div>

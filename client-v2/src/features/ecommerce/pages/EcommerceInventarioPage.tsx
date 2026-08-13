@@ -7,9 +7,9 @@ import {
   adminInventarioMatriz,
   adminInventarioResumen,
   adminListMovimientos,
-  adminListSucursales,
 } from "../api/ecommerce";
 import { useEcommerceAuthStore } from "../store/useEcommerceAuthStore";
+import { AdminBranchFilterBar, useScopedSucursalId } from "../components/admin/AdminBranchFilterBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -67,6 +67,13 @@ function groupByProducto(rows: MatrizRow[]): ProductGroup[] {
     g.totalDisponible += Number(r.disponible) || 0;
   }
   return Array.from(map.values());
+}
+
+function varianteLabel(r: MatrizRow) {
+  const parts = [r.talla, r.color].filter(Boolean);
+  if (parts.length) return parts.join(" · ");
+  if (r.sku) return r.sku;
+  return null;
 }
 
 function StockCell({
@@ -180,7 +187,7 @@ function StockCell({
         type="button"
         size="icon"
         variant="outline"
-        className="size-8 shrink-0"
+        className="size-10 sm:size-8 shrink-0"
         disabled={saving || localStock <= 0}
         onClick={() => void applyDeltaQueued(-1)}
         aria-label="Reducir stock"
@@ -194,7 +201,7 @@ function StockCell({
           setDraft(String(localStock));
           setEditing(true);
         }}
-        className="min-w-[2.25rem] h-8 px-2 text-sm font-medium rounded-md hover:bg-stone-100 disabled:opacity-50"
+        className="min-w-[2.75rem] h-10 sm:min-w-[2.25rem] sm:h-8 px-2 text-sm font-medium rounded-md hover:bg-stone-100 disabled:opacity-50"
         title="Click para editar cantidad"
       >
         {saving ? "…" : localStock}
@@ -203,7 +210,7 @@ function StockCell({
         type="button"
         size="icon"
         variant="outline"
-        className="size-8 shrink-0"
+        className="size-10 sm:size-8 shrink-0"
         disabled={saving}
         onClick={() => void applyDeltaQueued(1)}
         aria-label="Aumentar stock"
@@ -235,32 +242,32 @@ function patchMatrizCache(
 export default function EcommerceInventarioPage() {
   const qc = useQueryClient();
   const tid = useEcommerceAuthStore((s) => s.user?.id_tienda);
-  const [filtroSucursal, setFiltroSucursal] = useState<number | "">("");
+  const id_sucursal = useScopedSucursalId();
   const [busqueda, setBusqueda] = useState("");
   const [busquedaAplicada, setBusquedaAplicada] = useState("");
   const [page, setPage] = useState(0);
   const [movOpen, setMovOpen] = useState(false);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const queryKeyMatriz = useMemo(
-    () => ["ecom-inv-matriz", tid, filtroSucursal, page, busquedaAplicada] as const,
-    [tid, filtroSucursal, page, busquedaAplicada]
+    () => ["ecom-inv-matriz", tid, id_sucursal, page, busquedaAplicada] as const,
+    [tid, id_sucursal, page, busquedaAplicada]
   );
+
+  useEffect(() => {
+    setPage(0);
+    setExpanded({});
+  }, [id_sucursal]);
 
   const resumenQ = useQuery({
     queryKey: ["ecom-inv-resumen", tid],
     queryFn: adminInventarioResumen,
     enabled: Boolean(tid),
   });
-  const sucQ = useQuery({
-    queryKey: ["ecom-sucursales", tid],
-    queryFn: () => adminListSucursales(),
-    enabled: Boolean(tid),
-  });
   const matrizQ = useQuery({
     queryKey: queryKeyMatriz,
     queryFn: () =>
       adminInventarioMatriz({
-        sucursal: filtroSucursal ? Number(filtroSucursal) : undefined,
+        sucursal: id_sucursal || undefined,
         limit: PAGE_SIZE,
         offset: page * PAGE_SIZE,
         q: busquedaAplicada || undefined,
@@ -272,7 +279,7 @@ export default function EcommerceInventarioPage() {
   const movQ = useQuery({
     queryKey: ["ecom-inv-mov", tid],
     queryFn: () => adminListMovimientos(30),
-    enabled: Boolean(tid),
+    enabled: Boolean(tid) && movOpen,
   });
 
   const kpis = resumenQ.data?.data;
@@ -281,23 +288,27 @@ export default function EcommerceInventarioPage() {
   const total = matrizQ.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const movimientos = movQ.data?.data || [];
-  const sucursales = sucQ.data?.data || [];
-  const singleSucursal = Boolean(filtroSucursal);
+  const singleSucursal = Boolean(id_sucursal);
 
   const refreshMatriz = () => {
     qc.invalidateQueries({ queryKey: queryKeyMatriz });
+    qc.invalidateQueries({ queryKey: ["ecom-inv-resumen", tid] });
+  };
+
+  const onStockUpdated = (row: MatrizRow, u: { stock_fisico: number; disponible: number }) => {
+    patchMatrizCache(qc, queryKeyMatriz, row, u);
+    qc.invalidateQueries({ queryKey: ["ecom-inv-resumen", tid] });
   };
 
   const aplicarBusqueda = () => {
     setBusquedaAplicada(busqueda.trim());
     setPage(0);
+    setExpanded({});
   };
 
   const isOpen = (id: number) => {
     if (singleSucursal) return true;
-    if (expanded[id] !== undefined) return expanded[id];
-    // Por defecto abierto para ver stock por sucursal sin clicks extra.
-    return true;
+    return Boolean(expanded[id]);
   };
 
   const toggleGroup = (id: number) => {
@@ -307,14 +318,17 @@ export default function EcommerceInventarioPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Inventario</h1>
-        <p className="text-sm text-stone-500">
-          Stock por producto y sucursal — ajusta con +/− o click en la cantidad
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Inventario</h1>
+          <p className="text-sm text-stone-500">
+            Stock por producto y sucursal — ajusta con +/− o click en la cantidad
+          </p>
+        </div>
+        <AdminBranchFilterBar />
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 snap-x sm:grid sm:grid-cols-2 lg:grid-cols-5 sm:overflow-visible sm:pb-0 sm:mx-0 sm:px-0">
         {[
           { label: "Agotados", value: kpis?.agotados ?? "—" },
           { label: "Stock bajo", value: kpis?.stock_bajo ?? "—" },
@@ -322,33 +336,18 @@ export default function EcommerceInventarioPage() {
           { label: "En tránsito", value: kpis?.en_transito_total ?? "—" },
           { label: "Transf. pend.", value: kpis?.transferencias_pendientes ?? "—" },
         ].map((k) => (
-          <div key={k.label} className="rounded-xl border border-stone-200 bg-white p-4">
+          <div
+            key={k.label}
+            className="rounded-xl border border-stone-200 bg-white p-4 min-w-[8.5rem] snap-start shrink-0 sm:min-w-0 sm:shrink"
+          >
             <p className="text-xs text-stone-500">{k.label}</p>
             <p className="text-2xl font-semibold mt-1">{k.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-3 items-end">
-        <div>
-          <label className="text-xs text-stone-500 block mb-1">Sucursal</label>
-          <select
-            className="h-9 rounded-md border border-stone-200 px-2 text-sm min-w-[10rem]"
-            value={filtroSucursal}
-            onChange={(e) => {
-              setFiltroSucursal(e.target.value ? Number(e.target.value) : "");
-              setPage(0);
-            }}
-          >
-            <option value="">Todas</option>
-            {sucursales.map((s: { id_sucursal: number; nombre: string }) => (
-              <option key={s.id_sucursal} value={s.id_sucursal}>
-                {s.nombre}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex-1 min-w-[12rem]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+        <div className="flex-1 min-w-0 w-full sm:min-w-[12rem]">
           <label className="text-xs text-stone-500 block mb-1">Buscar producto</label>
           <div className="flex gap-2">
             <Input
@@ -356,9 +355,9 @@ export default function EcommerceInventarioPage() {
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && aplicarBusqueda()}
-              className="h-9"
+              className="min-h-11"
             />
-            <Button type="button" variant="outline" size="sm" className="h-9" onClick={aplicarBusqueda}>
+            <Button type="button" variant="outline" className="min-h-11 shrink-0" onClick={aplicarBusqueda}>
               Buscar
             </Button>
           </div>
@@ -378,7 +377,7 @@ export default function EcommerceInventarioPage() {
                 <div key={g.id_producto}>
                   <button
                     type="button"
-                    className="w-full flex items-start justify-between gap-3 p-3 sm:p-4 text-left hover:bg-stone-50/80"
+                    className="w-full flex items-start justify-between gap-3 p-3 sm:p-4 text-left hover:bg-stone-50/80 min-h-11"
                     onClick={() => toggleGroup(g.id_producto)}
                     aria-expanded={open}
                   >
@@ -386,7 +385,8 @@ export default function EcommerceInventarioPage() {
                       <p className="font-medium text-sm sm:text-base">{g.nombre}</p>
                       <p className="text-xs text-stone-400 mt-0.5">
                         {g.sku ? `${g.sku} · ` : ""}
-                        {g.rows.length} {g.rows.length === 1 ? "sucursal" : "sucursales"}
+                        {g.rows.length} {g.rows.length === 1 ? "fila" : "filas"}
+                        <span className="sm:hidden"> · Disp. {g.totalDisponible}</span>
                       </p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
@@ -406,14 +406,15 @@ export default function EcommerceInventarioPage() {
 
                   {open ? (
                     <div className="px-3 pb-3 sm:px-4 sm:pb-4">
-                      {/* Desktop nested table */}
                       <div className="hidden md:block rounded-lg border border-stone-100 overflow-hidden">
                         <table className="w-full text-sm">
                           <thead className="bg-stone-50 text-left text-xs text-stone-500">
                             <tr>
                               <th className="px-3 py-2 font-medium">Sucursal</th>
+                              <th className="px-3 py-2 font-medium">Variante</th>
                               <th className="px-3 py-2 font-medium">Físico</th>
                               <th className="px-3 py-2 font-medium">Reservado</th>
+                              <th className="px-3 py-2 font-medium">Comprom.</th>
                               <th className="px-3 py-2 font-medium">Disponible</th>
                             </tr>
                           </thead>
@@ -423,14 +424,20 @@ export default function EcommerceInventarioPage() {
                                 <td className="px-3 py-2.5">
                                   <span className="font-medium">{r.sucursal_nombre}</span>
                                 </td>
+                                <td className="px-3 py-2.5 text-stone-500 text-xs">
+                                  {varianteLabel(r) || "—"}
+                                </td>
                                 <td className="px-3 py-2.5">
                                   <StockCell
                                     row={r}
-                                    onStockUpdated={(u) => patchMatrizCache(qc, queryKeyMatriz, r, u)}
+                                    onStockUpdated={(u) => onStockUpdated(r, u)}
                                     onFallbackRefresh={refreshMatriz}
                                   />
                                 </td>
                                 <td className="px-3 py-2.5 tabular-nums text-stone-600">{r.reservado}</td>
+                                <td className="px-3 py-2.5 tabular-nums text-stone-600">
+                                  {Number(r.comprometido) || 0}
+                                </td>
                                 <td className="px-3 py-2.5 tabular-nums font-medium">{r.disponible}</td>
                               </tr>
                             ))}
@@ -438,9 +445,12 @@ export default function EcommerceInventarioPage() {
                           {!singleSucursal && g.rows.length > 1 ? (
                             <tfoot>
                               <tr className="border-t border-stone-200 bg-stone-50/60 text-xs">
-                                <td className="px-3 py-2 font-medium text-stone-500">Total</td>
+                                <td className="px-3 py-2 font-medium text-stone-500" colSpan={2}>
+                                  Total
+                                </td>
                                 <td className="px-3 py-2 tabular-nums font-semibold">{g.totalFisico}</td>
                                 <td className="px-3 py-2 tabular-nums text-stone-600">{g.totalReservado}</td>
+                                <td className="px-3 py-2 tabular-nums text-stone-600">—</td>
                                 <td className="px-3 py-2 tabular-nums font-semibold">{g.totalDisponible}</td>
                               </tr>
                             </tfoot>
@@ -448,7 +458,6 @@ export default function EcommerceInventarioPage() {
                         </table>
                       </div>
 
-                      {/* Mobile nested cards */}
                       <div className="md:hidden space-y-2">
                         {g.rows.map((r) => (
                           <div
@@ -456,7 +465,12 @@ export default function EcommerceInventarioPage() {
                             className="rounded-lg border border-stone-100 bg-stone-50/40 p-3"
                           >
                             <div className="flex items-center justify-between gap-2">
-                              <p className="text-sm font-medium truncate">{r.sucursal_nombre}</p>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium truncate">{r.sucursal_nombre}</p>
+                                {varianteLabel(r) ? (
+                                  <p className="text-[11px] text-stone-400 mt-0.5">{varianteLabel(r)}</p>
+                                ) : null}
+                              </div>
                               <p className="text-xs text-stone-500 shrink-0">Disp. {r.disponible}</p>
                             </div>
                             <div className="mt-2 flex items-center justify-between gap-3">
@@ -464,11 +478,14 @@ export default function EcommerceInventarioPage() {
                                 <span className="text-xs text-stone-500">Físico</span>
                                 <StockCell
                                   row={r}
-                                  onStockUpdated={(u) => patchMatrizCache(qc, queryKeyMatriz, r, u)}
+                                  onStockUpdated={(u) => onStockUpdated(r, u)}
                                   onFallbackRefresh={refreshMatriz}
                                 />
                               </div>
-                              <p className="text-xs text-stone-500">Res. {r.reservado}</p>
+                              <p className="text-xs text-stone-500">
+                                Res. {r.reservado}
+                                {Number(r.comprometido) ? ` · Comp. ${r.comprometido}` : ""}
+                              </p>
                             </div>
                           </div>
                         ))}
@@ -497,6 +514,7 @@ export default function EcommerceInventarioPage() {
               type="button"
               variant="outline"
               size="sm"
+              className="min-h-11"
               disabled={page <= 0 || matrizQ.isFetching}
               onClick={() => setPage((p) => Math.max(0, p - 1))}
             >
@@ -507,6 +525,7 @@ export default function EcommerceInventarioPage() {
               type="button"
               variant="outline"
               size="sm"
+              className="min-h-11"
               disabled={page >= totalPages - 1 || matrizQ.isFetching}
               onClick={() => setPage((p) => p + 1)}
             >
@@ -520,7 +539,7 @@ export default function EcommerceInventarioPage() {
       <div className="rounded-xl border border-stone-200 bg-white">
         <button
           type="button"
-          className="w-full flex items-center justify-between p-4 text-left font-semibold text-sm"
+          className="w-full flex items-center justify-between p-4 text-left font-semibold text-sm min-h-11"
           onClick={() => setMovOpen((o) => !o)}
         >
           Movimientos recientes
@@ -528,7 +547,9 @@ export default function EcommerceInventarioPage() {
         </button>
         {movOpen && (
           <ul className="px-4 pb-4 space-y-2 max-h-64 overflow-y-auto text-xs border-t border-stone-100 pt-3">
-            {movimientos.length === 0 ? (
+            {movQ.isLoading ? (
+              <li className="text-stone-500">Cargando movimientos…</li>
+            ) : movimientos.length === 0 ? (
               <li className="text-stone-500">Sin movimientos recientes.</li>
             ) : (
               movimientos.map((m: Record<string, unknown>) => (

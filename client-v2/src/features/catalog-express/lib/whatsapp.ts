@@ -10,10 +10,14 @@ export function normalizarTelefono(telefono: string | null | undefined): string 
 }
 
 export function formatearMensajePedido(items: CarritoItem[], nombreNegocio: string): string {
-  const lineas = items.map(
-    (it) => `• ${it.cantidad}x ${it.producto.descripcion} — S/ ${(it.producto.precio * it.cantidad).toFixed(2)}`
+  const lineas = items.map((it) => {
+    const precio = it.precio_unitario ?? it.producto.precio;
+    return `• ${it.cantidad}x ${it.producto.descripcion} — S/ ${(precio * it.cantidad).toFixed(2)}`;
+  });
+  const total = items.reduce(
+    (sum, it) => sum + (it.precio_unitario ?? it.producto.precio) * it.cantidad,
+    0
   );
-  const total = items.reduce((sum, it) => sum + it.producto.precio * it.cantidad, 0);
   return [
     `Hola ${nombreNegocio}, quiero hacer este pedido:`,
     "",
