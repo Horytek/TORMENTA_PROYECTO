@@ -82,6 +82,8 @@ export interface Venta {
   direccion?: string;
   fecha_iso?: string;
   metodo_pago?: string;
+  /** Canal de origen: pos | tienda_web */
+  canal?: string;
   recibido?: number;
   vuelto?: number;
   descuento?: number;
@@ -174,6 +176,8 @@ export interface VentasFilters {
   estado?: number;
   id_comprobante?: string;
   dni_vendedor?: string;
+  /** pos | tienda_web */
+  canal?: string;
 }
 
 export interface VentasStats {

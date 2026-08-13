@@ -13,7 +13,9 @@ import {
 import {
   adminAprobarSolicitud,
   adminCancelarSolicitud,
+  adminConfirmarSolicitud,
   adminEnRevisionSolicitud,
+  adminEnTrasladoSolicitud,
   adminGetSolicitud,
   adminListSolicitudes,
   adminRechazarSolicitud,
@@ -40,6 +42,9 @@ type Solicitud = {
   estado: string;
   producto_nombre?: string;
   sucursal_nombre?: string;
+  sucursal_origen_nombre?: string | null;
+  id_sucursal_origen?: number | null;
+  fulfillment?: string | null;
   nombre_cliente?: string;
   cantidad_solicitada: number;
   cantidad_aprobada?: number | null;
@@ -63,15 +68,19 @@ type Solicitud = {
 const KPI = [
   { key: "pendiente", label: "Pendientes" },
   { key: "en_revision", label: "En revisión" },
-  { key: "aprobada", label: "Aprobadas" },
+  { key: "confirmada", label: "Confirmadas" },
+  { key: "en_traslado", label: "En traslado" },
+  { key: "disponible", label: "Disponibles" },
   { key: "rechazada", label: "Rechazadas" },
-  { key: "expirada", label: "Expiradas" },
   { key: "total", label: "Total" },
 ] as const;
 
 const TONE: Record<string, string> = {
   pendiente: "bg-amber-100 text-amber-900",
   en_revision: "bg-sky-100 text-sky-900",
+  confirmada: "bg-indigo-100 text-indigo-900",
+  en_traslado: "bg-violet-100 text-violet-900",
+  disponible: "bg-emerald-100 text-emerald-900",
   aprobada: "bg-emerald-100 text-emerald-900",
   rechazada: "bg-red-100 text-red-800",
   expirada: "bg-stone-100 text-stone-600",
@@ -79,7 +88,12 @@ const TONE: Record<string, string> = {
 };
 
 function estadoLabel(estado: string) {
-  return estado.replace(/_/g, " ").toUpperCase();
+  const e = estado === "aprobada" ? "disponible" : estado;
+  return e.replace(/_/g, " ").toUpperCase();
+}
+
+function isPreDisponible(estado: string) {
+  return ["pendiente", "en_revision", "confirmada", "en_traslado"].includes(estado);
 }
 
 function attrsLines(attrs?: Record<string, unknown> | null) {
@@ -128,9 +142,13 @@ type DetailFormProps = {
   comentario: string;
   setComentario: (v: string) => void;
   onAprobar: () => void;
+  onConfirmar: () => void;
+  onEnTraslado: () => void;
   onRechazar: () => void;
   onCancelar: () => void;
   aprobarPending: boolean;
+  confirmarPending: boolean;
+  trasladoPending: boolean;
   rechazarPending: boolean;
   cancelPending: boolean;
   stickyActions?: boolean;
@@ -151,27 +169,51 @@ function SolicitudDetailForm({
   comentario,
   setComentario,
   onAprobar,
+  onConfirmar,
+  onEnTraslado,
   onRechazar,
   onCancelar,
   aprobarPending,
+  confirmarPending,
+  trasladoPending,
   rechazarPending,
   cancelPending,
   stickyActions = false,
 }: DetailFormProps) {
-  const editable = detail.estado === "pendiente" || detail.estado === "en_revision";
+  const editable = isPreDisponible(detail.estado);
   const sys = detail.inventario?.disponible;
   const fis = stockFisico === "" ? null : Number(stockFisico);
   const diff = sys != null && fis != null && Number.isFinite(fis) && Number(sys) !== Number(fis);
 
   const actions = editable ? (
-    <div className={cn("flex flex-col gap-2", stickyActions && "sm:flex-row")}>
+    <div className={cn("flex flex-col gap-2", stickyActions && "sm:flex-row sm:flex-wrap")}>
+      {(detail.estado === "pendiente" || detail.estado === "en_revision") && (
+        <Button
+          variant="secondary"
+          className="h-11 w-full sm:w-auto"
+          disabled={confirmarPending}
+          onClick={onConfirmar}
+        >
+          Confirmar solicitud
+        </Button>
+      )}
+      {(detail.estado === "confirmada" || detail.estado === "en_revision") && (
+        <Button
+          variant="secondary"
+          className="h-11 w-full sm:w-auto"
+          disabled={trasladoPending}
+          onClick={onEnTraslado}
+        >
+          Marcar en traslado
+        </Button>
+      )}
       <Button
         className="h-12 w-full sm:flex-1 bg-emerald-700 hover:bg-emerald-800 text-base"
         disabled={aprobarPending}
         onClick={onAprobar}
       >
         <CheckCircle2 className="size-4 mr-1.5" />
-        Confirmar disponibilidad
+        Marcar disponible
       </Button>
       <Button
         variant="destructive"
@@ -211,8 +253,15 @@ function SolicitudDetailForm({
             </p>
             <p className="flex items-center gap-2">
               <MapPin className="size-4 text-stone-400 shrink-0" />
-              {detail.sucursal_nombre || "Sucursal"}
+              Destino: {detail.sucursal_nombre || "Sucursal"}
+              {detail.fulfillment ? ` · ${detail.fulfillment}` : ""}
             </p>
+            {detail.sucursal_origen_nombre && (
+              <p className="flex items-center gap-2 text-amber-800">
+                <Package className="size-4 text-amber-600 shrink-0" />
+                Origen sugerido: <strong>{detail.sucursal_origen_nombre}</strong>
+              </p>
+            )}
             <p className="flex items-center gap-2">
               <Package className="size-4 text-stone-400 shrink-0" />
               Cantidad solicitada: <strong>{detail.cantidad_solicitada}</strong>
@@ -334,11 +383,14 @@ function SolicitudDetailForm({
           </>
         )}
 
-        {detail.estado === "aprobada" && (
+        {(detail.estado === "disponible" || detail.estado === "aprobada") && (
           <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4 text-sm text-emerald-900">
-            Disponibilidad confirmada
+            Producto disponible
             {detail.expires_at && <> hasta {new Date(detail.expires_at).toLocaleString()}</>}.
             Cantidad: {detail.cantidad_aprobada ?? detail.cantidad_solicitada}
+            {detail.sucursal_origen_nombre && (
+              <p className="mt-1">Origen: {detail.sucursal_origen_nombre}</p>
+            )}
           </div>
         )}
         {detail.estado === "rechazada" && (
@@ -436,9 +488,35 @@ export default function EcommerceSolicitudesStockPage() {
         stock_fisico: stockFisico === "" ? null : Number(stockFisico),
         observacion_stock: obs || null,
         crear_reserva: crearReserva,
+        id_sucursal_origen: detail?.id_sucursal_origen || null,
       }),
     onSuccess: () => {
-      toast.success("Disponibilidad confirmada");
+      toast.success("Producto marcado como disponible");
+      invalidate();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const confirmarMut = useMutation({
+    mutationFn: () =>
+      adminConfirmarSolicitud(selectedId!, {
+        id_sucursal_origen: detail?.id_sucursal_origen || null,
+        observacion_stock: obs || undefined,
+      }),
+    onSuccess: () => {
+      toast.success("Solicitud confirmada");
+      invalidate();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const trasladoMut = useMutation({
+    mutationFn: () =>
+      adminEnTrasladoSolicitud(selectedId!, {
+        id_sucursal_origen: detail?.id_sucursal_origen || null,
+      }),
+    onSuccess: () => {
+      toast.success("Marcada en traslado");
       invalidate();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -491,9 +569,13 @@ export default function EcommerceSolicitudesStockPage() {
         comentario,
         setComentario,
         onAprobar: () => aprobarMut.mutate(),
+        onConfirmar: () => confirmarMut.mutate(),
+        onEnTraslado: () => trasladoMut.mutate(),
         onRechazar: () => rechazarMut.mutate(),
         onCancelar: () => cancelMut.mutate(),
         aprobarPending: aprobarMut.isPending,
+        confirmarPending: confirmarMut.isPending,
+        trasladoPending: trasladoMut.isPending,
         rechazarPending: rechazarMut.isPending,
         cancelPending: cancelMut.isPending,
       }
@@ -514,7 +596,7 @@ export default function EcommerceSolicitudesStockPage() {
         </div>
       )}
       {rows.map((s) => {
-        const actionable = s.estado === "pendiente" || s.estado === "en_revision";
+        const actionable = isPreDisponible(s.estado);
         return (
           <button
             key={s.id_solicitud}
@@ -550,6 +632,7 @@ export default function EcommerceSolicitudesStockPage() {
               <User className="size-3.5 shrink-0" />
               <span className="truncate">
                 {s.nombre_cliente || "Cliente"} · {s.sucursal_nombre || "Sucursal"}
+                {s.sucursal_origen_nombre ? ` · Origen: ${s.sucursal_origen_nombre}` : ""}
               </span>
             </div>
             {actionable && (

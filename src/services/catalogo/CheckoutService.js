@@ -129,6 +129,7 @@ export async function confirmarPedidoPagado(cx, {
     idempotency_key: `tienda:${pedido.idempotency_key}`,
     id_usuario: id_usuario_sistema || 1,
     referencia_pago: mp_payment_id || pedido.mp_payment_id || pedido.codigo,
+    canal: "tienda_web",
     detalles,
   };
 

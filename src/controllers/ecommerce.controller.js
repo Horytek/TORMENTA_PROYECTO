@@ -45,6 +45,10 @@ import {
   productHasSeleccionAttrs,
 } from "../services/ecommerce/DisponibilidadService.js";
 import { assertAutorizacionVigente } from "../services/ecommerce/SolicitudDisponibilidadService.js";
+import {
+  resolveDisponibilidadFulfillment,
+  badgeFromModo,
+} from "../services/ecommerce/FulfillmentDisponibilidadService.js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FRONTEND = () => process.env.FRONTEND_URL || "http://localhost:5173";
@@ -1350,6 +1354,8 @@ export const validateCartStore = async (req, res) => {
   const { slug } = req.params;
   const items = Array.isArray(req.body?.items) ? req.body.items : [];
   const id_sucursal = req.body?.id_sucursal ? Number(req.body.id_sucursal) : null;
+  const fulfillment = req.body?.fulfillment || "pickup";
+  const id_zona = req.body?.id_zona ? Number(req.body.id_zona) : null;
   if (!items.length) {
     return res.status(400).json({ success: false, message: "Carrito vacío." });
   }
@@ -1368,12 +1374,14 @@ export const validateCartStore = async (req, res) => {
     const useBranchInv = allSucursales.length > 0;
     const results = [];
     let ok = true;
+    let hasInmediata = false;
+    let hasSolicitud = false;
 
     for (const item of items) {
       const id_producto = Number(item.id_producto);
       const cantidad = Math.max(1, Number(item.cantidad) || 1);
       const [[prod]] = await connection.query(
-        `SELECT id_producto, nombre, stock, attrs_json, activo FROM producto
+        `SELECT id_producto, nombre, stock, attrs_json, activo, precio FROM producto
          WHERE id_producto = ? AND id_tienda = ? LIMIT 1`,
         [id_producto, tienda.id_tienda]
       );
@@ -1383,6 +1391,7 @@ export const validateCartStore = async (req, res) => {
           id_producto,
           ok: false,
           estado: "agotado",
+          badge: "no_disponible",
           disponible: 0,
           message: "Producto no disponible.",
         });
@@ -1402,24 +1411,11 @@ export const validateCartStore = async (req, res) => {
           id_producto,
           ok: false,
           estado: "consultar",
+          badge: "pendiente",
           disponible: 0,
           message: err.message || "Selección inválida.",
         });
         continue;
-      }
-
-      let disponible = useBranchInv
-        ? await getStockTotalProducto(connection, tienda.id_tienda, prod.id_producto, id_sucursal)
-        : Number(prod.stock) || 0;
-      if (useBranchInv && resolved.id_variante && id_sucursal) {
-        const rows = await getStockPorProductoSucursal(
-          connection,
-          tienda.id_tienda,
-          prod.id_producto,
-          id_sucursal
-        );
-        const vRow = rows.find((r) => Number(r.id_variante) === Number(resolved.id_variante));
-        disponible = vRow ? Number(vRow.disponible) || 0 : 0;
       }
 
       const hasSeleccion = await productHasSeleccionAttrs(
@@ -1436,7 +1432,7 @@ export const validateCartStore = async (req, res) => {
             id_solicitud,
             id_usuario: req.id_cliente,
             id_producto,
-            id_sucursal,
+            id_sucursal: item.id_sucursal ? Number(item.id_sucursal) : id_sucursal,
             cantidad,
           });
           tieneAuth = true;
@@ -1445,12 +1441,77 @@ export const validateCartStore = async (req, res) => {
         }
       }
 
-      const disp = buildDisponibilidad(disponible, prod.attrs_json, cfg, {
-        tieneAutorizacionVigente: tieneAuth,
-        hasSeleccionAttrs: hasSeleccion,
-      });
+      let badge = "inmediata";
+      let modo = "inmediata";
+      let disponible = 0;
+      let disp;
+
+      if (useBranchInv && (id_sucursal || fulfillment !== "pickup")) {
+        const fr = await resolveDisponibilidadFulfillment(connection, {
+          id_tienda: tienda.id_tienda,
+          id_producto: prod.id_producto,
+          id_variante: resolved.id_variante || null,
+          cantidad,
+          fulfillment: item.fulfillment || fulfillment,
+          id_sucursal: item.id_sucursal ? Number(item.id_sucursal) : id_sucursal,
+          id_zona,
+          subtotal: Number(prod.precio || 0) * cantidad,
+          theme_json: tienda.theme_json,
+          attrs_json: prod.attrs_json,
+          hasSeleccionAttrs: hasSeleccion,
+        });
+        modo = fr.modo;
+        badge = badgeFromModo(fr.modo);
+        disponible = fr.stock_local;
+        disp = fr.disponibilidad || buildDisponibilidad(disponible, prod.attrs_json, cfg, {
+          tieneAutorizacionVigente: tieneAuth,
+          hasSeleccionAttrs: hasSeleccion,
+        });
+        if (tieneAuth) {
+          badge = "inmediata";
+          modo = "inmediata";
+          disp = buildDisponibilidad(Math.max(disponible, cantidad), prod.attrs_json, cfg, {
+            tieneAutorizacionVigente: true,
+            hasSeleccionAttrs: hasSeleccion,
+          });
+        } else if (modo === "otra_ubicacion") {
+          hasSolicitud = true;
+        } else if (modo === "inmediata") {
+          hasInmediata = true;
+        }
+      } else {
+        disponible = useBranchInv
+          ? await getStockTotalProducto(connection, tienda.id_tienda, prod.id_producto, id_sucursal)
+          : Number(prod.stock) || 0;
+        if (useBranchInv && resolved.id_variante && id_sucursal) {
+          const rows = await getStockPorProductoSucursal(
+            connection,
+            tienda.id_tienda,
+            prod.id_producto,
+            id_sucursal
+          );
+          const vRow = rows.find((r) => Number(r.id_variante) === Number(resolved.id_variante));
+          disponible = vRow ? Number(vRow.disponible) || 0 : 0;
+        }
+        disp = buildDisponibilidad(disponible, prod.attrs_json, cfg, {
+          tieneAutorizacionVigente: tieneAuth,
+          hasSeleccionAttrs: hasSeleccion,
+        });
+        if (tieneAuth) {
+          badge = "inmediata";
+        } else if (disp.cta.requiresSolicitud) {
+          badge = "solicitud";
+          hasSolicitud = true;
+        } else if (disp.estado === "agotado" || disponible < cantidad) {
+          badge = "no_disponible";
+        } else {
+          hasInmediata = true;
+        }
+      }
+
       const lineOk =
-        Boolean(disp.cta.allowAddToCart) && disponible >= cantidad;
+        tieneAuth ||
+        (Boolean(disp?.cta?.allowAddToCart) && disponible >= cantidad);
       if (!lineOk) {
         ok = false;
         await registrarIntentoSinStock(connection, {
@@ -1460,8 +1521,8 @@ export const validateCartStore = async (req, res) => {
           id_sucursal,
           cantidad,
           origen: "cart_validate",
-          mensaje: !disp.cta.allowAddToCart
-            ? disp.cta.requiresSolicitud
+          mensaje: !disp?.cta?.allowAddToCart
+            ? disp?.cta?.requiresSolicitud
               ? "requiere_solicitud"
               : "requiere_consulta"
             : "sin_stock",
@@ -1472,23 +1533,35 @@ export const validateCartStore = async (req, res) => {
         id_variante: resolved.id_variante || null,
         id_solicitud: id_solicitud || null,
         ok: lineOk,
-        estado: disp.estado,
-        label: disp.label,
+        estado: disp?.estado || modo,
+        badge,
+        modo,
+        label: disp?.label || null,
         disponible,
         cantidad,
-        allowAddToCart: disp.cta.allowAddToCart,
-        requiresSolicitud: Boolean(disp.cta.requiresSolicitud),
+        allowAddToCart: Boolean(disp?.cta?.allowAddToCart) || tieneAuth,
+        requiresSolicitud: Boolean(disp?.cta?.requiresSolicitud) && !tieneAuth,
         message: lineOk
           ? null
-          : !disp.cta.allowAddToCart
-            ? disp.cta.requiresSolicitud
-              ? `Envía una solicitud de disponibilidad para ${prod.nombre} antes de comprar.`
+          : !disp?.cta?.allowAddToCart
+            ? disp?.cta?.requiresSolicitud
+              ? `Solicita disponibilidad para ${prod.nombre} antes de comprar.`
               : `Confirma la disponibilidad de ${prod.nombre} antes de comprar.`
             : `Este producto ya no está disponible en la cantidad seleccionada (${prod.nombre}).`,
       });
     }
 
-    return res.json({ success: true, data: { ok, items: results } });
+    return res.json({
+      success: true,
+      data: {
+        ok,
+        items: results,
+        mixto: hasInmediata && hasSolicitud,
+        aviso_mixto: hasInmediata && hasSolicitud
+          ? "Tu carrito incluye productos de entrega inmediata y otros bajo solicitud."
+          : null,
+      },
+    });
   } catch (error) {
     console.error("[ecommerce.validateCartStore]", error);
     return res.status(500).json({ success: false, message: "Error al validar carrito." });

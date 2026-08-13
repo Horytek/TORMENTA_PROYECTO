@@ -5,7 +5,7 @@ import {
   stockPorSku,
 } from "../inventario/stockRepository.js";
 import { listarPorProductos } from "../producto/productoImagenRepository.js";
-import { almacenesDeSucursal } from "./TiendaConfigService.js";
+import { almacenesDeSucursal, listSucursalesPublicas } from "./TiendaConfigService.js";
 
 function slugify(text) {
   return String(text || "")
@@ -479,12 +479,7 @@ export async function getProductoDetalle(cx, {
   }
 
   // Disponibilidad por sucursal
-  const [sucRows] = await cx.query(
-    `SELECT s.id_sucursal, s.nombre_sucursal AS nombre, s.ubicacion AS direccion
-     FROM sucursal s
-     WHERE s.id_tenant = ? AND (s.estado_sucursal = 1 OR s.estado_sucursal IS NULL)`,
-    [id_tenant]
-  );
+  const sucRows = await listSucursalesPublicas(cx, id_tenant);
   const porSucursal = [];
   for (const s of sucRows) {
     const alms = await almacenesDeSucursal(cx, s.id_sucursal, id_tenant);
@@ -498,7 +493,10 @@ export async function getProductoDetalle(cx, {
       id_sucursal: s.id_sucursal,
       nombre: s.nombre,
       direccion: s.direccion,
-      telefono: null,
+      telefono: s.telefono || null,
+      whatsapp: s.whatsapp || null,
+      allow_pickup: s.allow_pickup !== false,
+      allow_delivery: Boolean(s.allow_delivery),
       stock: st,
       disponibilidad: disponibilidadEstado(st, umbral),
     });

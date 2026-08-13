@@ -162,8 +162,11 @@ export const adminPatchTiendaConfig = async (body: Record<string, unknown>) => {
   return response.data?.data;
 };
 
-export const adminListPedidos = async (estado?: string) => {
-  const response = await api.get("/catalogo/admin/pedidos", { params: { estado } });
+export const adminListPedidos = async (params?: {
+  estado?: string;
+  mp_status?: string;
+}) => {
+  const response = await api.get("/catalogo/admin/pedidos", { params });
   return response.data?.data;
 };
 
@@ -171,8 +174,8 @@ export const adminUpdatePedidoEstado = async (id: number, estado: string) => {
   await api.patch(`/catalogo/admin/pedidos/${id}/estado`, { estado });
 };
 
-export const adminValidarPickup = async (token: string) => {
-  const response = await api.post("/catalogo/admin/pickup/validar", { token });
+export const adminValidarPickup = async (body: { token?: string; codigo?: string }) => {
+  const response = await api.post("/catalogo/admin/pickup/validar", body);
   return response.data?.data;
 };
 
@@ -204,11 +207,55 @@ export const adminSaveBanner = async (body: Record<string, unknown>) => {
   await api.post("/catalogo/admin/banners", body);
 };
 
-export const adminResenas = async () => {
-  const response = await api.get("/catalogo/admin/resenas");
+export const adminResenas = async (params?: { estado?: string; q?: string }) => {
+  const response = await api.get("/catalogo/admin/resenas", { params });
+  return response.data?.data;
+};
+
+export const adminResenaStats = async () => {
+  const response = await api.get("/catalogo/admin/resenas/stats");
+  return response.data?.data;
+};
+
+export const adminGetResenaConfig = async () => {
+  const response = await api.get("/catalogo/admin/resenas/config");
+  return response.data?.data;
+};
+
+export const adminPatchResenaConfig = async (body: Record<string, unknown>) => {
+  const response = await api.patch("/catalogo/admin/resenas/config", body);
   return response.data?.data;
 };
 
 export const adminModerarResena = async (id: number, body: Record<string, unknown>) => {
   await api.patch(`/catalogo/admin/resenas/${id}`, body);
+};
+
+export const adminPatchSucursal = async (id: number, body: Record<string, unknown>) => {
+  const response = await api.patch(`/catalogo/admin/sucursales/${id}`, body);
+  return response.data?.data;
+};
+
+export const adminListSucursales = async () => {
+  const response = await api.get("/catalogo/admin/sucursales");
+  return response.data?.data;
+};
+
+export const adminUploadTiendaBrand = async (
+  kind: "logo" | "banner",
+  file: string,
+  fileName?: string
+) => {
+  const response = await api.post(`/catalogo/admin/tienda/${kind}`, { file, fileName });
+  return response.data;
+};
+
+export const adminConsultasStats = async () => {
+  const response = await api.get("/catalogo/admin/consultas");
+  return response.data?.data;
+};
+
+export const adminPatchDisponibilidad = async (disponibilidad: Record<string, unknown>) => {
+  const response = await api.patch("/catalogo/admin/config", { disponibilidad });
+  return response.data?.data;
 };

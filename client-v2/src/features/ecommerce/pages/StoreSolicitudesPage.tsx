@@ -10,6 +10,7 @@ type Solicitud = {
   id_solicitud: number;
   codigo: string;
   estado: string;
+  estado_ui?: string;
   producto_nombre?: string;
   sucursal_nombre?: string;
   cantidad_solicitada: number;
@@ -23,11 +24,38 @@ type Solicitud = {
 const TONE: Record<string, string> = {
   pendiente: "bg-amber-100 text-amber-900",
   en_revision: "bg-sky-100 text-sky-900",
+  confirmada: "bg-indigo-100 text-indigo-900",
+  en_traslado: "bg-violet-100 text-violet-900",
+  disponible: "bg-emerald-100 text-emerald-900",
   aprobada: "bg-emerald-100 text-emerald-900",
   rechazada: "bg-red-100 text-red-800",
   expirada: "bg-stone-100 text-stone-600",
   cancelada: "bg-stone-200 text-stone-700",
 };
+
+const STEPS = [
+  { key: "enviada", label: "Enviada" },
+  { key: "confirmacion", label: "Esperando confirmación" },
+  { key: "camino", label: "En camino / Disponible" },
+  { key: "compra", label: "Compra" },
+] as const;
+
+function normalizeEstado(estado: string) {
+  return estado === "aprobada" ? "disponible" : estado;
+}
+
+function stepIndex(estado: string) {
+  const e = normalizeEstado(estado);
+  if (e === "pendiente") return 0;
+  if (e === "en_revision" || e === "confirmada") return 1;
+  if (e === "en_traslado") return 2;
+  if (e === "disponible") return 2;
+  return 0;
+}
+
+function isListoParaComprar(estado: string) {
+  return estado === "disponible" || estado === "aprobada";
+}
 
 function expiresLabel(iso?: string | null) {
   if (!iso) return null;
@@ -39,6 +67,40 @@ function expiresLabel(iso?: string | null) {
   if (m < 60) return `Expira en ${m} min`;
   const h = Math.floor(m / 60);
   return `Expira en ${h} h ${m % 60} min`;
+}
+
+function SolicitudStepper({ estado, vigente }: { estado: string; vigente: boolean }) {
+  let idx = stepIndex(estado);
+  if (vigente) idx = 3;
+  const e = normalizeEstado(estado);
+  const failed = e === "rechazada" || e === "expirada" || e === "cancelada";
+
+  return (
+    <ol className="grid grid-cols-4 gap-1 pt-2">
+      {STEPS.map((step, i) => {
+        const done = !failed && i <= idx;
+        const current = !failed && i === idx;
+        return (
+          <li key={step.key} className="min-w-0">
+            <div
+              className={cn(
+                "h-1.5 rounded-full mb-1",
+                failed ? "bg-stone-200" : done ? "bg-emerald-500" : "bg-stone-200"
+              )}
+            />
+            <p
+              className={cn(
+                "text-[10px] leading-tight truncate",
+                current ? "font-semibold text-foreground" : "store-muted"
+              )}
+            >
+              {step.label}
+            </p>
+          </li>
+        );
+      })}
+    </ol>
+  );
 }
 
 export default function StoreSolicitudesPage() {
@@ -86,16 +148,19 @@ export default function StoreSolicitudesPage() {
         {rows.map((s) => {
           const exp = expiresLabel(s.expires_at);
           const vigente =
-            s.estado === "aprobada" && (!s.expires_at || new Date(s.expires_at).getTime() > Date.now());
+            isListoParaComprar(s.estado) &&
+            (!s.expires_at || new Date(s.expires_at).getTime() > Date.now());
+          const estadoUi = normalizeEstado(s.estado_ui || s.estado);
           return (
             <div key={s.id_solicitud} className="vitrina-card p-4 space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <span className={cn("text-[11px] font-semibold px-2 py-0.5 rounded-full", TONE[s.estado])}>
-                  {s.estado.replace("_", " ")}
+                <span className={cn("text-[11px] font-semibold px-2 py-0.5 rounded-full", TONE[estadoUi] || TONE[s.estado])}>
+                  {estadoUi.replace("_", " ")}
                 </span>
                 <span className="text-xs font-mono store-muted">#{s.codigo}</span>
               </div>
               <div className="font-medium">{s.producto_nombre}</div>
+              <SolicitudStepper estado={s.estado} vigente={vigente} />
               <ul className="text-sm store-muted space-y-0.5">
                 {s.attrs_json &&
                   Object.entries(s.attrs_json).map(([k, v]) => (
@@ -110,11 +175,11 @@ export default function StoreSolicitudesPage() {
               </ul>
               {vigente && (
                 <p className="text-sm text-emerald-800">
-                  Stock confirmado. Puedes continuar con tu compra
+                  Producto disponible. Puedes continuar con tu compra
                   {exp ? ` · ${exp}` : s.expires_at ? ` antes de ${new Date(s.expires_at).toLocaleString()}` : ""}.
                 </p>
               )}
-              {s.estado === "aprobada" && !vigente && (
+              {isListoParaComprar(s.estado) && !vigente && (
                 <p className="text-sm store-muted">Esta confirmación expiró.</p>
               )}
               {s.estado === "rechazada" && s.comentario_cliente && (
@@ -130,10 +195,13 @@ export default function StoreSolicitudesPage() {
                     onClick={() => comprarMut.mutate(s.id_solicitud)}
                     disabled={comprarMut.isPending}
                   >
-                    Ir a comprar
+                    Continuar con la compra
                   </Button>
                 )}
-                {(s.estado === "pendiente" || s.estado === "en_revision") && (
+                {(s.estado === "pendiente" ||
+                  s.estado === "en_revision" ||
+                  s.estado === "confirmada" ||
+                  s.estado === "en_traslado") && (
                   <Button
                     size="sm"
                     variant="outline"
@@ -143,7 +211,9 @@ export default function StoreSolicitudesPage() {
                     Cancelar
                   </Button>
                 )}
-                {(s.estado === "expirada" || s.estado === "rechazada" || (s.estado === "aprobada" && !vigente)) && (
+                {(s.estado === "expirada" ||
+                  s.estado === "rechazada" ||
+                  (isListoParaComprar(s.estado) && !vigente)) && (
                   <Button size="sm" variant="outline" asChild>
                     <Link to={`/tienda/${slug}/producto/${s.id_producto}`}>Solicitar nuevamente</Link>
                   </Button>

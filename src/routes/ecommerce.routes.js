@@ -140,6 +140,7 @@ import {
   listStoreSucursales,
   searchStore,
   getProductAvailability,
+  resolveProductDisponibilidad,
   adminListSucursales,
   adminCreateSucursal,
   adminUpdateSucursal,
@@ -203,6 +204,8 @@ import {
   adminStatsSolicitudes,
   adminGetSolicitud,
   adminEnRevisionSolicitud,
+  adminConfirmarSolicitud,
+  adminEnTrasladoSolicitud,
   adminAprobarSolicitud,
   adminRechazarSolicitud,
   adminCancelarSolicitud,
@@ -226,6 +229,14 @@ router.get("/store/:slug/sucursales", listStoreSucursales);
 router.get("/store/:slug/search", searchStore);
 router.get("/store/:slug/products/:id", getStoreProduct);
 router.get("/store/:slug/products/:id/disponibilidad", getProductAvailability);
+router.post(
+  "/store/:slug/products/:id/disponibilidad/resolver",
+  resolveProductDisponibilidad
+);
+router.get(
+  "/store/:slug/products/:id/disponibilidad/resolver",
+  resolveProductDisponibilidad
+);
 router.post(
   "/store/:slug/consultas-disponibilidad",
   validateSchema(ecommerceConsultaDisponibilidadSchema),
@@ -404,6 +415,8 @@ router.get("/admin/solicitudes/stats", P("solicitudes.ver"), adminStatsSolicitud
 router.get("/admin/solicitudes", P("solicitudes.ver"), adminListSolicitudes);
 router.get("/admin/solicitudes/:id", P("solicitudes.ver"), adminGetSolicitud);
 router.post("/admin/solicitudes/:id/en-revision", P("solicitudes.verificar"), adminEnRevisionSolicitud);
+router.post("/admin/solicitudes/:id/confirmar", P("solicitudes.verificar"), adminConfirmarSolicitud);
+router.post("/admin/solicitudes/:id/en-traslado", P("solicitudes.verificar"), adminEnTrasladoSolicitud);
 router.post(
   "/admin/solicitudes/:id/aprobar",
   P("solicitudes.aprobar"),

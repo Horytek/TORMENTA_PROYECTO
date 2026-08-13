@@ -99,6 +99,8 @@ export async function crearPedido(cx, {
   costo_envio = 0,
   notas = null,
   idempotency_key,
+  id_destino = null,
+  id_agencia = null,
 }) {
   if (!Array.isArray(items) || items.length === 0) {
     throw Object.assign(new Error("El carrito está vacío"), { status: 400 });
@@ -161,8 +163,8 @@ export async function crearPedido(cx, {
       id_tenant, codigo, id_comprador, id_cliente, id_sucursal, id_almacen,
       estado, metodo_entrega, direccion_entrega, distrito, referencia_entrega,
       costo_envio, subtotal, descuento, total, cupon_codigo,
-      idempotency_key, pickup_qr_token, notas, expires_at
-    ) VALUES (?, ?, ?, ?, ?, ?, 'pendiente_pago', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      idempotency_key, pickup_qr_token, notas, expires_at, id_destino, id_agencia
+    ) VALUES (?, ?, ?, ?, ?, ?, 'pendiente_pago', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id_tenant,
       codigo,
@@ -183,6 +185,8 @@ export async function crearPedido(cx, {
       pickupToken,
       notas,
       expires,
+      id_destino || null,
+      id_agencia || null,
     ]
   );
   const id_pedido = ins.insertId;
@@ -290,18 +294,32 @@ export async function listarPedidosComprador(cx, { id_tenant, id_comprador }) {
   return rows;
 }
 
-export async function listarPedidosAdmin(cx, { id_tenant, estado = null, limit = 50 }) {
-  const where = ["id_tenant = ?"];
+export async function listarPedidosAdmin(
+  cx,
+  { id_tenant, estado = null, mp_status = null, limit = 50 }
+) {
+  const where = ["p.id_tenant = ?"];
   const params = [id_tenant];
   if (estado) {
-    where.push("estado = ?");
+    where.push("p.estado = ?");
     params.push(estado);
+  }
+  if (mp_status) {
+    where.push("p.mp_status = ?");
+    params.push(mp_status);
   }
   params.push(Math.min(100, Number(limit) || 50));
   const [rows] = await cx.query(
-    `SELECT * FROM tienda_pedido
+    `SELECT p.*,
+            c.nombres AS comprador_nombre,
+            c.email AS comprador_email,
+            c.telefono AS comprador_telefono,
+            s.nombre_sucursal AS sucursal_nombre
+     FROM tienda_pedido p
+     LEFT JOIN tienda_comprador c ON c.id_comprador = p.id_comprador
+     LEFT JOIN sucursal s ON s.id_sucursal = p.id_sucursal
      WHERE ${where.join(" AND ")}
-     ORDER BY created_at DESC
+     ORDER BY p.created_at DESC
      LIMIT ?`,
     params
   );

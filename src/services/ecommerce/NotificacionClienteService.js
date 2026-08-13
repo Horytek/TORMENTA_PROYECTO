@@ -9,6 +9,9 @@ export const TIPOS_NOTIF = [
   "solicitud_expirada",
   "solicitud_en_revision",
   "solicitud_cancelada",
+  "solicitud_recibida",
+  "solicitud_confirmada",
+  "solicitud_disponible",
 ];
 
 function parsePayload(raw) {
@@ -62,6 +65,18 @@ export async function notificarSolicitudCliente(connection, solicitud, tipo, { t
   const producto = solicitud.producto_nombre || "Producto";
   const codigo = solicitud.codigo || `#${solicitud.id_solicitud}`;
   const defaults = {
+    solicitud_recibida: {
+      titulo: `Solicitud enviada · ${producto}`,
+      cuerpo: `Recibimos tu solicitud ${codigo}. Te avisaremos cuando confirmemos disponibilidad.`,
+    },
+    solicitud_confirmada: {
+      titulo: `Confirmada · ${producto}`,
+      cuerpo: `Tu solicitud ${codigo} fue confirmada. Estamos preparando tu producto.`,
+    },
+    solicitud_disponible: {
+      titulo: `Producto disponible · ${producto}`,
+      cuerpo: `Tu solicitud ${codigo} ya está lista. Puedes continuar con la compra.`,
+    },
     solicitud_aprobada: {
       titulo: `Stock confirmado · ${producto}`,
       cuerpo: `Tu solicitud ${codigo} fue aprobada. Ya puedes comprar.`,
@@ -138,13 +153,13 @@ export async function sincronizarNotifsDesdeSolicitudes(connection, id_tienda, i
        FROM ecom_solicitud_disponibilidad s
        LEFT JOIN producto p ON p.id_producto = s.id_producto AND p.id_tienda = s.id_tienda
        WHERE s.id_tienda = ? AND s.id_usuario = ?
-         AND s.estado = 'aprobada'
+         AND s.estado IN ('disponible','aprobada')
          AND s.expires_at IS NOT NULL AND s.expires_at > NOW()
          AND NOT EXISTS (
            SELECT 1 FROM ecom_notificacion_cliente n
            WHERE n.id_tienda = s.id_tienda
              AND n.id_cliente = s.id_usuario
-             AND n.tipo = 'solicitud_aprobada'
+             AND n.tipo IN ('solicitud_aprobada','solicitud_disponible')
              AND n.ref_tipo = 'solicitud'
              AND n.ref_id = s.id_solicitud
          )

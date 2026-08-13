@@ -29,13 +29,73 @@ const UpdatesPage = lazy(() => import("@/features/landing/pages/UpdatesPage"));
 const ContactPage = lazy(() => import("@/features/landing/pages/ContactPage"));
 const PaymentResultPage = lazy(() => import("@/features/landing/pages/PaymentResultPage"));
 const RegisterPage = lazy(() => import("@/features/registration/pages/RegisterPage"));
-const CatalogoPublicoPage = lazy(() => import("@/features/catalog-express/pages/CatalogoPublicoPage"));
-const CatalogStoreBySlugPage = lazy(() => import("@/features/catalog-express/pages/CatalogStoreBySlugPage"));
-const CatalogProductPage = lazy(() => import("@/features/catalog-express/pages/CatalogProductPage"));
-const CatalogCartCheckoutPage = lazy(() => import("@/features/catalog-express/pages/CatalogCartCheckoutPage"));
-const CatalogPaymentResultPage = lazy(() => import("@/features/catalog-express/pages/CatalogPaymentResultPage"));
-const CatalogAccountPage = lazy(() => import("@/features/catalog-express/pages/CatalogAccountPage"));
-const CatalogExpressManagePage = lazy(() => import("@/features/catalog-express/pages/CatalogExpressManagePage"));
+const TiendaAdminLayout = lazy(() =>
+  import("@/features/catalog-express/components/TiendaAdminLayout").then((m) => ({
+    default: m.default,
+  }))
+);
+const TiendaAdminIndexRedirect = lazy(() =>
+  import("@/features/catalog-express/components/TiendaAdminLayout").then((m) => ({
+    default: m.TiendaAdminIndexRedirect,
+  }))
+);
+const TiendaAdminPedidosPage = lazy(
+  () => import("@/features/catalog-express/pages/TiendaAdminPedidosPage")
+);
+const TiendaAdminOrdenesPage = lazy(
+  () => import("@/features/catalog-express/pages/TiendaAdminOrdenesPage")
+);
+const TiendaAdminRecojoPage = lazy(
+  () => import("@/features/catalog-express/pages/TiendaAdminRecojoPage")
+);
+const TiendaAdminResenasPage = lazy(
+  () => import("@/features/catalog-express/pages/TiendaAdminResenasPage")
+);
+const TiendaAdminConfigPage = lazy(
+  () => import("@/features/catalog-express/pages/TiendaAdminConfigPage")
+);
+const TiendaAdminCuponesPage = lazy(
+  () => import("@/features/catalog-express/pages/TiendaAdminCuponesPage")
+);
+const TiendaAdminEntregaPage = lazy(
+  () => import("@/features/catalog-express/pages/TiendaAdminEntregaPage")
+);
+const TiendaAdminSucursalesPage = lazy(
+  () => import("@/features/catalog-express/pages/TiendaAdminSucursalesPage")
+);
+const TiendaAdminBannersPage = lazy(
+  () => import("@/features/catalog-express/pages/TiendaAdminBannersPage")
+);
+const LegacyCatalogTenantRedirect = lazy(() =>
+  import("@/features/erp-store/pages/LegacyCatalogRedirects").then((m) => ({
+    default: m.RedirectCatalogTenantToErpStore,
+  }))
+);
+const LegacyCatalogSlugRedirect = lazy(() =>
+  import("@/features/erp-store/pages/LegacyCatalogRedirects").then((m) => ({
+    default: m.RedirectCatalogSlugToErpStore,
+  }))
+);
+const ErpStorefrontPage = lazy(() => import("@/features/erp-store/pages/StorefrontPage"));
+const ErpStoreProductPage = lazy(() => import("@/features/erp-store/pages/StoreProductPage"));
+const ErpStoreCartPage = lazy(() => import("@/features/erp-store/pages/StoreCartPage"));
+const ErpStorePaymentResultPage = lazy(() => import("@/features/erp-store/pages/StorePaymentResultPage"));
+const ErpStoreLoginPage = lazy(() => import("@/features/erp-store/pages/StoreLoginPage"));
+const ErpStoreRegisterPage = lazy(() => import("@/features/erp-store/pages/StoreRegisterPage"));
+const ErpStoreAccountLayout = lazy(() => import("@/features/erp-store/pages/StoreAccountLayout"));
+const ErpStoreAccountHomePage = lazy(() =>
+  import("@/features/erp-store/pages/StoreAccountLayout").then((m) => ({
+    default: m.StoreAccountHomePage,
+  }))
+);
+const ErpStoreOrdersPage = lazy(() => import("@/features/erp-store/pages/StoreOrdersPage"));
+const ErpStoreSolicitudesPage = lazy(() => import("@/features/erp-store/pages/StoreSolicitudesPage"));
+const ErpStoreOrderDetailPage = lazy(() => import("@/features/erp-store/pages/StoreOrderDetailPage"));
+const ErpStoreOrderQrPage = lazy(() => import("@/features/erp-store/pages/StoreOrderQrPage"));
+const ErpStoreFavoritesPage = lazy(() => import("@/features/erp-store/pages/StoreFavoritesPage"));
+const ErpStoreProfilePage = lazy(() => import("@/features/erp-store/pages/StoreProfilePage"));
+const ErpStoreOpinionesPage = lazy(() => import("@/features/erp-store/pages/StoreOpinionesPage"));
+const ErpStoreMisReviewsPage = lazy(() => import("@/features/erp-store/pages/StoreMisReviewsPage"));
 const SolucionesPage = lazy(() => import("@/features/landing/pages/SolucionesPage"));
 const SolucionProductoPage = lazy(() => import("@/features/landing/pages/SolucionProductoPage"));
 const SolucionBundlePage = lazy(() => import("@/features/landing/pages/SolucionBundlePage"));
@@ -352,14 +412,28 @@ export default function App() {
                 <Route path="perfil" element={<StoreProfilePage />} />
               </Route>
               <Route path="/tienda/:slug/pago/resultado" element={<StorePaymentResultPage />} />
-              <Route path="/catalogo/:idTenant" element={<CatalogoPublicoPage />} />
-              <Route path="/c/:slug" element={<CatalogStoreBySlugPage />} />
-              <Route path="/c/:slug/p/:productId" element={<CatalogProductPage />} />
-              <Route path="/c/:slug/carrito" element={<CatalogCartCheckoutPage />} />
-              <Route path="/c/:slug/pago/resultado" element={<CatalogPaymentResultPage />} />
-              <Route path="/c/:slug/cuenta" element={<CatalogAccountPage />} />
-              <Route path="/c/:slug/cuenta/pedidos" element={<CatalogAccountPage />} />
-              <Route path="/c/:slug/cuenta/favoritos" element={<CatalogAccountPage />} />
+              {/* Ecommerce ERP (reemplaza Catálogo WhatsApp) */}
+              <Route path="/s/:slug" element={<ErpStorefrontPage />} />
+              <Route path="/s/:slug/producto/:id" element={<ErpStoreProductPage />} />
+              <Route path="/s/:slug/opiniones" element={<ErpStoreOpinionesPage />} />
+              <Route path="/s/:slug/carrito" element={<ErpStoreCartPage />} />
+              <Route path="/s/:slug/login" element={<ErpStoreLoginPage />} />
+              <Route path="/s/:slug/registro" element={<ErpStoreRegisterPage />} />
+              <Route path="/s/:slug/cuenta/pedidos/:id/qr" element={<ErpStoreOrderQrPage />} />
+              <Route path="/s/:slug/cuenta" element={<ErpStoreAccountLayout />}>
+                <Route index element={<ErpStoreAccountHomePage />} />
+                <Route path="pedidos" element={<ErpStoreOrdersPage />} />
+                <Route path="solicitudes" element={<ErpStoreSolicitudesPage />} />
+                <Route path="pedidos/:id" element={<ErpStoreOrderDetailPage />} />
+                <Route path="favoritos" element={<ErpStoreFavoritesPage />} />
+                <Route path="opiniones" element={<ErpStoreMisReviewsPage />} />
+                <Route path="perfil" element={<ErpStoreProfilePage />} />
+              </Route>
+              <Route path="/s/:slug/pago/resultado" element={<ErpStorePaymentResultPage />} />
+              {/* Legacy Catálogo WA → Tienda web ERP */}
+              <Route path="/catalogo/:idTenant" element={<LegacyCatalogTenantRedirect />} />
+              <Route path="/c/:slug/*" element={<LegacyCatalogSlugRedirect />} />
+              <Route path="/c/:slug" element={<LegacyCatalogSlugRedirect />} />
               <Route path="/status" element={<StatusPage />} />
               <Route path="/success" element={<PaymentResultPage />} />
               <Route path="/failure" element={<PaymentResultPage />} />
@@ -448,12 +522,27 @@ export default function App() {
                   {/* "Inicio" no requiere capability — visible para cualquier usuario autenticado. */}
                   <Route path="/dashboard" element={<DashboardPage />} />
                   <Route
+                    path="/catalog-express"
+                    element={
+                      <RequireCapability capability="catalogo.view">
+                        <TiendaAdminLayout />
+                      </RequireCapability>
+                    }
+                  >
+                    <Route index element={<TiendaAdminIndexRedirect />} />
+                    <Route path="pedidos" element={<TiendaAdminPedidosPage />} />
+                    <Route path="recojo" element={<TiendaAdminRecojoPage />} />
+                    <Route path="ordenes" element={<TiendaAdminOrdenesPage />} />
+                    <Route path="resenas" element={<TiendaAdminResenasPage />} />
+                    <Route path="cupones" element={<TiendaAdminCuponesPage />} />
+                    <Route path="sucursales" element={<TiendaAdminSucursalesPage />} />
+                    <Route path="entrega" element={<TiendaAdminEntregaPage />} />
+                    <Route path="banners" element={<TiendaAdminBannersPage />} />
+                    <Route path="configuracion" element={<TiendaAdminConfigPage />} />
+                  </Route>
+                  <Route
                     path="/products"
                     element={<RequireCapability capability="productos.view"><ProductsPage /></RequireCapability>}
-                  />
-                  <Route
-                    path="/catalog-express"
-                    element={<CatalogExpressManagePage />}
                   />
                   <Route
                     path="/products/costos"

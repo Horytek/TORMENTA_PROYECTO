@@ -43,7 +43,7 @@ interface SearchCommandDialogProps {
 export function SearchCommandDialog({ open, onOpenChange }: SearchCommandDialogProps) {
   const navigate = useNavigate();
   const globalModuleConfigs = useUserStore((s) => s.globalModuleConfigs);
-  const { can, isDeveloper } = usePermissions();
+  const { can, isDeveloper, isAdmin } = usePermissions();
 
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 300);
@@ -77,8 +77,13 @@ export function SearchCommandDialog({ open, onOpenChange }: SearchCommandDialogP
   // Filtrar por capabilities del usuario (developer ve todo)
   const availableRoutes = useMemo<SearchableRoute[]>(() => {
     if (isDeveloper) return allRoutes;
-    return allRoutes.filter((r) => !r.capability || can(`${r.capability}.view`));
-  }, [allRoutes, can, isDeveloper]);
+    return allRoutes.filter(
+      (r) =>
+        !r.capability ||
+        (r.capability === "catalogo" && isAdmin) ||
+        can(`${r.capability}.view`)
+    );
+  }, [allRoutes, can, isDeveloper, isAdmin]);
 
   const recentUrls = useMemo(() => getRecentSearches(), [open]);
 

@@ -14,7 +14,7 @@ import type { Negocio } from "../types";
 import { DASHBOARD_WIDGET_OPTIONS } from "../types";
 import { VariantesSettingsCard } from "../components/VariantesSettingsCard";
 import { PuntosSettingsCard } from "@/features/loyalty/components/PuntosSettingsCard";
-import { CatalogoSettingsCard } from "@/features/catalog-express/components/CatalogoSettingsCard";
+import { TiendaWebSettingsCard } from "@/features/catalog-express/components/TiendaWebSettingsCard";
 
 const ALL_WIDGET_KEYS = DASHBOARD_WIDGET_OPTIONS.map((w) => w.key);
 
@@ -285,8 +285,8 @@ export default function SettingsPage() {
       {/* Club de puntos / fidelización */}
       <PuntosSettingsCard />
 
-      {/* Catálogo Digital WhatsApp público */}
-      <CatalogoSettingsCard />
+      {/* Tienda web: enlace público + Mercado Pago */}
+      <TiendaWebSettingsCard />
 
       {/* Panel principal */}
       <Card>

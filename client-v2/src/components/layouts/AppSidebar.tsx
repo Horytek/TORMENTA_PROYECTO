@@ -79,6 +79,10 @@ export default function AppSidebar() {
         can(`${item.capability}.view`)
       );
     }
+    if (item.capability === "catalogo" || item.url.startsWith("/catalog-express")) {
+      if (isAdmin) return true;
+      return can("catalogo.view");
+    }
     return can(`${item.capability}.view`);
   };
 

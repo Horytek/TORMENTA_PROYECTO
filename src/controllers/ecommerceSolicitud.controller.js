@@ -10,12 +10,15 @@ import {
   listSolicitudesBuyer,
   statsSolicitudes,
   marcarEnRevision,
+  confirmarSolicitud,
+  marcarEnTraslado,
   aprobarSolicitud,
   rechazarSolicitud,
   cancelarSolicitud,
   assertAutorizacionVigente,
   getStockSnapshot,
 } from "../services/ecommerce/SolicitudDisponibilidadService.js";
+import { resolveDisponibilidadFulfillment } from "../services/ecommerce/FulfillmentDisponibilidadService.js";
 import {
   listNotificacionesCliente,
   countUnreadNotificaciones,
@@ -35,6 +38,8 @@ function mapSolicitud(row) {
     ...row,
     attrs_json: parseJsonSafe(row.attrs_json),
     alternativa_json: parseJsonSafe(row.alternativa_json),
+    entrega_json: parseJsonSafe(row.entrega_json),
+    estado_ui: row.estado === "aprobada" ? "disponible" : row.estado,
   };
 }
 
@@ -77,6 +82,46 @@ export const storeCrearSolicitud = async (req, res) => {
     }
 
     const buyer = req.storefrontUser;
+    let id_sucursal_origen = body.id_sucursal_origen ? Number(body.id_sucursal_origen) : null;
+    const fulfillment = body.fulfillment || "pickup";
+
+    if (!id_sucursal_origen && id_variante) {
+      try {
+        const resolved = await resolveDisponibilidadFulfillment(connection, {
+          id_tienda,
+          id_producto,
+          id_variante,
+          cantidad,
+          fulfillment,
+          id_sucursal,
+          id_zona: body.id_zona ? Number(body.id_zona) : null,
+          distrito: body.distrito || null,
+          lat: body.lat != null ? Number(body.lat) : null,
+          lng: body.lng != null ? Number(body.lng) : null,
+          subtotal: Number(producto.precio || 0) * cantidad,
+          theme_json: tienda.theme_json,
+          attrs_json: producto.attrs_json,
+        });
+        if (resolved.modo === "otra_ubicacion" && resolved.id_sucursal_origen) {
+          id_sucursal_origen = resolved.id_sucursal_origen;
+        }
+        if (resolved.modo === "inmediata") {
+          return res.status(400).json({
+            success: false,
+            message: "Hay stock disponible. Puedes comprar ahora sin solicitud.",
+          });
+        }
+        if (resolved.modo === "agotado") {
+          return res.status(400).json({
+            success: false,
+            message: "Producto no disponible actualmente.",
+          });
+        }
+      } catch {
+        /* si falla el resolver, permite crear igual */
+      }
+    }
+
     const result = await crearSolicitud(connection, {
       id_tienda,
       id_usuario: buyer.id_cliente,
@@ -89,6 +134,11 @@ export const storeCrearSolicitud = async (req, res) => {
       attrs_json: body.attrs || body.attrs_json || null,
       cantidad_solicitada: cantidad,
       id_sucursal,
+      id_sucursal_origen,
+      fulfillment,
+      direccion_entrega: body.direccion_entrega || null,
+      id_zona: body.id_zona ? Number(body.id_zona) : null,
+      entrega_json: body.entrega_json || null,
       precio_unitario_snapshot: producto.precio,
       theme_json: tienda.theme_json,
     });
@@ -387,6 +437,75 @@ export const adminEnRevisionSolicitud = async (req, res) => {
   }
 };
 
+/** POST /admin/solicitudes/:id/confirmar */
+export const adminConfirmarSolicitud = async (req, res) => {
+  let connection;
+  try {
+    connection = await getEcommerceConnection();
+    await connection.beginTransaction();
+    const row = await getSolicitudById(connection, req.id_tienda, Number(req.params.id));
+    if (!row) {
+      await connection.rollback();
+      return res.status(404).json({ success: false, message: "Solicitud no encontrada." });
+    }
+    assertSucursal(req.ecomAccess, row.id_sucursal);
+    const updated = await confirmarSolicitud(connection, {
+      id_tienda: req.id_tienda,
+      id_solicitud: row.id_solicitud,
+      id_usuario_staff: req.ecommerceUser?.id_usuario,
+      id_sucursal_origen: req.body?.id_sucursal_origen
+        ? Number(req.body.id_sucursal_origen)
+        : null,
+      observacion_stock: req.body?.observacion_stock || null,
+    });
+    await connection.commit();
+    return res.json({
+      success: true,
+      data: mapSolicitud(updated),
+      message: "Solicitud confirmada.",
+    });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    return fail(res, error);
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+/** POST /admin/solicitudes/:id/en-traslado */
+export const adminEnTrasladoSolicitud = async (req, res) => {
+  let connection;
+  try {
+    connection = await getEcommerceConnection();
+    await connection.beginTransaction();
+    const row = await getSolicitudById(connection, req.id_tienda, Number(req.params.id));
+    if (!row) {
+      await connection.rollback();
+      return res.status(404).json({ success: false, message: "Solicitud no encontrada." });
+    }
+    assertSucursal(req.ecomAccess, row.id_sucursal);
+    const updated = await marcarEnTraslado(connection, {
+      id_tienda: req.id_tienda,
+      id_solicitud: row.id_solicitud,
+      id_usuario_staff: req.ecommerceUser?.id_usuario,
+      id_sucursal_origen: req.body?.id_sucursal_origen
+        ? Number(req.body.id_sucursal_origen)
+        : null,
+    });
+    await connection.commit();
+    return res.json({
+      success: true,
+      data: mapSolicitud(updated),
+      message: "Marcada en traslado.",
+    });
+  } catch (error) {
+    if (connection) await connection.rollback().catch(() => {});
+    return fail(res, error);
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 /** POST /admin/solicitudes/:id/aprobar */
 export const adminAprobarSolicitud = async (req, res) => {
   let connection;
@@ -413,13 +532,16 @@ export const adminAprobarSolicitud = async (req, res) => {
       observacion_stock: req.body?.observacion_stock,
       crear_reserva: req.body?.crear_reserva,
       congelar_precio: req.body?.congelar_precio,
+      id_sucursal_origen: req.body?.id_sucursal_origen
+        ? Number(req.body.id_sucursal_origen)
+        : null,
       theme_json: tienda?.theme_json,
     });
     await connection.commit();
     return res.json({
       success: true,
       data: mapSolicitud(updated),
-      message: "Disponibilidad confirmada. El cliente puede comprar hasta la hora de expiración.",
+      message: "Producto disponible. El cliente puede comprar hasta la hora de expiración.",
     });
   } catch (error) {
     if (connection) await connection.rollback().catch(() => {});

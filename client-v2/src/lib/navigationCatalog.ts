@@ -27,8 +27,8 @@ import {
   HandCoins,
   ArrowLeftRight,
   MessageCircle,
-  RefreshCw,
   Store,
+  RefreshCw,
   Factory,
   Handshake,
   PackageSearch,
@@ -76,7 +76,7 @@ export interface ModuleMeta {
  */
 const MODULE_META: Record<string, ModuleMeta> = {
   "productos": { url: "/products", icon: Tags, group: "General", title: "Productos", keywords: ["sku", "catálogo", "stock"] },
-  "catalogo": { url: "/catalog-express", icon: MessageCircle, group: "General", title: "Catálogo WhatsApp", keywords: ["whatsapp", "catalogo", "tienda", "vitrina", "pedidos"] },
+  "catalogo": { url: "/catalog-express", icon: Store, group: "General", title: "Tienda web", keywords: ["whatsapp", "catalogo", "tienda", "vitrina", "pedidos", "ecommerce"] },
   "stock-sync": { url: "/platform/sync", icon: RefreshCw, group: "Plataforma", title: "Sync Stock", keywords: ["sync", "stock", "canales", "sobrevende"] },
   "mayorista": { url: "/mayorista-admin", icon: Store, group: "Plataforma", title: "Mayorista B2B", keywords: ["b2b", "mayorista", "lista", "volumen"] },
   "taller": { url: "/platform/taller", icon: Factory, group: "Plataforma", title: "Taller", keywords: ["ot", "insumos", "merma", "planta", "fabricación"] },

@@ -74,6 +74,7 @@ export function SalesHistoryTab() {
     let igv = 0;
     let efectivo = 0;
     let digital = 0;
+    let tiendaWeb = 0;
 
     ventas.forEach((v) => {
       const isCompletada = v.estado_venta === 1 || v.estado === 1;
@@ -85,6 +86,7 @@ export function SalesHistoryTab() {
         const split = parseMetodoPago(v.metodo_pago, saleTotal);
         efectivo += split.efectivo;
         digital += split.digital;
+        if (String(v.canal) === "tienda_web") tiendaWeb += saleTotal;
       }
     });
 
@@ -94,7 +96,8 @@ export function SalesHistoryTab() {
       igv,
       promedio: count > 0 ? total / count : 0,
       efectivo,
-      digital
+      digital,
+      tiendaWeb,
     };
   }, [ventas]);
 
@@ -109,6 +112,10 @@ export function SalesHistoryTab() {
     { key: "igv", priority: "meta", semantic: "number", label: "IGV", format: (v) => `S/ ${Number(v ?? 0).toFixed(2)}` },
     { key: "total_t", priority: "secondary", semantic: "number", label: "Total", format: (v) => `S/ ${Number(v ?? 0).toFixed(2)}` },
     { key: "metodo_pago", priority: "secondary", semantic: "chip", label: "Método" },
+    {
+      key: "canal", priority: "secondary", semantic: "chip", label: "Canal",
+      format: (v) => (String(v) === "tienda_web" ? "Tienda web" : "POS"),
+    },
     {
       key: "estado_venta", priority: "secondary", semantic: "badge", label: "Estado",
       format: (v) => (Number(v) === 1 ? "Completada" : "Anulada"),
@@ -209,6 +216,18 @@ export function SalesHistoryTab() {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Canal</Label>
+            <Select value={filters.canal ?? "all"}
+              onValueChange={(v) => setFilters((f) => ({ ...f, canal: v === "all" ? undefined : v }))}>
+              <SelectTrigger className="h-8 text-xs w-auto min-w-[120px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="pos">POS</SelectItem>
+                <SelectItem value="tienda_web">Tienda web</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex-1" />
           <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => refetch()}>🔄 Actualizar</Button>
           <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleExportCSV} disabled={ventas.length === 0}>
@@ -218,11 +237,12 @@ export function SalesHistoryTab() {
       </Card>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 shrink-0">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 shrink-0">
         <StatCard label="Ventas" value={stats.count.toLocaleString()} />
         <StatCard label="Total" value={`S/ ${stats.total.toFixed(2)}`} accent />
         <StatCard label="Dinero Físico" value={`S/ ${stats.efectivo.toFixed(2)}`} />
         <StatCard label="Dinero Digital" value={`S/ ${stats.digital.toFixed(2)}`} />
+        <StatCard label="Tienda web" value={`S/ ${stats.tiendaWeb.toFixed(2)}`} />
         <StatCard label="IGV Total" value={`S/ ${stats.igv.toFixed(2)}`} />
         <StatCard label="Promedio" value={`S/ ${stats.promedio.toFixed(2)}`} />
       </div>

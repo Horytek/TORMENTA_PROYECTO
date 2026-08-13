@@ -250,7 +250,7 @@ export function getLoginDemoBundle(
         return {
           mode,
           surface: "portal",
-          hint: "Catálogo WhatsApp de demostración.",
+          hint: "Tienda web ERP de demostración.",
           lines: [{ label: "Código", value: "demo" }],
           fill: { codigo: "1", slug: "1" },
           openHref: "/catalogo/1",

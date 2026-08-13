@@ -7,6 +7,17 @@ import { parseConfig, DEFAULT_CONFIG, parseJsonSafe } from "./DisponibilidadServ
 import { notificarSolicitudCliente } from "./NotificacionClienteService.js";
 
 const ESTADOS_ABIERTOS = ["pendiente", "en_revision"];
+const ESTADOS_PRE_DISPONIBLE = ["pendiente", "en_revision", "confirmada", "en_traslado"];
+
+/** Listo para comprar (incluye alias legacy aprobada). */
+export function isEstadoListoParaComprar(estado) {
+  return estado === "disponible" || estado === "aprobada";
+}
+
+export function normalizeEstadoSolicitud(estado) {
+  if (estado === "aprobada") return "disponible";
+  return estado;
+}
 
 function attrsKey(attrs) {
   const obj = attrs && typeof attrs === "object" ? attrs : {};
@@ -66,8 +77,11 @@ export async function findDedupePendiente(connection, {
   const [rows] = await connection.query(
     `SELECT * FROM ecom_solicitud_disponibilidad
      WHERE id_tienda = ? AND id_usuario = ? AND id_producto = ? AND id_sucursal = ?
-       AND estado IN ('pendiente','en_revision','aprobada')
-       AND (estado <> 'aprobada' OR (expires_at IS NOT NULL AND expires_at > NOW()))
+       AND estado IN ('pendiente','en_revision','confirmada','en_traslado','disponible','aprobada')
+       AND (
+         estado NOT IN ('disponible','aprobada')
+         OR (expires_at IS NOT NULL AND expires_at > NOW())
+       )
      ORDER BY id_solicitud DESC
      LIMIT 20`,
     [id_tienda, id_usuario, id_producto, id_sucursal]
@@ -93,6 +107,11 @@ export async function crearSolicitud(connection, {
   attrs_json,
   cantidad_solicitada = 1,
   id_sucursal,
+  id_sucursal_origen = null,
+  fulfillment = "pickup",
+  direccion_entrega = null,
+  id_zona = null,
+  entrega_json = null,
   precio_unitario_snapshot,
   theme_json,
 }) {
@@ -103,6 +122,10 @@ export async function crearSolicitud(connection, {
     });
   }
   const qty = Math.max(1, Number(cantidad_solicitada) || 1);
+  const mode =
+    fulfillment === "retiro" ? "pickup" : ["pickup", "delivery", "provincia"].includes(fulfillment)
+      ? fulfillment
+      : "pickup";
   const dedupe = await findDedupePendiente(connection, {
     id_tienda,
     id_usuario,
@@ -120,8 +143,9 @@ export async function crearSolicitud(connection, {
     `INSERT INTO ecom_solicitud_disponibilidad
       (codigo, id_tienda, id_usuario, nombre_cliente, telefono_cliente, email_cliente,
        id_producto, id_variante, sku, attrs_json, cantidad_solicitada, id_sucursal,
+       id_sucursal_origen, fulfillment, direccion_entrega, id_zona, entrega_json,
        precio_unitario_snapshot, estado)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendiente')`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendiente')`,
     [
       codigo,
       id_tienda,
@@ -135,6 +159,11 @@ export async function crearSolicitud(connection, {
       attrs_json ? JSON.stringify(attrs_json) : null,
       qty,
       id_sucursal,
+      id_sucursal_origen || null,
+      mode,
+      direccion_entrega || null,
+      id_zona || null,
+      entrega_json ? JSON.stringify(entrega_json) : null,
       precio_unitario_snapshot != null ? Number(precio_unitario_snapshot) : null,
     ]
   );
@@ -146,17 +175,21 @@ export async function crearSolicitud(connection, {
     actor_id: id_usuario || null,
     estado_anterior: null,
     estado_nuevo: "pendiente",
-    payload: { codigo },
+    payload: { codigo, fulfillment: mode, id_sucursal_origen },
   });
+  await notificarSolicitudCliente(connection, solicitud, "solicitud_recibida");
   return { solicitud, duplicated: false };
 }
 
 export async function getSolicitudById(connection, id_tienda, id_solicitud) {
   const [[row]] = await connection.query(
-    `SELECT s.*, p.nombre AS producto_nombre, suc.nombre AS sucursal_nombre
+    `SELECT s.*, p.nombre AS producto_nombre,
+            suc.nombre AS sucursal_nombre,
+            so.nombre AS sucursal_origen_nombre
      FROM ecom_solicitud_disponibilidad s
      LEFT JOIN producto p ON p.id_producto = s.id_producto AND p.id_tienda = s.id_tienda
      LEFT JOIN ecom_sucursal suc ON suc.id_sucursal = s.id_sucursal AND suc.id_tienda = s.id_tienda
+     LEFT JOIN ecom_sucursal so ON so.id_sucursal = s.id_sucursal_origen AND so.id_tienda = s.id_tienda
      WHERE s.id_solicitud = ? AND s.id_tienda = ?
      LIMIT 1`,
     [id_solicitud, id_tienda]
@@ -184,13 +217,15 @@ export async function listSolicitudesAdmin(
   }
   params.push(Number(limit) || 50, Number(offset) || 0);
   const [rows] = await connection.query(
-    `SELECT s.*, p.nombre AS producto_nombre, suc.nombre AS sucursal_nombre
+    `SELECT s.*, p.nombre AS producto_nombre, suc.nombre AS sucursal_nombre,
+            so.nombre AS sucursal_origen_nombre
      FROM ecom_solicitud_disponibilidad s
      LEFT JOIN producto p ON p.id_producto = s.id_producto AND p.id_tienda = s.id_tienda
      LEFT JOIN ecom_sucursal suc ON suc.id_sucursal = s.id_sucursal AND suc.id_tienda = s.id_tienda
+     LEFT JOIN ecom_sucursal so ON so.id_sucursal = s.id_sucursal_origen AND so.id_tienda = s.id_tienda
      WHERE ${where}
      ORDER BY
-       FIELD(s.estado,'pendiente','en_revision','aprobada','rechazada','expirada','cancelada'),
+       FIELD(s.estado,'pendiente','en_revision','confirmada','en_traslado','disponible','aprobada','rechazada','expirada','cancelada'),
        s.created_at ASC
      LIMIT ? OFFSET ?`,
     params
@@ -218,6 +253,9 @@ export async function statsSolicitudes(connection, id_tienda, { id_sucursal, suc
   const base = {
     pendiente: 0,
     en_revision: 0,
+    confirmada: 0,
+    en_traslado: 0,
+    disponible: 0,
     aprobada: 0,
     rechazada: 0,
     expirada: 0,
@@ -225,7 +263,9 @@ export async function statsSolicitudes(connection, id_tienda, { id_sucursal, suc
     total: 0,
   };
   for (const r of rows) {
-    base[r.estado] = Number(r.n) || 0;
+    const key = r.estado === "aprobada" ? "disponible" : r.estado;
+    base[key] = (base[key] || 0) + (Number(r.n) || 0);
+    if (r.estado === "aprobada") base.aprobada = Number(r.n) || 0;
     base.total += Number(r.n) || 0;
   }
   return base;
@@ -273,6 +313,88 @@ export async function marcarEnRevision(connection, id_tienda, id_solicitud, id_u
   return getSolicitudById(connection, id_tienda, id_solicitud);
 }
 
+export async function confirmarSolicitud(connection, {
+  id_tienda,
+  id_solicitud,
+  id_usuario_staff,
+  id_sucursal_origen = null,
+  observacion_stock = null,
+}) {
+  const [[locked]] = await connection.query(
+    `SELECT * FROM ecom_solicitud_disponibilidad
+     WHERE id_solicitud = ? AND id_tienda = ? FOR UPDATE`,
+    [id_solicitud, id_tienda]
+  );
+  if (!locked) throw Object.assign(new Error("Solicitud no encontrada."), { status: 404 });
+  if (!["pendiente", "en_revision"].includes(locked.estado)) {
+    throw Object.assign(new Error("La solicitud no puede confirmarse en este estado."), {
+      status: 400,
+    });
+  }
+  await connection.query(
+    `UPDATE ecom_solicitud_disponibilidad SET
+      estado = 'confirmada',
+      id_usuario_staff = ?,
+      id_sucursal_origen = COALESCE(?, id_sucursal_origen),
+      observacion_stock = COALESCE(?, observacion_stock),
+      respondido_at = COALESCE(respondido_at, NOW())
+     WHERE id_solicitud = ? AND id_tienda = ?`,
+    [
+      id_usuario_staff || null,
+      id_sucursal_origen || null,
+      observacion_stock || null,
+      id_solicitud,
+      id_tienda,
+    ]
+  );
+  await registrarEvento(connection, {
+    id_solicitud,
+    id_tienda,
+    actor_tipo: "staff",
+    actor_id: id_usuario_staff,
+    estado_anterior: locked.estado,
+    estado_nuevo: "confirmada",
+    payload: { id_sucursal_origen },
+  });
+  const updated = await getSolicitudById(connection, id_tienda, id_solicitud);
+  await notificarSolicitudCliente(connection, updated, "solicitud_confirmada");
+  return updated;
+}
+
+export async function marcarEnTraslado(connection, {
+  id_tienda,
+  id_solicitud,
+  id_usuario_staff,
+  id_sucursal_origen = null,
+}) {
+  const [[locked]] = await connection.query(
+    `SELECT * FROM ecom_solicitud_disponibilidad
+     WHERE id_solicitud = ? AND id_tienda = ? FOR UPDATE`,
+    [id_solicitud, id_tienda]
+  );
+  if (!locked) throw Object.assign(new Error("Solicitud no encontrada."), { status: 404 });
+  if (!["confirmada", "en_revision"].includes(locked.estado)) {
+    throw Object.assign(new Error("Primero confirma la solicitud."), { status: 400 });
+  }
+  await connection.query(
+    `UPDATE ecom_solicitud_disponibilidad SET
+      estado = 'en_traslado',
+      id_usuario_staff = ?,
+      id_sucursal_origen = COALESCE(?, id_sucursal_origen)
+     WHERE id_solicitud = ? AND id_tienda = ?`,
+    [id_usuario_staff || null, id_sucursal_origen || null, id_solicitud, id_tienda]
+  );
+  await registrarEvento(connection, {
+    id_solicitud,
+    id_tienda,
+    actor_tipo: "staff",
+    actor_id: id_usuario_staff,
+    estado_anterior: locked.estado,
+    estado_nuevo: "en_traslado",
+  });
+  return getSolicitudById(connection, id_tienda, id_solicitud);
+}
+
 export async function aprobarSolicitud(connection, {
   id_tienda,
   id_solicitud,
@@ -284,6 +406,7 @@ export async function aprobarSolicitud(connection, {
   crear_reserva,
   theme_json,
   congelar_precio,
+  id_sucursal_origen = null,
 }) {
   const [[locked]] = await connection.query(
     `SELECT * FROM ecom_solicitud_disponibilidad
@@ -291,7 +414,7 @@ export async function aprobarSolicitud(connection, {
     [id_solicitud, id_tienda]
   );
   if (!locked) throw Object.assign(new Error("Solicitud no encontrada."), { status: 404 });
-  if (!ESTADOS_ABIERTOS.includes(locked.estado) && locked.estado !== "en_revision") {
+  if (!ESTADOS_PRE_DISPONIBLE.includes(locked.estado)) {
     throw Object.assign(new Error("La solicitud no está pendiente de aprobación."), { status: 400 });
   }
 
@@ -307,6 +430,7 @@ export async function aprobarSolicitud(connection, {
   const ttl = cfg.validez_confirmacion_min || DEFAULT_CONFIG.validez_confirmacion_min;
   const freeze = congelar_precio === true || cfg.congelar_precio_al_aprobar === true ? 1 : 0;
   let id_reserva = null;
+  const origen = id_sucursal_origen || locked.id_sucursal_origen || null;
 
   const shouldReserve =
     crear_reserva === true || (crear_reserva !== false && cfg.reserva_al_aprobar === true);
@@ -317,7 +441,7 @@ export async function aprobarSolicitud(connection, {
         id_tienda,
         id_producto: locked.id_producto,
         id_variante: locked.id_variante,
-        id_sucursal: locked.id_sucursal,
+        id_sucursal: origen || locked.id_sucursal,
         cantidad: qty,
         minutos: reservaMins,
         id_usuario_staff,
@@ -327,7 +451,6 @@ export async function aprobarSolicitud(connection, {
       });
       id_reserva = reserva.id_reserva;
     } catch (err) {
-      // Aprobar igual si falta la tabla de soft-reserva o no hay fila de inventario.
       if (err?.code === "ER_NO_SUCH_TABLE" || err?.status === 400) {
         console.warn(
           "[solicitud-disp] reserva soft omitida al aprobar:",
@@ -342,7 +465,7 @@ export async function aprobarSolicitud(connection, {
 
   await connection.query(
     `UPDATE ecom_solicitud_disponibilidad SET
-      estado = 'aprobada',
+      estado = 'disponible',
       cantidad_aprobada = ?,
       expires_at = DATE_ADD(NOW(), INTERVAL ? MINUTE),
       id_usuario_staff = ?,
@@ -351,7 +474,8 @@ export async function aprobarSolicitud(connection, {
       stock_fisico = ?,
       observacion_stock = ?,
       id_reserva = ?,
-      congelar_precio = ?
+      congelar_precio = ?,
+      id_sucursal_origen = COALESCE(?, id_sucursal_origen)
      WHERE id_solicitud = ? AND id_tienda = ?`,
     [
       qty,
@@ -362,6 +486,7 @@ export async function aprobarSolicitud(connection, {
       observacion_stock || null,
       id_reserva,
       freeze,
+      origen,
       id_solicitud,
       id_tienda,
     ]
@@ -373,11 +498,13 @@ export async function aprobarSolicitud(connection, {
     actor_tipo: "staff",
     actor_id: id_usuario_staff,
     estado_anterior: locked.estado,
-    estado_nuevo: "aprobada",
-    payload: { cantidad_aprobada: qty, id_reserva, ttl_min: ttl },
+    estado_nuevo: "disponible",
+    payload: { cantidad_aprobada: qty, id_reserva, ttl_min: ttl, id_sucursal_origen: origen },
   });
 
   const approved = await getSolicitudById(connection, id_tienda, id_solicitud);
+  await notificarSolicitudCliente(connection, approved, "solicitud_disponible");
+  // Alias legacy para clientes que aún escuchan solicitud_aprobada
   await notificarSolicitudCliente(connection, approved, "solicitud_aprobada");
   return approved;
 }
@@ -398,7 +525,7 @@ export async function rechazarSolicitud(connection, {
     [id_solicitud, id_tienda]
   );
   if (!locked) throw Object.assign(new Error("Solicitud no encontrada."), { status: 404 });
-  if (!ESTADOS_ABIERTOS.includes(locked.estado) && locked.estado !== "en_revision") {
+  if (!ESTADOS_PRE_DISPONIBLE.includes(locked.estado)) {
     throw Object.assign(new Error("La solicitud no se puede rechazar."), { status: 400 });
   }
 
@@ -498,7 +625,8 @@ export async function expirarSolicitudesVencidas(connection) {
   const [rows] = await connection.query(
     `SELECT id_solicitud, id_tienda, id_reserva, estado
      FROM ecom_solicitud_disponibilidad
-     WHERE estado = 'aprobada' AND expires_at IS NOT NULL AND expires_at < NOW()
+     WHERE estado IN ('disponible','aprobada')
+       AND expires_at IS NOT NULL AND expires_at < NOW()
      LIMIT 100`
   );
   let n = 0;
@@ -509,7 +637,7 @@ export async function expirarSolicitudesVencidas(connection) {
         `SELECT * FROM ecom_solicitud_disponibilidad WHERE id_solicitud = ? FOR UPDATE`,
         [r.id_solicitud]
       );
-      if (!locked || locked.estado !== "aprobada") {
+      if (!locked || !isEstadoListoParaComprar(locked.estado)) {
         await connection.rollback();
         continue;
       }
@@ -530,7 +658,7 @@ export async function expirarSolicitudesVencidas(connection) {
         id_solicitud: r.id_solicitud,
         id_tienda: r.id_tienda,
         actor_tipo: "sistema",
-        estado_anterior: "aprobada",
+        estado_anterior: locked.estado,
         estado_nuevo: "expirada",
         payload: { motivo: "TTL autorización" },
       });
@@ -558,8 +686,10 @@ export async function assertAutorizacionVigente(connection, {
 }) {
   const row = await getSolicitudById(connection, id_tienda, id_solicitud);
   if (!row) throw Object.assign(new Error("Solicitud no encontrada."), { status: 404 });
-  if (row.estado !== "aprobada") {
-    throw Object.assign(new Error("La solicitud no está aprobada."), { status: 400 });
+  if (!isEstadoListoParaComprar(row.estado)) {
+    throw Object.assign(new Error("La solicitud aún no está disponible para compra."), {
+      status: 400,
+    });
   }
   if (row.expires_at && new Date(row.expires_at) < new Date()) {
     throw Object.assign(new Error("La confirmación de disponibilidad ha expirado."), { status: 400 });

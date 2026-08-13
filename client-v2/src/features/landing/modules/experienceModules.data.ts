@@ -97,11 +97,11 @@ export const EXPERIENCE_MODULES: LandingProductModule[] = [
     tone("#0D9488", "#F0FDFA", "#0F766E", "cool"),
     ["hero", "trust", "surfaces", "flow", "proof", "pricing", "faq", "cta"],
     {
-      badge: "Catálogo WhatsApp",
-      title: "El cliente arma el pedido.",
-      titleAccent: "Tú lo cierras en el chat.",
-      body: "Vitrina pública con stock del ERP. El carrito se convierte en mensaje de WhatsApp listo para confirmar — sin app del cliente ni checkout forzado.",
-      trust: ["Stock del ERP", "Carrito → WhatsApp", "Sin app del cliente"],
+      badge: "Tienda web",
+      title: "El cliente compra en tu vitrina.",
+      titleAccent: "La venta entra al ERP.",
+      body: "Ecommerce propio conectado al inventario y sucursales del ERP. Checkout con MercadoPago; WhatsApp queda como canal de consulta.",
+      trust: ["Stock del ERP", "Checkout web", "Visible en Reportes"],
       sectionTitles: {
         surfaces: "Tres superficies, un pedido",
         flow: "Del browse al mensaje",

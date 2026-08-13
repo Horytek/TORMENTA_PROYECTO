@@ -102,7 +102,7 @@ export default function StoreCartPage() {
       items.filter((i) => i.id_solicitud).map((i) => Number(i.id_solicitud))
     );
     return rows.filter((s) => {
-      if (s.estado !== "aprobada") return false;
+      if (s.estado !== "aprobada" && s.estado !== "disponible") return false;
       if (s.expires_at && new Date(s.expires_at).getTime() <= Date.now()) return false;
       if (inCart.has(Number(s.id_solicitud))) return false;
       return true;
@@ -242,6 +242,8 @@ export default function StoreCartPage() {
       "cart-validate",
       slug,
       id_sucursal,
+      fulfillment,
+      idZona,
       items.map((i) => `${i.line_key}:${i.cantidad}:${i.id_solicitud || 0}`).join("|"),
     ],
     queryFn: () =>
@@ -254,6 +256,8 @@ export default function StoreCartPage() {
           selecciones: i.selecciones,
         })),
         id_sucursal: id_sucursal || null,
+        fulfillment,
+        id_zona: idZona,
       }),
     enabled: Boolean(slug && items.length),
     refetchOnWindowFocus: true,
@@ -262,6 +266,14 @@ export default function StoreCartPage() {
   const stockMessages = (cartValidateQ.data?.data?.items || [])
     .filter((r) => !r.ok && r.message)
     .map((r) => r.message as string);
+  const validateByProduct = useMemo(() => {
+    const map = new Map<number, { badge?: string; message?: string | null }>();
+    for (const r of cartValidateQ.data?.data?.items || []) {
+      map.set(r.id_producto, { badge: r.badge, message: r.message });
+    }
+    return map;
+  }, [cartValidateQ.data]);
+  const avisoMixto = cartValidateQ.data?.data?.aviso_mixto;
 
   const canPay = (() => {
     const cfg = tienda?.disponibilidad_config;
@@ -441,7 +453,33 @@ export default function StoreCartPage() {
         ) : (
           <>
             <ul className="mt-8 space-y-3">
-              {items.map((i) => (
+              {avisoMixto && (
+                <li className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  {avisoMixto}
+                </li>
+              )}
+              {items.map((i) => {
+                const v = validateByProduct.get(i.id_producto);
+                const badge = i.id_solicitud
+                  ? "inmediata"
+                  : v?.badge || (consultItems.some((c) => c.line_key === i.line_key) ? "solicitud" : "inmediata");
+                const badgeLabel =
+                  badge === "solicitud"
+                    ? "Bajo solicitud"
+                    : badge === "pendiente"
+                      ? "Pendiente"
+                      : badge === "no_disponible"
+                        ? "No disponible"
+                        : "Entrega inmediata";
+                const badgeClass =
+                  badge === "solicitud"
+                    ? "bg-amber-50 text-amber-900 border-amber-100"
+                    : badge === "no_disponible"
+                      ? "bg-red-50 text-red-800 border-red-100"
+                      : badge === "pendiente"
+                        ? "bg-sky-50 text-sky-900 border-sky-100"
+                        : "bg-emerald-50 text-emerald-800 border-emerald-100";
+                return (
                 <li
                   key={i.line_key}
                   className="vitrina-card border store-hairline bg-[var(--vitrina-elevated)] p-4 flex gap-4"
@@ -454,13 +492,11 @@ export default function StoreCartPage() {
                     {i.attrs_label && (
                       <div className="text-xs store-muted mt-0.5">{i.attrs_label}</div>
                     )}
-                    {i.id_solicitud ? (
-                      <p className="text-[11px] mt-1 inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-emerald-50 text-emerald-800 border border-emerald-100">
-                        Stock confirmado · listo para pagar
-                      </p>
-                    ) : null}
-                    {consultItems.some((c) => c.line_key === i.line_key) && (
-                      <p className="text-xs text-amber-800 mt-1">⚠ Requiere confirmar disponibilidad</p>
+                    <p className={`text-[11px] mt-1 inline-flex items-center rounded-full px-2 py-0.5 font-medium border ${badgeClass}`}>
+                      {i.id_solicitud ? "Stock confirmado · listo para pagar" : badgeLabel}
+                    </p>
+                    {consultItems.some((c) => c.line_key === i.line_key) && !i.id_solicitud && (
+                      <p className="text-xs text-amber-800 mt-1">Requiere confirmar disponibilidad</p>
                     )}
                     <div className="text-sm mt-0.5" style={{ color: "var(--vitrina-accent)" }}>
                       {formatPen(i.precio)}
@@ -479,7 +515,8 @@ export default function StoreCartPage() {
                     </div>
                   </div>
                 </li>
-              ))}
+                );
+              })}
             </ul>
 
             <StockWhatsAppLeyenda

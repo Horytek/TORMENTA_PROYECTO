@@ -25,6 +25,10 @@ import {
   buildDisponibilidad,
   productHasSeleccionAttrs,
 } from "../services/ecommerce/DisponibilidadService.js";
+import {
+  resolveDisponibilidadFulfillment,
+  badgeFromModo,
+} from "../services/ecommerce/FulfillmentDisponibilidadService.js";
 
 // ─── Público ─────────────────────────────────────────────────────────────
 
@@ -159,6 +163,74 @@ export const getProductAvailability = async (req, res) => {
   } catch (error) {
     console.error("[ecommerce.getProductAvailability]", error);
     return res.status(500).json({ success: false, message: "Error." });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+/**
+ * Resuelve disponibilidad por fulfillment + variante + cantidad.
+ * POST/GET /store/:slug/products/:id/disponibilidad/resolver
+ */
+export const resolveProductDisponibilidad = async (req, res) => {
+  const { slug, id } = req.params;
+  const src = req.method === "GET" ? req.query : req.body || {};
+  let connection;
+  try {
+    connection = await getEcommerceConnection();
+    const [[tienda]] = await connection.query(
+      `SELECT id_tienda, theme_json FROM tienda WHERE slug = ? AND estado = 'active' LIMIT 1`,
+      [slug]
+    );
+    if (!tienda) {
+      return res.status(404).json({ success: false, message: "Tienda no encontrada." });
+    }
+    const [[producto]] = await connection.query(
+      `SELECT id_producto, nombre, attrs_json, precio FROM producto
+       WHERE id_producto = ? AND id_tienda = ? AND activo = 1 LIMIT 1`,
+      [Number(id), tienda.id_tienda]
+    );
+    if (!producto) {
+      return res.status(404).json({ success: false, message: "Producto no encontrado." });
+    }
+
+    const id_variante = src.id_variante ? Number(src.id_variante) : null;
+    const cantidad = Math.max(1, Number(src.cantidad) || 1);
+    const fulfillment = String(src.fulfillment || "pickup");
+    const hasSeleccion = await productHasSeleccionAttrs(
+      connection,
+      tienda.id_tienda,
+      producto.id_producto
+    );
+
+    const resolved = await resolveDisponibilidadFulfillment(connection, {
+      id_tienda: tienda.id_tienda,
+      id_producto: producto.id_producto,
+      id_variante,
+      cantidad,
+      fulfillment,
+      id_sucursal: src.id_sucursal ? Number(src.id_sucursal) : null,
+      id_zona: src.id_zona ? Number(src.id_zona) : null,
+      distrito: src.distrito || null,
+      lat: src.lat != null ? Number(src.lat) : null,
+      lng: src.lng != null ? Number(src.lng) : null,
+      subtotal: Number(producto.precio || 0) * cantidad,
+      theme_json: tienda.theme_json,
+      attrs_json: producto.attrs_json,
+      hasSeleccionAttrs: hasSeleccion,
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        ...resolved,
+        badge: badgeFromModo(resolved.modo),
+        producto: { id_producto: producto.id_producto, nombre: producto.nombre },
+      },
+    });
+  } catch (error) {
+    console.error("[ecommerce.resolveProductDisponibilidad]", error);
+    return res.status(500).json({ success: false, message: error.message || "Error." });
   } finally {
     if (connection) connection.release();
   }

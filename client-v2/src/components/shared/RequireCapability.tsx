@@ -23,6 +23,7 @@ export function RequireCapability({ capability, developerOnly, adminOnly, childr
   const { can, isDeveloper, isAdmin } = usePermissions();
 
   const isCompanySetting = capability?.startsWith("configuracion/negocio") || capability?.startsWith("configuracion/empresa");
+  const isCatalogo = capability === "catalogo.view" || capability?.startsWith("catalogo.");
 
   const allowed = developerOnly
     ? isDeveloper
@@ -31,6 +32,7 @@ export function RequireCapability({ capability, developerOnly, adminOnly, childr
       : capability
         ? isDeveloper ||
           (isCompanySetting && isAdmin) ||
+          (isCatalogo && isAdmin) ||
           can(capability) ||
           (isCompanySetting &&
             (can("configuracion/negocio.ver") ||

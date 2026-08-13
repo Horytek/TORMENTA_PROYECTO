@@ -13,6 +13,7 @@ type Props = {
 };
 
 export function StickyBuyBar({ precio, disabled, onAdd, inCart, slug, whatsapp, addLabel }: Props) {
+  const label = addLabel || "Comprar ahora";
   return (
     <div className="store-sticky-bar lg:hidden px-4 py-3 flex items-center gap-3">
       <div className="shrink-0">
@@ -39,7 +40,7 @@ export function StickyBuyBar({ precio, disabled, onAdd, inCart, slug, whatsapp, 
           className="vitrina-pill flex-1 h-11 px-5 text-sm font-semibold text-white disabled:opacity-40"
           style={{ background: "var(--vitrina-accent)" }}
         >
-          {addLabel || "Agregar"}
+          {label}
         </button>
       )}
     </div>

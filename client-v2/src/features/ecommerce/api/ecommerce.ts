@@ -187,6 +187,50 @@ export async function getProductAvailability(slug: string, id: number) {
   return data as { success: boolean; data: BranchAvailability[] };
 }
 
+export type ResolveDisponibilidadResult = {
+  modo: "inmediata" | "otra_ubicacion" | "agotado" | "incompleto";
+  cta: "comprar" | "solicitar" | "no_disponible" | "incomplete";
+  label: string;
+  hint?: string | null;
+  badge?: string;
+  cantidad: number;
+  fulfillment: string;
+  id_sucursal?: number | null;
+  id_sucursal_origen?: number | null;
+  stock_local: number;
+  disponibilidad?: {
+    estado: string;
+    label: string;
+    hint?: string;
+    cta?: {
+      allowAddToCart?: boolean;
+      requiresSolicitud?: boolean;
+      showEnviarSolicitud?: boolean;
+      showCart?: boolean;
+      showWhatsapp?: boolean;
+      primary?: string | null;
+    };
+  } | null;
+};
+
+export async function resolveProductDisponibilidad(
+  slug: string,
+  id: number,
+  body: {
+    id_variante?: number | null;
+    cantidad?: number;
+    fulfillment?: "pickup" | "delivery" | "provincia";
+    id_sucursal?: number | null;
+    id_zona?: number | null;
+    distrito?: string | null;
+    lat?: number | null;
+    lng?: number | null;
+  }
+) {
+  const { data } = await api.post(`/ecommerce/store/${slug}/products/${id}/disponibilidad/resolver`, body);
+  return data as { success: boolean; data: ResolveDisponibilidadResult };
+}
+
 export async function validateCartStore(
   slug: string,
   body: {
@@ -196,8 +240,12 @@ export async function validateCartStore(
       id_solicitud?: number | null;
       cantidad: number;
       selecciones?: { id_atributo: number; id_valor?: number | null; valor?: string }[];
+      fulfillment?: string;
+      id_sucursal?: number | null;
     }[];
     id_sucursal?: number | null;
+    fulfillment?: "pickup" | "delivery" | "provincia";
+    id_zona?: number | null;
   }
 ) {
   const { data } = await api.post(`/ecommerce/store/${slug}/cart/validate`, body, {
@@ -207,15 +255,20 @@ export async function validateCartStore(
     success: boolean;
     data: {
       ok: boolean;
+      mixto?: boolean;
+      aviso_mixto?: string | null;
       items: {
         id_producto: number;
         id_variante?: number | null;
         ok: boolean;
         estado: string;
+        badge?: string;
+        modo?: string;
         label?: string;
         disponible: number;
         cantidad: number;
         allowAddToCart?: boolean;
+        requiresSolicitud?: boolean;
         message?: string | null;
       }[];
     };
@@ -1059,6 +1112,26 @@ export async function adminEnRevisionSolicitud(id: number) {
   return data;
 }
 
+export async function adminConfirmarSolicitud(
+  id: number,
+  body?: { id_sucursal_origen?: number | null; observacion_stock?: string }
+) {
+  const { data } = await api.post(`/ecommerce/admin/solicitudes/${id}/confirmar`, body || {}, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminEnTrasladoSolicitud(
+  id: number,
+  body?: { id_sucursal_origen?: number | null }
+) {
+  const { data } = await api.post(`/ecommerce/admin/solicitudes/${id}/en-traslado`, body || {}, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
 export async function adminAprobarSolicitud(id: number, body: Record<string, unknown>) {
   const { data } = await api.post(`/ecommerce/admin/solicitudes/${id}/aprobar`, body, {
     headers: authHeaders(),
@@ -1088,6 +1161,11 @@ export async function buyerCrearSolicitud(
     id_sucursal: number;
     cantidad?: number;
     attrs?: Record<string, unknown>;
+    fulfillment?: "pickup" | "delivery" | "provincia";
+    id_sucursal_origen?: number | null;
+    id_zona?: number | null;
+    direccion_entrega?: string | null;
+    entrega_json?: Record<string, unknown> | null;
   }
 ) {
   const { data } = await api.post(`/ecommerce/store/${slug}/solicitudes`, body, {

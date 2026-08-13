@@ -5,10 +5,13 @@ import { signCatalogoBuyerToken } from "../middlewares/catalogoBuyerAuth.middlew
 import {
   getOrCreateConfig,
   listSucursalesPublicas,
+  listSucursalesAdmin,
+  parseThemeJson,
   resolveTenantById,
   resolveTenantBySlug,
   toPublicStorefront,
   upsertConfig,
+  upsertSucursalOverlay,
 } from "../services/catalogo/TiendaConfigService.js";
 import {
   getProductoDetalle,
@@ -24,6 +27,22 @@ import {
   procesarWebhookMp,
 } from "../services/catalogo/CheckoutService.js";
 import { aplicarCupon, listarCupones, upsertCupon } from "../services/catalogo/CuponService.js";
+import {
+  cotizarEntrega,
+  deleteAgencia,
+  deleteDestino,
+  deleteZona,
+  getEntregaConfig,
+  listAgencias,
+  listDestinos,
+  listOpcionesEntrega,
+  listZonas,
+  saveEntregaConfig,
+  upsertAgencia,
+  upsertDestino,
+  upsertZona,
+} from "../services/catalogo/TiendaEntregaService.js";
+import { uploadImage as subirAImageKit } from "../services/imagekit.service.js";
 
 async function resolveStore(cx, { slug, id_tenant }) {
   if (slug) return resolveTenantBySlug(cx, slug);
@@ -437,33 +456,45 @@ export const checkout = async (req, res) => {
     }
 
     const body = req.body || {};
-    let costo_envio = 0;
-    if (body.metodo_entrega === "delivery") {
-      const distrito = body.distrito;
-      const [zonas] = await connection.query(
-        `SELECT * FROM tienda_delivery_zona WHERE id_tenant = ? AND activo = 1`,
-        [cfg.id_tenant]
-      );
-      const zona = zonas.find((z) => {
-        const dists = typeof z.distritos === "string" ? JSON.parse(z.distritos || "[]") : z.distritos || [];
-        return dists.some((d) => String(d).toLowerCase() === String(distrito || "").toLowerCase());
-      });
-      if (zona) costo_envio = Number(zona.costo);
-      else {
-        const [[ent]] = await connection.query(
-          `SELECT costo_default FROM tienda_entrega_config WHERE id_tenant = ?`,
-          [cfg.id_tenant]
-        );
-        costo_envio = Number(ent?.costo_default || 0);
+    const metodo = body.metodo_entrega || "retiro";
+    const sucursales = await listSucursalesPublicas(connection, cfg.id_tenant);
+    let idSucursal = Number(body.id_sucursal) || null;
+    if (metodo === "retiro") {
+      const ok = sucursales.find((s) => s.id_sucursal === idSucursal && s.allow_pickup);
+      if (!ok) {
+        await connection.rollback();
+        return res.status(400).json({ success: false, message: "Elige una sucursal de recojo." });
+      }
+    } else {
+      const deliveryOk = sucursales.filter((s) => s.allow_delivery);
+      if (idSucursal && !deliveryOk.some((s) => s.id_sucursal === idSucursal)) {
+        const fallback = deliveryOk.find((s) => s.es_default) || deliveryOk[0] || sucursales.find((s) => s.es_default) || sucursales[0];
+        idSucursal = fallback?.id_sucursal || idSucursal;
+      } else if (!idSucursal) {
+        const fallback = deliveryOk.find((s) => s.es_default) || deliveryOk[0] || sucursales[0];
+        idSucursal = fallback?.id_sucursal || null;
       }
     }
+
+    const quote = await cotizarEntrega(connection, cfg.id_tenant, {
+      fulfillment: metodo === "retiro" ? "pickup" : metodo,
+      distrito: body.distrito,
+      id_zona: body.id_zona,
+      id_destino: body.id_destino,
+      subtotal: 0,
+    });
+    if (!quote.disponible && metodo !== "retiro") {
+      await connection.rollback();
+      return res.status(400).json({ success: false, message: quote.motivo || "Entrega no disponible" });
+    }
+    const costo_envio = metodo === "retiro" ? 0 : Number(quote.costo || 0);
 
     const pedido = await crearPedido(connection, {
       id_tenant: cfg.id_tenant,
       id_comprador: req.id_comprador,
       id_cliente: req.catalogoBuyer?.id_cliente || null,
-      id_sucursal: body.id_sucursal,
-      metodo_entrega: body.metodo_entrega || "retiro",
+      id_sucursal: idSucursal,
+      metodo_entrega: metodo,
       items: body.items,
       cupon: body.cupon_codigo ? { codigo: body.cupon_codigo } : null,
       direccion_entrega: body.direccion_entrega,
@@ -472,6 +503,8 @@ export const checkout = async (req, res) => {
       costo_envio,
       notas: body.notas,
       idempotency_key: body.idempotency_key,
+      id_destino: body.id_destino || null,
+      id_agencia: body.id_agencia || null,
     });
 
     const full = await getPedidoByCodigo(connection, {
@@ -488,9 +521,9 @@ export const checkout = async (req, res) => {
         pedido: full,
         items: full.items,
         back_urls: {
-          success: `${origin}/c/${slug}/pago/resultado?status=success&codigo=${full.codigo}`,
-          failure: `${origin}/c/${slug}/pago/resultado?status=failure&codigo=${full.codigo}`,
-          pending: `${origin}/c/${slug}/pago/resultado?status=pending&codigo=${full.codigo}`,
+          success: `${origin}/s/${slug}/pago/resultado?status=success&codigo=${full.codigo}`,
+          failure: `${origin}/s/${slug}/pago/resultado?status=failure&codigo=${full.codigo}`,
+          pending: `${origin}/s/${slug}/pago/resultado?status=pending&codigo=${full.codigo}`,
         },
         notification_url: `${origin.replace(/:\d+$/, ":4000")}/api/catalogo/webhook/mp`,
       });
@@ -555,35 +588,16 @@ export const cotizarEnvio = async (req, res) => {
     const cfg = await resolveStore(connection, { slug: req.params.slug });
     if (!cfg) return res.status(404).json({ success: false, message: "Tienda no encontrada" });
 
-    const distrito = req.body?.distrito || req.query.distrito;
-    const [zonas] = await connection.query(
-      `SELECT id_zona, nombre, distritos, costo FROM tienda_delivery_zona
-       WHERE id_tenant = ? AND activo = 1 ORDER BY orden`,
-      [cfg.id_tenant]
-    );
-    const zona = zonas.find((z) => {
-      const dists = typeof z.distritos === "string" ? JSON.parse(z.distritos || "[]") : z.distritos || [];
-      return dists.some((d) => String(d).toLowerCase() === String(distrito || "").toLowerCase());
+    const body = req.body || {};
+    const fulfillment = body.fulfillment || (body.distrito ? "delivery" : "pickup");
+    const quote = await cotizarEntrega(connection, cfg.id_tenant, {
+      fulfillment,
+      distrito: body.distrito || req.query.distrito,
+      id_zona: body.id_zona,
+      id_destino: body.id_destino,
+      subtotal: body.subtotal,
     });
-    const [[ent]] = await connection.query(
-      `SELECT * FROM tienda_entrega_config WHERE id_tenant = ?`,
-      [cfg.id_tenant]
-    );
-    return res.json({
-      success: true,
-      data: {
-        costo: zona ? Number(zona.costo) : Number(ent?.costo_default || 0),
-        zona: zona ? { id_zona: zona.id_zona, nombre: zona.nombre } : null,
-        retiro_activo: Number(ent?.retiro_activo ?? 1) === 1,
-        delivery_activo: Number(ent?.delivery_activo ?? 0) === 1,
-        zonas: zonas.map((z) => ({
-          id_zona: z.id_zona,
-          nombre: z.nombre,
-          costo: Number(z.costo),
-          distritos: typeof z.distritos === "string" ? JSON.parse(z.distritos || "[]") : z.distritos,
-        })),
-      },
-    });
+    return res.json({ success: true, data: quote });
   } catch (error) {
     console.error("cotizarEnvio:", error);
     return res.status(500).json({ success: false, message: "Error interno" });
@@ -807,6 +821,7 @@ export const adminGetConfig = async (req, res) => {
       success: true,
       data: {
         ...cfg,
+        theme_json: parseThemeJson(cfg.theme_json),
         mp_access_token_enc: undefined,
         mp_conectado: Boolean(cfg.mp_access_token_enc),
         empresa,
@@ -838,10 +853,41 @@ export const adminPatchConfig = async (req, res) => {
         .replace(/-+/g, "-")
         .slice(0, 80);
     }
+    if (body.theme_json) {
+      const existing = await getOrCreateConfig(connection, id_tenant);
+      const current = parseThemeJson(existing.theme_json) || {};
+      const incoming =
+        typeof body.theme_json === "object"
+          ? body.theme_json
+          : parseThemeJson(body.theme_json) || {};
+      if (!incoming.disponibilidad && current.disponibilidad) {
+        incoming.disponibilidad = current.disponibilidad;
+      }
+      incoming.disponibilidad = {
+        ...(incoming.disponibilidad || {}),
+        solicitudes_activas: false,
+      };
+      body.theme_json = incoming;
+    }
     const cfg = await upsertConfig(connection, id_tenant, body);
+    if (body.disponibilidad && typeof body.disponibilidad === "object") {
+      const current = parseThemeJson(cfg.theme_json) || {};
+      current.disponibilidad = {
+        ...(current.disponibilidad || {}),
+        ...body.disponibilidad,
+        solicitudes_activas: false,
+      };
+      await upsertConfig(connection, id_tenant, { theme_json: current });
+    }
+    const fresh = await getOrCreateConfig(connection, id_tenant);
     return res.json({
       success: true,
-      data: { ...cfg, mp_access_token_enc: undefined, mp_conectado: Boolean(cfg.mp_access_token_enc) },
+      data: {
+        ...fresh,
+        theme_json: parseThemeJson(fresh.theme_json),
+        mp_access_token_enc: undefined,
+        mp_conectado: Boolean(fresh.mp_access_token_enc),
+      },
     });
   } catch (error) {
     console.error("adminPatchConfig:", error);
@@ -861,6 +907,7 @@ export const adminListPedidos = async (req, res) => {
     const rows = await listarPedidosAdmin(connection, {
       id_tenant: req.id_tenant,
       estado: req.query.estado || null,
+      mp_status: req.query.mp_status || null,
     });
     return res.json({ success: true, data: rows });
   } catch (error) {
@@ -911,14 +958,45 @@ export const adminValidarPickup = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
-    const token = req.body?.token || req.params.token;
+    const token = String(req.body?.token || req.params.token || "").trim();
+    const codigo = String(req.body?.codigo || "").trim();
+    if (!token && !codigo) {
+      return res.status(400).json({ success: false, message: "Token o código requerido" });
+    }
     const [[pedido]] = await connection.query(
-      `SELECT * FROM tienda_pedido
-       WHERE id_tenant = ? AND pickup_qr_token = ? LIMIT 1`,
-      [req.id_tenant, token]
+      token
+        ? `SELECT p.*, c.nombres AS comprador_nombre, c.email AS comprador_email,
+                  c.telefono AS comprador_telefono, s.nombre_sucursal AS sucursal_nombre
+           FROM tienda_pedido p
+           LEFT JOIN tienda_comprador c ON c.id_comprador = p.id_comprador
+           LEFT JOIN sucursal s ON s.id_sucursal = p.id_sucursal
+           WHERE p.id_tenant = ? AND p.pickup_qr_token = ? LIMIT 1`
+        : `SELECT p.*, c.nombres AS comprador_nombre, c.email AS comprador_email,
+                  c.telefono AS comprador_telefono, s.nombre_sucursal AS sucursal_nombre
+           FROM tienda_pedido p
+           LEFT JOIN tienda_comprador c ON c.id_comprador = p.id_comprador
+           LEFT JOIN sucursal s ON s.id_sucursal = p.id_sucursal
+           WHERE p.id_tenant = ? AND p.codigo = ? LIMIT 1`,
+      [req.id_tenant, token || codigo]
     );
     if (!pedido) {
-      return res.status(404).json({ success: false, message: "QR no válido" });
+      return res.status(404).json({ success: false, message: "QR o código no válido" });
+    }
+    if (pedido.estado === "entregado") {
+      return res.json({
+        success: true,
+        data: {
+          codigo: pedido.codigo,
+          estado: "entregado",
+          already_delivered: true,
+          total: Number(pedido.total),
+          comprador_nombre: pedido.comprador_nombre,
+          sucursal_nombre: pedido.sucursal_nombre,
+        },
+      });
+    }
+    if (pedido.estado === "cancelado") {
+      return res.status(400).json({ success: false, message: "Pedido cancelado" });
     }
     await connection.query(
       `UPDATE tienda_pedido SET estado = 'entregado'
@@ -927,7 +1005,16 @@ export const adminValidarPickup = async (req, res) => {
     );
     return res.json({
       success: true,
-      data: { codigo: pedido.codigo, estado: "entregado" },
+      data: {
+        codigo: pedido.codigo,
+        estado: "entregado",
+        total: Number(pedido.total),
+        comprador_nombre: pedido.comprador_nombre,
+        comprador_email: pedido.comprador_email,
+        comprador_telefono: pedido.comprador_telefono,
+        sucursal_nombre: pedido.sucursal_nombre,
+        metodo_entrega: pedido.metodo_entrega,
+      },
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: "Error interno" });
@@ -959,69 +1046,172 @@ export const adminEntrega = async (req, res) => {
     connection = await getConnection();
     const id_tenant = req.id_tenant;
     if (req.method === "GET") {
-      const [[cfg]] = await connection.query(
-        `SELECT * FROM tienda_entrega_config WHERE id_tenant = ?`,
-        [id_tenant]
-      );
-      const [zonas] = await connection.query(
-        `SELECT * FROM tienda_delivery_zona WHERE id_tenant = ? ORDER BY orden`,
-        [id_tenant]
-      );
-      return res.json({ success: true, data: { config: cfg, zonas } });
+      const config = await getEntregaConfig(connection, id_tenant);
+      const [zonas, destinos, agencias, sucursales] = await Promise.all([
+        listZonas(connection, id_tenant),
+        listDestinos(connection, id_tenant).catch(() => []),
+        listAgencias(connection, id_tenant).catch(() => []),
+        listSucursalesAdmin(connection, id_tenant).catch(() => []),
+      ]);
+      return res.json({ success: true, data: { config, zonas, destinos, agencias, sucursales } });
     }
 
-    const { config, zona } = req.body || {};
-    if (config) {
-      await connection.query(
-        `INSERT INTO tienda_entrega_config (id_tenant, retiro_activo, delivery_activo, costo_default, tiempo_preparacion_min)
-         VALUES (?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE
-           retiro_activo = VALUES(retiro_activo),
-           delivery_activo = VALUES(delivery_activo),
-           costo_default = VALUES(costo_default),
-           tiempo_preparacion_min = VALUES(tiempo_preparacion_min)`,
-        [
-          id_tenant,
-          config.retiro_activo ? 1 : 0,
-          config.delivery_activo ? 1 : 0,
-          Number(config.costo_default) || 0,
-          Number(config.tiempo_preparacion_min) || 60,
-        ]
-      );
-    }
-    if (zona) {
-      if (zona.id_zona) {
-        await connection.query(
-          `UPDATE tienda_delivery_zona SET nombre=?, distritos=?, costo=?, activo=?, orden=?
-           WHERE id_zona=? AND id_tenant=?`,
-          [
-            zona.nombre,
-            JSON.stringify(zona.distritos || []),
-            Number(zona.costo) || 0,
-            zona.activo == null ? 1 : zona.activo ? 1 : 0,
-            Number(zona.orden) || 0,
-            zona.id_zona,
-            id_tenant,
-          ]
-        );
-      } else {
-        await connection.query(
-          `INSERT INTO tienda_delivery_zona (id_tenant, nombre, distritos, costo, activo, orden)
-           VALUES (?, ?, ?, ?, ?, ?)`,
-          [
-            id_tenant,
-            zona.nombre,
-            JSON.stringify(zona.distritos || []),
-            Number(zona.costo) || 0,
-            1,
-            Number(zona.orden) || 0,
-          ]
-        );
-      }
-    }
+    const { config, zona, delete_zona, destino, delete_destino, agencia, delete_agencia } = req.body || {};
+    if (config) await saveEntregaConfig(connection, id_tenant, config);
+    if (zona) await upsertZona(connection, id_tenant, zona);
+    if (delete_zona) await deleteZona(connection, id_tenant, Number(delete_zona));
+    if (destino) await upsertDestino(connection, id_tenant, destino);
+    if (delete_destino) await deleteDestino(connection, id_tenant, Number(delete_destino));
+    if (agencia) await upsertAgencia(connection, id_tenant, agencia);
+    if (delete_agencia) await deleteAgencia(connection, id_tenant, Number(delete_agencia));
     return res.json({ success: true });
   } catch (error) {
     console.error("adminEntrega:", error);
+    return res.status(error.status || 500).json({ success: false, message: error.message || "Error interno" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+export const opcionesEnvio = async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    const cfg = await resolveStore(connection, { slug: req.params.slug });
+    if (!cfg) return res.status(404).json({ success: false, message: "Tienda no encontrada" });
+    const data = await listOpcionesEntrega(connection, cfg.id_tenant, {
+      subtotal: Number(req.query.subtotal) || 0,
+    });
+    return res.json({ success: true, data });
+  } catch (error) {
+    console.error("opcionesEnvio:", error);
+    return res.status(500).json({ success: false, message: "Error interno" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+export const adminListSucursales = async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    const rows = await listSucursalesAdmin(connection, req.id_tenant);
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("adminListSucursales:", error);
+    return res.status(500).json({ success: false, message: "Error interno" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+export const adminPatchSucursal = async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    const rows = await upsertSucursalOverlay(
+      connection,
+      req.id_tenant,
+      Number(req.params.id),
+      req.body || {}
+    );
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    return res.status(error.status || 500).json({ success: false, message: error.message || "Error interno" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+export const adminUploadBrand = async (req, res) => {
+  const kind = req.params.kind === "banner" ? "banner" : "logo";
+  const { file, fileName } = req.body || {};
+  if (!file) {
+    return res.status(400).json({ success: false, message: "Archivo requerido (base64)." });
+  }
+  const safeName = String(fileName || `tienda-${kind}.jpg`).replace(/[^\w.\-]+/g, "_");
+  const extension = safeName.split(".").pop()?.toLowerCase() || "jpg";
+  const allowed = new Set(["png", "jpg", "jpeg", "webp", "gif"]);
+  if (!allowed.has(extension)) {
+    return res.status(400).json({
+      success: false,
+      message: `Tipo no permitido. Usa: ${[...allowed].join(", ")}`,
+    });
+  }
+  let connection;
+  try {
+    const uploaded = await subirAImageKit({
+      file,
+      fileName: `erp_${kind}_${req.id_tenant}_${Date.now()}.${extension}`,
+      folder: `/tienda-erp/${req.id_tenant}/brand/`,
+    });
+    connection = await getConnection();
+    if (kind === "logo") {
+      await upsertConfig(connection, req.id_tenant, { logo_url: uploaded.url });
+      return res.status(201).json({ success: true, data: { url: uploaded.url, kind: "logo" } });
+    }
+    const cfg = await getOrCreateConfig(connection, req.id_tenant);
+    const theme = parseThemeJson(cfg.theme_json) || {};
+    theme.banner_url = uploaded.url;
+    await upsertConfig(connection, req.id_tenant, { banner_url: uploaded.url, theme_json: theme });
+    return res.status(201).json({
+      success: true,
+      data: { url: uploaded.url, kind: "banner", theme_json: theme },
+    });
+  } catch (error) {
+    console.error("adminUploadBrand:", error);
+    return res.status(500).json({ success: false, message: error.message || "Error al subir." });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+export const adminConsultasStats = async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    const id_tenant = req.id_tenant;
+    const empty = { total: 0, productos: [], sucursales: [], intentos_sin_stock: 0 };
+    try {
+      const [[tot]] = await connection.query(
+        `SELECT COUNT(*) AS c FROM tienda_consulta_wa WHERE id_tenant = ?`,
+        [id_tenant]
+      );
+      const [productos] = await connection.query(
+        `SELECT c.id_producto, COALESCE(p.descripcion, CONCAT('#', c.id_producto)) AS nombre, COUNT(*) AS consultas
+         FROM tienda_consulta_wa c
+         LEFT JOIN producto p ON p.id_producto = c.id_producto AND p.id_tenant = c.id_tenant
+         WHERE c.id_tenant = ? AND c.id_producto IS NOT NULL
+         GROUP BY c.id_producto, p.descripcion
+         ORDER BY consultas DESC LIMIT 10`,
+        [id_tenant]
+      );
+      const [sucursales] = await connection.query(
+        `SELECT c.id_sucursal, s.nombre_sucursal AS nombre, COUNT(*) AS consultas
+         FROM tienda_consulta_wa c
+         LEFT JOIN sucursal s ON s.id_sucursal = c.id_sucursal AND s.id_tenant = c.id_tenant
+         WHERE c.id_tenant = ? AND c.id_sucursal IS NOT NULL
+         GROUP BY c.id_sucursal, s.nombre_sucursal
+         ORDER BY consultas DESC LIMIT 10`,
+        [id_tenant]
+      );
+      return res.json({
+        success: true,
+        data: {
+          total: Number(tot?.c || 0),
+          productos,
+          sucursales,
+          intentos_sin_stock: 0,
+        },
+      });
+    } catch (err) {
+      if (err?.code === "ER_NO_SUCH_TABLE") {
+        return res.json({ success: true, data: empty });
+      }
+      throw err;
+    }
+  } catch (error) {
+    console.error("adminConsultasStats:", error);
     return res.status(500).json({ success: false, message: "Error interno" });
   } finally {
     if (connection) connection.release();
@@ -1059,16 +1249,114 @@ export const adminListResenas = async (req, res) => {
   let connection;
   try {
     connection = await getConnection();
+    const estado = req.query.estado || null;
+    const q = String(req.query.q || "").trim();
+    const where = ["r.id_tenant = ?"];
+    const params = [req.id_tenant];
+    if (estado) {
+      where.push("r.estado = ?");
+      params.push(estado);
+    }
+    if (q) {
+      where.push("(PR.descripcion LIKE ? OR c.nombres LIKE ? OR r.cuerpo LIKE ?)");
+      const like = `%${q}%`;
+      params.push(like, like, like);
+    }
     const [rows] = await connection.query(
       `SELECT r.*, PR.descripcion AS producto, c.nombres, c.email
        FROM tienda_resena r
        INNER JOIN producto PR ON PR.id_producto = r.id_producto
        INNER JOIN tienda_comprador c ON c.id_comprador = r.id_comprador
-       WHERE r.id_tenant = ?
+       WHERE ${where.join(" AND ")}
        ORDER BY r.created_at DESC LIMIT 100`,
-      [req.id_tenant]
+      params
     );
     return res.json({ success: true, data: rows });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Error interno" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+export const adminResenaStats = async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    const [[stats]] = await connection.query(
+      `SELECT
+         COUNT(*) AS total,
+         SUM(estado = 'pendiente') AS pendientes,
+         SUM(estado = 'aprobada') AS publicadas,
+         SUM(estado = 'rechazada') AS rechazadas,
+         SUM(estado = 'oculta') AS ocultas,
+         ROUND(AVG(CASE WHEN estado = 'aprobada' THEN rating END), 1) AS promedio
+       FROM tienda_resena
+       WHERE id_tenant = ?`,
+      [req.id_tenant]
+    );
+    return res.json({
+      success: true,
+      data: {
+        total: Number(stats?.total || 0),
+        pendientes: Number(stats?.pendientes || 0),
+        publicadas: Number(stats?.publicadas || 0),
+        rechazadas: Number(stats?.rechazadas || 0),
+        ocultas: Number(stats?.ocultas || 0),
+        promedio: stats?.promedio != null ? Number(stats.promedio) : null,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Error interno" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+export const adminGetResenaConfig = async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    const [[cfg]] = await connection.query(
+      `SELECT * FROM tienda_resena_config WHERE id_tenant = ?`,
+      [req.id_tenant]
+    );
+    return res.json({
+      success: true,
+      data: cfg || {
+        id_tenant: req.id_tenant,
+        habilitado: 1,
+        requiere_compra: 1,
+        moderacion: 1,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Error interno" });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+export const adminPatchResenaConfig = async (req, res) => {
+  let connection;
+  try {
+    connection = await getConnection();
+    const b = req.body || {};
+    await connection.query(
+      `INSERT INTO tienda_resena_config (id_tenant, habilitado, requiere_compra, moderacion)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         habilitado = VALUES(habilitado),
+         requiere_compra = VALUES(requiere_compra),
+         moderacion = VALUES(moderacion)`,
+      [
+        req.id_tenant,
+        b.habilitado == null ? 1 : b.habilitado ? 1 : 0,
+        b.requiere_compra == null ? 1 : b.requiere_compra ? 1 : 0,
+        b.moderacion == null ? 1 : b.moderacion ? 1 : 0,
+      ]
+    );
+    return res.json({ success: true });
   } catch (error) {
     return res.status(500).json({ success: false, message: "Error interno" });
   } finally {
@@ -1167,6 +1455,7 @@ export const methods = {
   checkout,
   validateCupon,
   cotizarEnvio,
+  opcionesEnvio,
   misPedidos,
   miPedidoDetalle,
   syncPago,
@@ -1182,8 +1471,15 @@ export const methods = {
   adminValidarPickup,
   adminCupones,
   adminEntrega,
+  adminListSucursales,
+  adminPatchSucursal,
+  adminUploadBrand,
+  adminConsultasStats,
   adminModerarResena,
   adminListResenas,
+  adminResenaStats,
+  adminGetResenaConfig,
+  adminPatchResenaConfig,
   adminBanners,
   adminPatchProductoTienda,
 };

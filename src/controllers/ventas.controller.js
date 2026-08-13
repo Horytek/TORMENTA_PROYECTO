@@ -336,7 +336,8 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
     id_sucursal, id_almacen, id_comprobante, id_cliente, estado_venta,
     f_venta, igv, detalles, fecha_iso, metodo_pago, fecha,
     descuento_venta, vuelto, recibido, observacion, estado_sunat, idempotency_key,
-    id_usuario, dni_vendedor, motivo_descuento, referencia_pago, puntos_canjeados
+    id_usuario, dni_vendedor, motivo_descuento, referencia_pago, puntos_canjeados,
+    canal
   } = saleData;
 
   const fechaVenta = f_venta || fecha;
@@ -444,10 +445,22 @@ const createVentaInternal = async (connection, saleData, id_tenant) => {
 
   // 3. Insertar Venta
   // id_anular / id_anular_b removed/ignored.
-  const [ventaResult] = await connection.query(
-    "INSERT INTO venta (id_comprobante, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, observacion, estado_sunat, id_tenant, idempotency_key, recibido, vuelto, descuento_global, dni_vendedor, motivo_descuento, referencia_pago) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [id_comprobante_final, id_cliente, id_sucursal, estadoVenta, fechaVenta, igvVenta, fechaIsoVenta, metodo_pago, observacionVenta, estadoSunat, id_tenant, idempotencyKey, recibidoVenta, vueltoVenta, descuentoVenta, dniVendedor, motivoDescuentoVenta, referenciaPagoVenta]
-  );
+  // 3. Insertar Venta (canal: pos por defecto; tienda_web desde checkout ERP)
+  const canalVenta = canal || "pos";
+  let ventaResult;
+  try {
+    [ventaResult] = await connection.query(
+      "INSERT INTO venta (id_comprobante, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, observacion, estado_sunat, id_tenant, idempotency_key, recibido, vuelto, descuento_global, dni_vendedor, motivo_descuento, referencia_pago, canal) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [id_comprobante_final, id_cliente, id_sucursal, estadoVenta, fechaVenta, igvVenta, fechaIsoVenta, metodo_pago, observacionVenta, estadoSunat, id_tenant, idempotencyKey, recibidoVenta, vueltoVenta, descuentoVenta, dniVendedor, motivoDescuentoVenta, referenciaPagoVenta, canalVenta]
+    );
+  } catch (err) {
+    // Sin migración venta.canal aún: fallback legacy
+    if (err?.code !== "ER_BAD_FIELD_ERROR") throw err;
+    [ventaResult] = await connection.query(
+      "INSERT INTO venta (id_comprobante, id_cliente, id_sucursal, estado_venta, f_venta, igv, fecha_iso, metodo_pago, observacion, estado_sunat, id_tenant, idempotency_key, recibido, vuelto, descuento_global, dni_vendedor, motivo_descuento, referencia_pago) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [id_comprobante_final, id_cliente, id_sucursal, estadoVenta, fechaVenta, igvVenta, fechaIsoVenta, metodo_pago, observacionVenta, estadoSunat, id_tenant, idempotencyKey, recibidoVenta, vueltoVenta, descuentoVenta, dniVendedor, motivoDescuentoVenta, referenciaPagoVenta]
+    );
+  }
   const id_venta = ventaResult.insertId;
 
   // 3.1. Venta a crédito: registrar la cuenta por cobrar (vencimiento a 30 días).
@@ -717,6 +730,10 @@ const getVentas = async (req, res) => {
       where.push("v.dni_vendedor = ?");
       params.push(req.query.dni_vendedor);
     }
+    if (req.query.canal) {
+      where.push("COALESCE(v.canal, 'pos') = ?");
+      params.push(String(req.query.canal));
+    }
 
     // Armar cláusula WHERE
     let whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
@@ -750,6 +767,7 @@ const getVentas = async (req, res) => {
         v.motivo_descuento,
         v.referencia_pago,
         v.estado_sunat,
+        COALESCE(v.canal, 'pos') AS canal,
         usu.usua,
         v.observacion,
         v.hora_creacion,

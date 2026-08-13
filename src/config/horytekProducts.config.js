@@ -73,9 +73,9 @@ export const HORYTEK_PRODUCTS = [
   },
   {
     id: "catalogo-wa",
-    slug: "catalogo-whatsapp",
-    name: "Catálogo WhatsApp",
-    job: "Vitrina pública con checkout web, WhatsApp y ventas ERP",
+    slug: "tienda-web",
+    name: "Tienda web",
+    job: "Ecommerce propio del ERP: vitrina, checkout MercadoPago y ventas en Reportes",
     database: "",
     envKey: "",
     isolation: "id_tenant",
@@ -83,8 +83,8 @@ export const HORYTEK_PRODUCTS = [
     wave: "existing",
     loginMode: "catalogo-wa",
     adminPath: "/catalog-express",
-    clientPath: "/c/:slug",
-    notIncludes: ["SaaS multi-tienda independiente"],
+    clientPath: "/s/:slug",
+    notIncludes: ["SaaS multi-tienda independiente", "pedido solo por WhatsApp"],
   },
   {
     id: "sync",

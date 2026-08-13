@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { ArrowLeft, ChevronLeft, ChevronRight, Minus, Plus, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
-import { getStore, getStoreProduct, getProductAvailability, validateCartStore, buyerCrearSolicitud } from "../api/ecommerce";
+import { getStore, getStoreProduct, getProductAvailability, validateCartStore, buyerCrearSolicitud, resolveProductDisponibilidad, storeEntregaOpciones } from "../api/ecommerce";
 import { useEcommerceCartStore, type AttrSeleccion } from "../store/useEcommerceCartStore";
 import { useBranchStore } from "../store/useBranchStore";
 import { useStorefrontAuthStore } from "../store/useStorefrontAuthStore";
@@ -58,6 +58,8 @@ export default function StoreProductPage() {
   const [zoom, setZoom] = useState(false);
   const [sels, setSels] = useState<AttrSeleccion[]>([]);
   const [pendingRelated, setPendingRelated] = useState<StoreProducto | null>(null);
+  const [fulfillment, setFulfillment] = useState<"pickup" | "delivery">("pickup");
+  const [idZona, setIdZona] = useState<number | null>(null);
   const canAdd = useQuickAddGuard();
 
   const id_sucursal = useBranchStore((s) => s.id_sucursal);
@@ -88,6 +90,12 @@ export default function StoreProductPage() {
     queryKey: ["product-availability", slug, productId],
     queryFn: () => getProductAvailability(slug, productId),
     enabled: Boolean(slug) && Number.isFinite(productId) && productId > 0,
+  });
+
+  const entregaOpcionesQ = useQuery({
+    queryKey: ["pdp-entrega-opciones", slug, id_sucursal],
+    queryFn: () => storeEntregaOpciones(slug, { id_sucursal: id_sucursal || undefined }),
+    enabled: Boolean(slug) && fulfillment === "delivery",
   });
 
   useEffect(() => {
@@ -142,7 +150,37 @@ export default function StoreProductPage() {
       0;
   // Misma regla que el backend: attrs de selección o variantes (talla/color).
   const hasSeleccionAttrs = atributos.some((a) => a.requiere_seleccion || a.es_variante);
-  const disp = producto
+  const fulfillReady =
+    Boolean(producto) &&
+    !attrsIncomplete &&
+    !comboUnresolved &&
+    (fulfillment === "pickup" ? Boolean(id_sucursal) : true);
+
+  const resolveQ = useQuery({
+    queryKey: [
+      "pdp-resolve-disp",
+      slug,
+      productId,
+      idVariante,
+      qty,
+      fulfillment,
+      id_sucursal,
+      idZona,
+    ],
+    queryFn: () =>
+      resolveProductDisponibilidad(slug, productId, {
+        id_variante: idVariante,
+        cantidad: qty,
+        fulfillment,
+        id_sucursal: id_sucursal || null,
+        id_zona: idZona,
+      }),
+    enabled: Boolean(slug) && Number.isFinite(productId) && productId > 0 && fulfillReady,
+    placeholderData: keepPreviousData,
+  });
+
+  const resolved = resolveQ.data?.data;
+  const dispLegacy = producto
     ? resolveDisponibilidad(
         stockForCta,
         producto.attrs_json,
@@ -150,6 +188,60 @@ export default function StoreProductPage() {
         { hasSeleccionAttrs }
       )
     : null;
+  const disp = resolved?.disponibilidad
+    ? {
+        ...dispLegacy!,
+        ...resolved.disponibilidad,
+        cta: {
+          ...(dispLegacy?.cta || {}),
+          ...(resolved.disponibilidad.cta || {}),
+          allowAddToCart: resolved.cta === "comprar",
+          showCart: resolved.cta === "comprar",
+          showEnviarSolicitud: resolved.cta === "solicitar",
+          requiresSolicitud: resolved.cta === "solicitar",
+          primary:
+            resolved.cta === "solicitar"
+              ? "solicitud"
+              : resolved.cta === "comprar"
+                ? "cart"
+                : dispLegacy?.cta.primary,
+        },
+        label: resolved.label || resolved.disponibilidad.label,
+        hint: resolved.hint || resolved.disponibilidad.hint,
+        estado:
+          resolved.cta === "comprar"
+            ? "disponible"
+            : resolved.cta === "solicitar"
+              ? "consultar"
+              : resolved.cta === "no_disponible"
+                ? "agotado"
+                : dispLegacy?.estado || "consultar",
+      }
+    : dispLegacy;
+
+  const ctaLabel =
+    resolved?.cta === "solicitar"
+      ? "Solicitar disponibilidad"
+      : resolved?.cta === "no_disponible"
+        ? "No disponible"
+        : resolved?.cta === "incomplete"
+          ? "Elige cómo recibirlo"
+          : "Comprar ahora";
+
+  const deliveryZonas = useMemo(() => {
+    const raw = entregaOpcionesQ.data?.data as Record<string, unknown> | unknown[] | undefined;
+    if (Array.isArray(raw)) {
+      const delivery = raw.find((o) => (o as { fulfillment?: string }).fulfillment === "delivery") as
+        | { zonas?: unknown[]; opciones?: unknown[] }
+        | undefined;
+      const zonas = delivery?.zonas || delivery?.opciones || [];
+      return Array.isArray(zonas) ? zonas : [];
+    }
+    const delivery = (raw as { delivery?: { zonas?: unknown[]; opciones?: unknown[] } } | undefined)?.delivery;
+    const zonas = delivery?.zonas || delivery?.opciones || [];
+    return Array.isArray(zonas) ? zonas : [];
+  }, [entregaOpcionesQ.data]);
+
   const availabilityForUi = useMemo(() => {
     const mapBranch = (a: BranchAvailability) => {
       const stock = idVariante
@@ -171,16 +263,21 @@ export default function StoreProductPage() {
   const productUrl = typeof window !== "undefined" ? window.location.href.split("?")[0] : undefined;
 
   const onAdd = async (p: StoreProducto, cantidad = 1) => {
-    // Misma fuente de verdad que el CTA: stock de variante en PDP actual; listados usan agregate.
     const isCurrent = p.id_producto === producto?.id_producto;
-    const stockGate = isCurrent ? stockForCta : Number(p.stock) || 0;
+    if (isCurrent && resolved && resolved.cta !== "comprar") {
+      toast.error(resolved.hint || "No puedes comprar este producto todavía.");
+      return;
+    }
+    const stockGate = isCurrent
+      ? Number(resolved?.stock_local ?? stockForCta)
+      : Number(p.stock) || 0;
     const pDisp =
       (isCurrent && disp) ||
       p.disponibilidad ||
       resolveDisponibilidad(stockGate, p.attrs_json, tienda?.disponibilidad_config, {
         hasSeleccionAttrs: isCurrent ? hasSeleccionAttrs : false,
       });
-    if (!pDisp.cta.allowAddToCart) {
+    if (!pDisp?.cta.allowAddToCart) {
       toast.error("Antes de agregar este producto necesitamos confirmar su disponibilidad.");
       return;
     }
@@ -214,6 +311,8 @@ export default function StoreProductPage() {
           },
         ],
         id_sucursal: id_sucursal || null,
+        fulfillment,
+        id_zona: idZona,
       });
       if (!v?.data?.ok) {
         const msg = v?.data?.items?.[0]?.message || "Este producto ya no está disponible en la cantidad seleccionada.";
@@ -240,12 +339,13 @@ export default function StoreProductPage() {
       toast.error("Selecciona todas las características del producto");
       return;
     }
-    if (!id_sucursal) {
-      toast.error("Selecciona una sucursal");
+    const sid = resolved?.id_sucursal || id_sucursal;
+    if (!sid) {
+      toast.error(fulfillment === "pickup" ? "Selecciona una sucursal" : "Completa la zona de entrega");
       return;
     }
     if (!token) {
-      toast.message("Inicia sesión para enviar la solicitud");
+      toast.message("Inicia sesión para solicitar disponibilidad");
       navigate(`/tienda/${slug}/login?next=/tienda/${slug}/producto/${productId}`);
       return;
     }
@@ -255,9 +355,12 @@ export default function StoreProductPage() {
       const res = await buyerCrearSolicitud(slug, {
         id_producto: producto.id_producto,
         id_variante: idVariante,
-        id_sucursal,
+        id_sucursal: Number(sid),
         cantidad: qty,
         attrs,
+        fulfillment,
+        id_sucursal_origen: resolved?.id_sucursal_origen || null,
+        id_zona: idZona,
       });
       if (res.duplicated) {
         toast.message(res.message || "Ya tienes una solicitud pendiente");
@@ -402,15 +505,80 @@ export default function StoreProductPage() {
 
             <AttrPicker atributos={atributos} value={sels} onChange={setSels} />
 
-            {availabilityForUi.length > 0 && (
-              <ProductAvailabilityPanel
-                availability={availabilityForUi}
-                activeBranchId={id_sucursal}
-                onSelectBranch={setBranch}
-                allowConsultEmpty
-                modeSolicitud={Boolean(disp?.cta.showEnviarSolicitud)}
-              />
-            )}
+            <div className="space-y-3 rounded-[var(--store-radius-lg)] border store-hairline p-4">
+              <p className="text-sm font-semibold">¿Dónde quieres recibir tu producto?</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFulfillment("pickup")}
+                  className={`vitrina-pill h-10 px-4 text-sm font-medium border ${
+                    fulfillment === "pickup" ? "text-white border-transparent" : "store-hairline"
+                  }`}
+                  style={fulfillment === "pickup" ? { background: "var(--vitrina-accent)" } : undefined}
+                >
+                  Recojo en tienda
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFulfillment("delivery")}
+                  className={`vitrina-pill h-10 px-4 text-sm font-medium border ${
+                    fulfillment === "delivery" ? "text-white border-transparent" : "store-hairline"
+                  }`}
+                  style={fulfillment === "delivery" ? { background: "var(--vitrina-accent)" } : undefined}
+                >
+                  Delivery
+                </button>
+              </div>
+              {fulfillment === "pickup" && availabilityForUi.length > 0 && (
+                <ProductAvailabilityPanel
+                  availability={availabilityForUi}
+                  activeBranchId={id_sucursal}
+                  onSelectBranch={setBranch}
+                  allowConsultEmpty
+                  modeSolicitud={Boolean(disp?.cta.showEnviarSolicitud)}
+                />
+              )}
+              {fulfillment === "delivery" && (
+                <div className="space-y-2">
+                  <label className="text-xs store-muted">Zona / distrito</label>
+                  <select
+                    className="w-full h-11 rounded-md border store-hairline bg-[var(--vitrina-elevated)] px-3 text-sm"
+                    value={idZona ?? ""}
+                    onChange={(e) => setIdZona(e.target.value ? Number(e.target.value) : null)}
+                  >
+                    <option value="">Selecciona una zona</option>
+                    {deliveryZonas.map((z) => {
+                      const zona = z as { id_zona?: number; id?: number; nombre?: string; label?: string };
+                      const zid = Number(zona.id_zona || zona.id);
+                      return (
+                        <option key={zid} value={zid}>
+                          {zona.nombre || zona.label || `Zona ${zid}`}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              )}
+              {resolveQ.isFetching && fulfillReady && (
+                <p className="text-xs store-muted animate-pulse">Consultando disponibilidad…</p>
+              )}
+              {resolved && !resolveQ.isFetching && (
+                <div className="space-y-1">
+                  <span
+                    className={`inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                      resolved.cta === "comprar"
+                        ? "bg-emerald-100 text-emerald-900"
+                        : resolved.cta === "solicitar"
+                          ? "bg-amber-100 text-amber-900"
+                          : "bg-stone-100 text-stone-700"
+                    }`}
+                  >
+                    {resolved.label}
+                  </span>
+                  {resolved.hint && <p className="text-xs store-muted">{resolved.hint}</p>}
+                </div>
+              )}
+            </div>
 
             {comboUnresolved && (
               <p className="text-sm text-red-700">
@@ -422,18 +590,30 @@ export default function StoreProductPage() {
               <div className="space-y-2">
                 <button
                   type="button"
-                  disabled={attrsIncomplete || !id_sucursal}
+                  disabled={attrsIncomplete || resolveQ.isFetching}
                   onClick={onEnviarSolicitud}
                   className="w-full sm:w-auto vitrina-pill inline-flex items-center justify-center gap-2 h-11 px-8 text-sm font-semibold text-white disabled:opacity-40"
                   style={{ background: "var(--vitrina-accent)" }}
                 >
-                  Enviar solicitud
+                  Solicitar disponibilidad
                 </button>
-                <p className="text-xs store-muted">Confirma la disponibilidad antes de comprar.</p>
+                <p className="text-xs store-muted">
+                  Te avisaremos cuando el producto esté listo para comprar.
+                </p>
                 <Link to={`/tienda/${slug}/cuenta/solicitudes`} className="text-xs underline store-muted">
                   Ver mis solicitudes
                 </Link>
               </div>
+            )}
+
+            {resolved?.cta === "no_disponible" && (
+              <button
+                type="button"
+                disabled
+                className="w-full sm:w-auto vitrina-pill h-11 px-8 text-sm font-semibold opacity-40"
+              >
+                No disponible
+              </button>
             )}
 
             {disp?.cta.showWhatsapp && (
@@ -483,7 +663,7 @@ export default function StoreProductPage() {
                     style={{ background: "var(--vitrina-accent)" }}
                   >
                     <ShoppingBag className="size-4" />
-                    Agregar al carrito
+                    Comprar ahora
                   </button>
                 </>
               )}
@@ -513,18 +693,24 @@ export default function StoreProductPage() {
         </div>
       </div>
 
-      {(disp?.cta.showCart || disp?.cta.primary === "whatsapp" || disp?.cta.showEnviarSolicitud) && (
+      {(disp?.cta.showCart || disp?.cta.primary === "whatsapp" || disp?.cta.showEnviarSolicitud || resolved?.cta === "no_disponible") && (
       <StickyBuyBar
         precio={Number(producto.precio) * qty}
         disabled={
           disp?.cta.showEnviarSolicitud
-            ? attrsIncomplete || !id_sucursal || comboUnresolved
-            : !disp?.cta.allowAddToCart || attrsIncomplete || comboUnresolved
+            ? attrsIncomplete || resolveQ.isFetching
+            : !disp?.cta.allowAddToCart || attrsIncomplete || comboUnresolved || resolved?.cta === "no_disponible"
         }
-        onAdd={() =>
-          disp?.cta.showEnviarSolicitud ? onEnviarSolicitud() : onAdd(producto, qty)
+        onAdd={
+          disp?.cta.showEnviarSolicitud ? onEnviarSolicitud : () => onAdd(producto, qty)
         }
-        addLabel={disp?.cta.showEnviarSolicitud ? "Enviar solicitud" : undefined}
+        addLabel={
+          disp?.cta.showEnviarSolicitud
+            ? "Solicitar disponibilidad"
+            : resolved?.cta === "no_disponible"
+              ? "No disponible"
+              : ctaLabel
+        }
         inCart={inCart}
         slug={slug}
         whatsapp={

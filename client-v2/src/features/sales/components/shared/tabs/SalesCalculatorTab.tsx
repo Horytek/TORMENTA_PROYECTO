@@ -200,6 +200,18 @@ export function SalesCalculatorTab() {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Canal</Label>
+            <Select value={filters.canal ?? "all"}
+              onValueChange={(v) => setFilters((f) => ({ ...f, canal: v === "all" ? undefined : v }))}>
+              <SelectTrigger className="h-8 text-xs w-auto min-w-[120px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="pos">POS</SelectItem>
+                <SelectItem value="tienda_web">Tienda web</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex-1" />
           <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
             <Calculator className="h-3 w-3" /> Calcular
