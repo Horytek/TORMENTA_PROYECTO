@@ -29,9 +29,10 @@ export function addProductToCart(opts: {
   variantes: StorefrontVariante[];
   selecciones: AttrSeleccion[];
   imagen?: string | null;
+  id_solicitud?: number | null;
 }) {
-  const { producto, qty = 1, atributos, variantes, selecciones, imagen } = opts;
-  if (producto.disponibilidad && !producto.disponibilidad.cta.allowAddToCart) {
+  const { producto, qty = 1, atributos, variantes, selecciones, imagen, id_solicitud } = opts;
+  if (!id_solicitud && producto.disponibilidad && !producto.disponibilidad.cta.allowAddToCart) {
     throw new Error("Antes de agregar este producto necesitamos confirmar su disponibilidad.");
   }
   if (requiredAttrsIncomplete(atributos, selecciones)) {
@@ -42,6 +43,7 @@ export function addProductToCart(opts: {
     {
       id_producto: producto.id_producto,
       id_variante,
+      id_solicitud: id_solicitud || null,
       nombre: producto.nombre,
       precio: Number(producto.precio),
       imagen_url: imagen || producto.imagen_url,

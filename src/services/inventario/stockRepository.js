@@ -242,6 +242,88 @@ export const devolverAsignaciones = async (cx, { id_tenant, id_almacen, asignaci
   return movimientos;
 };
 
+/**
+ * Reserva unidades (incrementa `reservado`) sin restar `stock`.
+ * Disponible efectivo = stock - reservado.
+ */
+export const reservarStockSku = async (cx, { id_tenant, id_sku, id_almacen, cantidad }) => {
+  const unidades = Number(cantidad);
+  if (!Number.isInteger(unidades) || unidades <= 0) {
+    throw new Error(`reservarStockSku: cantidad inválida (${cantidad}).`);
+  }
+
+  const [resultado] = await cx.query(
+    `UPDATE inventario_stock
+     SET reservado = reservado + ?
+     WHERE id_tenant = ? AND id_sku = ? AND id_almacen = ?
+       AND (stock - reservado) >= ?`,
+    [unidades, id_tenant, id_sku, id_almacen, unidades]
+  );
+
+  if (resultado.affectedRows === 0) {
+    const actual = await stockPorSku(cx, { id_tenant, id_sku, id_almacen });
+    const disponible = actual ? actual.stock - actual.reservado : 0;
+    throw new StockInsuficienteError({
+      id_sku, id_almacen, disponible, solicitado: unidades,
+    });
+  }
+};
+
+/** Libera una reserva previa (decrementa `reservado`). */
+export const liberarReservaSku = async (cx, { id_tenant, id_sku, id_almacen, cantidad }) => {
+  const unidades = Number(cantidad);
+  if (!Number.isInteger(unidades) || unidades <= 0) {
+    throw new Error(`liberarReservaSku: cantidad inválida (${cantidad}).`);
+  }
+
+  await cx.query(
+    `UPDATE inventario_stock
+     SET reservado = GREATEST(0, reservado - ?)
+     WHERE id_tenant = ? AND id_sku = ? AND id_almacen = ?`,
+    [unidades, id_tenant, id_sku, id_almacen]
+  );
+};
+
+/**
+ * Stock disponible (stock - reservado) agregado por producto.
+ */
+export const disponiblePorProducto = async (cx, { id_tenant, id_almacen = null, ids_producto = null }) => {
+  if (Array.isArray(id_almacen) && id_almacen.length === 0) return new Map();
+
+  const where = ["s.id_tenant = ?"];
+  const params = [id_tenant];
+
+  if (Array.isArray(id_almacen)) {
+    where.push(`s.id_almacen IN (${id_almacen.map(() => "?").join(",")})`);
+    params.push(...id_almacen);
+  } else if (id_almacen) {
+    where.push("s.id_almacen = ?");
+    params.push(id_almacen);
+  }
+  if (Array.isArray(ids_producto) && ids_producto.length > 0) {
+    where.push(`ps.id_producto IN (${ids_producto.map(() => "?").join(",")})`);
+    params.push(...ids_producto);
+  }
+
+  const [filas] = await cx.query(
+    `SELECT ps.id_producto,
+            COALESCE(SUM(s.stock), 0) AS stock,
+            COALESCE(SUM(s.reservado), 0) AS reservado
+     FROM inventario_stock s
+     INNER JOIN producto_sku ps ON ps.id_sku = s.id_sku AND ps.id_tenant = s.id_tenant
+     WHERE ${where.join(" AND ")}
+     GROUP BY ps.id_producto`,
+    params
+  );
+
+  return new Map(
+    filas.map((f) => [
+      Number(f.id_producto),
+      Math.max(0, Number(f.stock) - Number(f.reservado)),
+    ])
+  );
+};
+
 export default {
   stockPorProducto,
   stockPorSku,
@@ -251,4 +333,7 @@ export default {
   restarStockSku,
   descontarPorProducto,
   devolverAsignaciones,
+  reservarStockSku,
+  liberarReservaSku,
+  disponiblePorProducto,
 };

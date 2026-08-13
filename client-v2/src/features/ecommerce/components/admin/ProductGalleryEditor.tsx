@@ -14,7 +14,10 @@ type Img = {
   url: string;
   es_principal: number | boolean;
   orden: number;
+  tipo?: "galeria" | "informativa";
 };
+
+type ImagenTipo = "galeria" | "informativa";
 
 async function fileToCompressedDataUrl(file: File, maxSide = 1280, quality = 0.82): Promise<string> {
   if (!file.type.startsWith("image/")) throw new Error("El archivo debe ser una imagen");
@@ -36,21 +39,28 @@ export function ProductGalleryEditor({
   id_producto,
   tid,
   ensureProducto,
+  tipo = "galeria",
+  title,
+  hint,
 }: {
   id_producto: number | null;
   tid?: number;
   ensureProducto?: () => Promise<number | null>;
+  tipo?: ImagenTipo;
+  title?: string;
+  hint?: string;
 }) {
+  const isGaleria = tipo === "galeria";
   const qc = useQueryClient();
   const q = useQuery({
-    queryKey: ["ecom-galeria", tid, id_producto],
-    queryFn: () => adminListProductoImagenes(id_producto!),
+    queryKey: ["ecom-galeria", tid, id_producto, tipo],
+    queryFn: () => adminListProductoImagenes(id_producto!, tipo),
     enabled: Boolean(id_producto),
   });
   const imagenes = (q.data?.data || []) as Img[];
 
   const invalidate = (id: number) => {
-    qc.invalidateQueries({ queryKey: ["ecom-galeria", tid, id] });
+    qc.invalidateQueries({ queryKey: ["ecom-galeria", tid, id, tipo] });
     qc.invalidateQueries({ queryKey: ["ecom-productos", tid] });
   };
 
@@ -66,7 +76,7 @@ export function ProductGalleryEditor({
       if (!id) throw new Error("Pon un nombre al producto primero");
       for (const file of files) {
         const base64 = await fileToCompressedDataUrl(file);
-        await ecommerceUploadImagen(id, base64, file.name.replace(/\.\w+$/, ".jpg"));
+        await ecommerceUploadImagen(id, base64, file.name.replace(/\.\w+$/, ".jpg"), tipo);
       }
       return id;
     },
@@ -85,31 +95,42 @@ export function ProductGalleryEditor({
     const tmp = ids[idx];
     ids[idx] = ids[next];
     ids[next] = tmp;
-    await adminReorderImagenes(id_producto, ids);
+    await adminReorderImagenes(id_producto, ids, tipo);
     invalidate(id_producto);
   };
 
+  const defaultTitle = isGaleria ? "Galería del producto" : "Imágenes informativas";
+  const defaultHint = isGaleria
+    ? id_producto
+      ? "La foto principal no se cambia al subir extras. Márcala con la estrella."
+      : "Puedes subir fotos ahora. Si el producto aún no existe, se crea con el nombre de arriba."
+    : "Guías de talla, fichas técnicas o cómo usar. Se muestran aparte en la tienda, no en el carrusel.";
+
   return (
     <div className="md:col-span-2 space-y-2">
-      <p className="text-sm font-medium text-stone-700">Galería del producto</p>
-      <p className="text-xs text-stone-500">
-        {id_producto
-          ? "La foto principal no se cambia al subir extras. Márcala con la estrella."
-          : "Puedes subir fotos ahora. Si el producto aún no existe, se crea con el nombre de arriba."}
-      </p>
+      <p className="text-sm font-medium text-stone-700">{title || defaultTitle}</p>
+      <p className="text-xs text-stone-500">{hint || defaultHint}</p>
       <div className="flex flex-wrap gap-3">
         {imagenes.map((img, idx) => (
           <div
             key={img.id_imagen}
             className="relative w-[calc(50%-0.375rem)] sm:w-28 aspect-square rounded-xl overflow-hidden border border-stone-200 bg-stone-100"
           >
-            <img src={img.url} alt="" className="size-full object-cover" />
-            {Boolean(img.es_principal) && (
+            <img
+              src={img.url}
+              alt=""
+              className={isGaleria ? "size-full object-cover" : "size-full object-contain bg-white"}
+            />
+            {isGaleria && Boolean(img.es_principal) && (
               <span className="absolute top-1.5 left-1.5 text-[10px] font-medium bg-teal-700 text-white px-1.5 py-0.5 rounded">
                 Principal
               </span>
             )}
-            <div className="absolute inset-x-0 bottom-0 grid grid-cols-4 bg-black/55">
+            <div
+              className={`absolute inset-x-0 bottom-0 grid bg-black/55 ${
+                isGaleria ? "grid-cols-4" : "grid-cols-3"
+              }`}
+            >
               <button
                 type="button"
                 className="min-h-11 flex items-center justify-center text-white"
@@ -126,18 +147,20 @@ export function ProductGalleryEditor({
               >
                 <ChevronRight className="size-4" />
               </button>
-              <button
-                type="button"
-                className="min-h-11 flex items-center justify-center text-amber-300"
-                onClick={async () => {
-                  if (!id_producto) return;
-                  await adminSetImagenPrincipal(id_producto, img.id_imagen);
-                  invalidate(id_producto);
-                }}
-                aria-label="Marcar principal"
-              >
-                <Star className="size-4" />
-              </button>
+              {isGaleria ? (
+                <button
+                  type="button"
+                  className="min-h-11 flex items-center justify-center text-amber-300"
+                  onClick={async () => {
+                    if (!id_producto) return;
+                    await adminSetImagenPrincipal(id_producto, img.id_imagen);
+                    invalidate(id_producto);
+                  }}
+                  aria-label="Marcar principal"
+                >
+                  <Star className="size-4" />
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="min-h-11 flex items-center justify-center text-red-300"
@@ -161,7 +184,9 @@ export function ProductGalleryEditor({
           }`}
         >
           <ImagePlus className="size-7 text-stone-400" />
-          <span className="text-xs text-stone-500 px-2 text-center">Agregar fotos</span>
+          <span className="text-xs text-stone-500 px-2 text-center">
+            {isGaleria ? "Agregar fotos" : "Agregar guía"}
+          </span>
           <input
             type="file"
             accept="image/*"

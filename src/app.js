@@ -393,4 +393,11 @@ try {
   console.error('❌ Error iniciando cron de suscripciones:', error);
 }
 
+import { initEcommerceInventoryCron } from "./cron/ecommerceInventoryCron.js";
+try {
+  initEcommerceInventoryCron();
+} catch (error) {
+  console.error('❌ Error iniciando cron de inventario ecommerce:', error);
+}
+
 export default app;

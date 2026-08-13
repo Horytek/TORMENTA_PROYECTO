@@ -7,6 +7,8 @@ type Props = {
   activeBranchId?: number | null;
   onSelectBranch?: (id: number) => void;
   allowConsultEmpty?: boolean;
+  /** true = flujo solicitud / confirmación */
+  modeSolicitud?: boolean;
 };
 
 export function ProductAvailabilityPanel({
@@ -14,12 +16,19 @@ export function ProductAvailabilityPanel({
   activeBranchId,
   onSelectBranch,
   allowConsultEmpty = false,
+  modeSolicitud = false,
 }: Props) {
   if (!availability.length) return null;
   return (
     <div className="mt-2 border store-hairline rounded-[var(--store-radius-lg)] p-4 bg-[var(--vitrina-elevated)]">
-      <h3 className="font-semibold text-sm mb-1">¿Dónde quieres consultar disponibilidad?</h3>
-      <p className="text-xs store-muted mb-4">Elige la sucursal. El WhatsApp se abre con ese local.</p>
+      <h3 className="font-semibold text-sm mb-1">
+        {modeSolicitud ? "¿En qué sucursal confirmamos el stock?" : "¿Dónde quieres consultar disponibilidad?"}
+      </h3>
+      <p className="text-xs store-muted mb-4">
+        {modeSolicitud
+          ? "Elige la sucursal. Primero enviamos una solicitud; la compra se habilita cuando el personal confirma."
+          : "Elige la sucursal. El WhatsApp se abre con ese local."}
+      </p>
       <ul className="divide-y store-hairline">
         {availability.map((a) => {
           const empty = a.disponible <= 0;

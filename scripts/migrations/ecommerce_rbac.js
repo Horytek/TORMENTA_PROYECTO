@@ -53,6 +53,11 @@ const PERMISOS = [
   ["roles.editar", "Roles", "editar"],
   ["configuracion.ver", "Configuración", "ver"],
   ["configuracion.editar", "Configuración", "editar"],
+  ["solicitudes.ver", "Solicitudes", "ver"],
+  ["solicitudes.verificar", "Solicitudes", "verificar"],
+  ["solicitudes.aprobar", "Solicitudes", "aprobar"],
+  ["solicitudes.rechazar", "Solicitudes", "rechazar"],
+  ["solicitudes.cancelar", "Solicitudes", "cancelar"],
 ];
 
 const ROLES = [
@@ -94,6 +99,11 @@ const ROLES = [
       "ordenes.ver",
       "ordenes.editar",
       "resenas.ver",
+      "solicitudes.ver",
+      "solicitudes.verificar",
+      "solicitudes.aprobar",
+      "solicitudes.rechazar",
+      "solicitudes.cancelar",
     ],
   },
   {
@@ -139,6 +149,11 @@ const ROLES = [
       "recojo.ver",
       "recojo.escanear",
       "recojo.confirmar",
+      "solicitudes.ver",
+      "solicitudes.verificar",
+      "solicitudes.aprobar",
+      "solicitudes.rechazar",
+      "solicitudes.cancelar",
     ],
   },
 ];

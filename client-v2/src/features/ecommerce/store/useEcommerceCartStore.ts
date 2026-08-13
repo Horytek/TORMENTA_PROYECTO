@@ -11,6 +11,7 @@ export type EcomCartItem = {
   line_key: string;
   id_producto: number;
   id_variante?: number | null;
+  id_solicitud?: number | null;
   nombre: string;
   precio: number;
   cantidad: number;
@@ -34,14 +35,15 @@ type CartState = {
 export function cartLineKey(
   id_producto: number,
   id_variante?: number | null,
-  selecciones?: AttrSeleccion[]
+  selecciones?: AttrSeleccion[],
+  id_solicitud?: number | null
 ) {
   const hash = JSON.stringify(
     (selecciones || [])
       .map((s) => [s.id_atributo, s.id_valor ?? s.valor ?? ""])
       .sort((a, b) => Number(a[0]) - Number(b[0]))
   );
-  return `${id_producto}:${id_variante || 0}:${hash}`;
+  return `${id_producto}:${id_variante || 0}:${id_solicitud || 0}:${hash}`;
 }
 
 export const useEcommerceCartStore = create<CartState>()(
@@ -57,7 +59,8 @@ export const useEcommerceCartStore = create<CartState>()(
       add: (item, qty = 1) =>
         set((state) => {
           const line_key =
-            item.line_key || cartLineKey(item.id_producto, item.id_variante, item.selecciones);
+            item.line_key ||
+            cartLineKey(item.id_producto, item.id_variante, item.selecciones, item.id_solicitud);
           const existing = state.items.find((i) => i.line_key === line_key);
           if (existing) {
             return {
@@ -90,7 +93,7 @@ export const useEcommerceCartStore = create<CartState>()(
           slug: p.slug ?? null,
           items: (p.items || []).map((i) => ({
             ...i,
-            line_key: i.line_key || cartLineKey(i.id_producto, i.id_variante, i.selecciones),
+            line_key: i.line_key || cartLineKey(i.id_producto, i.id_variante, i.selecciones, i.id_solicitud),
           })),
         };
       },

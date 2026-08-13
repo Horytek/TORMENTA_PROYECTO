@@ -3,6 +3,7 @@ import type { Disponibilidad } from "../utils/disponibilidad";
 
 const TONE: Record<string, string> = {
   disponible: "bg-emerald-500/15 text-emerald-800",
+  limitado: "bg-amber-500/15 text-amber-900",
   consultar: "bg-amber-500/15 text-amber-900",
   agotado: "bg-red-500/15 text-red-700",
   proximamente: "bg-stone-500/15 text-stone-700",
@@ -10,6 +11,7 @@ const TONE: Record<string, string> = {
 
 const DOT: Record<string, string> = {
   disponible: "🟢",
+  limitado: "🟡",
   consultar: "🟡",
   agotado: "🔴",
   proximamente: "⚪",
@@ -38,12 +40,6 @@ export function AvailabilityStatus({
       {showHint && (
         <p className="text-xs store-muted leading-relaxed">
           {disp.confianza || disp.hint}
-          {disp.estado !== "agotado" && disp.stock_registrado >= 0 && (
-            <span className="block mt-0.5 opacity-70">
-              Stock registrado: {disp.stock_registrado}
-              {disp.estado === "consultar" ? " · no confirma venta inmediata" : ""}
-            </span>
-          )}
         </p>
       )}
     </div>

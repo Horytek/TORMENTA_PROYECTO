@@ -33,13 +33,15 @@ export function ProductCover({
   const badge =
     estado === "consultar"
       ? "Consultar"
-      : estado === "agotado"
-        ? "Agotado"
-        : estado === "proximamente"
-          ? "Próximamente"
-          : producto.stock > 0 && producto.stock <= 3
-            ? "Últimas"
-            : null;
+      : estado === "limitado"
+        ? "Limitado"
+        : estado === "agotado"
+          ? "Agotado"
+          : estado === "proximamente"
+            ? "Próximamente"
+            : producto.stock > 0 && producto.stock <= 3
+              ? "Últimas"
+              : null;
 
   return (
     <article className={`store-cover-hover group ${className}`}>

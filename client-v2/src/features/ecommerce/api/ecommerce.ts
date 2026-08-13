@@ -92,10 +92,15 @@ export async function ecommerceDeleteProducto(id: number) {
   return data;
 }
 
-export async function ecommerceUploadImagen(id: number, file: string, fileName: string) {
+export async function ecommerceUploadImagen(
+  id: number,
+  file: string,
+  fileName: string,
+  tipo: "galeria" | "informativa" = "galeria"
+) {
   const { data } = await api.post(
     `/ecommerce/admin/productos/${id}/imagenes`,
-    { file, fileName },
+    { file, fileName, tipo },
     { headers: authHeaders() }
   );
   return data;
@@ -182,10 +187,51 @@ export async function getProductAvailability(slug: string, id: number) {
   return data as { success: boolean; data: BranchAvailability[] };
 }
 
+export async function validateCartStore(
+  slug: string,
+  body: {
+    items: {
+      id_producto: number;
+      id_variante?: number | null;
+      id_solicitud?: number | null;
+      cantidad: number;
+      selecciones?: { id_atributo: number; id_valor?: number | null; valor?: string }[];
+    }[];
+    id_sucursal?: number | null;
+  }
+) {
+  const { data } = await api.post(`/ecommerce/store/${slug}/cart/validate`, body, {
+    headers: storefrontAuthHeaders(slug),
+  });
+  return data as {
+    success: boolean;
+    data: {
+      ok: boolean;
+      items: {
+        id_producto: number;
+        id_variante?: number | null;
+        ok: boolean;
+        estado: string;
+        label?: string;
+        disponible: number;
+        cantidad: number;
+        allowAddToCart?: boolean;
+        message?: string | null;
+      }[];
+    };
+  };
+}
+
 export async function checkoutStore(
   slug: string,
   body: {
-    items: { id_producto: number; id_variante?: number | null; cantidad: number; selecciones?: { id_atributo: number; id_valor?: number | null; valor?: string }[] }[];
+    items: {
+      id_producto: number;
+      id_variante?: number | null;
+      id_solicitud?: number | null;
+      cantidad: number;
+      selecciones?: { id_atributo: number; id_valor?: number | null; valor?: string }[];
+    }[];
     id_sucursal?: number | null;
     fulfillment?: "pickup" | "delivery" | "provincia";
     telefono_comprador?: string;
@@ -786,9 +832,10 @@ export async function adminSetProductoAtributos(
   return data;
 }
 
-export async function adminListProductoImagenes(id: number) {
+export async function adminListProductoImagenes(id: number, tipo?: "galeria" | "informativa") {
   const { data } = await api.get(`/ecommerce/admin/productos/${id}/imagenes`, {
     headers: authHeaders(),
+    params: tipo ? { tipo } : undefined,
   });
   return data;
 }
@@ -802,10 +849,14 @@ export async function adminSetImagenPrincipal(id: number, idImagen: number) {
   return data;
 }
 
-export async function adminReorderImagenes(id: number, ids: number[]) {
+export async function adminReorderImagenes(
+  id: number,
+  ids: number[],
+  tipo: "galeria" | "informativa" = "galeria"
+) {
   const { data } = await api.patch(
     `/ecommerce/admin/productos/${id}/imagenes/reorder`,
-    { ids },
+    { ids, tipo },
     { headers: authHeaders() }
   );
   return data;
@@ -823,6 +874,8 @@ export async function adminListStock(params?: {
   id_sucursal?: number | null;
   estado?: string;
   umbral?: number;
+  limit?: number;
+  offset?: number;
 }) {
   const { data } = await api.get("/ecommerce/admin/stock", {
     headers: authHeaders(),
@@ -831,9 +884,17 @@ export async function adminListStock(params?: {
       id_sucursal: params?.id_sucursal || undefined,
       estado: params?.estado || undefined,
       umbral: params?.umbral,
+      limit: params?.limit,
+      offset: params?.offset,
     },
   });
-  return data;
+  return data as {
+    success: boolean;
+    data: unknown[];
+    total?: number;
+    limit?: number;
+    offset?: number;
+  };
 }
 
 export async function adminListRoles() {
@@ -933,3 +994,206 @@ export async function adminDisponibilidadStats() {
   const { data } = await api.get("/ecommerce/admin/disponibilidad/stats", { headers: authHeaders() });
   return data;
 }
+
+export async function adminListReservasDisponibilidad() {
+  const { data } = await api.get("/ecommerce/admin/disponibilidad/reservas", { headers: authHeaders() });
+  return data;
+}
+
+export async function adminCrearReservaDisponibilidad(body: {
+  id_producto: number;
+  id_variante?: number | null;
+  id_sucursal: number;
+  cantidad?: number;
+  minutos?: number;
+  notas?: string;
+}) {
+  const { data } = await api.post("/ecommerce/admin/disponibilidad/reservas", body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminCancelarReservaDisponibilidad(id: number) {
+  const { data } = await api.delete(`/ecommerce/admin/disponibilidad/reservas/${id}`, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+/* —— Solicitudes de disponibilidad —— */
+
+export async function adminListSolicitudes(params?: {
+  estado?: string | null;
+  id_sucursal?: number | null;
+  limit?: number;
+}) {
+  const { data } = await api.get("/ecommerce/admin/solicitudes", {
+    headers: authHeaders(),
+    params: {
+      estado: params?.estado || undefined,
+      id_sucursal: params?.id_sucursal || undefined,
+      limit: params?.limit || 50,
+    },
+  });
+  return data;
+}
+
+export async function adminStatsSolicitudes(id_sucursal?: number | null) {
+  const { data } = await api.get("/ecommerce/admin/solicitudes/stats", {
+    headers: authHeaders(),
+    params: { id_sucursal: id_sucursal || undefined },
+  });
+  return data;
+}
+
+export async function adminGetSolicitud(id: number) {
+  const { data } = await api.get(`/ecommerce/admin/solicitudes/${id}`, { headers: authHeaders() });
+  return data;
+}
+
+export async function adminEnRevisionSolicitud(id: number) {
+  const { data } = await api.post(`/ecommerce/admin/solicitudes/${id}/en-revision`, {}, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminAprobarSolicitud(id: number, body: Record<string, unknown>) {
+  const { data } = await api.post(`/ecommerce/admin/solicitudes/${id}/aprobar`, body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminRechazarSolicitud(id: number, body: Record<string, unknown>) {
+  const { data } = await api.post(`/ecommerce/admin/solicitudes/${id}/rechazar`, body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminCancelarSolicitud(id: number, body?: { motivo?: string }) {
+  const { data } = await api.post(`/ecommerce/admin/solicitudes/${id}/cancelar`, body || {}, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function buyerCrearSolicitud(
+  slug: string,
+  body: {
+    id_producto: number;
+    id_variante?: number | null;
+    id_sucursal: number;
+    cantidad?: number;
+    attrs?: Record<string, unknown>;
+  }
+) {
+  const { data } = await api.post(`/ecommerce/store/${slug}/solicitudes`, body, {
+    headers: storefrontAuthHeaders(slug),
+  });
+  return data as {
+    success: boolean;
+    duplicated?: boolean;
+    message?: string;
+    data?: Record<string, unknown>;
+  };
+}
+
+export async function buyerListSolicitudes(slug: string) {
+  const { data } = await api.get(`/ecommerce/store/${slug}/mis-solicitudes`, {
+    headers: storefrontAuthHeaders(slug),
+  });
+  return data;
+}
+
+export async function buyerGetSolicitud(slug: string, id: number) {
+  const { data } = await api.get(`/ecommerce/store/${slug}/mis-solicitudes/${id}`, {
+    headers: storefrontAuthHeaders(slug),
+  });
+  return data;
+}
+
+export async function buyerCancelarSolicitud(slug: string, id: number, motivo?: string) {
+  const { data } = await api.post(
+    `/ecommerce/store/${slug}/mis-solicitudes/${id}/cancelar`,
+    { motivo },
+    { headers: storefrontAuthHeaders(slug) }
+  );
+  return data;
+}
+
+export async function buyerComprarDesdeSolicitud(slug: string, id: number) {
+  const { data } = await api.post(
+    `/ecommerce/store/${slug}/mis-solicitudes/${id}/comprar`,
+    {},
+    { headers: storefrontAuthHeaders(slug) }
+  );
+  return data as {
+    success: boolean;
+    data?: {
+      id_solicitud: number;
+      id_producto: number;
+      id_variante?: number | null;
+      id_sucursal: number;
+      cantidad: number;
+      attrs?: Record<string, unknown>;
+      precio?: number;
+      producto_nombre?: string;
+      expires_at?: string;
+    };
+  };
+}
+
+export type BuyerNotificacion = {
+  id_notificacion: number;
+  tipo: string;
+  titulo: string;
+  cuerpo?: string | null;
+  ref_tipo: string;
+  ref_id: number;
+  payload?: {
+    codigo?: string | null;
+    estado?: string;
+    id_producto?: number | null;
+    expires_at?: string | null;
+    producto_nombre?: string | null;
+  } | null;
+  leida: boolean;
+  leida_at?: string | null;
+  created_at?: string;
+};
+
+export async function buyerListNotificaciones(slug: string) {
+  const { data } = await api.get(`/ecommerce/store/${slug}/mis-notificaciones`, {
+    headers: storefrontAuthHeaders(slug),
+  });
+  return data as { success: boolean; data: BuyerNotificacion[] };
+}
+
+export async function buyerUnreadNotificaciones(slug: string) {
+  const { data } = await api.get(`/ecommerce/store/${slug}/mis-notificaciones/unread-count`, {
+    headers: storefrontAuthHeaders(slug),
+  });
+  return data as { success: boolean; data: { count: number } };
+}
+
+export async function buyerLeerNotificacion(slug: string, id: number) {
+  const { data } = await api.post(
+    `/ecommerce/store/${slug}/mis-notificaciones/${id}/leer`,
+    {},
+    { headers: storefrontAuthHeaders(slug) }
+  );
+  return data;
+}
+
+export async function buyerLeerTodasNotificaciones(slug: string) {
+  const { data } = await api.post(
+    `/ecommerce/store/${slug}/mis-notificaciones/leer-todas`,
+    {},
+    { headers: storefrontAuthHeaders(slug) }
+  );
+  return data;
+}
+

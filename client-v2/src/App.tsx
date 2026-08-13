@@ -30,6 +30,11 @@ const ContactPage = lazy(() => import("@/features/landing/pages/ContactPage"));
 const PaymentResultPage = lazy(() => import("@/features/landing/pages/PaymentResultPage"));
 const RegisterPage = lazy(() => import("@/features/registration/pages/RegisterPage"));
 const CatalogoPublicoPage = lazy(() => import("@/features/catalog-express/pages/CatalogoPublicoPage"));
+const CatalogStoreBySlugPage = lazy(() => import("@/features/catalog-express/pages/CatalogStoreBySlugPage"));
+const CatalogProductPage = lazy(() => import("@/features/catalog-express/pages/CatalogProductPage"));
+const CatalogCartCheckoutPage = lazy(() => import("@/features/catalog-express/pages/CatalogCartCheckoutPage"));
+const CatalogPaymentResultPage = lazy(() => import("@/features/catalog-express/pages/CatalogPaymentResultPage"));
+const CatalogAccountPage = lazy(() => import("@/features/catalog-express/pages/CatalogAccountPage"));
 const CatalogExpressManagePage = lazy(() => import("@/features/catalog-express/pages/CatalogExpressManagePage"));
 const SolucionesPage = lazy(() => import("@/features/landing/pages/SolucionesPage"));
 const SolucionProductoPage = lazy(() => import("@/features/landing/pages/SolucionProductoPage"));
@@ -155,6 +160,9 @@ const EcommerceProductsPage = lazy(() => import("@/features/ecommerce/pages/Ecom
 const EcommerceAtributosPage = lazy(() => import("@/features/ecommerce/pages/EcommerceAtributosPage"));
 const EcommerceTaxonomiaPage = lazy(() => import("@/features/ecommerce/pages/EcommerceTaxonomiaPage"));
 const EcommerceOrdersPage = lazy(() => import("@/features/ecommerce/pages/EcommerceOrdersPage"));
+const EcommerceSolicitudesStockPage = lazy(
+  () => import("@/features/ecommerce/pages/EcommerceSolicitudesStockPage")
+);
 const EcommerceSettingsPage = lazy(() => import("@/features/ecommerce/pages/EcommerceSettingsPage"));
 const EcommerceSucursalesPage = lazy(() => import("@/features/ecommerce/pages/EcommerceSucursalesPage"));
 const EcommerceEntregasPage = lazy(() => import("@/features/ecommerce/pages/EcommerceEntregasPage"));
@@ -173,6 +181,7 @@ const StoreAccountHomePage = lazy(() =>
   }))
 );
 const StoreOrdersPage = lazy(() => import("@/features/ecommerce/pages/StoreOrdersPage"));
+const StoreSolicitudesPage = lazy(() => import("@/features/ecommerce/pages/StoreSolicitudesPage"));
 const StoreOrderDetailPage = lazy(() => import("@/features/ecommerce/pages/StoreOrderDetailPage"));
 const StoreOrderQrPage = lazy(() => import("@/features/ecommerce/pages/StoreOrderQrPage"));
 const StoreFavoritesPage = lazy(() => import("@/features/ecommerce/pages/StoreFavoritesPage"));
@@ -336,6 +345,7 @@ export default function App() {
               <Route path="/tienda/:slug/cuenta" element={<StoreAccountLayout />}>
                 <Route index element={<StoreAccountHomePage />} />
                 <Route path="pedidos" element={<StoreOrdersPage />} />
+                <Route path="solicitudes" element={<StoreSolicitudesPage />} />
                 <Route path="pedidos/:id" element={<StoreOrderDetailPage />} />
                 <Route path="favoritos" element={<StoreFavoritesPage />} />
                 <Route path="opiniones" element={<StoreMisReviewsPage />} />
@@ -343,6 +353,13 @@ export default function App() {
               </Route>
               <Route path="/tienda/:slug/pago/resultado" element={<StorePaymentResultPage />} />
               <Route path="/catalogo/:idTenant" element={<CatalogoPublicoPage />} />
+              <Route path="/c/:slug" element={<CatalogStoreBySlugPage />} />
+              <Route path="/c/:slug/p/:productId" element={<CatalogProductPage />} />
+              <Route path="/c/:slug/carrito" element={<CatalogCartCheckoutPage />} />
+              <Route path="/c/:slug/pago/resultado" element={<CatalogPaymentResultPage />} />
+              <Route path="/c/:slug/cuenta" element={<CatalogAccountPage />} />
+              <Route path="/c/:slug/cuenta/pedidos" element={<CatalogAccountPage />} />
+              <Route path="/c/:slug/cuenta/favoritos" element={<CatalogAccountPage />} />
               <Route path="/status" element={<StatusPage />} />
               <Route path="/success" element={<PaymentResultPage />} />
               <Route path="/failure" element={<PaymentResultPage />} />
@@ -359,6 +376,7 @@ export default function App() {
                 <Route path="stock" element={<EcommerceStockPage />} />
                 <Route path="transferencias" element={<EcommerceTransferenciasPage />} />
                 <Route path="ordenes" element={<EcommerceOrdersPage />} />
+                <Route path="solicitudes-stock" element={<EcommerceSolicitudesStockPage />} />
                 <Route path="pedidos-retiro" element={<EcommercePedidosRetiroPage />} />
                 <Route path="validar-retiro" element={<EcommerceValidarRetiroPage />} />
                 <Route path="recojo" element={<EcommerceValidarRetiroPage />} />

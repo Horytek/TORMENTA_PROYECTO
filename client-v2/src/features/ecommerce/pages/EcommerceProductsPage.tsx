@@ -13,12 +13,13 @@ import {
   getProductoAtributos,
   parseProductoAttrs,
 } from "../utils/productoAttrs";
-import { parseProductoCompra, type DisponibilidadManual, type MetodoCompra } from "../utils/disponibilidad";
+import { parseProductoCompra, type ConfirmacionStock, type DisponibilidadManual, type MetodoCompra } from "../utils/disponibilidad";
 import { getMarca } from "../types/storefront";
 import { useEcommerceAuthStore } from "../store/useEcommerceAuthStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ProductGalleryEditor } from "../components/admin/ProductGalleryEditor";
 import { ProductAttrsEditor } from "../components/admin/ProductAttrsEditor";
@@ -48,6 +49,7 @@ type ProductForm = {
   tags: string[];
   metodo: MetodoCompra;
   disponibilidad: DisponibilidadManual;
+  confirmacion_stock: ConfirmacionStock;
 };
 
 const emptyForm = (): ProductForm => ({
@@ -62,6 +64,7 @@ const emptyForm = (): ProductForm => ({
   tags: [],
   metodo: "auto",
   disponibilidad: "auto",
+  confirmacion_stock: "auto",
 });
 
 function buildAttrsFromForm(
@@ -85,6 +88,7 @@ function buildAttrsFromForm(
   attrs_json.compra = {
     metodo: form.metodo,
     disponibilidad: form.disponibilidad,
+    confirmacion_stock: form.confirmacion_stock,
   };
   return attrs_json;
 }
@@ -107,6 +111,7 @@ function formFromProducto(p: Producto): ProductForm {
     tags,
     metodo: compra.metodo,
     disponibilidad: compra.disponibilidad,
+    confirmacion_stock: compra.confirmacion_stock,
   };
 }
 
@@ -346,24 +351,26 @@ export default function EcommerceProductsPage() {
             placeholder="Buscar o crear tags"
           />
         </div>
-        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-1">
-          <label className="inline-flex items-center gap-2 min-h-11 text-sm">
-            <input
-              type="checkbox"
-              className="size-4"
+        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <label className="flex items-center justify-between gap-3 min-h-11 rounded-lg border border-stone-100 px-3 py-2">
+            <span>
+              <span className="text-sm block">Destacado</span>
+              <span className="text-[11px] text-stone-400">Aparece en secciones de destacados</span>
+            </span>
+            <Switch
               checked={form.destacado}
-              onChange={(e) => setForm({ ...form, destacado: e.target.checked })}
+              onCheckedChange={(v) => setForm({ ...form, destacado: v })}
             />
-            Destacado
           </label>
-          <label className="inline-flex items-center gap-2 min-h-11 text-sm">
-            <input
-              type="checkbox"
-              className="size-4"
+          <label className="flex items-center justify-between gap-3 min-h-11 rounded-lg border border-stone-100 px-3 py-2">
+            <span>
+              <span className="text-sm block">Story / Featured</span>
+              <span className="text-[11px] text-stone-400">Módulo Story/Featured de la vitrina</span>
+            </span>
+            <Switch
               checked={form.story}
-              onChange={(e) => setForm({ ...form, story: e.target.checked })}
+              onCheckedChange={(v) => setForm({ ...form, story: v })}
             />
-            Story / Featured
           </label>
         </div>
         <div>
@@ -388,6 +395,7 @@ export default function EcommerceProductsPage() {
           >
             <option value="auto">Automático (reglas de stock)</option>
             <option value="disponible">🟢 Disponible para compra</option>
+            <option value="limitado">🟡 Disponibilidad limitada</option>
             <option value="consultar">🟡 Consultar disponibilidad</option>
             <option value="agotado">🔴 Agotado</option>
             <option value="proximamente">⚪ Próximamente</option>
@@ -396,11 +404,35 @@ export default function EcommerceProductsPage() {
             El stock registrado no confirma disponibilidad física. Usa “Consultar” si el personal debe verificar.
           </p>
         </div>
+        <div>
+          <Label>Requiere confirmación de stock</Label>
+          <select
+            className="mt-1 w-full min-h-11 rounded-md border border-stone-200 bg-white px-3 text-sm"
+            value={form.confirmacion_stock}
+            onChange={(e) =>
+              setForm({ ...form, confirmacion_stock: e.target.value as ConfirmacionStock })
+            }
+          >
+            <option value="auto">Automático — con talla/color pide solicitud; sin attrs según umbral</option>
+            <option value="nunca">Nunca — compra directa</option>
+            <option value="siempre">Siempre — solicitar antes de comprar</option>
+            <option value="stock_bajo">Cuando el stock sea bajo</option>
+            <option value="sucursal">Cuando la sucursal lo requiera</option>
+          </select>
+        </div>
         <ProductGalleryEditor
           key={`gal-${formNonce}`}
           id_producto={editingId}
           tid={tid}
           ensureProducto={ensureProducto}
+          tipo="galeria"
+        />
+        <ProductGalleryEditor
+          key={`info-${formNonce}`}
+          id_producto={editingId}
+          tid={tid}
+          ensureProducto={ensureProducto}
+          tipo="informativa"
         />
         <ProductAttrsEditor
           key={`attrs-${formNonce}`}

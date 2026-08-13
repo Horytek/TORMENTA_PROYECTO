@@ -65,6 +65,12 @@ export type StoreImagen = {
   orden?: number;
 };
 
+export type StoreImagenInformativa = {
+  id_imagen: number;
+  url: string;
+  orden?: number;
+};
+
 export type StorefrontAttrValor = {
   id_valor: number | null;
   valor: string;

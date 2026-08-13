@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { ArrowLeft, ChevronLeft, ChevronRight, Minus, Plus, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
-import { getStore, getStoreProduct, getProductAvailability } from "../api/ecommerce";
+import { getStore, getStoreProduct, getProductAvailability, validateCartStore, buyerCrearSolicitud } from "../api/ecommerce";
 import { useEcommerceCartStore, type AttrSeleccion } from "../store/useEcommerceCartStore";
 import { useBranchStore } from "../store/useBranchStore";
+import { useStorefrontAuthStore } from "../store/useStorefrontAuthStore";
 import { StoreShell } from "../components/vitrina/StoreShell";
 import { StoreHeader } from "../components/vitrina/StoreHeader";
 import { StoreFooter } from "../components/vitrina/StoreFooter";
@@ -22,11 +23,14 @@ import {
   attrsSnapshotFromPicker,
   requiredAttrsIncomplete,
   resolveVarianteId,
+  varianteSelectionUnresolved,
 } from "../components/vitrina/AttrPicker";
 import { addProductToCart, QuickAddSheet, useQuickAddGuard } from "../components/vitrina/QuickAddSheet";
 import { AvailabilityStatus } from "../design/AvailabilityStatus";
 import { ConsultarWhatsAppButton } from "../design/ConsultarWhatsAppButton";
+import { StockWhatsAppLeyenda } from "../components/vitrina/StockWhatsAppLeyenda";
 import { resolveDisponibilidad } from "../utils/disponibilidad";
+import { buildDisponibilidadWaMessage, waLink } from "../design/buildWaMessage";
 import {
   formatPen,
   getCategoria,
@@ -35,6 +39,7 @@ import {
   type StorefrontAttr,
   type StorefrontVariante,
   type StoreImagen,
+  type StoreImagenInformativa,
   type StoreProducto,
   type StoreSucursal,
   type StoreTienda,
@@ -42,9 +47,11 @@ import {
 
 export default function StoreProductPage() {
   const { slug = "", id = "" } = useParams();
+  const navigate = useNavigate();
   const productId = Number(id);
   const setSlug = useEcommerceCartStore((s) => s.setSlug);
   const items = useEcommerceCartStore((s) => s.items);
+  const token = useStorefrontAuthStore((s) => s.token);
   const count = useEcommerceCartStore((s) => s.count());
   const [qty, setQty] = useState(1);
   const [imgIdx, setImgIdx] = useState(0);
@@ -91,6 +98,7 @@ export default function StoreProductPage() {
   const tienda = (productQ.data?.data?.tienda || storeQ.data?.data?.tienda) as StoreTienda | undefined;
   const producto = productQ.data?.data?.producto as StoreProducto | undefined;
   const imagenes = (productQ.data?.data?.imagenes || []) as StoreImagen[];
+  const imagenesInformativas = (productQ.data?.data?.imagenes_informativas || []) as StoreImagenInformativa[];
   const atributos = (productQ.data?.data?.atributos || []) as StorefrontAttr[];
   const variantes = (productQ.data?.data?.variantes || []) as StorefrontVariante[];
   const catalogo = (storeQ.data?.data?.productos || []) as StoreProducto[];
@@ -117,35 +125,101 @@ export default function StoreProductPage() {
   const availability = (availabilityQ.data?.data || []) as BranchAvailability[];
   const attrsIncomplete = requiredAttrsIncomplete(atributos, sels);
   const idVariante = producto ? resolveVarianteId(variantes, atributos, sels) : null;
+  const comboUnresolved = producto
+    ? varianteSelectionUnresolved(variantes, atributos, sels)
+    : false;
   const branchAvail = availability.find((a) => a.sucursal.id_sucursal === id_sucursal) || availability[0];
   const variantRow = idVariante
     ? branchAvail?.variantes?.find((v) => v.id_variante === idVariante)
     : null;
-  const stockForCta = variantRow?.disponible ?? producto?.stock ?? 0;
+  // Si hay variante resuelta usa su stock; si no hay attrs es_variante, stock de sucursal/producto.
+  const stockForCta = comboUnresolved
+    ? 0
+    : variantRow?.disponible ??
+      (idVariante ? branchAvail?.disponible : undefined) ??
+      branchAvail?.disponible ??
+      producto?.stock ??
+      0;
+  // Misma regla que el backend: attrs de selección o variantes (talla/color).
+  const hasSeleccionAttrs = atributos.some((a) => a.requiere_seleccion || a.es_variante);
   const disp = producto
     ? resolveDisponibilidad(
         stockForCta,
         producto.attrs_json,
-        tienda?.disponibilidad_config || producto.disponibilidad
-          ? tienda?.disponibilidad_config
-          : undefined
+        tienda?.disponibilidad_config || undefined,
+        { hasSeleccionAttrs }
       )
     : null;
+  const availabilityForUi = useMemo(() => {
+    const mapBranch = (a: BranchAvailability) => {
+      const stock = idVariante
+        ? Number(a.variantes?.find((v) => Number(v.id_variante) === Number(idVariante))?.disponible) ||
+          0
+        : Number(a.disponible) || 0;
+      return {
+        ...a,
+        disponible: stock,
+        disponibilidad: resolveDisponibilidad(stock, producto?.attrs_json, tienda?.disponibilidad_config, {
+          hasSeleccionAttrs,
+        }),
+      };
+    };
+    return availability.map(mapBranch);
+  }, [availability, idVariante, producto?.attrs_json, tienda?.disponibilidad_config, hasSeleccionAttrs]);
+
   const waAttrs = producto ? attrsSnapshotFromPicker(atributos, sels) : [];
   const productUrl = typeof window !== "undefined" ? window.location.href.split("?")[0] : undefined;
 
-  const onAdd = (p: StoreProducto, cantidad = 1) => {
-    const pDisp = p.disponibilidad || resolveDisponibilidad(p.stock, p.attrs_json, tienda?.disponibilidad_config);
+  const onAdd = async (p: StoreProducto, cantidad = 1) => {
+    // Misma fuente de verdad que el CTA: stock de variante en PDP actual; listados usan agregate.
+    const isCurrent = p.id_producto === producto?.id_producto;
+    const stockGate = isCurrent ? stockForCta : Number(p.stock) || 0;
+    const pDisp =
+      (isCurrent && disp) ||
+      p.disponibilidad ||
+      resolveDisponibilidad(stockGate, p.attrs_json, tienda?.disponibilidad_config, {
+        hasSeleccionAttrs: isCurrent ? hasSeleccionAttrs : false,
+      });
     if (!pDisp.cta.allowAddToCart) {
       toast.error("Antes de agregar este producto necesitamos confirmar su disponibilidad.");
       return;
     }
+    if (stockGate < cantidad) {
+      toast.error("Este producto ya no está disponible en la cantidad seleccionada.");
+      return;
+    }
     if (!canAdd(p)) return;
-    if (p.id_producto !== producto?.id_producto) {
+    if (isCurrent && comboUnresolved) {
+      toast.error("Esta combinación no está disponible.");
+      return;
+    }
+    if (!isCurrent) {
       setPendingRelated(p);
       return;
     }
     try {
+      const selecciones = sels;
+      const id_variante = resolveVarianteId(variantes, atributos, selecciones);
+      const v = await validateCartStore(slug, {
+        items: [
+          {
+            id_producto: p.id_producto,
+            id_variante,
+            cantidad,
+            selecciones: selecciones.map((s) => ({
+              id_atributo: s.id_atributo,
+              id_valor: s.id_valor ?? null,
+              valor: s.valor,
+            })),
+          },
+        ],
+        id_sucursal: id_sucursal || null,
+      });
+      if (!v?.data?.ok) {
+        const msg = v?.data?.items?.[0]?.message || "Este producto ya no está disponible en la cantidad seleccionada.";
+        toast.error(msg);
+        return;
+      }
       addProductToCart({
         producto: p,
         qty: cantidad,
@@ -155,6 +229,42 @@ export default function StoreProductPage() {
         imagen: galeria[imgIdx] || p.imagen_url,
       });
       toast.success(`${p.nombre} agregado al carrito`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  };
+
+  const onEnviarSolicitud = async () => {
+    if (!producto) return;
+    if (attrsIncomplete) {
+      toast.error("Selecciona todas las características del producto");
+      return;
+    }
+    if (!id_sucursal) {
+      toast.error("Selecciona una sucursal");
+      return;
+    }
+    if (!token) {
+      toast.message("Inicia sesión para enviar la solicitud");
+      navigate(`/tienda/${slug}/login?next=/tienda/${slug}/producto/${productId}`);
+      return;
+    }
+    try {
+      const attrs: Record<string, string> = {};
+      for (const a of waAttrs) attrs[a.nombre] = a.valor;
+      const res = await buyerCrearSolicitud(slug, {
+        id_producto: producto.id_producto,
+        id_variante: idVariante,
+        id_sucursal,
+        cantidad: qty,
+        attrs,
+      });
+      if (res.duplicated) {
+        toast.message(res.message || "Ya tienes una solicitud pendiente");
+      } else {
+        toast.success(res.message || "Solicitud enviada");
+      }
+      navigate(`/tienda/${slug}/cuenta/solicitudes`);
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -292,13 +402,38 @@ export default function StoreProductPage() {
 
             <AttrPicker atributos={atributos} value={sels} onChange={setSels} />
 
-            {availability.length > 0 && (
+            {availabilityForUi.length > 0 && (
               <ProductAvailabilityPanel
-                availability={availability}
+                availability={availabilityForUi}
                 activeBranchId={id_sucursal}
                 onSelectBranch={setBranch}
                 allowConsultEmpty
+                modeSolicitud={Boolean(disp?.cta.showEnviarSolicitud)}
               />
+            )}
+
+            {comboUnresolved && (
+              <p className="text-sm text-red-700">
+                Esta combinación de atributos no está disponible. Prueba otra opción o consulta por WhatsApp.
+              </p>
+            )}
+
+            {disp?.cta.showEnviarSolicitud && (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  disabled={attrsIncomplete || !id_sucursal}
+                  onClick={onEnviarSolicitud}
+                  className="w-full sm:w-auto vitrina-pill inline-flex items-center justify-center gap-2 h-11 px-8 text-sm font-semibold text-white disabled:opacity-40"
+                  style={{ background: "var(--vitrina-accent)" }}
+                >
+                  Enviar solicitud
+                </button>
+                <p className="text-xs store-muted">Confirma la disponibilidad antes de comprar.</p>
+                <Link to={`/tienda/${slug}/cuenta/solicitudes`} className="text-xs underline store-muted">
+                  Ver mis solicitudes
+                </Link>
+              </div>
             )}
 
             {disp?.cta.showWhatsapp && (
@@ -318,8 +453,8 @@ export default function StoreProductPage() {
                 mensajeIntro={tienda.disponibilidad_config?.mensaje_intro}
                 label={
                   disp.cta.primary === "whatsapp"
-                    ? "Consultar disponibilidad por WhatsApp"
-                    : "Consultar por WhatsApp"
+                    ? "Consultar por WhatsApp"
+                    : "También por WhatsApp"
                 }
               />
             )}
@@ -342,7 +477,7 @@ export default function StoreProductPage() {
                   </div>
                   <button
                     type="button"
-                    disabled={!disp.cta.allowAddToCart || attrsIncomplete}
+                    disabled={!disp.cta.allowAddToCart || attrsIncomplete || comboUnresolved}
                     onClick={() => onAdd(producto, qty)}
                     className="vitrina-pill inline-flex items-center gap-2 h-11 px-8 text-sm font-semibold text-white disabled:opacity-40"
                     style={{ background: "var(--vitrina-accent)" }}
@@ -353,19 +488,47 @@ export default function StoreProductPage() {
                 </>
               )}
             </div>
+
+            <StockWhatsAppLeyenda
+              mensaje={tienda.disponibilidad_config?.mensaje_leyenda_stock}
+              whatsappHref={
+                !disp?.cta.showWhatsapp
+                  ? waLink(
+                      activeBranch?.whatsapp || activeBranch?.telefono || tienda.telefono,
+                      buildDisponibilidadWaMessage({
+                        tiendaNombre: tienda.nombre,
+                        product: producto,
+                        branch: activeBranch,
+                        qty,
+                        sku: variantRow?.sku || producto.sku,
+                        attrs: waAttrs,
+                        productUrl,
+                        intro: tienda.disponibilidad_config?.mensaje_intro,
+                      })
+                    )
+                  : null
+              }
+            />
           </div>
         </div>
       </div>
 
-      {(disp?.cta.showCart || disp?.cta.primary === "whatsapp") && (
+      {(disp?.cta.showCart || disp?.cta.primary === "whatsapp" || disp?.cta.showEnviarSolicitud) && (
       <StickyBuyBar
         precio={Number(producto.precio) * qty}
-        disabled={!disp?.cta.allowAddToCart || attrsIncomplete}
-        onAdd={() => onAdd(producto, qty)}
+        disabled={
+          disp?.cta.showEnviarSolicitud
+            ? attrsIncomplete || !id_sucursal || comboUnresolved
+            : !disp?.cta.allowAddToCart || attrsIncomplete || comboUnresolved
+        }
+        onAdd={() =>
+          disp?.cta.showEnviarSolicitud ? onEnviarSolicitud() : onAdd(producto, qty)
+        }
+        addLabel={disp?.cta.showEnviarSolicitud ? "Enviar solicitud" : undefined}
         inCart={inCart}
         slug={slug}
         whatsapp={
-          disp?.cta.primary === "whatsapp" ? (
+          disp?.cta.primary === "whatsapp" && !disp?.cta.showEnviarSolicitud ? (
             <ConsultarWhatsAppButton
               slug={slug}
               telefono={tienda.telefono}
@@ -385,6 +548,28 @@ export default function StoreProductPage() {
           ) : null
         }
       />
+      )}
+
+      {imagenesInformativas.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 lg:px-8 pb-10 lg:pb-14">
+          <h2 className="text-lg font-semibold tracking-tight mb-2">Información del producto</h2>
+          <p className="text-sm store-muted mb-6">Guías, fichas y detalles útiles</p>
+          <div className="space-y-6">
+            {imagenesInformativas.map((img) => (
+              <figure
+                key={img.id_imagen}
+                className="rounded-[var(--store-radius,1rem)] overflow-hidden border store-hairline bg-[var(--vitrina-elevated)]"
+              >
+                <img
+                  src={img.url}
+                  alt=""
+                  className="w-full h-auto object-contain max-h-[min(90vh,900px)] mx-auto"
+                  loading="lazy"
+                />
+              </figure>
+            ))}
+          </div>
+        </section>
       )}
 
       <ProductReviewsSection slug={slug} id_producto={productId} />

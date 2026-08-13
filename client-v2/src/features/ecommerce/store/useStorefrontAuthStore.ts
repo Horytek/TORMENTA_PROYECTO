@@ -38,6 +38,19 @@ export const useStorefrontAuthStore = create<State>((set) => ({
   },
   hydrate: (slug) => {
     const token = getStorefrontToken(slug);
-    set({ token, slug, user: null });
+    set((state) => {
+      if (!token) {
+        return { token: null, slug, user: null };
+      }
+      // Misma tienda + mismo token: conservar user (evita flash/logout al remontar header).
+      if (state.slug === slug && state.token === token) {
+        return { token, slug, user: state.user };
+      }
+      return {
+        token,
+        slug,
+        user: state.slug === slug ? state.user : null,
+      };
+    });
   },
 }));

@@ -17,6 +17,7 @@ import {
   PackageCheck,
   Truck,
   MessageSquareText,
+  ClipboardList,
   Menu,
   X,
   Warehouse,
@@ -46,6 +47,7 @@ const NAV_GROUPS: { label: string; items: NavItem[] }[] = [
     label: "Pedidos",
     items: [
       { to: "/ecommerce-admin/pedidos-retiro", label: "Pedidos", icon: PackageCheck, perm: "pedidos.ver" },
+      { to: "/ecommerce-admin/solicitudes-stock", label: "Solicitudes de stock", icon: ClipboardList, perm: "solicitudes.ver" },
       { to: "/ecommerce-admin/validar-retiro", label: "Recojo", icon: ScanLine, perm: "recojo.ver" },
       { to: "/ecommerce-admin/ordenes", label: "Órdenes", icon: ShoppingBag, perm: "ordenes.ver" },
     ],

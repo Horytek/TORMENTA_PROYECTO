@@ -7,6 +7,12 @@ import {
   DEFAULT_CONFIG,
 } from "../services/ecommerce/DisponibilidadService.js";
 import { getSucursal } from "../services/ecommerce/BranchService.js";
+import {
+  crearReservaManual,
+  cancelarReservaManual,
+  listReservasActivas,
+} from "../services/ecommerce/SoftReservaService.js";
+import { ensureDefaultVariante } from "../services/ecommerce/InventoryService.js";
 
 function fail(res, error) {
   const status = error.status || 500;
@@ -108,9 +114,39 @@ export const adminDisponibilidadStats = async (req, res) => {
       const alerta = (productos || []).filter(
         (p) => Number(p.consultas) >= 5 && Number(p.stock) <= 2
       );
+      let reservas_por_expirar = [];
+      let intentos_sin_stock = 0;
+      try {
+        reservas_por_expirar = await listReservasActivas(connection, req.id_tienda, 20);
+        reservas_por_expirar = reservas_por_expirar.filter((r) => {
+          if (!r.expires_at) return false;
+          const ms = new Date(r.expires_at).getTime() - Date.now();
+          return ms > 0 && ms < 30 * 60 * 1000;
+        });
+      } catch {
+        /* tabla puede no existir en installs viejos */
+      }
+      try {
+        const [[it]] = await connection.query(
+          `SELECT COUNT(*) AS c FROM ecom_intento_sin_stock
+           WHERE id_tienda = ? AND created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)`,
+          [req.id_tienda]
+        );
+        intentos_sin_stock = Number(it?.c || 0);
+      } catch {
+        /* noop */
+      }
       return res.json({
         success: true,
-        data: { total: Number(tot?.c || 0), productos, variantes, sucursales, alerta },
+        data: {
+          total: Number(tot?.c || 0),
+          productos,
+          variantes,
+          sucursales,
+          alerta,
+          reservas_por_expirar,
+          intentos_sin_stock,
+        },
       });
     } catch (err) {
       if (err?.code === "ER_NO_SUCH_TABLE") {
@@ -119,6 +155,95 @@ export const adminDisponibilidadStats = async (req, res) => {
       throw err;
     }
   } catch (error) {
+    return fail(res, error);
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+export const adminListReservasDisponibilidad = async (req, res) => {
+  let connection;
+  try {
+    connection = await getEcommerceConnection();
+    const rows = await listReservasActivas(connection, req.id_tienda, 100);
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    if (error?.code === "ER_NO_SUCH_TABLE") {
+      return res.json({ success: true, data: [] });
+    }
+    return fail(res, error);
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+export const adminCrearReservaDisponibilidad = async (req, res) => {
+  const {
+    id_producto,
+    id_variante,
+    id_sucursal,
+    cantidad = 1,
+    minutos,
+    notas,
+  } = req.body || {};
+  let connection;
+  try {
+    connection = await getEcommerceConnection();
+    await connection.beginTransaction();
+    const [[tienda]] = await connection.query(
+      `SELECT theme_json FROM tienda WHERE id_tienda = ? LIMIT 1`,
+      [req.id_tienda]
+    );
+    const [[prod]] = await connection.query(
+      `SELECT id_producto FROM producto WHERE id_producto = ? AND id_tienda = ? LIMIT 1`,
+      [Number(id_producto), req.id_tienda]
+    );
+    if (!prod) {
+      await connection.rollback();
+      return res.status(404).json({ success: false, message: "Producto no encontrado." });
+    }
+    const suc = await getSucursal(connection, req.id_tienda, Number(id_sucursal));
+    if (!suc) {
+      await connection.rollback();
+      return res.status(400).json({ success: false, message: "Sucursal inválida." });
+    }
+    let varianteId = id_variante ? Number(id_variante) : null;
+    if (!varianteId) {
+      const v = await ensureDefaultVariante(connection, req.id_tienda, Number(id_producto));
+      varianteId = v.id_variante;
+    }
+    const row = await crearReservaManual(connection, {
+      id_tienda: req.id_tienda,
+      id_producto: Number(id_producto),
+      id_variante: varianteId,
+      id_sucursal: Number(id_sucursal),
+      cantidad: Math.max(1, Number(cantidad) || 1),
+      minutos,
+      id_usuario_staff: req.user?.sub ?? null,
+      notas,
+      theme_json: tienda?.theme_json,
+    });
+    await connection.commit();
+    return res.status(201).json({ success: true, data: row });
+  } catch (error) {
+    if (connection) try { await connection.rollback(); } catch { /* noop */ }
+    return fail(res, error);
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+export const adminCancelarReservaDisponibilidad = async (req, res) => {
+  const id_reserva = Number(req.params.id);
+  let connection;
+  try {
+    connection = await getEcommerceConnection();
+    await connection.beginTransaction();
+    await cancelarReservaManual(connection, req.id_tienda, id_reserva);
+    await connection.commit();
+    return res.json({ success: true });
+  } catch (error) {
+    if (connection) try { await connection.rollback(); } catch { /* noop */ }
     return fail(res, error);
   } finally {
     if (connection) connection.release();

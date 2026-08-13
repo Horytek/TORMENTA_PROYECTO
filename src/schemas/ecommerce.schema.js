@@ -47,6 +47,7 @@ export const ecommerceCheckoutSchema = z.object({
         id_producto: z.number().int().positive(),
         id_variante: z.number().int().positive().optional().nullable(),
         cantidad: z.number().int().positive().max(99),
+        id_solicitud: z.number().int().positive().optional().nullable(),
         selecciones: z
           .array(
             z.object({
@@ -81,6 +82,30 @@ export const ecommerceCheckoutSchema = z.object({
     })
     .optional()
     .nullable(),
+});
+
+export const ecommerceCartValidateSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        id_producto: z.number().int().positive(),
+        id_variante: z.number().int().positive().optional().nullable(),
+        cantidad: z.number().int().positive().max(99),
+        id_solicitud: z.number().int().positive().optional().nullable(),
+        selecciones: z
+          .array(
+            z.object({
+              id_atributo: z.number().int().positive(),
+              id_valor: z.number().int().positive().optional().nullable(),
+              valor: z.union([z.string(), z.number()]).optional().nullable(),
+            })
+          )
+          .optional()
+          .nullable(),
+      })
+    )
+    .min(1),
+  id_sucursal: z.number().int().positive().optional().nullable(),
 });
 
 export const ecommerceEntregaConfigSchema = z.object({
@@ -312,11 +337,15 @@ export const ecommerceThemeSchema = z
         metodo_default: z.enum(["auto", "directa", "consultar", "ambos"]).optional(),
         umbral_consulta: z.number().int().min(0).max(999).optional(),
         umbral_agotado: z.number().int().min(0).max(999).optional(),
+        umbral_limitado: z.number().int().min(0).max(999).optional(),
         mostrar_boton_producto: z.boolean().optional(),
         mostrar_boton_variante: z.boolean().optional(),
         mensaje_confianza: z.string().max(400).optional(),
+        mensaje_leyenda_stock: z.string().max(500).optional(),
         mensaje_intro: z.string().max(400).optional(),
         validez_confirmacion_min: z.number().int().min(15).max(10080).optional(),
+        reserva_checkout_min: z.number().int().min(1).max(10080).optional(),
+        permitir_checkout_parcial: z.boolean().optional(),
       })
       .optional(),
     surfaces: z
@@ -418,11 +447,58 @@ export const ecommerceDisponibilidadConfigSchema = z.object({
   metodo_default: z.enum(["auto", "directa", "consultar", "ambos"]).optional(),
   umbral_consulta: z.number().int().min(0).max(999).optional(),
   umbral_agotado: z.number().int().min(0).max(999).optional(),
+  umbral_limitado: z.number().int().min(0).max(999).optional(),
+  umbral_confirmacion: z.number().int().min(0).max(999).optional(),
   mostrar_boton_producto: z.boolean().optional(),
   mostrar_boton_variante: z.boolean().optional(),
   mensaje_confianza: z.string().max(400).optional(),
+  mensaje_leyenda_stock: z.string().max(500).optional(),
   mensaje_intro: z.string().max(400).optional(),
   validez_confirmacion_min: z.number().int().min(15).max(10080).optional(),
+  reserva_checkout_min: z.number().int().min(1).max(10080).optional(),
+  permitir_checkout_parcial: z.boolean().optional(),
+  solicitudes_activas: z.boolean().optional(),
+  reserva_al_aprobar: z.boolean().optional(),
+  reserva_minutos: z.number().int().min(5).max(10080).optional(),
+  permitir_aprobacion_parcial: z.boolean().optional(),
+  congelar_precio_al_aprobar: z.boolean().optional(),
+  permitir_solicitud_invitado: z.boolean().optional(),
+});
+
+export const ecommerceSolicitudCreateSchema = z.object({
+  id_producto: z.number().int().positive(),
+  id_variante: z.number().int().positive().optional().nullable(),
+  id_sucursal: z.number().int().positive(),
+  cantidad: z.number().int().positive().max(99).optional(),
+  attrs: z.record(z.string(), z.unknown()).optional().nullable(),
+  attrs_json: z.record(z.string(), z.unknown()).optional().nullable(),
+});
+
+export const ecommerceSolicitudAprobarSchema = z.object({
+  cantidad_aprobada: z.number().int().positive().max(99).optional(),
+  stock_sistema: z.number().int().min(0).optional().nullable(),
+  stock_fisico: z.number().int().min(0).optional().nullable(),
+  observacion_stock: z.string().max(500).optional().nullable(),
+  crear_reserva: z.boolean().optional(),
+  congelar_precio: z.boolean().optional(),
+});
+
+export const ecommerceSolicitudRechazarSchema = z.object({
+  motivo_rechazo: z
+    .enum([
+      "agotado",
+      "no_disponible_sucursal",
+      "variante_no_disponible",
+      "cantidad_insuficiente",
+      "error_inventario",
+      "otro",
+    ])
+    .optional()
+    .nullable(),
+  comentario_cliente: z.string().max(500).optional().nullable(),
+  stock_sistema: z.number().int().min(0).optional().nullable(),
+  stock_fisico: z.number().int().min(0).optional().nullable(),
+  observacion_stock: z.string().max(500).optional().nullable(),
 });
 
 export const ecommerceConsultaDisponibilidadSchema = z.object({
@@ -495,6 +571,7 @@ export const ecommerceProductoAtributosSchema = z.object({
 
 export const ecommerceImagenReorderSchema = z.object({
   ids: z.array(z.number().int().positive()).min(1),
+  tipo: z.enum(["galeria", "informativa"]).optional(),
 });
 
 export const ecommerceRolPatchSchema = z.object({

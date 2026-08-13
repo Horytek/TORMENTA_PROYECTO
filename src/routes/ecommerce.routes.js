@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { validateSchema } from "../middlewares/validator.middleware.js";
 import { ecommerceAuth } from "../middlewares/ecommerceAuth.middleware.js";
-import { storefrontAuth } from "../middlewares/storefrontAuth.middleware.js";
+import { storefrontAuth, storefrontAuthOptional } from "../middlewares/storefrontAuth.middleware.js";
 import {
   ecommerceRegisterSchema,
   ecommerceLoginSchema,
@@ -9,6 +9,7 @@ import {
   ecommerceProductoSchema,
   ecommerceMpCredentialsSchema,
   ecommerceCheckoutSchema,
+  ecommerceCartValidateSchema,
   ecommerceTiendaUpdateSchema,
   ecommerceBrandUploadSchema,
   ecommerceSucursalSchema,
@@ -35,6 +36,9 @@ import {
   ecommerceDeleteOrdenesSchema,
   ecommerceDisponibilidadConfigSchema,
   ecommerceConsultaDisponibilidadSchema,
+  ecommerceSolicitudCreateSchema,
+  ecommerceSolicitudAprobarSchema,
+  ecommerceSolicitudRechazarSchema,
   ecommerceAtributoSchema,
   ecommerceAtributoValorSchema,
   ecommerceProductoAtributosSchema,
@@ -71,6 +75,7 @@ import {
   deleteOrdenes,
   getStoreBySlug,
   getStoreProduct,
+  validateCartStore,
   checkoutStore,
   ecommerceStoreWebhook,
   syncStoreOrderPayment,
@@ -179,8 +184,29 @@ import {
   adminGetDisponibilidadConfig,
   adminPatchDisponibilidadConfig,
   adminDisponibilidadStats,
+  adminListReservasDisponibilidad,
+  adminCrearReservaDisponibilidad,
+  adminCancelarReservaDisponibilidad,
   storeRegistrarConsulta,
 } from "../controllers/ecommerceDisponibilidad.controller.js";
+import {
+  storeCrearSolicitud,
+  storeListMisSolicitudes,
+  storeGetMisSolicitud,
+  storeCancelarSolicitud,
+  storeComprarDesdeSolicitud,
+  storeListMisNotificaciones,
+  storeUnreadNotificaciones,
+  storeLeerNotificacion,
+  storeLeerTodasNotificaciones,
+  adminListSolicitudes,
+  adminStatsSolicitudes,
+  adminGetSolicitud,
+  adminEnRevisionSolicitud,
+  adminAprobarSolicitud,
+  adminRechazarSolicitud,
+  adminCancelarSolicitud,
+} from "../controllers/ecommerceSolicitud.controller.js";
 
 const router = Router();
 
@@ -264,6 +290,27 @@ router.post(
 router.get("/store/:slug/mis-reviews", storefrontAuth, listMisReviews);
 
 router.post(
+  "/store/:slug/solicitudes",
+  storefrontAuth,
+  validateSchema(ecommerceSolicitudCreateSchema),
+  storeCrearSolicitud
+);
+router.get("/store/:slug/mis-solicitudes", storefrontAuth, storeListMisSolicitudes);
+router.get("/store/:slug/mis-solicitudes/:id", storefrontAuth, storeGetMisSolicitud);
+router.post("/store/:slug/mis-solicitudes/:id/cancelar", storefrontAuth, storeCancelarSolicitud);
+router.post("/store/:slug/mis-solicitudes/:id/comprar", storefrontAuth, storeComprarDesdeSolicitud);
+router.get("/store/:slug/mis-notificaciones", storefrontAuth, storeListMisNotificaciones);
+router.get("/store/:slug/mis-notificaciones/unread-count", storefrontAuth, storeUnreadNotificaciones);
+router.post("/store/:slug/mis-notificaciones/leer-todas", storefrontAuth, storeLeerTodasNotificaciones);
+router.post("/store/:slug/mis-notificaciones/:id/leer", storefrontAuth, storeLeerNotificacion);
+
+router.post(
+  "/store/:slug/cart/validate",
+  storefrontAuthOptional,
+  validateSchema(ecommerceCartValidateSchema),
+  validateCartStore
+);
+router.post(
   "/store/:slug/checkout",
   storefrontAuth,
   validateSchema(ecommerceCheckoutSchema),
@@ -345,6 +392,31 @@ router.patch(
   adminPatchDisponibilidadConfig
 );
 router.get("/admin/disponibilidad/stats", P("dashboard.ver"), adminDisponibilidadStats);
+router.get("/admin/disponibilidad/reservas", P("inventario.ver"), adminListReservasDisponibilidad);
+router.post("/admin/disponibilidad/reservas", P("inventario.editar"), adminCrearReservaDisponibilidad);
+router.delete(
+  "/admin/disponibilidad/reservas/:id",
+  P("inventario.editar"),
+  adminCancelarReservaDisponibilidad
+);
+
+router.get("/admin/solicitudes/stats", P("solicitudes.ver"), adminStatsSolicitudes);
+router.get("/admin/solicitudes", P("solicitudes.ver"), adminListSolicitudes);
+router.get("/admin/solicitudes/:id", P("solicitudes.ver"), adminGetSolicitud);
+router.post("/admin/solicitudes/:id/en-revision", P("solicitudes.verificar"), adminEnRevisionSolicitud);
+router.post(
+  "/admin/solicitudes/:id/aprobar",
+  P("solicitudes.aprobar"),
+  validateSchema(ecommerceSolicitudAprobarSchema),
+  adminAprobarSolicitud
+);
+router.post(
+  "/admin/solicitudes/:id/rechazar",
+  P("solicitudes.rechazar"),
+  validateSchema(ecommerceSolicitudRechazarSchema),
+  adminRechazarSolicitud
+);
+router.post("/admin/solicitudes/:id/cancelar", P("solicitudes.cancelar"), adminCancelarSolicitud);
 router.post(
   "/admin/tienda/logo",
   P("configuracion.editar"),

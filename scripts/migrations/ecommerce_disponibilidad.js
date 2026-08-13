@@ -81,6 +81,7 @@ const ejecutar = async () => {
           expires_at DATETIME NULL,
           id_usuario_staff INT NULL,
           id_consulta INT NULL,
+          id_solicitud INT NULL,
           notas VARCHAR(500) NULL,
           created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME NULL ON UPDATE CURRENT_TIMESTAMP,

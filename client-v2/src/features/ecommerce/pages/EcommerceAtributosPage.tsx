@@ -305,7 +305,16 @@ export default function EcommerceAtributosPage() {
                   className="mt-0.5"
                   checked={form.es_variante}
                   disabled={!varianteOk}
-                  onChange={(e) => setForm({ ...form, es_variante: e.target.checked })}
+                  onChange={(e) => {
+                    const next = e.target.checked;
+                    if (next && !form.es_variante) {
+                      const ok = window.confirm(
+                        "Al activar stock por opción se crearán combinaciones (variantes) con stock 0 en cada sucursal. No se inventan cantidades: debes cargar el inventario después. Los datos existentes no se borran. ¿Continuar?"
+                      );
+                      if (!ok) return;
+                    }
+                    setForm({ ...form, es_variante: next });
+                  }}
                 />
                 <span>
                   <span className="font-medium">Cada opción tiene su propio stock</span>

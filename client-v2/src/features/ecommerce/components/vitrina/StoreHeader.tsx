@@ -1,7 +1,8 @@
 import { useMemo, useState, type CSSProperties } from "react";
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
-import { Search, ShoppingBag, Menu, Moon, Sun, Monitor, User, Heart } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { Search, ShoppingBag, Menu, Moon, Sun, Monitor, User, Heart, Bell } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { monograma, type StoreTienda } from "../../types/storefront";
 import { useStoreColorScheme } from "./StoreShell";
@@ -11,6 +12,21 @@ import type { StoreProducto, StoreSucursal } from "../../types/storefront";
 import { resolveNavEntries, type NavStyle, type ResolvedNavEntry } from "../../types/theme";
 import { BranchSelector } from "../../design/BranchSelector";
 import { useStorefrontAuthStore } from "../../store/useStorefrontAuthStore";
+import { buyerUnreadNotificaciones, getStorefrontToken } from "../../api/ecommerce";
+import { StoreNotificationsSheet } from "./StoreNotificationsSheet";
+import { refreshStorefrontSession } from "../../utils/refreshStorefrontSession";
+
+function buyerInitial(nombre?: string | null, email?: string | null) {
+  const fromName = String(nombre || "")
+    .trim()
+    .charAt(0);
+  if (fromName) return fromName.toUpperCase();
+  const fromEmail = String(email || "")
+    .trim()
+    .charAt(0);
+  if (fromEmail) return fromEmail.toUpperCase();
+  return "U";
+}
 
 type Props = {
   tienda: StoreTienda;
@@ -76,18 +92,43 @@ export function StoreHeader({
 }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const navigate = useNavigate();
   const { pref, cycle, allowToggle, theme } = useStoreColorScheme();
   const buyerToken = useStorefrontAuthStore((s) => s.token);
+  const buyerUser = useStorefrontAuthStore((s) => s.user);
   const hydrate = useStorefrontAuthStore((s) => s.hydrate);
 
   useEffect(() => {
-    if (slug) hydrate(slug);
+    if (!slug) return;
+    hydrate(slug);
+    if (!getStorefrontToken(slug)) return;
+    void refreshStorefrontSession(slug);
   }, [slug, hydrate]);
+
+  const unreadQ = useQuery({
+    queryKey: ["buyer-notif-unread", slug],
+    queryFn: () => buyerUnreadNotificaciones(slug),
+    enabled: Boolean(slug && buyerToken),
+    refetchInterval: 45_000,
+    retry: false,
+  });
+  const unreadCount = Number(unreadQ.data?.data?.count) || 0;
+
   const headerStyle = theme.header_style;
   const nav = theme.nav;
 
   const entries = useMemo(() => resolveNavEntries(nav, categorias), [nav, categorias]);
 
+  const openNotificaciones = () => {
+    if (!buyerToken) {
+      navigate(`/tienda/${slug}/login`, { state: { from: `/tienda/${slug}` } });
+      return;
+    }
+    setNotifOpen(true);
+  };
+
+  const initial = buyerInitial(buyerUser?.nombre, buyerUser?.email);
   const activateEntry = (entry: ResolvedNavEntry) => {
     setSheetOpen(false);
     if (entry.kind === "link" && entry.href) {
@@ -283,12 +324,40 @@ export function StoreHeader({
             >
               <Heart className="size-5" />
             </Link>
+            <button
+              type="button"
+              onClick={openNotificaciones}
+              className="store-icon-btn relative size-10 sm:size-11 flex items-center justify-center"
+              aria-label={
+                unreadCount > 0 ? `Notificaciones (${unreadCount} sin leer)` : "Notificaciones"
+              }
+            >
+              <Bell className="size-5" />
+              {unreadCount > 0 && (
+                <span
+                  className="absolute top-1 right-1 min-w-4 h-4 px-1 text-[10px] font-bold flex items-center justify-center text-white rounded-full"
+                  style={{ background: isAccent ? "rgba(0,0,0,0.35)" : "var(--vitrina-accent)" }}
+                >
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </button>
             <Link
               to={buyerToken ? `/tienda/${slug}/cuenta` : `/tienda/${slug}/login`}
               className="store-icon-btn size-10 sm:size-11 flex items-center justify-center"
-              aria-label="Mi cuenta"
+              aria-label={buyerToken && buyerUser ? `Cuenta de ${buyerUser.nombre}` : "Mi cuenta"}
             >
-              <User className="size-5" />
+              {buyerToken && buyerUser ? (
+                <span
+                  className="size-7 sm:size-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-semibold text-white"
+                  style={{ background: "var(--vitrina-accent)" }}
+                  aria-hidden
+                >
+                  {initial}
+                </span>
+              ) : (
+                <User className="size-5" />
+              )}
             </Link>
             <Link
               to={`/tienda/${slug}/carrito`}
@@ -309,6 +378,12 @@ export function StoreHeader({
         </div>
       </header>
       <SearchSheet open={searchOpen} onClose={() => setSearchOpen(false)} productos={productos} slug={slug} />
+      <StoreNotificationsSheet
+        slug={slug}
+        open={notifOpen}
+        onOpenChange={setNotifOpen}
+        enabled={Boolean(buyerToken)}
+      />
     </>
   );
 }

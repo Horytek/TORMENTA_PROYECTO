@@ -1,17 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useMutation, useQuery, keepPreviousData } from "@tanstack/react-query";
-import { Bike, Package, Store } from "lucide-react";
+import { Bike, Package, ShoppingBag, Store } from "lucide-react";
 import { useEcommerceCartStore } from "../store/useEcommerceCartStore";
 import { useBranchStore } from "../store/useBranchStore";
 import { useStorefrontAuthStore } from "../store/useStorefrontAuthStore";
 import {
   checkoutStore,
   getStore,
-  buyerMe,
+  buyerListSolicitudes,
   storeEntregaOpciones,
   storeEntregaCotizar,
+  validateCartStore,
 } from "../api/ecommerce";
+import { refreshStorefrontSession } from "../utils/refreshStorefrontSession";
+import { comprarSolicitudAlCarrito } from "../utils/comprarSolicitudAlCarrito";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +26,7 @@ import { useStorefrontCatalog } from "../components/vitrina/hooks/useStorefrontC
 import { BranchAddressCard } from "../design/BranchAddressCard";
 import { BranchSelector } from "../design/BranchSelector";
 import { ConsultarWhatsAppButton } from "../design/ConsultarWhatsAppButton";
+import { StockWhatsAppLeyenda } from "../components/vitrina/StockWhatsAppLeyenda";
 import { buildWaMessage, waLink } from "../design/buildWaMessage";
 import { formatPen, type StoreProducto, type StoreSucursal, type StoreTienda } from "../types/storefront";
 import { cn } from "@/lib/utils";
@@ -44,7 +48,7 @@ export default function StoreCartPage() {
   const initForStore = useBranchStore((s) => s.initForStore);
   const sucursales = useBranchStore((s) => s.sucursales);
   const activeBranch = useBranchStore((s) => s.activeBranch());
-  const { token, user, hydrate, setSession, clear: clearAuth } = useStorefrontAuthStore();
+  const { token, user, hydrate } = useStorefrontAuthStore();
   const [telefono, setTelefono] = useState("");
   const [fulfillment, setFulfillment] = useState<Fulfillment>("pickup");
   const [idDestino, setIdDestino] = useState<number | null>(null);
@@ -68,18 +72,50 @@ export default function StoreCartPage() {
   }, [slug, setSlug, hydrate]);
 
   useEffect(() => {
-    const t = useStorefrontAuthStore.getState().token;
-    if (!slug || !t) return;
-    buyerMe(slug)
-      .then((res) => {
-        if (res.success && res.data?.user) setSession(t, res.data.user, slug);
-      })
-      .catch(() => clearAuth());
-  }, [slug, setSession, clearAuth]);
+    if (!slug) return;
+    void refreshStorefrontSession(slug);
+  }, [slug]);
 
   useEffect(() => {
     if (user?.telefono) setTelefono(user.telefono);
   }, [user?.telefono]);
+
+  const solicitudesQ = useQuery({
+    queryKey: ["buyer-solicitudes", slug],
+    queryFn: () => buyerListSolicitudes(slug),
+    enabled: Boolean(slug && token),
+    refetchOnWindowFocus: true,
+  });
+  type SolRow = {
+    id_solicitud: number;
+    codigo: string;
+    estado: string;
+    producto_nombre?: string;
+    expires_at?: string | null;
+    cantidad_aprobada?: number | null;
+    cantidad_solicitada: number;
+    attrs_json?: Record<string, unknown>;
+  };
+  const aprobadasListas = useMemo(() => {
+    const rows = (solicitudesQ.data?.data || []) as SolRow[];
+    const inCart = new Set(
+      items.filter((i) => i.id_solicitud).map((i) => Number(i.id_solicitud))
+    );
+    return rows.filter((s) => {
+      if (s.estado !== "aprobada") return false;
+      if (s.expires_at && new Date(s.expires_at).getTime() <= Date.now()) return false;
+      if (inCart.has(Number(s.id_solicitud))) return false;
+      return true;
+    });
+  }, [solicitudesQ.data, items]);
+
+  const addSolicitudMut = useMutation({
+    mutationFn: (id: number) => comprarSolicitudAlCarrito(slug, id),
+    onSuccess: (res) => {
+      toast.success(res.alreadyInCart ? "Ya está en tu carrito" : "Agregado · listo para pagar");
+    },
+    onError: (e: Error) => toast.error(e.message || "No se pudo agregar"),
+  });
 
   const storeQ = useQuery({
     queryKey: ["store", slug, id_sucursal],
@@ -196,12 +232,46 @@ export default function StoreCartPage() {
   const totalFinal = Math.round((subtotal + costoEnvio) * 100) / 100;
 
   const consultItems = items.filter((i) => {
+    if (i.id_solicitud) return false;
     const p = productos.find((x) => x.id_producto === i.id_producto);
     return p?.disponibilidad && !p.disponibilidad.cta.allowAddToCart;
   });
 
+  const cartValidateQ = useQuery({
+    queryKey: [
+      "cart-validate",
+      slug,
+      id_sucursal,
+      items.map((i) => `${i.line_key}:${i.cantidad}:${i.id_solicitud || 0}`).join("|"),
+    ],
+    queryFn: () =>
+      validateCartStore(slug, {
+        items: items.map((i) => ({
+          id_producto: i.id_producto,
+          id_variante: i.id_variante,
+          id_solicitud: i.id_solicitud || null,
+          cantidad: i.cantidad,
+          selecciones: i.selecciones,
+        })),
+        id_sucursal: id_sucursal || null,
+      }),
+    enabled: Boolean(slug && items.length),
+    refetchOnWindowFocus: true,
+  });
+  const stockBlocked = cartValidateQ.data?.data?.ok === false;
+  const stockMessages = (cartValidateQ.data?.data?.items || [])
+    .filter((r) => !r.ok && r.message)
+    .map((r) => r.message as string);
+
   const canPay = (() => {
-    if (consultItems.length) return false;
+    const cfg = tienda?.disponibilidad_config;
+    const parcial = Boolean(cfg?.permitir_checkout_parcial);
+    if (consultItems.length && !parcial) return false;
+    if (consultItems.length && parcial) {
+      const directaCount = items.length - consultItems.length;
+      if (directaCount <= 0) return false;
+    }
+    if (stockBlocked) return false;
     if (!token) return false;
     if (quoteMsg && fulfillment !== "pickup") return false;
     if (fulfillment === "pickup") return Boolean(id_sucursal);
@@ -216,10 +286,18 @@ export default function StoreCartPage() {
   const checkoutMut = useMutation({
     mutationFn: () => {
       if (!token) throw new Error("Inicia sesión para comprar");
+      const cfg = tienda?.disponibilidad_config;
+      const parcial = Boolean(cfg?.permitir_checkout_parcial);
+      const payItems =
+        parcial && consultItems.length
+          ? items.filter((i) => !consultItems.some((c) => c.line_key === i.line_key))
+          : items;
+      if (!payItems.length) throw new Error("No hay productos listos para pagar.");
       return checkoutStore(slug, {
-        items: items.map((i) => ({
+        items: payItems.map((i) => ({
           id_producto: i.id_producto,
           id_variante: i.id_variante,
+          id_solicitud: i.id_solicitud || undefined,
           cantidad: i.cantidad,
           selecciones: i.selecciones,
         })),
@@ -306,6 +384,49 @@ export default function StoreCartPage() {
         <h1 className="text-3xl font-semibold tracking-tight mt-4">Tu carrito</h1>
         <p className="text-sm store-muted mt-1">Elige cómo recibir tu pedido e inicia sesión para pagar</p>
 
+        {aprobadasListas.length > 0 && (
+          <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 space-y-3">
+            <div>
+              <p className="text-sm font-semibold text-emerald-900">Stock confirmado · listo para comprar</p>
+              <p className="text-xs text-emerald-800/80 mt-0.5">
+                Agrega estas solicitudes al carrito para pagar con Mercado Pago.
+              </p>
+            </div>
+            {aprobadasListas.map((s) => (
+              <div
+                key={s.id_solicitud}
+                className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between rounded-xl bg-white/80 border border-emerald-100 px-3 py-2.5"
+              >
+                <div className="min-w-0 text-sm">
+                  <p className="font-medium truncate">{s.producto_nombre || `#${s.codigo}`}</p>
+                  <p className="text-xs store-muted">
+                    #{s.codigo}
+                    {s.attrs_json
+                      ? ` · ${Object.entries(s.attrs_json)
+                          .map(([k, v]) => `${k}: ${v}`)
+                          .join(" · ")}`
+                      : ""}
+                    {` · Cant. ${s.cantidad_aprobada || s.cantidad_solicitada}`}
+                    {s.expires_at
+                      ? ` · hasta ${new Date(s.expires_at).toLocaleString()}`
+                      : ""}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  className="h-10 shrink-0 gap-1.5"
+                  style={{ background: "var(--vitrina-accent)" }}
+                  disabled={addSolicitudMut.isPending}
+                  onClick={() => addSolicitudMut.mutate(s.id_solicitud)}
+                >
+                  <ShoppingBag className="size-3.5" />
+                  Agregar y pagar
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
         {items.length === 0 ? (
           <div className="mt-12 text-center py-16 border border-dashed store-hairline bg-[var(--vitrina-elevated)]">
             <p className="store-muted mb-4">Tu carrito está vacío.</p>
@@ -333,6 +454,11 @@ export default function StoreCartPage() {
                     {i.attrs_label && (
                       <div className="text-xs store-muted mt-0.5">{i.attrs_label}</div>
                     )}
+                    {i.id_solicitud ? (
+                      <p className="text-[11px] mt-1 inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-emerald-50 text-emerald-800 border border-emerald-100">
+                        Stock confirmado · listo para pagar
+                      </p>
+                    ) : null}
                     {consultItems.some((c) => c.line_key === i.line_key) && (
                       <p className="text-xs text-amber-800 mt-1">⚠ Requiere confirmar disponibilidad</p>
                     )}
@@ -355,6 +481,20 @@ export default function StoreCartPage() {
                 </li>
               ))}
             </ul>
+
+            <StockWhatsAppLeyenda
+              className="mt-4"
+              mensaje={tienda.disponibilidad_config?.mensaje_leyenda_stock}
+              whatsappHref={waHref}
+            />
+
+            {stockMessages.length > 0 && (
+              <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-xs text-red-800 space-y-1">
+                {stockMessages.map((m, i) => (
+                  <p key={`${m}-${i}`}>{m}</p>
+                ))}
+              </div>
+            )}
 
             {opciones.length > 0 && (
               <div className="mt-8 space-y-3">
@@ -581,7 +721,11 @@ export default function StoreCartPage() {
                 disabled={!canPay || checkoutMut.isPending}
                 onClick={() => checkoutMut.mutate()}
               >
-                {checkoutMut.isPending ? "Redirigiendo…" : "Pagar con Mercado Pago"}
+                {checkoutMut.isPending
+                  ? "Redirigiendo…"
+                  : items.some((i) => i.id_solicitud)
+                    ? "Pagar (stock confirmado)"
+                    : "Pagar con Mercado Pago"}
               </button>
               {waHref && (
                 <a href={waHref} target="_blank" rel="noreferrer" className="block text-center text-sm store-muted hover:underline">

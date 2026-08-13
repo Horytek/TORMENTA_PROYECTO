@@ -2161,3 +2161,6 @@ export const methods = {
   exchangeProducto,
   getVentasOnline,
 };
+
+/** Expuesto para canal tienda web (pedido → venta). */
+export { createVentaInternal };

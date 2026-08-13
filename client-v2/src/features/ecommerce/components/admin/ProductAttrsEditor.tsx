@@ -174,6 +174,12 @@ export function ProductAttrsEditor({
                     </span>
                   )}
                 </div>
+                {c.es_variante && assigned && (
+                  <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-md px-2 py-1.5">
+                    Este atributo controla inventario por combinación. Al guardar se generan variantes con
+                    stock 0; carga cantidades en Inventario. No afirma stock de opciones solo informativas.
+                  </p>
+                )}
                 {c.valores.length === 0 && (
                   <label className="flex items-center gap-3 min-h-11 text-sm touch-manipulation">
                     <input

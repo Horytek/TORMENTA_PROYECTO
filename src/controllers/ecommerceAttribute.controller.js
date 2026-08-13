@@ -172,6 +172,8 @@ export const adminListStock = async (req, res) => {
   const q = String(req.query.q || "").trim();
   const estado = String(req.query.estado || "");
   const umbral = Math.max(0, Number(req.query.umbral) || 5);
+  const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+  const offset = Math.max(Number(req.query.offset) || 0, 0);
   let id_sucursal = req.query.id_sucursal ? Number(req.query.id_sucursal) : null;
   if (req.ecomAccess && !req.ecomAccess.acceso_global) {
     if (id_sucursal && !req.ecomAccess.sucursal_ids.includes(id_sucursal)) {
@@ -184,53 +186,64 @@ export const adminListStock = async (req, res) => {
   let connection;
   try {
     connection = await getEcommerceConnection();
-    let sql = `
-      SELECT p.id_producto, p.nombre AS producto, p.sku AS sku_producto,
-             v.id_variante, v.sku, v.talla, v.color, v.attrs_json,
-             s.id_sucursal, s.nombre AS sucursal,
-             i.stock_fisico, i.reservado, i.comprometido,
-             GREATEST(0, i.stock_fisico - i.reservado - i.comprometido) AS disponible
+    let where = ` WHERE i.id_tienda = ? AND v.activo = 1`;
+    const params = [req.id_tienda];
+    if (id_sucursal) {
+      where += ` AND i.id_sucursal = ?`;
+      params.push(id_sucursal);
+    } else if (req.ecomAccess && !req.ecomAccess.acceso_global && req.ecomAccess.sucursal_ids.length) {
+      where += ` AND i.id_sucursal IN (?)`;
+      params.push(req.ecomAccess.sucursal_ids);
+    }
+    if (q) {
+      where += ` AND (p.nombre LIKE ? OR v.sku LIKE ? OR p.sku LIKE ?)`;
+      const term = `%${q}%`;
+      params.push(term, term, term);
+    }
+    const dispExpr = `GREATEST(0, i.stock_fisico - i.reservado - i.comprometido)`;
+    if (estado === "agotado") {
+      where += ` AND ${dispExpr} <= 0`;
+    } else if (estado === "bajo") {
+      where += ` AND ${dispExpr} > 0 AND ${dispExpr} <= ?`;
+      params.push(umbral);
+    } else if (estado === "ok") {
+      where += ` AND ${dispExpr} > ?`;
+      params.push(umbral);
+    }
+
+    const fromJoin = `
       FROM ecom_inventario i
       JOIN ecom_variante v ON v.id_variante = i.id_variante AND v.id_tienda = i.id_tienda
       JOIN producto p ON p.id_producto = v.id_producto AND p.id_tienda = i.id_tienda
       JOIN ecom_sucursal s ON s.id_sucursal = i.id_sucursal AND s.id_tienda = i.id_tienda
-      WHERE i.id_tienda = ? AND v.activo = 1`;
-    const params = [req.id_tienda];
-    if (id_sucursal) {
-      sql += ` AND i.id_sucursal = ?`;
-      params.push(id_sucursal);
-    } else if (req.ecomAccess && !req.ecomAccess.acceso_global && req.ecomAccess.sucursal_ids.length) {
-      sql += ` AND i.id_sucursal IN (?)`;
-      params.push(req.ecomAccess.sucursal_ids);
-    }
-    if (q) {
-      sql += ` AND (p.nombre LIKE ? OR v.sku LIKE ? OR p.sku LIKE ?)`;
-      const term = `%${q}%`;
-      params.push(term, term, term);
-    }
-    sql += ` ORDER BY p.nombre, v.sku, s.nombre LIMIT 500`;
-    const [rows] = await connection.query(sql, params);
-    const data = rows
-      .map((r) => {
-        const disponible = Number(r.disponible);
-        let status = "ok";
-        if (disponible <= 0) status = "agotado";
-        else if (disponible <= umbral) status = "bajo";
-        return {
-          ...r,
-          disponible,
-          reservado: Number(r.reservado),
-          total: Number(r.stock_fisico),
-          estado: status,
-        };
-      })
-      .filter((r) => {
-        if (estado === "agotado") return r.estado === "agotado";
-        if (estado === "bajo") return r.estado === "bajo";
-        if (estado === "ok") return r.estado === "ok";
-        return true;
-      });
-    return res.json({ success: true, data });
+      ${where}`;
+
+    const [[{ total }]] = await connection.query(`SELECT COUNT(*) AS total ${fromJoin}`, params);
+    const [rows] = await connection.query(
+      `SELECT p.id_producto, p.nombre AS producto, p.sku AS sku_producto,
+              v.id_variante, v.sku, v.talla, v.color, v.attrs_json,
+              s.id_sucursal, s.nombre AS sucursal,
+              i.stock_fisico, i.reservado, i.comprometido,
+              ${dispExpr} AS disponible
+       ${fromJoin}
+       ORDER BY p.nombre, v.sku, s.nombre
+       LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
+    );
+    const data = rows.map((r) => {
+      const disponible = Number(r.disponible);
+      let status = "ok";
+      if (disponible <= 0) status = "agotado";
+      else if (disponible <= umbral) status = "bajo";
+      return {
+        ...r,
+        disponible,
+        reservado: Number(r.reservado),
+        total: Number(r.stock_fisico),
+        estado: status,
+      };
+    });
+    return res.json({ success: true, data, total: Number(total) || 0, limit, offset });
   } catch (error) {
     return fail(res, error);
   } finally {
