@@ -121,6 +121,30 @@ export async function confirmarVenta(connection, { id_tienda, id_variante, id_su
   });
 }
 
+/** Devuelve stock físico al borrar/anular una orden ya cobrada. */
+export async function devolverVenta(connection, { id_tienda, id_variante, id_sucursal, cantidad, ref_tipo, ref_id }) {
+  const inv = await getInventario(connection, id_tienda, id_variante, id_sucursal, true);
+  if (!inv) return;
+  const fisAntes = Number(inv.stock_fisico);
+  const fisDespues = fisAntes + cantidad;
+  await connection.query(
+    `UPDATE ecom_inventario SET stock_fisico = ? WHERE id_inventario = ? AND id_tienda = ?`,
+    [fisDespues, inv.id_inventario, id_tienda]
+  );
+  await registrarMovimiento(connection, {
+    id_tienda,
+    id_variante,
+    id_sucursal,
+    tipo: "entrada",
+    cantidad,
+    stock_antes: fisAntes,
+    stock_despues: fisDespues,
+    motivo: "Orden eliminada",
+    ref_tipo,
+    ref_id,
+  });
+}
+
 export async function getStockPorProductoSucursal(connection, id_tienda, id_producto, id_sucursal) {
   const [rows] = await connection.query(
     `SELECT v.id_variante, v.sku, v.talla, v.color,

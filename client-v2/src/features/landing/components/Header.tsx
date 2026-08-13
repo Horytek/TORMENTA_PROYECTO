@@ -9,6 +9,21 @@ import { getLandingModule } from "../modules/landingModules.registry";
 import { HORYTEK_PRODUCTS } from "@/features/platform/catalog/horytekProducts";
 import { buildNavLinks } from "./buildNavLinks";
 import { DemoSurfacesDropdown } from "./DemoSurfacesDropdown";
+import { useActiveSection } from "../hooks/useActiveLandingNav";
+
+function sectionIdFromHref(href: string) {
+  if (!href.startsWith("#")) return null;
+  return href.slice(1);
+}
+
+function navAnchorClass(active: boolean) {
+  return cn(
+    "text-[13px] transition-colors",
+    active
+      ? "font-semibold text-foreground underline decoration-2 underline-offset-8"
+      : "font-medium text-muted-foreground hover:text-foreground",
+  );
+}
 
 interface HeaderProps {
   productId: string;
@@ -22,6 +37,10 @@ export function Header({ productId, onProductChange }: HeaderProps) {
   const isPocket = productId === "pocket";
   const isEcommerce = productId === "ecommerce";
   const navLinks = buildNavLinks(productId, product?.name ?? module.name, module);
+  const sectionIds = [
+    ...new Set(navLinks.map((l) => sectionIdFromHref(l.href)).filter((id): id is string => Boolean(id))),
+  ];
+  const activeSection = useActiveSection(sectionIds);
 
   return (
     <header
@@ -71,15 +90,20 @@ export function Header({ productId, onProductChange }: HeaderProps) {
           >
             Soluciones
           </Link>
-          {navLinks.map((l) => (
-            <a
-              key={`${l.href}-${l.label}`}
-              href={l.href}
-              className="text-[13px] font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {l.label}
-            </a>
-          ))}
+          {navLinks.map((l) => {
+            const sectionId = sectionIdFromHref(l.href);
+            const active = Boolean(sectionId && activeSection === sectionId);
+            return (
+              <a
+                key={`${l.href}-${l.label}`}
+                href={l.href}
+                aria-current={active ? "location" : undefined}
+                className={navAnchorClass(active)}
+              >
+                {l.label}
+              </a>
+            );
+          })}
         </nav>
 
         <div className="flex items-center gap-2">
@@ -149,17 +173,25 @@ export function Header({ productId, onProductChange }: HeaderProps) {
                 Soluciones
               </Link>
             </li>
-            {navLinks.map((l) => (
-              <li key={`${l.href}-${l.label}`}>
-                <a
-                  href={l.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="block text-[14px] font-medium text-foreground/90"
-                >
-                  {l.label}
-                </a>
-              </li>
-            ))}
+            {navLinks.map((l) => {
+              const sectionId = sectionIdFromHref(l.href);
+              const active = Boolean(sectionId && activeSection === sectionId);
+              return (
+                <li key={`${l.href}-${l.label}`}>
+                  <a
+                    href={l.href}
+                    onClick={() => setMobileOpen(false)}
+                    aria-current={active ? "location" : undefined}
+                    className={cn(
+                      "block text-[14px]",
+                      active ? "font-semibold text-foreground" : "font-medium text-foreground/90",
+                    )}
+                  >
+                    {l.label}
+                  </a>
+                </li>
+              );
+            })}
             <li>
               <Link
                 to={module.loginHref}

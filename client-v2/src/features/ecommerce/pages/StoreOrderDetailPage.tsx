@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { QrCode, Star } from "lucide-react";
 import { buyerGetPedido, getReviewEligibilidad } from "../api/ecommerce";
 import { formatPen } from "../types/storefront";
+import { AttrsSnapshotText } from "../components/AttrsSnapshotText";
 import { Button } from "@/components/ui/button";
 import {
   BUYER_BADGE_CLASS,
@@ -172,6 +173,7 @@ export default function StoreOrderDetailPage() {
           >
             <span>
               {String(item.nombre)} × {Number(item.cantidad)}
+              <AttrsSnapshotText snapshot={item.attrs_snapshot} className="text-xs store-muted mt-0.5" />
             </span>
             <span>{formatPen(Number(item.precio_unitario) * Number(item.cantidad))}</span>
           </li>

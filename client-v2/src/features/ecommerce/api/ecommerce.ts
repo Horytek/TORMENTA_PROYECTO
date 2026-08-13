@@ -133,9 +133,21 @@ export async function ecommerceUploadBanner(file: string, fileName?: string) {
   return data;
 }
 
-export async function ecommerceListOrdenes() {
-  const { data } = await api.get("/ecommerce/admin/ordenes", { headers: authHeaders() });
+export async function ecommerceListOrdenes(params?: { id_sucursal?: number | null }) {
+  const { data } = await api.get("/ecommerce/admin/ordenes", {
+    headers: authHeaders(),
+    params: params?.id_sucursal ? { id_sucursal: params.id_sucursal } : undefined,
+  });
   return data;
+}
+
+export async function ecommerceDeleteOrdenes(ids: number[]) {
+  const { data } = await api.post(
+    "/ecommerce/admin/ordenes/eliminar",
+    { ids },
+    { headers: authHeaders() }
+  );
+  return data as { success: boolean; data: { deleted: number; ids: number[] } };
 }
 
 export async function getStore(slug: string, branch?: number | null) {
@@ -173,7 +185,7 @@ export async function getProductAvailability(slug: string, id: number) {
 export async function checkoutStore(
   slug: string,
   body: {
-    items: { id_producto: number; id_variante?: number | null; cantidad: number }[];
+    items: { id_producto: number; id_variante?: number | null; cantidad: number; selecciones?: { id_atributo: number; id_valor?: number | null; valor?: string }[] }[];
     id_sucursal?: number | null;
     fulfillment?: "pickup" | "delivery" | "provincia";
     telefono_comprador?: string;
@@ -690,5 +702,234 @@ export async function adminReplyReview(id: number, cuerpo: string) {
     { cuerpo },
     { headers: authHeaders() }
   );
+  return data;
+}
+
+/* ——— Atributos / galería / stock / RBAC ——— */
+
+export async function adminListAtributos(params?: { q?: string; tipo?: string; activo?: string }) {
+  const { data } = await api.get("/ecommerce/admin/atributos", {
+    headers: authHeaders(),
+    params,
+  });
+  return data;
+}
+
+export async function adminGetAtributo(id: number) {
+  const { data } = await api.get(`/ecommerce/admin/atributos/${id}`, { headers: authHeaders() });
+  return data;
+}
+
+export async function adminCreateAtributo(body: Record<string, unknown>) {
+  const { data } = await api.post("/ecommerce/admin/atributos", body, { headers: authHeaders() });
+  return data;
+}
+
+export async function adminUpdateAtributo(id: number, body: Record<string, unknown>) {
+  const { data } = await api.put(`/ecommerce/admin/atributos/${id}`, body, { headers: authHeaders() });
+  return data;
+}
+
+export async function adminDeleteAtributo(id: number) {
+  const { data } = await api.delete(`/ecommerce/admin/atributos/${id}`, { headers: authHeaders() });
+  return data;
+}
+
+export async function adminAtributoProductos(id: number) {
+  const { data } = await api.get(`/ecommerce/admin/atributos/${id}/productos`, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminAddAtributoValor(id: number, body: { valor: string; hex?: string | null }) {
+  const { data } = await api.post(`/ecommerce/admin/atributos/${id}/valores`, body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminUpdateAtributoValor(
+  id: number,
+  idValor: number,
+  body: Record<string, unknown>
+) {
+  const { data } = await api.put(`/ecommerce/admin/atributos/${id}/valores/${idValor}`, body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminDeleteAtributoValor(id: number, idValor: number) {
+  const { data } = await api.delete(`/ecommerce/admin/atributos/${id}/valores/${idValor}`, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminGetProductoAtributos(id: number) {
+  const { data } = await api.get(`/ecommerce/admin/productos/${id}/atributos`, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminSetProductoAtributos(
+  id: number,
+  atributos: Record<string, unknown>[]
+) {
+  const { data } = await api.put(
+    `/ecommerce/admin/productos/${id}/atributos`,
+    { atributos },
+    { headers: authHeaders() }
+  );
+  return data;
+}
+
+export async function adminListProductoImagenes(id: number) {
+  const { data } = await api.get(`/ecommerce/admin/productos/${id}/imagenes`, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminSetImagenPrincipal(id: number, idImagen: number) {
+  const { data } = await api.patch(
+    `/ecommerce/admin/productos/${id}/imagenes/${idImagen}/principal`,
+    {},
+    { headers: authHeaders() }
+  );
+  return data;
+}
+
+export async function adminReorderImagenes(id: number, ids: number[]) {
+  const { data } = await api.patch(
+    `/ecommerce/admin/productos/${id}/imagenes/reorder`,
+    { ids },
+    { headers: authHeaders() }
+  );
+  return data;
+}
+
+export async function adminDeleteImagen(id: number, idImagen: number) {
+  const { data } = await api.delete(`/ecommerce/admin/productos/${id}/imagenes/${idImagen}`, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminListStock(params?: {
+  q?: string;
+  id_sucursal?: number | null;
+  estado?: string;
+  umbral?: number;
+}) {
+  const { data } = await api.get("/ecommerce/admin/stock", {
+    headers: authHeaders(),
+    params: {
+      q: params?.q || undefined,
+      id_sucursal: params?.id_sucursal || undefined,
+      estado: params?.estado || undefined,
+      umbral: params?.umbral,
+    },
+  });
+  return data;
+}
+
+export async function adminListRoles() {
+  const { data } = await api.get("/ecommerce/admin/roles", { headers: authHeaders() });
+  return data;
+}
+
+export async function adminPatchRol(id: number, body: Record<string, unknown>) {
+  const { data } = await api.patch(`/ecommerce/admin/roles/${id}`, body, { headers: authHeaders() });
+  return data;
+}
+
+export async function adminListUsuarios() {
+  const { data } = await api.get("/ecommerce/admin/usuarios", { headers: authHeaders() });
+  return data;
+}
+
+export async function adminCreateUsuario(body: Record<string, unknown>) {
+  const { data } = await api.post("/ecommerce/admin/usuarios", body, { headers: authHeaders() });
+  return data;
+}
+
+export async function adminUpdateUsuario(id: number, body: Record<string, unknown>) {
+  const { data } = await api.patch(`/ecommerce/admin/usuarios/${id}`, body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export type TaxonomiaTipo = "marca" | "categoria" | "tag";
+
+export async function adminListTaxonomia(params?: {
+  tipo?: TaxonomiaTipo;
+  q?: string;
+  activo?: string;
+}) {
+  const { data } = await api.get("/ecommerce/admin/taxonomia", {
+    headers: authHeaders(),
+    params,
+  });
+  return data;
+}
+
+export async function adminCreateTaxonomia(body: {
+  tipo: TaxonomiaTipo;
+  nombre: string;
+  ensure?: boolean;
+  activo?: boolean;
+}) {
+  const { data } = await api.post("/ecommerce/admin/taxonomia", body, { headers: authHeaders() });
+  return data;
+}
+
+export async function adminUpdateTaxonomia(
+  id: number,
+  body: { nombre?: string; activo?: boolean; orden?: number }
+) {
+  const { data } = await api.put(`/ecommerce/admin/taxonomia/${id}`, body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminDeleteTaxonomia(id: number) {
+  const { data } = await api.delete(`/ecommerce/admin/taxonomia/${id}`, { headers: authHeaders() });
+  return data;
+}
+
+export async function registrarConsultaDisponibilidad(
+  slug: string,
+  body: {
+    id_producto: number;
+    id_variante?: number | null;
+    id_sucursal?: number | null;
+    cantidad?: number;
+    attrs_snapshot?: { nombre: string; valor: string }[];
+    origen?: string;
+  }
+) {
+  const { data } = await api.post(`/ecommerce/store/${slug}/consultas-disponibilidad`, body);
+  return data as { success: boolean; data?: { product_url?: string } };
+}
+
+export async function adminGetDisponibilidadConfig() {
+  const { data } = await api.get("/ecommerce/admin/disponibilidad/config", { headers: authHeaders() });
+  return data;
+}
+
+export async function adminPatchDisponibilidadConfig(body: Record<string, unknown>) {
+  const { data } = await api.patch("/ecommerce/admin/disponibilidad/config", body, {
+    headers: authHeaders(),
+  });
+  return data;
+}
+
+export async function adminDisponibilidadStats() {
+  const { data } = await api.get("/ecommerce/admin/disponibilidad/stats", { headers: authHeaders() });
   return data;
 }

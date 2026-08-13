@@ -22,6 +22,7 @@ import {
   crearTransferencia,
   cambiarEstadoTransferencia,
 } from "../services/ecommerce/TransferService.js";
+import { parseConfig, buildDisponibilidad } from "../services/ecommerce/DisponibilidadService.js";
 
 // ─── Público ─────────────────────────────────────────────────────────────
 
@@ -111,20 +112,21 @@ export const getProductAvailability = async (req, res) => {
   try {
     connection = await getEcommerceConnection();
     const [[tienda]] = await connection.query(
-      `SELECT id_tienda FROM tienda WHERE slug = ? AND estado = 'active' LIMIT 1`,
+      `SELECT id_tienda, theme_json FROM tienda WHERE slug = ? AND estado = 'active' LIMIT 1`,
       [slug]
     );
     if (!tienda) {
       return res.status(404).json({ success: false, message: "Tienda no encontrada." });
     }
     const [[producto]] = await connection.query(
-      `SELECT id_producto, nombre FROM producto WHERE id_producto = ? AND id_tienda = ? AND activo = 1 LIMIT 1`,
+      `SELECT id_producto, nombre, attrs_json FROM producto WHERE id_producto = ? AND id_tienda = ? AND activo = 1 LIMIT 1`,
       [Number(id), tienda.id_tienda]
     );
     if (!producto) {
       return res.status(404).json({ success: false, message: "Producto no encontrado." });
     }
     const sucursales = await listSucursalesActivas(connection, tienda.id_tienda);
+    const dispCfg = parseConfig(tienda.theme_json);
     const availability = [];
     for (const s of sucursales) {
       const variantes = await getStockPorProductoSucursal(
@@ -137,7 +139,11 @@ export const getProductAvailability = async (req, res) => {
       availability.push({
         sucursal: mapPublicSucursal(s),
         disponible,
-        variantes,
+        disponibilidad: buildDisponibilidad(disponible, producto.attrs_json, dispCfg),
+        variantes: variantes.map((v) => ({
+          ...v,
+          disponibilidad: buildDisponibilidad(v.disponible, producto.attrs_json, dispCfg),
+        })),
       });
     }
     return res.json({ success: true, data: availability });

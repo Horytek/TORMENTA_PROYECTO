@@ -1,358 +1,450 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Tags, Search, Save, RotateCcw, Package, X } from "lucide-react";
+import { Plus, Search, Tags, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { ecommerceListProductos, ecommerceUpdateProducto } from "../api/ecommerce";
-import { useEcommerceAuthStore } from "../store/useEcommerceAuthStore";
-import { TallaMultiSelect } from "../components/admin/TallaMultiSelect";
-import { TonalidadEditor } from "../components/admin/TonalidadEditor";
 import {
-  attrsEqual,
-  getProductoAtributos,
-  mergeProductoAtributos,
-  normalizeHex,
-  parseProductoAttrs,
-  type TonalidadAttr,
-  type VitrinaAtributosAdmin,
-} from "../utils/productoAttrs";
+  adminAddAtributoValor,
+  adminAtributoProductos,
+  adminCreateAtributo,
+  adminDeleteAtributo,
+  adminDeleteAtributoValor,
+  adminListAtributos,
+  adminUpdateAtributo,
+} from "../api/ecommerce";
+import { useEcommerceAuthStore } from "../store/useEcommerceAuthStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 
-type TonosClipboard = {
-  fromId: number;
-  fromNombre: string;
-  tonalidad: TonalidadAttr[];
-};
+const TIPOS = [
+  { value: "seleccion", label: "Una opción", hint: "El cliente elige una: S, M, L…" },
+  { value: "color", label: "Color", hint: "Opciones con muestra de color" },
+  { value: "seleccion_multiple", label: "Varias opciones", hint: "Puede marcar más de una" },
+  { value: "texto", label: "Texto libre", hint: "El cliente escribe, ej. dedicación" },
+  { value: "numero", label: "Número", hint: "Ej. voltaje, cantidad de piezas" },
+  { value: "medida", label: "Medida", hint: "Ej. 1.5 m, 250 ml" },
+  { value: "booleano", label: "Sí / No", hint: "Ej. ¿incluye estuche?" },
+  { value: "rango", label: "Rango", hint: "Ej. de–hasta" },
+] as const;
 
-function cloneTonalidades(list: TonalidadAttr[]): TonalidadAttr[] {
-  return list
-    .filter((t) => t.nombre.trim())
-    .map((t) => ({ nombre: t.nombre.trim(), hex: normalizeHex(t.hex) }));
+const TIPO_LABEL: Record<string, string> = Object.fromEntries(TIPOS.map((t) => [t.value, t.label]));
+
+function puedeSerVariante(tipo: string) {
+  return tipo === "seleccion" || tipo === "color";
 }
 
-type Producto = {
-  id_producto: number;
+type Valor = { id_valor: number; valor: string; hex?: string | null; activo?: boolean };
+type Atributo = {
+  id_atributo: number;
+  codigo: string;
   nombre: string;
-  precio: number;
-  stock: number;
-  activo: number;
-  categoria?: string | null;
-  imagen_url?: string | null;
-  sku?: string | null;
-  attrs_json?: Record<string, unknown> | string | null;
+  tipo: string;
+  es_variante: boolean;
+  activo: boolean;
+  productos_count?: number;
+  valores: Valor[];
 };
 
-type DraftMap = Record<number, VitrinaAtributosAdmin>;
+const emptyForm = {
+  nombre: "",
+  tipo: "seleccion" as string,
+  es_variante: false,
+  activo: true,
+};
 
 export default function EcommerceAtributosPage() {
   const qc = useQueryClient();
   const tid = useEcommerceAuthStore((s) => s.user?.id_tienda);
   const [q, setQ] = useState("");
-  const [filtro, setFiltro] = useState<"todos" | "con" | "sin">("todos");
-  const [drafts, setDrafts] = useState<DraftMap>({});
-  const [tonosClip, setTonosClip] = useState<TonosClipboard | null>(null);
+  const [tipo, setTipo] = useState("");
+  const [activo, setActivo] = useState("");
+  const [editing, setEditing] = useState<Atributo | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [newValor, setNewValor] = useState("");
+  const [newHex, setNewHex] = useState("#888888");
+  const [assocId, setAssocId] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["ecom-productos", tid],
-    queryFn: ecommerceListProductos,
+    queryKey: ["ecom-atributos", tid, q, tipo, activo],
+    queryFn: () => adminListAtributos({ q: q || undefined, tipo: tipo || undefined, activo: activo || undefined }),
     enabled: Boolean(tid),
   });
+  const atributos = (data?.data || []) as Atributo[];
 
-  const productos = (data?.data || []) as Producto[];
-
-  useEffect(() => {
-    const list = (data?.data || []) as Producto[];
-    setDrafts((prev) => {
-      const next: DraftMap = { ...prev };
-      for (const p of list) {
-        const saved = getProductoAtributos(parseProductoAttrs(p.attrs_json));
-        const cur = prev[p.id_producto];
-        if (!cur || attrsEqual(cur, saved)) {
-          next[p.id_producto] = saved;
-        }
-      }
-      return next;
-    });
-  }, [data?.data]);
-
-  const filtered = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    return productos.filter((p) => {
-      const attrs = drafts[p.id_producto] || getProductoAtributos(parseProductoAttrs(p.attrs_json));
-      const has = attrs.talla.length > 0 || attrs.tonalidad.length > 0;
-      if (filtro === "con" && !has) return false;
-      if (filtro === "sin" && has) return false;
-      if (!term) return true;
-      const haystack = `${p.nombre} ${p.sku || ""} ${p.categoria || ""}`.toLowerCase();
-      return haystack.includes(term);
-    });
-  }, [productos, drafts, q, filtro]);
-
-  const saveMut = useMutation({
-    mutationFn: async ({
-      id,
-      talla,
-      tonalidad,
-      attrsBase,
-    }: {
-      id: number;
-      talla: string[];
-      tonalidad: VitrinaAtributosAdmin["tonalidad"];
-      attrsBase: Record<string, unknown>;
-    }) => {
-      const cleaned = tonalidad.filter((t) => t.nombre.trim());
-      const next = mergeProductoAtributos(attrsBase, talla, cleaned);
-      return ecommerceUpdateProducto(id, { attrs_json: next });
-    },
-    onSuccess: () => {
-      toast.success("Atributos guardados");
-      qc.invalidateQueries({ queryKey: ["ecom-productos", tid] });
-    },
-    onError: () => toast.error("No se pudieron guardar los atributos"),
+  const assocQ = useQuery({
+    queryKey: ["ecom-attr-prods", assocId],
+    queryFn: () => adminAtributoProductos(assocId!),
+    enabled: Boolean(assocId),
   });
 
-  const setDraft = (id: number, patch: Partial<VitrinaAtributosAdmin>) => {
-    setDrafts((prev) => {
-      const cur = prev[id] || { talla: [], tonalidad: [] };
-      return { ...prev, [id]: { ...cur, ...patch } };
-    });
-  };
-
-  const resetDraft = (p: Producto) => {
-    setDrafts((prev) => ({
-      ...prev,
-      [p.id_producto]: getProductoAtributos(parseProductoAttrs(p.attrs_json)),
-    }));
-  };
-
-  const copyTonos = (p: Producto, tonalidad: TonalidadAttr[]) => {
-    const cloned = cloneTonalidades(tonalidad);
-    if (!cloned.length) {
-      toast.message("Este producto no tiene tonalidades con nombre para copiar");
-      return;
+  useEffect(() => {
+    if (editing) {
+      setForm({
+        nombre: editing.nombre,
+        tipo: editing.tipo,
+        es_variante: editing.es_variante,
+        activo: editing.activo,
+      });
+    } else {
+      setForm(emptyForm);
     }
-    setTonosClip({ fromId: p.id_producto, fromNombre: p.nombre, tonalidad: cloned });
-    toast.success(`Tonalidades copiadas de “${p.nombre}” (${cloned.length})`);
-  };
+  }, [editing]);
 
-  const pasteTonos = (p: Producto) => {
-    if (!tonosClip?.tonalidad.length) {
-      toast.message("Primero copia las tonalidades de otro producto");
-      return;
-    }
-    setDraft(p.id_producto, { tonalidad: cloneTonalidades(tonosClip.tonalidad) });
-    toast.success(`Tonalidades pegadas en “${p.nombre}” — recuerda Guardar`);
-  };
+  const saveMut = useMutation({
+    mutationFn: () =>
+      editing
+        ? adminUpdateAtributo(editing.id_atributo, form)
+        : adminCreateAtributo(form),
+    onSuccess: () => {
+      toast.success(editing ? "Atributo actualizado" : "Atributo creado");
+      setCreating(false);
+      setEditing(null);
+      qc.invalidateQueries({ queryKey: ["ecom-atributos", tid] });
+    },
+    onError: (e: Error) => toast.error(e.message || "Error"),
+  });
 
-  const dirtyCount = useMemo(() => {
-    let n = 0;
-    for (const p of productos) {
-      const saved = getProductoAtributos(parseProductoAttrs(p.attrs_json));
-      const draft = drafts[p.id_producto];
-      if (draft && !attrsEqual(saved, draft)) n += 1;
-    }
-    return n;
-  }, [productos, drafts]);
+  const delMut = useMutation({
+    mutationFn: (id: number) => adminDeleteAtributo(id),
+    onSuccess: () => {
+      toast.success("Atributo eliminado");
+      setEditing(null);
+      qc.invalidateQueries({ queryKey: ["ecom-atributos", tid] });
+    },
+  });
+
+  const sheetOpen = creating || Boolean(editing);
+  const current = editing;
+  const isColor = form.tipo === "color" || current?.tipo === "color";
+  const tipoMeta = TIPOS.find((t) => t.value === form.tipo);
+  const varianteOk = puedeSerVariante(form.tipo);
 
   return (
     <div className="space-y-6 max-w-5xl">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
-            <Tags className="size-6 text-stone-500" />
-            Atributos
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Atributos</h1>
           <p className="text-stone-500 text-sm mt-1 max-w-xl">
-            Tallas (catálogo) y tonalidades (hex + nombre) para la vitrina. No parten el stock: el
-            inventario se gestiona por producto y sucursal.
+            Características que el cliente ve al comprar: talla, color, material, voltaje… Créalas
+            aquí y luego asígnalas a cada producto en{" "}
+            <Link to="/ecommerce-admin/productos" className="text-teal-700 hover:underline">
+              Productos
+            </Link>
+            .
           </p>
         </div>
-        <Button variant="outline" size="sm" asChild>
-          <Link to="/ecommerce-admin/productos">
-            <Package className="size-3.5 mr-1.5" />
-            Ir a productos
-          </Link>
+        <Button
+          size="sm"
+          onClick={() => {
+            setEditing(null);
+            setCreating(true);
+          }}
+        >
+          <Plus className="size-3.5 mr-1.5" />
+          Nuevo atributo
         </Button>
       </div>
 
-      <div className="rounded-xl border border-amber-200/80 bg-amber-50/70 px-4 py-3 text-sm text-amber-950/80">
-        Solo informativos en la ficha del producto. El carrito y el stock usan el producto completo
-        en la sucursal elegida.
-        {dirtyCount > 0 && (
-          <span className="ml-2 font-medium text-amber-900">
-            · {dirtyCount} producto{dirtyCount === 1 ? "" : "s"} con cambios sin guardar
-          </span>
-        )}
-      </div>
-
-      {tonosClip && (
-        <div className="rounded-xl border border-teal-200 bg-teal-50/80 px-4 py-3 flex flex-wrap items-center gap-3 justify-between">
-          <div className="min-w-0 text-sm text-teal-950">
-            <p className="font-medium">Tonalidades en portapapeles</p>
-            <p className="text-xs text-teal-900/70 mt-0.5 truncate">
-              De “{tonosClip.fromNombre}” · {tonosClip.tonalidad.length} color
-              {tonosClip.tonalidad.length === 1 ? "" : "es"}
-            </p>
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {tonosClip.tonalidad.map((t) => (
-                <span
-                  key={`${t.nombre}-${t.hex}`}
-                  className="inline-flex items-center gap-1.5 text-[11px] px-2 py-0.5 rounded-full bg-white/80 border border-teal-200"
-                >
-                  <span
-                    className="size-3 rounded-full border border-black/10 shrink-0"
-                    style={{ backgroundColor: t.hex }}
-                  />
-                  {t.nombre}
-                </span>
-              ))}
-            </div>
-          </div>
-          <Button type="button" size="sm" variant="ghost" onClick={() => setTonosClip(null)}>
-            <X className="size-3.5 mr-1" />
-            Limpiar
-          </Button>
-        </div>
-      )}
-
-      <div className="flex flex-wrap gap-2 items-center">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-stone-400" />
+      <div className="flex flex-wrap gap-2">
+        <div className="relative flex-1 min-w-[12rem]">
+          <Search className="size-4 absolute left-2.5 top-2.5 text-stone-400" />
           <Input
-            className="pl-8 h-9"
-            placeholder="Buscar producto, SKU o categoría…"
+            className="pl-8"
+            placeholder="Buscar por nombre…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
-        <div className="flex rounded-lg border border-stone-200 bg-white p-0.5 text-xs">
-          {(
-            [
-              ["todos", "Todos"],
-              ["con", "Con attrs"],
-              ["sin", "Sin attrs"],
-            ] as const
-          ).map(([id, label]) => (
-            <button
-              key={id}
-              type="button"
-              className={`px-2.5 py-1.5 rounded-md transition-colors ${
-                filtro === id ? "bg-stone-900 text-white" : "text-stone-600 hover:bg-stone-50"
-              }`}
-              onClick={() => setFiltro(id)}
-            >
-              {label}
-            </button>
+        <select
+          className="h-9 rounded-md border border-stone-200 px-2 text-sm"
+          value={tipo}
+          onChange={(e) => setTipo(e.target.value)}
+        >
+          <option value="">Todos los tipos</option>
+          {TIPOS.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
           ))}
-        </div>
+        </select>
+        <select
+          className="h-9 rounded-md border border-stone-200 px-2 text-sm"
+          value={activo}
+          onChange={(e) => setActivo(e.target.value)}
+        >
+          <option value="">Todos</option>
+          <option value="1">Activos</option>
+          <option value="0">Inactivos</option>
+        </select>
       </div>
 
       {isLoading ? (
         <p className="text-sm text-stone-400">Cargando…</p>
-      ) : productos.length === 0 ? (
+      ) : atributos.length === 0 ? (
         <div className="rounded-xl border border-dashed border-stone-300 bg-white p-10 text-center">
           <Tags className="size-8 mx-auto text-stone-300 mb-3" />
-          <p className="font-medium">Aún no hay productos</p>
-          <p className="text-sm text-stone-500 mt-1">Crea productos primero para asignar tallas y tonalidades.</p>
-          <Button className="mt-4" asChild>
-            <Link to="/ecommerce-admin/productos">Crear producto</Link>
-          </Button>
+          <p className="font-medium">Aún no hay características</p>
+          <p className="text-sm text-stone-500 mt-1">
+            Empieza con lo que el cliente elige: Talla, Color, Material…
+          </p>
         </div>
-      ) : filtered.length === 0 ? (
-        <p className="text-sm text-stone-500">Ningún producto coincide con el filtro.</p>
       ) : (
-        <div className="space-y-3">
-          {filtered.map((p) => {
-            const saved = getProductoAtributos(parseProductoAttrs(p.attrs_json));
-            const draft = drafts[p.id_producto] || saved;
-            const dirty = !attrsEqual(saved, draft);
-            const saving = saveMut.isPending && saveMut.variables?.id === p.id_producto;
-
-            return (
-              <article
-                key={p.id_producto}
-                className={`rounded-xl border bg-white p-4 ${
-                  dirty ? "border-teal-300 shadow-sm shadow-teal-50" : "border-stone-200"
-                }`}
-              >
-                <div className="flex flex-wrap gap-4">
-                  <div className="size-14 rounded-lg bg-stone-100 overflow-hidden shrink-0">
-                    {p.imagen_url ? (
-                      <img src={p.imagen_url} alt="" className="size-full object-cover" />
-                    ) : (
-                      <div className="size-full flex items-center justify-center text-[10px] text-stone-300">
-                        Sin foto
-                      </div>
+        <div className="rounded-xl border border-stone-200 bg-white divide-y">
+          {atributos.map((a) => (
+            <div key={a.id_atributo} className="p-3 flex flex-wrap items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium text-sm">{a.nombre}</p>
+                <p className="text-xs text-stone-400">
+                  {TIPO_LABEL[a.tipo] || a.tipo}
+                  {a.es_variante ? " · con stock propio por opción" : " · solo informativo"}
+                  {a.activo ? "" : " · oculto"}
+                  {" · "}
+                  {a.productos_count || 0}{" "}
+                  {a.productos_count === 1 ? "producto" : "productos"}
+                </p>
+                {a.valores.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {a.valores.slice(0, 8).map((v) => (
+                      <span
+                        key={v.id_valor}
+                        className="inline-flex items-center gap-1 text-[10px] rounded-full border border-stone-200 px-1.5 py-0.5"
+                      >
+                        {v.hex && (
+                          <span
+                            className="size-2 rounded-full border border-stone-200"
+                            style={{ backgroundColor: v.hex }}
+                          />
+                        )}
+                        {v.valor}
+                      </span>
+                    ))}
+                    {a.valores.length > 8 && (
+                      <span className="text-[10px] text-stone-400">+{a.valores.length - 8}</span>
                     )}
                   </div>
-                  <div className="min-w-0 flex-1 space-y-3">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm truncate">{p.nombre}</p>
-                        <p className="text-xs text-stone-400">
-                          {p.categoria || "Sin categoría"}
-                          {p.sku ? ` · ${p.sku}` : ""} · S/ {Number(p.precio).toFixed(2)}
-                        </p>
-                      </div>
-                      <div className="flex gap-1.5">
-                        {dirty && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            disabled={saving}
-                            onClick={() => resetDraft(p)}
-                          >
-                            <RotateCcw className="size-3.5 mr-1" />
-                            Descartar
-                          </Button>
-                        )}
-                        <Button
-                          type="button"
-                          size="sm"
-                          disabled={!dirty || saving}
-                          onClick={() =>
-                            saveMut.mutate({
-                              id: p.id_producto,
-                              talla: draft.talla,
-                              tonalidad: draft.tonalidad,
-                              attrsBase: parseProductoAttrs(p.attrs_json),
-                            })
-                          }
-                        >
-                          <Save className="size-3.5 mr-1" />
-                          {saving ? "Guardando…" : "Guardar"}
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="grid lg:grid-cols-2 gap-4">
-                      <TallaMultiSelect
-                        values={draft.talla}
-                        disabled={saving}
-                        onChange={(talla) => setDraft(p.id_producto, { talla })}
-                      />
-                      <TonalidadEditor
-                        values={draft.tonalidad}
-                        disabled={saving}
-                        onChange={(tonalidad) => setDraft(p.id_producto, { tonalidad })}
-                        onCopy={() => copyTonos(p, draft.tonalidad)}
-                        onPaste={() => pasteTonos(p)}
-                        canPaste={Boolean(tonosClip?.tonalidad.length)}
-                        pasteLabel={
-                          tonosClip
-                            ? `Pegar tonalidades de ${tonosClip.fromNombre}`
-                            : "Copia tonalidades de otro producto primero"
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
+                )}
+              </div>
+              <Button size="sm" variant="outline" onClick={() => setAssocId(a.id_atributo)}>
+                Productos
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setEditing(a)}>
+                Editar
+              </Button>
+            </div>
+          ))}
         </div>
       )}
+
+      <Sheet
+        open={sheetOpen}
+        onOpenChange={(v) => {
+          if (!v) {
+            setCreating(false);
+            setEditing(null);
+          }
+        }}
+      >
+        <SheetContent className="sm:max-w-md overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>{editing ? "Editar atributo" : "Nuevo atributo"}</SheetTitle>
+            <SheetDescription>
+              Así el cliente elige talla, color u otra opción al agregar al carrito.
+            </SheetDescription>
+          </SheetHeader>
+          <form
+            className="px-4 py-4 space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!form.nombre.trim()) return;
+              saveMut.mutate();
+            }}
+          >
+            <div>
+              <Label>¿Cómo se llama?</Label>
+              <Input
+                placeholder="Ej. Talla, Color, Material"
+                value={form.nombre}
+                onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>¿Cómo elige el cliente?</Label>
+              <select
+                className="w-full h-9 rounded-md border border-stone-200 px-2 text-sm mt-1"
+                value={form.tipo}
+                onChange={(e) => {
+                  const tipo = e.target.value;
+                  setForm({
+                    ...form,
+                    tipo,
+                    es_variante: form.es_variante && puedeSerVariante(tipo),
+                  });
+                }}
+              >
+                {TIPOS.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+              {tipoMeta && <p className="text-xs text-stone-500 mt-1">{tipoMeta.hint}</p>}
+            </div>
+            <div className="rounded-lg border border-stone-200 bg-stone-50 p-3 space-y-2">
+              <label className="flex items-start gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={form.es_variante}
+                  disabled={!varianteOk}
+                  onChange={(e) => setForm({ ...form, es_variante: e.target.checked })}
+                />
+                <span>
+                  <span className="font-medium">Cada opción tiene su propio stock</span>
+                  <span className="block text-xs text-stone-500 mt-0.5">
+                    {varianteOk
+                      ? "Márcalo para Talla o Color: Rojo/M y Rojo/L se venden por separado. No lo marques para Material o “incluye estuche”: eso no crea stock extra."
+                      : "Solo aplica si el cliente elige una opción (lista o color). Con texto o número no se puede separar el stock."}
+                  </span>
+                </span>
+              </label>
+            </div>
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={form.activo}
+                onChange={(e) => setForm({ ...form, activo: e.target.checked })}
+              />
+              <span>
+                <span className="font-medium">Disponible para usar</span>
+                <span className="block text-xs text-stone-500">
+                  Si lo desmarcas, no aparecerá al asignarlo a productos nuevos.
+                </span>
+              </span>
+            </label>
+            <Button type="submit" disabled={saveMut.isPending}>
+              Guardar
+            </Button>
+            {editing && (
+              <Button
+                type="button"
+                variant="ghost"
+                className="text-red-600"
+                onClick={() => delMut.mutate(editing.id_atributo)}
+              >
+                <Trash2 className="size-3.5 mr-1" />
+                Eliminar
+              </Button>
+            )}
+          </form>
+
+          {current && (
+            <div className="px-4 pb-6 space-y-2 border-t pt-4">
+              <p className="text-sm font-medium">Opciones que verá el cliente</p>
+              <p className="text-xs text-stone-500">
+                {isColor
+                  ? "Ej. Rojo, Negro, Beige. Elige también el color de la muestra."
+                  : "Ej. S, M, L, XL. Guarda la característica primero si aún no tiene opciones."}
+              </p>
+              <ul className="space-y-1">
+                {current.valores.map((v) => (
+                  <li key={v.id_valor} className="flex items-center gap-2 text-sm">
+                    {v.hex && (
+                      <span
+                        className="size-4 rounded-full border border-stone-200"
+                        style={{ backgroundColor: v.hex }}
+                      />
+                    )}
+                    <span className="flex-1">{v.valor}</span>
+                    <button
+                      type="button"
+                      className="text-stone-400 hover:text-red-600"
+                      onClick={async () => {
+                        await adminDeleteAtributoValor(current.id_atributo, v.id_valor);
+                        qc.invalidateQueries({ queryKey: ["ecom-atributos", tid] });
+                        const res = await adminListAtributos();
+                        const next = (res.data || []).find(
+                          (x: Atributo) => x.id_atributo === current.id_atributo
+                        );
+                        if (next) setEditing(next);
+                      }}
+                    >
+                      <X className="size-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <div className="flex gap-2">
+                <Input
+                  placeholder={isColor ? "Ej. Rojo" : "Ej. M"}
+                  value={newValor}
+                  onChange={(e) => setNewValor(e.target.value)}
+                />
+                {isColor && (
+                  <input
+                    type="color"
+                    className="size-9 rounded border"
+                    value={newHex}
+                    onChange={(e) => setNewHex(e.target.value)}
+                  />
+                )}
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={async () => {
+                    if (!newValor.trim()) return;
+                    await adminAddAtributoValor(current.id_atributo, {
+                      valor: newValor.trim(),
+                      hex: isColor ? newHex : null,
+                    });
+                    setNewValor("");
+                    qc.invalidateQueries({ queryKey: ["ecom-atributos", tid] });
+                    const res = await adminListAtributos();
+                    const next = (res.data || []).find(
+                      (x: Atributo) => x.id_atributo === current.id_atributo
+                    );
+                    if (next) setEditing(next);
+                  }}
+                >
+                  Añadir
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={Boolean(assocId)} onOpenChange={(v) => !v && setAssocId(null)}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Productos que usan esto</SheetTitle>
+            <SheetDescription>
+              Para cambiar las opciones de un producto, ábrelo en Productos.
+            </SheetDescription>
+          </SheetHeader>
+          <ul className="px-4 py-4 space-y-2 text-sm">
+            {((assocQ.data?.data || []) as { id_producto: number; nombre: string }[]).map((p) => (
+              <li key={p.id_producto}>
+                <Link to="/ecommerce-admin/productos" className="hover:underline">
+                  {p.nombre}
+                </Link>
+              </li>
+            ))}
+            {assocQ.isSuccess && !(assocQ.data?.data || []).length && (
+              <li className="text-stone-400">Todavía no está asignado a ningún producto.</li>
+            )}
+          </ul>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

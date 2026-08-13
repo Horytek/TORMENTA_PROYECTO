@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { HorytekIcon } from "@/components/brand/HorytekIcon";
 import { cn } from "@/lib/utils";
+import { useScrolledToFooter } from "../hooks/useActiveLandingNav";
 
 type MarketingHeaderProps = {
   productId?: string;
@@ -22,6 +23,8 @@ export function MarketingHeader({
   activeNav = null,
 }: MarketingHeaderProps) {
   const tinted = Boolean(accent || surface);
+  const inFooter = useScrolledToFooter();
+  const currentNav = inFooter ? null : activeNav;
 
   return (
     <header
@@ -49,14 +52,15 @@ export function MarketingHeader({
         <nav className="flex items-center gap-3 sm:gap-5">
           <Link
             to="/soluciones"
+            aria-current={currentNav === "soluciones" ? "page" : undefined}
             className={cn(
               "text-[13px] transition-colors",
-              activeNav === "soluciones"
+              currentNav === "soluciones"
                 ? "font-semibold text-foreground underline decoration-2 underline-offset-8"
                 : "font-medium text-muted-foreground hover:text-foreground"
             )}
             style={
-              activeNav === "soluciones" && accent
+              currentNav === "soluciones" && accent
                 ? { textDecorationColor: accent }
                 : undefined
             }

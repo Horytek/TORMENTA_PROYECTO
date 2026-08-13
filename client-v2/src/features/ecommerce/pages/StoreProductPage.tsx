@@ -1,28 +1,39 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { ArrowLeft, Minus, Plus, ShoppingBag } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Minus, Plus, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { getStore, getStoreProduct, getProductAvailability } from "../api/ecommerce";
-import { useEcommerceCartStore } from "../store/useEcommerceCartStore";
+import { useEcommerceCartStore, type AttrSeleccion } from "../store/useEcommerceCartStore";
 import { useBranchStore } from "../store/useBranchStore";
 import { StoreShell } from "../components/vitrina/StoreShell";
 import { StoreHeader } from "../components/vitrina/StoreHeader";
 import { StoreFooter } from "../components/vitrina/StoreFooter";
 import { ProductRail } from "../components/vitrina/ProductRail";
 import { useStorefrontCatalog } from "../components/vitrina/hooks/useStorefrontCatalog";
-import { ProductSpecs, StockBadge, StoreSkeleton } from "../components/vitrina/detail/ProductSpecs";
+import { ProductSpecs, StoreSkeleton } from "../components/vitrina/detail/ProductSpecs";
 import { FavoriteHeartButton } from "../components/vitrina/FavoriteHeartButton";
 import { StickyBuyBar } from "../components/vitrina/quick/StickyBuyBar";
 import { CartFab } from "../components/vitrina/quick/CartFab";
 import { ProductAvailabilityPanel } from "../design/ProductAvailabilityPanel";
-import { WhatsAppAssist } from "../design/WhatsAppAssist";
 import { ProductReviewsSection } from "../components/reviews/ProductReviewsSection";
+import {
+  AttrPicker,
+  attrsSnapshotFromPicker,
+  requiredAttrsIncomplete,
+  resolveVarianteId,
+} from "../components/vitrina/AttrPicker";
+import { addProductToCart, QuickAddSheet, useQuickAddGuard } from "../components/vitrina/QuickAddSheet";
+import { AvailabilityStatus } from "../design/AvailabilityStatus";
+import { ConsultarWhatsAppButton } from "../design/ConsultarWhatsAppButton";
+import { resolveDisponibilidad } from "../utils/disponibilidad";
 import {
   formatPen,
   getCategoria,
   getMarca,
   type BranchAvailability,
+  type StorefrontAttr,
+  type StorefrontVariante,
   type StoreImagen,
   type StoreProducto,
   type StoreSucursal,
@@ -33,11 +44,14 @@ export default function StoreProductPage() {
   const { slug = "", id = "" } = useParams();
   const productId = Number(id);
   const setSlug = useEcommerceCartStore((s) => s.setSlug);
-  const add = useEcommerceCartStore((s) => s.add);
   const items = useEcommerceCartStore((s) => s.items);
   const count = useEcommerceCartStore((s) => s.count());
   const [qty, setQty] = useState(1);
   const [imgIdx, setImgIdx] = useState(0);
+  const [zoom, setZoom] = useState(false);
+  const [sels, setSels] = useState<AttrSeleccion[]>([]);
+  const [pendingRelated, setPendingRelated] = useState<StoreProducto | null>(null);
+  const canAdd = useQuickAddGuard();
 
   const id_sucursal = useBranchStore((s) => s.id_sucursal);
   const setBranch = useBranchStore((s) => s.setBranch);
@@ -77,6 +91,8 @@ export default function StoreProductPage() {
   const tienda = (productQ.data?.data?.tienda || storeQ.data?.data?.tienda) as StoreTienda | undefined;
   const producto = productQ.data?.data?.producto as StoreProducto | undefined;
   const imagenes = (productQ.data?.data?.imagenes || []) as StoreImagen[];
+  const atributos = (productQ.data?.data?.atributos || []) as StorefrontAttr[];
+  const variantes = (productQ.data?.data?.variantes || []) as StorefrontVariante[];
   const catalogo = (storeQ.data?.data?.productos || []) as StoreProducto[];
   const catalog = useStorefrontCatalog(catalogo);
 
@@ -99,22 +115,49 @@ export default function StoreProductPage() {
 
   const inCart = Boolean(producto && items.some((i) => i.id_producto === producto.id_producto));
   const availability = (availabilityQ.data?.data || []) as BranchAvailability[];
+  const attrsIncomplete = requiredAttrsIncomplete(atributos, sels);
+  const idVariante = producto ? resolveVarianteId(variantes, atributos, sels) : null;
+  const branchAvail = availability.find((a) => a.sucursal.id_sucursal === id_sucursal) || availability[0];
+  const variantRow = idVariante
+    ? branchAvail?.variantes?.find((v) => v.id_variante === idVariante)
+    : null;
+  const stockForCta = variantRow?.disponible ?? producto?.stock ?? 0;
+  const disp = producto
+    ? resolveDisponibilidad(
+        stockForCta,
+        producto.attrs_json,
+        tienda?.disponibilidad_config || producto.disponibilidad
+          ? tienda?.disponibilidad_config
+          : undefined
+      )
+    : null;
+  const waAttrs = producto ? attrsSnapshotFromPicker(atributos, sels) : [];
+  const productUrl = typeof window !== "undefined" ? window.location.href.split("?")[0] : undefined;
 
   const onAdd = (p: StoreProducto, cantidad = 1) => {
-    if (!id_sucursal && sucursales.length) {
-      toast.error("Elige una sucursal de recojo primero");
+    const pDisp = p.disponibilidad || resolveDisponibilidad(p.stock, p.attrs_json, tienda?.disponibilidad_config);
+    if (!pDisp.cta.allowAddToCart) {
+      toast.error("Antes de agregar este producto necesitamos confirmar su disponibilidad.");
       return;
     }
-    add(
-      {
-        id_producto: p.id_producto,
-        nombre: p.nombre,
-        precio: Number(p.precio),
-        imagen_url: p.imagen_url || galeria[0],
-      },
-      cantidad
-    );
-    toast.success(`${p.nombre} agregado al carrito`);
+    if (!canAdd(p)) return;
+    if (p.id_producto !== producto?.id_producto) {
+      setPendingRelated(p);
+      return;
+    }
+    try {
+      addProductToCart({
+        producto: p,
+        qty: cantidad,
+        atributos,
+        variantes,
+        selecciones: sels,
+        imagen: galeria[imgIdx] || p.imagen_url,
+      });
+      toast.success(`${p.nombre} agregado al carrito`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
   };
 
   if (productQ.isLoading || storeQ.isLoading) return <StoreSkeleton />;
@@ -180,8 +223,44 @@ export default function StoreProductPage() {
               <div className="absolute top-3 right-3 z-10">
                 <FavoriteHeartButton id_producto={producto.id_producto} />
               </div>
+              {galeria.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 size-10 flex items-center justify-center bg-black/40 text-white"
+                    onClick={() => setImgIdx((i) => (i - 1 + galeria.length) % galeria.length)}
+                    aria-label="Anterior"
+                  >
+                    <ChevronLeft className="size-5" />
+                  </button>
+                  <button
+                    type="button"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 size-10 flex items-center justify-center bg-black/40 text-white"
+                    onClick={() => setImgIdx((i) => (i + 1) % galeria.length)}
+                    aria-label="Siguiente"
+                  >
+                    <ChevronRight className="size-5" />
+                  </button>
+                </>
+              )}
               {activeImg ? (
-                <img src={activeImg} alt={producto.nombre} className="size-full object-cover" />
+                <img
+                  src={activeImg}
+                  alt={producto.nombre}
+                  className={`size-full object-cover cursor-zoom-in transition-transform duration-300 ${
+                    zoom ? "scale-150 cursor-zoom-out" : "scale-100"
+                  }`}
+                  onClick={() => setZoom((z) => !z)}
+                  onTouchStart={(e) => {
+                    (e.currentTarget as HTMLImageElement).dataset.tx = String(e.touches[0].clientX);
+                  }}
+                  onTouchEnd={(e) => {
+                    const start = Number((e.currentTarget as HTMLImageElement).dataset.tx || 0);
+                    const dx = e.changedTouches[0].clientX - start;
+                    if (dx > 40) setImgIdx((i) => (i - 1 + galeria.length) % galeria.length);
+                    if (dx < -40) setImgIdx((i) => (i + 1) % galeria.length);
+                  }}
+                />
               ) : (
                 <div className="size-full flex items-center justify-center store-muted">Sin foto</div>
               )}
@@ -202,65 +281,111 @@ export default function StoreProductPage() {
             <p className="text-2xl font-semibold" style={{ color: "var(--vitrina-accent)" }}>
               {formatPen(Number(producto.precio))}
             </p>
-            <StockBadge stock={producto.stock} />
+            {disp && <AvailabilityStatus disp={disp} />}
+            {variantRow && disp?.estado === "consultar" && (
+              <p className="text-sm text-amber-800">Consulta disponibilidad de esta talla</p>
+            )}
             {producto.descripcion && (
               <p className="store-muted leading-relaxed whitespace-pre-line text-sm">{producto.descripcion}</p>
             )}
             <ProductSpecs producto={producto} />
+
+            <AttrPicker atributos={atributos} value={sels} onChange={setSels} />
 
             {availability.length > 0 && (
               <ProductAvailabilityPanel
                 availability={availability}
                 activeBranchId={id_sucursal}
                 onSelectBranch={setBranch}
+                allowConsultEmpty
               />
             )}
 
-            <WhatsAppAssist
-              telefono={tienda.telefono}
-              tiendaNombre={tienda.nombre}
-              branch={activeBranch}
-              product={producto}
-              qty={qty}
-              label="Consultar por WhatsApp"
-            />
+            {disp?.cta.showWhatsapp && (
+              <ConsultarWhatsAppButton
+                slug={slug}
+                telefono={tienda.telefono}
+                tiendaNombre={tienda.nombre}
+                branch={activeBranch}
+                product={producto}
+                qty={qty}
+                sku={variantRow?.sku || producto.sku}
+                attrs={waAttrs}
+                id_variante={idVariante}
+                productUrl={productUrl}
+                origen="producto"
+                primary={disp.cta.primary === "whatsapp"}
+                mensajeIntro={tienda.disponibilidad_config?.mensaje_intro}
+                label={
+                  disp.cta.primary === "whatsapp"
+                    ? "Consultar disponibilidad por WhatsApp"
+                    : "Consultar por WhatsApp"
+                }
+              />
+            )}
 
-            <div className="hidden lg:flex flex-wrap items-center gap-4 mt-4">
-              <div className="inline-flex items-center border store-hairline bg-[var(--vitrina-elevated)] rounded-[var(--store-radius-pill)] overflow-hidden">
-                <button type="button" className="size-11 flex items-center justify-center" onClick={() => setQty((q) => Math.max(1, q - 1))}>
-                  <Minus className="size-4" />
-                </button>
-                <span className="w-10 text-center font-semibold">{qty}</span>
-                <button
-                  type="button"
-                  className="size-11 flex items-center justify-center"
-                  onClick={() => setQty((q) => Math.min(producto.stock || 99, q + 1))}
-                >
-                  <Plus className="size-4" />
-                </button>
-              </div>
-              <button
-                type="button"
-                disabled={producto.stock <= 0}
-                onClick={() => onAdd(producto, qty)}
-                className="vitrina-pill inline-flex items-center gap-2 h-11 px-8 text-sm font-semibold text-white disabled:opacity-40"
-                style={{ background: "var(--vitrina-accent)" }}
-              >
-                <ShoppingBag className="size-4" />
-                Agregar al carrito
-              </button>
+            <div className="hidden lg:flex flex-wrap items-center gap-4 mt-2">
+              {disp?.cta.showCart && (
+                <>
+                  <div className="inline-flex items-center border store-hairline bg-[var(--vitrina-elevated)] rounded-[var(--store-radius-pill)] overflow-hidden">
+                    <button type="button" className="size-11 flex items-center justify-center" onClick={() => setQty((q) => Math.max(1, q - 1))}>
+                      <Minus className="size-4" />
+                    </button>
+                    <span className="w-10 text-center font-semibold">{qty}</span>
+                    <button
+                      type="button"
+                      className="size-11 flex items-center justify-center"
+                      onClick={() => setQty((q) => Math.min(Math.max(stockForCta, 1), q + 1))}
+                    >
+                      <Plus className="size-4" />
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!disp.cta.allowAddToCart || attrsIncomplete}
+                    onClick={() => onAdd(producto, qty)}
+                    className="vitrina-pill inline-flex items-center gap-2 h-11 px-8 text-sm font-semibold text-white disabled:opacity-40"
+                    style={{ background: "var(--vitrina-accent)" }}
+                  >
+                    <ShoppingBag className="size-4" />
+                    Agregar al carrito
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
       </div>
 
+      {(disp?.cta.showCart || disp?.cta.primary === "whatsapp") && (
       <StickyBuyBar
         precio={Number(producto.precio) * qty}
-        disabled={producto.stock <= 0}
+        disabled={!disp?.cta.allowAddToCart || attrsIncomplete}
         onAdd={() => onAdd(producto, qty)}
         inCart={inCart}
         slug={slug}
+        whatsapp={
+          disp?.cta.primary === "whatsapp" ? (
+            <ConsultarWhatsAppButton
+              slug={slug}
+              telefono={tienda.telefono}
+              tiendaNombre={tienda.nombre}
+              branch={activeBranch}
+              product={producto}
+              qty={qty}
+              sku={variantRow?.sku || producto.sku}
+              attrs={waAttrs}
+              id_variante={idVariante}
+              productUrl={productUrl}
+              origen="producto"
+              label="Consultar disponibilidad"
+              className="flex-1"
+              mensajeIntro={tienda.disponibilidad_config?.mensaje_intro}
+            />
+          ) : null
+        }
       />
+      )}
 
       <ProductReviewsSection slug={slug} id_producto={productId} />
 
@@ -274,6 +399,7 @@ export default function StoreProductPage() {
 
       <StoreFooter tienda={tienda} slug={slug} />
       <CartFab slug={slug} count={count} />
+      <QuickAddSheet slug={slug} producto={pendingRelated} onClose={() => setPendingRelated(null)} />
     </StoreShell>
   );
 }

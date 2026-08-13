@@ -1,25 +1,48 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+export type AttrSeleccion = {
+  id_atributo: number;
+  id_valor?: number | null;
+  valor?: string;
+};
+
 export type EcomCartItem = {
+  line_key: string;
   id_producto: number;
+  id_variante?: number | null;
   nombre: string;
   precio: number;
   cantidad: number;
   imagen_url?: string | null;
+  selecciones?: AttrSeleccion[];
+  attrs_label?: string;
 };
 
 type CartState = {
   slug: string | null;
   items: EcomCartItem[];
   setSlug: (slug: string) => void;
-  add: (item: Omit<EcomCartItem, "cantidad">, qty?: number) => void;
-  setQty: (id_producto: number, cantidad: number) => void;
-  remove: (id_producto: number) => void;
+  add: (item: Omit<EcomCartItem, "cantidad" | "line_key"> & { line_key?: string }, qty?: number) => void;
+  setQty: (line_key: string, cantidad: number) => void;
+  remove: (line_key: string) => void;
   clear: () => void;
   total: () => number;
   count: () => number;
 };
+
+export function cartLineKey(
+  id_producto: number,
+  id_variante?: number | null,
+  selecciones?: AttrSeleccion[]
+) {
+  const hash = JSON.stringify(
+    (selecciones || [])
+      .map((s) => [s.id_atributo, s.id_valor ?? s.valor ?? ""])
+      .sort((a, b) => Number(a[0]) - Number(b[0]))
+  );
+  return `${id_producto}:${id_variante || 0}:${hash}`;
+}
 
 export const useEcommerceCartStore = create<CartState>()(
   persist(
@@ -33,33 +56,44 @@ export const useEcommerceCartStore = create<CartState>()(
       },
       add: (item, qty = 1) =>
         set((state) => {
-          const existing = state.items.find((i) => i.id_producto === item.id_producto);
+          const line_key =
+            item.line_key || cartLineKey(item.id_producto, item.id_variante, item.selecciones);
+          const existing = state.items.find((i) => i.line_key === line_key);
           if (existing) {
             return {
               items: state.items.map((i) =>
-                i.id_producto === item.id_producto
-                  ? { ...i, cantidad: i.cantidad + qty }
-                  : i
+                i.line_key === line_key ? { ...i, cantidad: i.cantidad + qty } : i
               ),
             };
           }
-          return { items: [...state.items, { ...item, cantidad: qty }] };
+          return { items: [...state.items, { ...item, line_key, cantidad: qty }] };
         }),
-      setQty: (id_producto, cantidad) =>
+      setQty: (line_key, cantidad) =>
         set((state) => ({
           items:
             cantidad <= 0
-              ? state.items.filter((i) => i.id_producto !== id_producto)
-              : state.items.map((i) =>
-                  i.id_producto === id_producto ? { ...i, cantidad } : i
-                ),
+              ? state.items.filter((i) => i.line_key !== line_key)
+              : state.items.map((i) => (i.line_key === line_key ? { ...i, cantidad } : i)),
         })),
-      remove: (id_producto) =>
-        set((state) => ({ items: state.items.filter((i) => i.id_producto !== id_producto) })),
+      remove: (line_key) =>
+        set((state) => ({ items: state.items.filter((i) => i.line_key !== line_key) })),
       clear: () => set({ items: [] }),
       total: () => get().items.reduce((s, i) => s + i.precio * i.cantidad, 0),
       count: () => get().items.reduce((s, i) => s + i.cantidad, 0),
     }),
-    { name: "horytek-ecommerce-cart" }
+    {
+      name: "horytek-ecommerce-cart",
+      version: 1,
+      migrate: (persisted) => {
+        const p = (persisted || {}) as { slug?: string | null; items?: EcomCartItem[] };
+        return {
+          slug: p.slug ?? null,
+          items: (p.items || []).map((i) => ({
+            ...i,
+            line_key: i.line_key || cartLineKey(i.id_producto, i.id_variante, i.selecciones),
+          })),
+        };
+      },
+    }
   )
 );

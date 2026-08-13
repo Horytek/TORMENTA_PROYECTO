@@ -1,6 +1,17 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, ExternalLink } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Copy,
+  CreditCard,
+  ExternalLink,
+  Home,
+  ImagePlus,
+  Palette,
+  Store,
+  MessageCircle,
+} from "lucide-react";
 import {
   ecommerceMe,
   ecommerceListProductos,
@@ -22,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   DEFAULT_THEME,
@@ -34,7 +46,6 @@ import {
   type FontBody,
   type FontDisplay,
   type HeaderStyle,
-  type NavItem,
   type NavItemKind,
   type NavStyle,
   type StoreModule,
@@ -42,6 +53,7 @@ import {
   type ThemePreset,
 } from "../types/theme";
 import { getCategoria } from "../types/storefront";
+import { DisponibilidadSettingsTab } from "../components/admin/DisponibilidadSettingsTab";
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -56,14 +68,24 @@ const PRESETS: {
   id: ThemePreset;
   label: string;
   hint: string;
-  /** Caracter visual de la tarjeta (no es el color-scheme del visitante) */
   preview: "light" | "dark";
 }[] = [
-  { id: "store", label: "Store", hint: "Storefront digital tipo Epic/Steam", preview: "dark" },
-  { id: "nocturna", label: "Nocturna", hint: "Stage oscuro, discovery cinematográfico", preview: "dark" },
-  { id: "clara", label: "Clara", hint: "Superficies claras, retail limpio", preview: "light" },
-  { id: "retail", label: "Retail", hint: "Grises densos, look tienda", preview: "dark" },
+  { id: "clara", label: "Clara", hint: "Fondo claro, fácil de leer", preview: "light" },
+  { id: "store", label: "Digital", hint: "Oscura, como una app de tienda", preview: "dark" },
+  { id: "nocturna", label: "Noche", hint: "Más dramática, fotos grandes", preview: "dark" },
+  { id: "retail", label: "Clásica", hint: "Grises, look de tienda física", preview: "dark" },
 ];
+
+const MODULE_COPY: Record<string, { title: string; hint: string }> = {
+  spotlight: { title: "Portada", hint: "La foto grande y el mensaje al entrar" },
+  featured: { title: "Destacados", hint: "Productos que marcaste como Story / Featured" },
+  rows: { title: "Listas", hint: "Novedades, en stock, etc." },
+  categories: { title: "Categorías", hint: "Atajos a Polos, Jeans…" },
+  trust: { title: "Confianza", hint: "Envío, pago y WhatsApp" },
+  promo: { title: "Promoción", hint: "Una franja con oferta o aviso" },
+  browse: { title: "Catálogo", hint: "Todos los productos con filtros" },
+  faq: { title: "Preguntas", hint: "Dudas de envío, tallas, cambios" },
+};
 
 function surf(preset: ThemePreset, scheme: "light" | "dark" = "dark") {
   return PRESET_SURFACES[preset]?.[scheme] ?? PRESET_SURFACES.store.dark;
@@ -94,41 +116,47 @@ function PresetCard({
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
-      className={`text-left rounded-xl border-2 overflow-hidden transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600/40 ${
+      className={`text-left rounded-xl border-2 overflow-hidden transition touch-manipulation min-h-11 ${
         selected
           ? "border-teal-600 ring-2 ring-teal-600/15 shadow-sm"
           : "border-stone-200 hover:border-stone-300"
       }`}
     >
-      <div className="relative h-16" style={{ background: s.mist }}>
+      <div className="relative h-14" style={{ background: s.mist }}>
         <div
           className="absolute inset-x-0 top-0 h-3"
           style={{ background: s.elevated, borderBottom: `1px solid ${s.border}` }}
         />
         <div
           className="absolute inset-x-2 bottom-2 top-5 rounded-sm"
-          style={{
-            background: `linear-gradient(135deg, ${s.stageFrom}, ${s.stageTo})`,
-          }}
+          style={{ background: `linear-gradient(135deg, ${s.stageFrom}, ${s.stageTo})` }}
         />
-        <div
-          className="absolute left-2 bottom-2 w-1.5 h-6 rounded-full"
-          style={{ background: safeAccent }}
-        />
+        <div className="absolute left-2 bottom-2 w-1.5 h-6 rounded-full" style={{ background: safeAccent }} />
         {selected && (
           <span className="absolute top-1.5 right-1.5 size-5 rounded-full bg-teal-600 text-white text-[10px] font-bold flex items-center justify-center">
-            ✓
+            <Check className="size-3" />
           </span>
         )}
       </div>
       <div className="p-3 bg-white">
         <p className="text-sm font-semibold text-stone-900">{label}</p>
-        <p className="text-[11px] text-stone-500 leading-snug mt-0.5">{hint}</p>
-        <p className="text-[10px] uppercase tracking-wider text-stone-400 mt-2">
-          Preview {preview === "light" ? "claro" : "oscuro"}
-        </p>
+        <p className="text-xs text-stone-500 leading-snug mt-0.5">{hint}</p>
       </div>
     </button>
+  );
+}
+
+function Advanced({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <details className="rounded-xl border border-stone-200 bg-stone-50/60">
+      <summary className="flex items-center justify-between gap-2 min-h-11 px-4 py-2 text-sm font-medium cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+        {title}
+        <ChevronDown className="size-4 text-stone-400 shrink-0" />
+      </summary>
+      <div className="px-4 pb-4 pt-1 space-y-4 border-t border-stone-100 bg-white rounded-b-xl">
+        {children}
+      </div>
+    </details>
   );
 }
 
@@ -180,8 +208,13 @@ export default function EcommerceSettingsPage() {
     setColor(tienda.color_primario || "#0E7C7B");
     setLogoUrl(tienda.logo_url || null);
     setTheme(resolveTheme(tienda.theme_json));
+    setMp((s) => ({
+      ...s,
+      public_key: String(data?.data?.mp_public_key || ""),
+      modo: data?.data?.mp_modo === "prod" ? "prod" : "test",
+    }));
     setHydrated(true);
-  }, [tienda, hydrated]);
+  }, [tienda, hydrated, data]);
 
   const patchTheme = (partial: Partial<StoreTheme>) => {
     setTheme((t) =>
@@ -226,21 +259,21 @@ export default function EcommerceSettingsPage() {
         theme_json: theme,
       }),
     onSuccess: () => {
-      toast.success("Identidad de tienda guardada");
+      toast.success("Cambios guardados. Ya se ven en tu tienda.");
       qc.invalidateQueries({ queryKey: ["ecom-me", tid] });
       if (tienda?.slug) qc.invalidateQueries({ queryKey: ["store", tienda.slug] });
     },
-    onError: () => toast.error("No se pudo guardar la tienda"),
+    onError: () => toast.error("No se pudo guardar"),
   });
 
   const saveMp = useMutation({
     mutationFn: () => ecommerceSaveMpCredentials(mp),
     onSuccess: () => {
-      toast.success("Credenciales Mercado Pago guardadas");
+      toast.success("Mercado Pago guardado");
       qc.invalidateQueries({ queryKey: ["ecom-me", tid] });
       setMp((s) => ({ ...s, access_token: "" }));
     },
-    onError: () => toast.error("No se pudieron guardar"),
+    onError: () => toast.error("No se pudieron guardar las claves"),
   });
 
   const uploadLogo = useMutation({
@@ -267,12 +300,20 @@ export default function EcommerceSettingsPage() {
       if (res.success && res.data?.url) {
         patchTheme({ banner_url: res.data.url });
         if (res.data.theme_json) setTheme(resolveTheme(res.data.theme_json));
-        toast.success("Banner del Stage actualizado");
+        toast.success("Foto de portada actualizada");
         qc.invalidateQueries({ queryKey: ["ecom-me", tid] });
       }
     },
-    onError: () => toast.error("Error al subir banner"),
+    onError: () => toast.error("Error al subir la foto"),
   });
+
+  const onSaveBrand = () => {
+    if (!nombre.trim()) {
+      toast.error("Ponle un nombre a tu tienda");
+      return;
+    }
+    saveBrand.mutate();
+  };
 
   const previewStyle = useMemo(() => {
     const scheme = theme.preset === "clara" ? "light" : "dark";
@@ -311,17 +352,26 @@ export default function EcommerceSettingsPage() {
             borderBottom: `1px solid ${surf(theme.preset, theme.preset === "clara" ? "light" : "dark").border}`,
           };
 
+  const publicUrl = tienda?.slug ? `${window.location.origin}/tienda/${tienda.slug}` : "";
+  const mpOk = Boolean(data?.data?.mp_conectado);
+
   if (isLoading && !tienda) {
-    return <div className="text-stone-400 text-sm py-10">Cargando configuración…</div>;
+    return <div className="text-stone-400 text-sm py-10">Cargando…</div>;
   }
 
+  const saveBar = (
+    <Button type="button" className="w-full sm:w-auto min-h-11" onClick={onSaveBrand} disabled={saveBrand.isPending}>
+      {saveBrand.isPending ? "Guardando…" : "Guardar cambios"}
+    </Button>
+  );
+
   return (
-    <div className="space-y-8 max-w-5xl">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="space-y-6 max-w-5xl pb-8">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Configuración</h1>
           <p className="text-stone-500 text-sm mt-1">
-            Identidad visual y layout de tu Vitrina. El dinero de las ventas llega a tu Mercado Pago.
+            Datos de tu tienda, cómo se ve y cómo cobras.
           </p>
         </div>
         {tienda?.slug && (
@@ -329,36 +379,80 @@ export default function EcommerceSettingsPage() {
             href={`/tienda/${tienda.slug}`}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-teal-700 hover:underline"
+            className="inline-flex items-center gap-1.5 min-h-11 text-sm font-medium text-teal-700 hover:underline"
           >
-            Ver tienda pública <ExternalLink className="size-3.5" />
+            Ver mi tienda <ExternalLink className="size-3.5" />
           </a>
         )}
       </div>
 
-      <div className="grid lg:grid-cols-[1fr_320px] gap-8 items-start">
-        <div className="space-y-6">
-          {/* Identidad */}
-          <section className="rounded-xl border border-stone-200 bg-white p-5 space-y-4">
-            <h2 className="font-medium text-sm">Identidad</h2>
-            <p className="text-xs text-stone-500">
-              Slug público: <code className="bg-stone-100 px-1 rounded">/tienda/{tienda?.slug}</code>
-            </p>
+      <Tabs defaultValue="tienda" className="gap-5">
+        <TabsList className="group-data-[orientation=horizontal]/tabs:h-auto h-auto w-full grid grid-cols-2 md:grid-cols-5 gap-1 p-1.5 rounded-2xl bg-stone-100">
+          {(
+            [
+              { value: "tienda", label: "Tu tienda", hint: "Nombre y logo", icon: Store },
+              { value: "look", label: "Cómo se ve", hint: "Colores y portada", icon: Palette },
+              { value: "inicio", label: "Inicio", hint: "Bloques de la tienda", icon: Home },
+              { value: "whatsapp", label: "WhatsApp", hint: "Disponibilidad", icon: MessageCircle },
+              { value: "cobros", label: "Cobros", hint: "Mercado Pago", icon: CreditCard },
+            ] as const
+          ).map(({ value, label, hint, icon: Icon }) => (
+            <TabsTrigger
+              key={value}
+              value={value}
+              className="h-auto! min-h-14 flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 rounded-xl px-2.5 py-2.5 text-stone-500 whitespace-normal shadow-none data-[state=active]:bg-white data-[state=active]:text-stone-900 data-[state=active]:shadow-sm"
+            >
+              <Icon className="size-4 shrink-0" />
+              <span className="flex flex-col items-center sm:items-start leading-tight">
+                <span className="text-sm font-medium">{label}</span>
+                <span className="hidden sm:block text-[11px] font-normal text-stone-400">
+                  {hint}
+                </span>
+              </span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        <TabsContent value="tienda" className="space-y-4">
+          <section className="rounded-xl border border-stone-200 bg-white p-4 sm:p-5 space-y-4">
+            <div>
+              <h2 className="font-medium">Datos que ve el cliente</h2>
+              <p className="text-sm text-stone-500 mt-0.5">Nombre, logo y cómo te contactan.</p>
+            </div>
+            {tienda?.slug && (
+              <div>
+                <Label>Enlace de tu tienda</Label>
+                <div className="mt-1.5 flex gap-2">
+                  <Input readOnly value={publicUrl} className="min-h-11 font-mono text-xs sm:text-sm" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="min-h-11 min-w-11 shrink-0"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(publicUrl);
+                      toast.success("Enlace copiado");
+                    }}
+                  >
+                    <Copy className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-4">
               <button
                 type="button"
                 onClick={() => logoInput.current?.click()}
-                className="size-16 rounded-full border border-dashed border-stone-300 overflow-hidden bg-stone-50 flex items-center justify-center shrink-0 hover:border-teal-600"
+                className="size-20 rounded-full border border-dashed border-stone-300 overflow-hidden bg-stone-50 flex items-center justify-center shrink-0 hover:border-teal-600 touch-manipulation"
               >
                 {logoUrl ? (
                   <img src={logoUrl} alt="" className="size-full object-cover" />
                 ) : (
-                  <ImagePlus className="size-5 text-stone-400" />
+                  <ImagePlus className="size-6 text-stone-400" />
                 )}
               </button>
-              <div className="text-xs text-stone-500">
+              <div className="text-sm text-stone-500">
                 <p className="font-medium text-stone-700">Logo</p>
-                <p>PNG/JPG/WebP. Se muestra en header y footer.</p>
+                <p>Toca el círculo para cambiarlo. Se ve arriba y abajo de la tienda.</p>
                 <input
                   ref={logoInput}
                   type="file"
@@ -372,821 +466,663 @@ export default function EcommerceSettingsPage() {
               </div>
             </div>
             <div>
-              <Label>Nombre</Label>
-              <Input value={nombre} onChange={(e) => setNombre(e.target.value)} />
+              <Label>Nombre de la tienda</Label>
+              <Input className="min-h-11 mt-1" value={nombre} onChange={(e) => setNombre(e.target.value)} />
             </div>
             <div>
-              <Label>Teléfono</Label>
-              <Input value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="999000111" />
+              <Label>WhatsApp / teléfono</Label>
+              <Input
+                className="min-h-11 mt-1"
+                inputMode="tel"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
+                placeholder="999000111"
+              />
             </div>
             <div>
-              <Label>Descripción</Label>
+              <Label>Una frase sobre tu tienda</Label>
               <Textarea
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
                 rows={3}
-                className="resize-y"
+                className="resize-y mt-1"
+                placeholder="Moda femenina, envíos a Lima…"
               />
             </div>
+            {saveBar}
           </section>
+        </TabsContent>
 
-          {/* Color + preset */}
-          <section className="rounded-xl border border-stone-200 bg-white p-5 space-y-5">
-            <div>
-              <h2 className="font-medium text-sm">Color y ambiente</h2>
-              <p className="text-xs text-stone-500 mt-1">
-                El color primario es tu marca. El preset define el look de la vitrina (independiente del modo claro/oscuro del visitante).
-              </p>
-            </div>
-            <div>
-              <Label>Color primario</Label>
-              <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                <input
-                  type="color"
-                  value={/^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#0E7C7B"}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="size-11 rounded-md border border-stone-200 cursor-pointer p-0.5 shrink-0"
-                  aria-label="Selector de color"
-                />
-                <Input
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="w-36 font-mono"
-                  placeholder="#0E7C7B"
-                />
-                <div
-                  className="h-11 flex-1 min-w-[6rem] max-w-[12rem] rounded-md border border-stone-200"
-                  style={{ background: /^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#0E7C7B" }}
-                  title="Vista previa del acento"
-                />
-              </div>
-            </div>
-            <div>
-              <Label className="mb-2 block">Preset de marca</Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {PRESETS.map((p) => (
-                  <PresetCard
-                    key={p.id}
-                    preset={p.id}
-                    label={p.label}
-                    hint={p.hint}
-                    preview={p.preview}
-                    selected={theme.preset === p.id}
-                    accent={color}
-                    onSelect={() => patchTheme({ preset: p.id })}
-                  />
-                ))}
-              </div>
-              <p className="text-[11px] text-stone-400 mt-2">
-                Activo: <span className="font-medium text-stone-600">{theme.preset}</span>
-                {" · "}
-                Guarda con el botón de abajo para aplicar en la tienda pública.
-              </p>
-            </div>
-          </section>
-
-          <section className="rounded-xl border border-stone-200 bg-white p-5 space-y-4">
-            <h2 className="font-medium text-sm">Modo oscuro del visitante</h2>
-            <p className="text-xs text-stone-500">
-              Independiente del preset de marca. El comprador puede cambiar claro/oscuro/sistema.
-            </p>
-            <div>
-              <Label>Default</Label>
-              <Select
-                value={theme.color_scheme_default}
-                onValueChange={(v) => patchTheme({ color_scheme_default: v as ColorSchemePref })}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="system">Sistema</SelectItem>
-                  <SelectItem value="light">Claro</SelectItem>
-                  <SelectItem value="dark">Oscuro</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-sm">Permitir toggle en la vitrina</span>
-              <Switch
-                checked={theme.allow_visitor_scheme_toggle}
-                onCheckedChange={(v) => patchTheme({ allow_visitor_scheme_toggle: v })}
-              />
-            </div>
-          </section>
-
-          {/* Tipografía */}
-          <section className="rounded-xl border border-stone-200 bg-white p-5 space-y-4">
-            <h2 className="font-medium text-sm">Tipografía</h2>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div>
-                <Label>Display (títulos)</Label>
-                <Select
-                  value={theme.font_display}
-                  onValueChange={(v) => patchTheme({ font_display: v as FontDisplay })}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="syne">Syne</SelectItem>
-                    <SelectItem value="outfit">Outfit</SelectItem>
-                    <SelectItem value="sora">Sora</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Cuerpo</Label>
-                <Select
-                  value={theme.font_body}
-                  onValueChange={(v) => patchTheme({ font_body: v as FontBody })}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dm-sans">DM Sans</SelectItem>
-                    <SelectItem value="manrope">Manrope</SelectItem>
-                    <SelectItem value="space-grotesk">Space Grotesk</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <p
-              className="text-2xl tracking-tight"
-              style={{ fontFamily: FONT_DISPLAY_STACK[theme.font_display] }}
-            >
-              {nombre || "Tu marca"}
-            </p>
-            <p className="text-sm text-stone-500" style={{ fontFamily: FONT_BODY_STACK[theme.font_body] }}>
-              Así se lee el cuerpo de tu catálogo y descripciones.
-            </p>
-          </section>
-
-          {/* Hero */}
-          <section className="rounded-xl border border-stone-200 bg-white p-5 space-y-4">
-            <h2 className="font-medium text-sm">Hero / Stage</h2>
-            <div>
-              <Label>Titular (opcional)</Label>
-              <Input
-                value={theme.hero_headline || ""}
-                onChange={(e) => patchTheme({ hero_headline: e.target.value || null })}
-                placeholder={nombre || "Usa el nombre de la tienda"}
-              />
-            </div>
-            <div>
-              <Label>Subtítulo (opcional)</Label>
-              <Input
-                value={theme.hero_tagline || ""}
-                onChange={(e) => patchTheme({ hero_tagline: e.target.value || null })}
-                placeholder="Override de la descripción en el Stage"
-              />
-            </div>
-            <div>
-              <Label>Estilo del header</Label>
-              <Select
-                value={theme.header_style}
-                onValueChange={(v) => patchTheme({ header_style: v as HeaderStyle })}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="dark">Oscuro</SelectItem>
-                  <SelectItem value="light">Claro</SelectItem>
-                  <SelectItem value="accent">Color de marca</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Navbar categorías */}
-            <div className="rounded-lg border border-stone-100 bg-stone-50/80 p-4 space-y-3">
-              <div className="flex items-center justify-between gap-3">
+        <TabsContent value="look">
+          <div className="grid lg:grid-cols-[1fr_280px] gap-6 items-start">
+            <div className="space-y-4">
+              <section className="rounded-xl border border-stone-200 bg-white p-4 sm:p-5 space-y-4">
                 <div>
-                  <p className="text-sm font-medium">Menú del header</p>
-                  <p className="text-xs text-stone-500 mt-0.5">
-                    Estilo y contenido: etiquetas, orden, categorías o links.
-                    {theme.nav.items.length === 0
-                      ? " Ahora usa el menú automático del catálogo."
-                      : ` Menú personalizado (${theme.nav.items.filter((i) => i.enabled).length} ítems).`}
-                  </p>
+                  <h2 className="font-medium">Color de tu marca</h2>
+                  <p className="text-sm text-stone-500 mt-0.5">Botones, enlaces y acentos.</p>
                 </div>
-                <label className="inline-flex items-center gap-2 text-xs text-stone-600 shrink-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="color"
+                    value={/^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#0E7C7B"}
+                    onChange={(e) => setColor(e.target.value)}
+                    className="size-11 rounded-md border border-stone-200 cursor-pointer p-0.5 shrink-0"
+                    aria-label="Color de marca"
+                  />
+                  <Input
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    className="w-32 min-h-11 font-mono"
+                    placeholder="#0E7C7B"
+                  />
+                </div>
+              </section>
+
+              <section className="rounded-xl border border-stone-200 bg-white p-4 sm:p-5 space-y-3">
+                <div>
+                  <h2 className="font-medium">Estilo general</h2>
+                  <p className="text-sm text-stone-500 mt-0.5">Elige el ambiente. El color de arriba se mantiene.</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {PRESETS.map((p) => (
+                    <PresetCard
+                      key={p.id}
+                      preset={p.id}
+                      label={p.label}
+                      hint={p.hint}
+                      preview={p.preview}
+                      selected={theme.preset === p.id}
+                      accent={color}
+                      onSelect={() => patchTheme({ preset: p.id })}
+                    />
+                  ))}
+                </div>
+              </section>
+
+              <section className="rounded-xl border border-stone-200 bg-white p-4 sm:p-5 space-y-4">
+                <div>
+                  <h2 className="font-medium">Portada</h2>
+                  <p className="text-sm text-stone-500 mt-0.5">Lo primero que se ve al abrir la tienda.</p>
+                </div>
+                <div>
+                  <Label>Título</Label>
+                  <Input
+                    className="min-h-11 mt-1"
+                    value={theme.hero_headline || ""}
+                    onChange={(e) => patchTheme({ hero_headline: e.target.value || null })}
+                    placeholder={nombre || "Nueva temporada"}
+                  />
+                </div>
+                <div>
+                  <Label>Frase corta</Label>
+                  <Input
+                    className="min-h-11 mt-1"
+                    value={theme.hero_tagline || ""}
+                    onChange={(e) => patchTheme({ hero_tagline: e.target.value || null })}
+                    placeholder="Vestidos, blusas y denim…"
+                  />
+                </div>
+                <div>
+                  <Label>Foto de fondo</Label>
+                  <div className="mt-2 flex flex-wrap items-center gap-3">
+                    {theme.banner_url ? (
+                      <img src={theme.banner_url} alt="" className="h-20 w-32 object-cover rounded-md border" />
+                    ) : (
+                      <div className="h-20 w-32 rounded-md border border-dashed border-stone-300 bg-stone-50" />
+                    )}
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="min-h-11"
+                        onClick={() => bannerInput.current?.click()}
+                      >
+                        {uploadBanner.isPending ? "Subiendo…" : "Subir foto"}
+                      </Button>
+                      {theme.banner_url && (
+                        <Button type="button" variant="ghost" className="min-h-11" onClick={() => patchTheme({ banner_url: null })}>
+                          Quitar
+                        </Button>
+                      )}
+                    </div>
+                    <input
+                      ref={bannerInput}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) uploadBanner.mutate(f);
+                      }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label>Barra de arriba</Label>
+                  <Select
+                    value={theme.header_style}
+                    onValueChange={(v) => patchTheme({ header_style: v as HeaderStyle })}
+                  >
+                    <SelectTrigger className="mt-1 min-h-11">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="light">Clara</SelectItem>
+                      <SelectItem value="dark">Oscura</SelectItem>
+                      <SelectItem value="accent">Color de tu marca</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </section>
+
+              <Advanced title="Tipografía y modo claro/oscuro">
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <Label>Letra de títulos</Label>
+                    <Select
+                      value={theme.font_display}
+                      onValueChange={(v) => patchTheme({ font_display: v as FontDisplay })}
+                    >
+                      <SelectTrigger className="mt-1 min-h-11">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="syne">Syne</SelectItem>
+                        <SelectItem value="outfit">Outfit</SelectItem>
+                        <SelectItem value="sora">Sora</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Letra del texto</Label>
+                    <Select
+                      value={theme.font_body}
+                      onValueChange={(v) => patchTheme({ font_body: v as FontBody })}
+                    >
+                      <SelectTrigger className="mt-1 min-h-11">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="dm-sans">DM Sans</SelectItem>
+                        <SelectItem value="manrope">Manrope</SelectItem>
+                        <SelectItem value="space-grotesk">Space Grotesk</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <p className="text-2xl tracking-tight" style={{ fontFamily: FONT_DISPLAY_STACK[theme.font_display] }}>
+                  {nombre || "Tu marca"}
+                </p>
+                <div>
+                  <Label>Al entrar, la tienda se ve</Label>
+                  <Select
+                    value={theme.color_scheme_default}
+                    onValueChange={(v) => patchTheme({ color_scheme_default: v as ColorSchemePref })}
+                  >
+                    <SelectTrigger className="mt-1 min-h-11">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="system">Como el celular del cliente</SelectItem>
+                      <SelectItem value="light">Siempre clara</SelectItem>
+                      <SelectItem value="dark">Siempre oscura</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <label className="flex items-center justify-between gap-3 min-h-11 text-sm">
+                  <span>El cliente puede cambiar claro/oscuro</span>
+                  <Switch
+                    checked={theme.allow_visitor_scheme_toggle}
+                    onCheckedChange={(v) => patchTheme({ allow_visitor_scheme_toggle: v })}
+                  />
+                </label>
+              </Advanced>
+
+              <Advanced title="Menú de categorías (opcional)">
+                <p className="text-sm text-stone-500">
+                  Por defecto se arman solas con las categorías de tus productos.
+                </p>
+                <label className="flex items-center justify-between gap-3 min-h-11 text-sm">
+                  <span>Mostrar menú arriba</span>
                   <Switch
                     checked={theme.nav.show_categories !== false}
                     onCheckedChange={(v) => patchTheme({ nav: { ...theme.nav, show_categories: v } })}
                   />
-                  Mostrar
                 </label>
-              </div>
-              {theme.nav.show_categories !== false && (
-                <>
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <div>
-                      <Label>Estilo de links</Label>
-                      <Select
-                        value={theme.nav.style}
-                        onValueChange={(v) => patchTheme({ nav: { ...theme.nav, style: v as NavStyle } })}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="text">Texto simple</SelectItem>
-                          <SelectItem value="soft">Suave (redondeado)</SelectItem>
-                          <SelectItem value="pill">Cápsula</SelectItem>
-                          <SelectItem value="underline">Subrayado</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label>Máx. ítems visibles</Label>
-                      <Select
-                        value={String(theme.nav.max_items)}
-                        onValueChange={(v) =>
-                          patchTheme({ nav: { ...theme.nav, max_items: Number(v) } })
-                        }
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {[3, 4, 5, 6, 8, 10, 12].map((n) => (
-                            <SelectItem key={n} value={String(n)}>
-                              {n}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {theme.nav.items.length === 0 && (
-                      <div>
-                        <Label>Etiqueta “todas” (modo auto)</Label>
-                        <Input
-                          className="mt-1"
-                          value={theme.nav.label_all}
-                          onChange={(e) =>
-                            patchTheme({ nav: { ...theme.nav, label_all: e.target.value.slice(0, 40) } })
-                          }
-                          placeholder="Todo"
-                        />
-                      </div>
-                    )}
-                    <div className="flex items-end pb-1">
-                      <label className="inline-flex items-center gap-2 text-sm">
-                        <Switch
-                          checked={theme.nav.show_counts === true}
-                          onCheckedChange={(v) => patchTheme({ nav: { ...theme.nav, show_counts: v } })}
-                        />
-                        Mostrar contador
-                      </label>
-                    </div>
-                  </div>
+                {theme.nav.show_categories !== false && (
+                  <NavMenuEditor
+                    theme={theme}
+                    catalogCategorias={catalogCategorias}
+                    patchTheme={patchTheme}
+                  />
+                )}
+              </Advanced>
 
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        const items = buildNavItemsFromCatalog(
-                          catalogCategorias,
-                          theme.nav.label_all || "Todo"
-                        );
-                        patchTheme({ nav: { ...theme.nav, items } });
-                        toast.success(
-                          catalogCategorias.length
-                            ? `Menú cargado con ${catalogCategorias.length} categorías`
-                            : "Menú base creado (sin categorías aún)"
-                        );
-                      }}
+              {saveBar}
+            </div>
+
+            <aside className="lg:sticky lg:top-20 space-y-2">
+              <p className="text-xs uppercase tracking-wider text-stone-400">Así se ve</p>
+              <div className="rounded-xl overflow-hidden border border-stone-200 shadow-sm" style={previewStyle}>
+                <div className="px-3 py-2.5 flex items-center gap-2 text-[11px]" style={headerPreview}>
+                  {logoUrl ? (
+                    <img src={logoUrl} alt="" className="size-6 rounded-full object-cover" />
+                  ) : (
+                    <span
+                      className="size-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
+                      style={{ background: theme.header_style === "accent" ? "rgba(0,0,0,0.25)" : color }}
                     >
-                      Personalizar desde catálogo
-                    </Button>
-                    {theme.nav.items.length > 0 && (
+                      {(nombre || "H").slice(0, 1)}
+                    </span>
+                  )}
+                  <span className="font-semibold truncate" style={{ fontFamily: FONT_DISPLAY_STACK[theme.font_display] }}>
+                    {nombre || "Tu tienda"}
+                  </span>
+                </div>
+                <div
+                  className="relative h-36 p-4 flex flex-col justify-end"
+                  style={{
+                    background: `linear-gradient(145deg, ${surf(theme.preset, theme.preset === "clara" ? "light" : "dark").stageFrom}, ${surf(theme.preset, theme.preset === "clara" ? "light" : "dark").stageTo})`,
+                    color: theme.preset === "clara" ? surf(theme.preset, "light").ink : "#fff",
+                  }}
+                >
+                  {theme.banner_url && (
+                    <img src={theme.banner_url} alt="" className="absolute inset-0 size-full object-cover opacity-35" />
+                  )}
+                  <div className="relative">
+                    <p className="text-xl leading-none" style={{ fontFamily: FONT_DISPLAY_STACK[theme.font_display] }}>
+                      {theme.hero_headline || nombre || "Tu portada"}
+                    </p>
+                    <p className="text-[10px] mt-2 line-clamp-2 opacity-70">
+                      {theme.hero_tagline || descripcion || "Tu frase aparece aquí"}
+                    </p>
+                    <span
+                      className="inline-block mt-3 text-[10px] font-semibold px-2.5 py-1 rounded-full text-white"
+                      style={{ background: /^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#0E7C7B" }}
+                    >
+                      Explorar
+                    </span>
+                  </div>
+                </div>
+                {theme.modules.some((m) => m.type === "trust" && m.enabled) && (
+                  <div className="p-3 grid grid-cols-3 gap-1.5">
+                    {[theme.trust.envio, theme.trust.pago, theme.trust.soporte].map((t) => (
+                      <div
+                        key={t}
+                        className="rounded bg-white border border-stone-100 p-1.5 text-[9px] text-stone-600 truncate"
+                      >
+                        {t}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-stone-400">Es un boceto. Mira la tienda real con el enlace de arriba.</p>
+            </aside>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="inicio" className="space-y-4">
+          <section className="rounded-xl border border-stone-200 bg-white p-4 sm:p-5 space-y-3">
+            <div>
+              <h2 className="font-medium">Qué aparece al entrar</h2>
+              <p className="text-sm text-stone-500 mt-0.5">
+                Enciende o apaga cada bloque. Sube o baja para cambiar el orden.
+              </p>
+            </div>
+            <ul className="space-y-2">
+              {theme.modules.map((m, i) => {
+                const copy = MODULE_COPY[m.type] || { title: m.type, hint: "" };
+                return (
+                  <li
+                    key={m.id}
+                    className="flex items-center gap-3 rounded-xl border border-stone-100 px-3 py-2.5"
+                  >
+                    <Switch checked={m.enabled} onCheckedChange={(v) => toggleModule(m.id, v)} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{copy.title}</p>
+                      <p className="text-xs text-stone-400 truncate">{copy.hint}</p>
+                    </div>
+                    <div className="flex shrink-0">
                       <Button
                         type="button"
                         size="sm"
                         variant="ghost"
-                        onClick={() => patchTheme({ nav: { ...theme.nav, items: [] } })}
+                        className="min-h-11 min-w-11"
+                        disabled={i === 0}
+                        onClick={() => moveModule(i, -1)}
+                        aria-label="Subir"
                       >
-                        Volver a automático
+                        ↑
                       </Button>
-                    )}
-                    {theme.nav.items.length > 0 && (
                       <Button
                         type="button"
                         size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          const id = `nav_${Date.now().toString(36)}`;
-                          const next: NavItem[] = [
-                            ...theme.nav.items,
-                            {
-                              id,
-                              label: "Nuevo",
-                              kind: "category",
-                              category: catalogCategorias[0]?.nombre || "",
-                              href: null,
-                              enabled: true,
-                            },
-                          ];
-                          patchTheme({ nav: { ...theme.nav, items: next } });
-                        }}
+                        variant="ghost"
+                        className="min-h-11 min-w-11"
+                        disabled={i === theme.modules.length - 1}
+                        onClick={() => moveModule(i, 1)}
+                        aria-label="Bajar"
                       >
-                        + Ítem
+                        ↓
                       </Button>
-                    )}
-                  </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
 
-                  {theme.nav.items.length > 0 && (
-                    <ul className="space-y-2 pt-1">
-                      {theme.nav.items.map((item, index) => (
-                        <li
-                          key={item.id}
-                          className="rounded-lg border border-stone-200 bg-white p-3 space-y-2"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              checked={item.enabled !== false}
-                              onCheckedChange={(v) => {
-                                const items = theme.nav.items.map((it, i) =>
-                                  i === index ? { ...it, enabled: v } : it
-                                );
-                                patchTheme({ nav: { ...theme.nav, items } });
-                              }}
-                            />
-                            <Input
-                              value={item.label}
-                              onChange={(e) => {
-                                const items = theme.nav.items.map((it, i) =>
-                                  i === index ? { ...it, label: e.target.value.slice(0, 40) } : it
-                                );
-                                patchTheme({ nav: { ...theme.nav, items } });
-                              }}
-                              placeholder="Etiqueta visible"
-                              className="h-8 text-sm flex-1"
-                            />
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              disabled={index === 0}
-                              onClick={() => {
-                                const items = [...theme.nav.items];
-                                [items[index - 1], items[index]] = [items[index], items[index - 1]];
-                                patchTheme({ nav: { ...theme.nav, items } });
-                              }}
-                            >
-                              ↑
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              disabled={index === theme.nav.items.length - 1}
-                              onClick={() => {
-                                const items = [...theme.nav.items];
-                                [items[index], items[index + 1]] = [items[index + 1], items[index]];
-                                patchTheme({ nav: { ...theme.nav, items } });
-                              }}
-                            >
-                              ↓
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="ghost"
-                              className="text-red-600"
-                              onClick={() => {
-                                const items = theme.nav.items.filter((_, i) => i !== index);
-                                patchTheme({ nav: { ...theme.nav, items } });
-                              }}
-                            >
-                              ✕
-                            </Button>
-                          </div>
-                          <div className="grid sm:grid-cols-2 gap-2">
-                            <div>
-                              <Label className="text-[11px]">Tipo</Label>
-                              <Select
-                                value={item.kind}
-                                onValueChange={(v) => {
-                                  const kind = v as NavItemKind;
-                                  const items = theme.nav.items.map((it, i) => {
-                                    if (i !== index) return it;
-                                    if (kind === "all")
-                                      return { ...it, kind, category: null, href: null };
-                                    if (kind === "link")
-                                      return { ...it, kind, category: null, href: it.href || "#catalogo" };
-                                    return {
-                                      ...it,
-                                      kind,
-                                      category: it.category || catalogCategorias[0]?.nombre || "",
-                                      href: null,
-                                    };
-                                  });
-                                  patchTheme({ nav: { ...theme.nav, items } });
-                                }}
-                              >
-                                <SelectTrigger className="mt-1 h-8">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="all">Ver todo</SelectItem>
-                                  <SelectItem value="category">Categoría</SelectItem>
-                                  <SelectItem value="link">Link / ancla</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            {item.kind === "category" && (
-                              <div>
-                                <Label className="text-[11px]">Categoría del catálogo</Label>
-                                {catalogCategorias.length > 0 ? (
-                                  <Select
-                                    value={item.category || catalogCategorias[0]?.nombre || ""}
-                                    onValueChange={(v) => {
-                                      const items = theme.nav.items.map((it, i) =>
-                                        i === index ? { ...it, category: v } : it
-                                      );
-                                      patchTheme({ nav: { ...theme.nav, items } });
-                                    }}
-                                  >
-                                    <SelectTrigger className="mt-1 h-8">
-                                      <SelectValue placeholder="Elegir" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {catalogCategorias.map((c) => (
-                                        <SelectItem key={c.nombre} value={c.nombre}>
-                                          {c.nombre} ({c.count})
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                ) : (
-                                  <Input
-                                    className="mt-1 h-8"
-                                    value={item.category || ""}
-                                    onChange={(e) => {
-                                      const items = theme.nav.items.map((it, i) =>
-                                        i === index ? { ...it, category: e.target.value } : it
-                                      );
-                                      patchTheme({ nav: { ...theme.nav, items } });
-                                    }}
-                                    placeholder="Nombre exacto de categoría"
-                                  />
-                                )}
-                              </div>
-                            )}
-                            {item.kind === "link" && (
-                              <div>
-                                <Label className="text-[11px]">URL o ancla</Label>
-                                <Input
-                                  className="mt-1 h-8"
-                                  value={item.href || ""}
-                                  onChange={(e) => {
-                                    const items = theme.nav.items.map((it, i) =>
-                                      i === index ? { ...it, href: e.target.value } : it
-                                    );
-                                    patchTheme({ nav: { ...theme.nav, items } });
-                                  }}
-                                  placeholder="#catalogo o https://…"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </>
-              )}
-            </div>
-
-            <div>
-              <Label>Banner de fondo del Stage</Label>
-              <div className="mt-2 flex items-center gap-3">
-                {theme.banner_url ? (
-                  <img src={theme.banner_url} alt="" className="h-16 w-28 object-cover rounded-md border" />
-                ) : (
-                  <div className="h-16 w-28 rounded-md border border-dashed border-stone-300 bg-stone-50" />
-                )}
-                <Button type="button" variant="outline" size="sm" onClick={() => bannerInput.current?.click()}>
-                  {uploadBanner.isPending ? "Subiendo…" : "Subir banner"}
-                </Button>
-                {theme.banner_url && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => patchTheme({ banner_url: null })}
-                  >
-                    Quitar
-                  </Button>
-                )}
-                <input
-                  ref={bannerInput}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/gif"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) uploadBanner.mutate(f);
-                  }}
+          {theme.modules.some((m) => m.type === "trust" && m.enabled) && (
+            <section className="rounded-xl border border-stone-200 bg-white p-4 sm:p-5 space-y-3">
+              <h2 className="font-medium">Frases de confianza</h2>
+              <div>
+                <Label>Envío</Label>
+                <Input
+                  className="min-h-11 mt-1"
+                  value={theme.trust.envio}
+                  onChange={(e) => patchTheme({ trust: { ...theme.trust, envio: e.target.value } })}
                 />
               </div>
-            </div>
+              <div>
+                <Label>Pago</Label>
+                <Input
+                  className="min-h-11 mt-1"
+                  value={theme.trust.pago}
+                  onChange={(e) => patchTheme({ trust: { ...theme.trust, pago: e.target.value } })}
+                />
+              </div>
+              <div>
+                <Label>Soporte</Label>
+                <Input
+                  className="min-h-11 mt-1"
+                  value={theme.trust.soporte}
+                  onChange={(e) => patchTheme({ trust: { ...theme.trust, soporte: e.target.value } })}
+                />
+              </div>
+            </section>
+          )}
+
+          <section className="rounded-xl border border-stone-200 bg-white p-4 sm:p-5 space-y-1">
+            <h2 className="font-medium mb-2">En el celular</h2>
+            <label className="flex items-center justify-between gap-3 min-h-11 text-sm">
+              <span>Botón del carrito siempre visible</span>
+              <Switch
+                checked={theme.quick_actions.cart_fab !== false}
+                onCheckedChange={(v) => patchTheme({ quick_actions: { ...theme.quick_actions, cart_fab: v } })}
+              />
+            </label>
+            <label className="flex items-center justify-between gap-3 min-h-11 text-sm">
+              <span>Agregar al carrito desde la lista</span>
+              <Switch
+                checked={theme.quick_actions.quick_add !== false}
+                onCheckedChange={(v) => patchTheme({ quick_actions: { ...theme.quick_actions, quick_add: v } })}
+              />
+            </label>
+            <label className="flex items-center justify-between gap-3 min-h-11 text-sm">
+              <span>Botón de WhatsApp</span>
+              <Switch
+                checked={theme.quick_actions.whatsapp !== false}
+                onCheckedChange={(v) => patchTheme({ quick_actions: { ...theme.quick_actions, whatsapp: v } })}
+              />
+            </label>
           </section>
 
-          {/* Módulos ordenables */}
-          <section className="rounded-xl border border-stone-200 bg-white p-5 space-y-4">
-            <h2 className="font-medium text-sm">Arquitecto de vitrina (módulos)</h2>
-            <p className="text-xs text-stone-500">Activa, desactiva y reordena bloques. Browse = catálogo con filtros.</p>
-            <ul className="space-y-2">
-              {theme.modules.map((m, i) => (
-                <li
-                  key={m.id}
-                  className="flex items-center gap-2 rounded-lg border border-stone-100 px-3 py-2"
+          {saveBar}
+        </TabsContent>
+
+        <TabsContent value="whatsapp">
+          <DisponibilidadSettingsTab />
+        </TabsContent>
+
+        <TabsContent value="cobros">
+          <section className="rounded-xl border border-stone-200 bg-white p-4 sm:p-5 space-y-4 max-w-xl">
+            <div>
+              <h2 className="font-medium">Mercado Pago</h2>
+              <p className="text-sm text-stone-500 mt-0.5">
+                El dinero de las ventas llega a tu cuenta. Las claves salen de{" "}
+                <a
+                  href="https://www.mercadopago.com.pe/developers/panel/app"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-teal-700 hover:underline"
                 >
-                  <Switch checked={m.enabled} onCheckedChange={(v) => toggleModule(m.id, v)} />
-                  <span className="flex-1 text-sm font-medium capitalize">{m.type}</span>
-                  <span className="text-[10px] text-stone-400 font-mono">{m.id}</span>
-                  <Button type="button" size="sm" variant="ghost" disabled={i === 0} onClick={() => moveModule(i, -1)}>
-                    ↑
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    disabled={i === theme.modules.length - 1}
-                    onClick={() => moveModule(i, 1)}
-                  >
-                    ↓
-                  </Button>
-                </li>
-              ))}
-            </ul>
-            <div className="flex flex-wrap gap-4 text-sm pt-2 border-t border-stone-100">
-              <label className="inline-flex items-center gap-2">
-                <Switch
-                  checked={theme.quick_actions.cart_fab !== false}
-                  onCheckedChange={(v) =>
-                    patchTheme({ quick_actions: { ...theme.quick_actions, cart_fab: v } })
-                  }
-                />
-                Cart FAB
-              </label>
-              <label className="inline-flex items-center gap-2">
-                <Switch
-                  checked={theme.quick_actions.quick_add !== false}
-                  onCheckedChange={(v) =>
-                    patchTheme({ quick_actions: { ...theme.quick_actions, quick_add: v } })
-                  }
-                />
-                Quick add
-              </label>
-              <label className="inline-flex items-center gap-2">
-                <Switch
-                  checked={theme.quick_actions.whatsapp !== false}
-                  onCheckedChange={(v) =>
-                    patchTheme({ quick_actions: { ...theme.quick_actions, whatsapp: v } })
-                  }
-                />
-                WhatsApp
-              </label>
+                  tu panel de Mercado Pago
+                </a>
+                .
+              </p>
             </div>
-          </section>
-
-          {/* Trust texts */}
-          <section className="rounded-xl border border-stone-200 bg-white p-5 space-y-3">
-            <h2 className="font-medium text-sm">Textos de confianza</h2>
-            <div>
-              <Label>Envío</Label>
-              <Input
-                value={theme.trust.envio}
-                onChange={(e) => patchTheme({ trust: { ...theme.trust, envio: e.target.value } })}
-              />
-            </div>
-            <div>
-              <Label>Pago</Label>
-              <Input
-                value={theme.trust.pago}
-                onChange={(e) => patchTheme({ trust: { ...theme.trust, pago: e.target.value } })}
-              />
-            </div>
-            <div>
-              <Label>Soporte</Label>
-              <Input
-                value={theme.trust.soporte}
-                onChange={(e) => patchTheme({ trust: { ...theme.trust, soporte: e.target.value } })}
-              />
-            </div>
-          </section>
-
-          <Button
-            type="button"
-            onClick={() => {
-              if (!nombre.trim()) {
-                toast.error("El nombre es obligatorio");
-                return;
-              }
-              saveBrand.mutate();
-            }}
-            disabled={saveBrand.isPending}
-            className="w-full sm:w-auto"
-          >
-            {saveBrand.isPending ? "Guardando…" : "Guardar identidad y layout"}
-          </Button>
-
-          {/* MP */}
-          <section className="rounded-xl border border-stone-200 bg-white p-5 space-y-3">
-            <h2 className="font-medium text-sm">Mercado Pago (cuenta del negocio)</h2>
-            <p className="text-xs text-stone-500">
-              Estado:{" "}
-              {data?.data?.mp_conectado ? (
-                <span className="text-teal-700 font-medium">conectado ({data?.data?.mp_modo})</span>
-              ) : (
-                <span className="text-amber-700 font-medium">sin configurar</span>
-              )}
+            <p
+              className={`text-sm rounded-lg px-3 py-2 ${
+                mpOk ? "bg-teal-50 text-teal-800" : "bg-amber-50 text-amber-800"
+              }`}
+            >
+              {mpOk
+                ? `Conectado (${data?.data?.mp_modo === "prod" ? "producción" : "pruebas"}).`
+                : "Todavía no está conectado. El cliente puede ver el catálogo, pero no pagar en línea."}
             </p>
             <div>
-              <Label>Public Key</Label>
+              <Label>Clave pública (Public Key)</Label>
               <Input
+                className="min-h-11 mt-1 font-mono text-sm"
                 value={mp.public_key}
                 onChange={(e) => setMp({ ...mp, public_key: e.target.value })}
-                placeholder="APP_USR-... o TEST-..."
+                placeholder="APP_USR-… o TEST-…"
               />
             </div>
             <div>
-              <Label>Access Token</Label>
+              <Label>Token de acceso (Access Token)</Label>
               <Input
+                className="min-h-11 mt-1 font-mono text-sm"
                 type="password"
                 value={mp.access_token}
                 onChange={(e) => setMp({ ...mp, access_token: e.target.value })}
-                placeholder="APP_USR-... o TEST-..."
+                placeholder="APP_USR-… o TEST-…"
               />
             </div>
             <div>
               <Label>Modo</Label>
-              <select
-                className="w-full h-9 rounded-md border border-stone-200 px-2 text-sm"
-                value={mp.modo}
-                onChange={(e) => setMp({ ...mp, modo: e.target.value as "test" | "prod" })}
-              >
-                <option value="test">test</option>
-                <option value="prod">prod</option>
-              </select>
+              <Select value={mp.modo} onValueChange={(v) => setMp({ ...mp, modo: v as "test" | "prod" })}>
+                <SelectTrigger className="mt-1 min-h-11">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="test">Pruebas — no cobra de verdad</SelectItem>
+                  <SelectItem value="prod">Producción — cobra de verdad</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <Button
               type="button"
+              className="w-full sm:w-auto min-h-11"
               onClick={() => {
                 if (!mp.public_key || !mp.access_token) {
-                  toast.error("Completa ambas credenciales");
+                  toast.error("Completa las dos claves");
                   return;
                 }
                 saveMp.mutate();
               }}
               disabled={saveMp.isPending}
             >
-              Guardar Mercado Pago
+              {saveMp.isPending ? "Guardando…" : "Guardar Mercado Pago"}
             </Button>
           </section>
-        </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
 
-        {/* Live preview */}
-        <aside className="lg:sticky lg:top-20 space-y-3">
-          <p className="text-xs uppercase tracking-wider text-stone-400">Vista previa</p>
-          <div
-            className="rounded-xl overflow-hidden border border-stone-200 shadow-sm"
-            style={previewStyle}
+function NavMenuEditor({
+  theme,
+  catalogCategorias,
+  patchTheme,
+}: {
+  theme: StoreTheme;
+  catalogCategorias: { nombre: string; count: number }[];
+  patchTheme: (partial: Partial<StoreTheme>) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div>
+          <Label>Estilo de los enlaces</Label>
+          <Select
+            value={theme.nav.style}
+            onValueChange={(v) => patchTheme({ nav: { ...theme.nav, style: v as NavStyle } })}
           >
-            <div className="px-3 py-2.5 flex items-center gap-2 text-[11px]" style={headerPreview}>
-              {logoUrl ? (
-                <img src={logoUrl} alt="" className="size-6 rounded-full object-cover" />
-              ) : (
-                <span
-                  className="size-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
-                  style={{ background: theme.header_style === "accent" ? "rgba(0,0,0,0.25)" : color }}
-                >
-                  {(nombre || "H").slice(0, 1)}
-                </span>
-              )}
-              <span
-                className="font-semibold truncate shrink-0"
-                style={{ fontFamily: FONT_DISPLAY_STACK[theme.font_display] }}
-              >
-                {nombre || "Tu tienda"}
-              </span>
-              {theme.nav.show_categories !== false && (
-                <div className="hidden sm:flex items-center gap-1 ml-2 min-w-0 overflow-hidden">
-                  {(theme.nav.items.length > 0
-                    ? theme.nav.items.filter((i) => i.enabled).slice(0, 3).map((i) => i.label)
-                    : [theme.nav.label_all || "Todo", "Moda", "Tech"]
-                  ).map((label, i) => {
-                    const active = i === (theme.nav.items.length > 0 ? 0 : 1);
-                    const style = theme.nav.style;
-                    const pill =
-                      style === "pill"
-                        ? {
-                            background: active
-                              ? theme.header_style === "accent"
-                                ? "rgba(0,0,0,0.28)"
-                                : color
-                              : "transparent",
-                            color: active && theme.header_style !== "accent" ? "#fff" : undefined,
-                            borderRadius: 999,
-                            padding: "2px 8px",
-                            fontWeight: active ? 600 : 400,
-                          }
-                        : style === "soft"
-                          ? {
-                              background: active
-                                ? theme.header_style === "accent"
-                                  ? "rgba(0,0,0,0.2)"
-                                  : `${color}22`
-                                : "transparent",
-                              color: active && theme.header_style !== "accent" ? color : undefined,
-                              borderRadius: 10,
-                              padding: "2px 8px",
-                              fontWeight: active ? 600 : 400,
-                            }
-                          : style === "underline"
-                            ? {
-                                borderBottom: active
-                                  ? `2px solid ${theme.header_style === "accent" ? "#fff" : color}`
-                                  : "2px solid transparent",
-                                color: active && theme.header_style !== "accent" ? color : undefined,
-                                fontWeight: active ? 600 : 400,
-                                padding: "2px 4px",
-                              }
-                            : {
-                                color: active && theme.header_style !== "accent" ? color : undefined,
-                                fontWeight: active ? 600 : 400,
-                                padding: "2px 4px",
-                              };
-                    return (
-                      <span key={`${label}-${i}`} className="truncate opacity-90" style={pill}>
-                        {label}
-                      </span>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-            <div
-              className="relative h-36 p-4 flex flex-col justify-end text-white"
-              style={{
-                background: `linear-gradient(145deg, ${surf(theme.preset, theme.preset === "clara" ? "light" : "dark").stageFrom}, ${surf(theme.preset, theme.preset === "clara" ? "light" : "dark").stageTo})`,
-                color: theme.preset === "clara" ? surf(theme.preset, "light").ink : "#fff",
-              }}
-            >
-              {theme.banner_url && (
-                <img src={theme.banner_url} alt="" className="absolute inset-0 size-full object-cover opacity-35" />
-              )}
-              <div className="relative">
-                <p
-                  className="text-xl leading-none"
-                  style={{ fontFamily: FONT_DISPLAY_STACK[theme.font_display] }}
-                >
-                  {theme.hero_headline || nombre || "Headline"}
-                </p>
-                <p
-                  className="text-[10px] mt-2 line-clamp-2"
-                  style={{ opacity: 0.7 }}
-                >
-                  {theme.hero_tagline || descripcion || "Tu tagline aparece aquí"}
-                </p>
-                <span
-                  className="inline-block mt-3 text-[10px] font-semibold px-2.5 py-1 rounded-full text-white"
-                  style={{ background: /^#[0-9A-Fa-f]{6}$/.test(color) ? color : "#0E7C7B" }}
-                >
-                  Explorar
-                </span>
-              </div>
-            </div>
-            <div className="bg-[var(--vitrina-mist)] p-3 grid grid-cols-3 gap-1.5">
-              {theme.modules.some((m) => m.type === "trust" && m.enabled) &&
-                [theme.trust.envio, theme.trust.pago, theme.trust.soporte].map((t) => (
-                  <div key={t} className="rounded bg-white border border-stone-100 p-1.5 text-[9px] text-stone-600 truncate">
-                    {t}
-                  </div>
-                ))}
-              {!theme.modules.some((m) => m.type === "trust" && m.enabled) && (
-                <p className="col-span-3 text-[10px] text-stone-400 text-center py-2">Trust oculto</p>
-              )}
-            </div>
-            <div className="px-3 py-2 bg-white border-t border-stone-100 text-[10px] text-stone-400 flex flex-wrap gap-1">
-              {theme.modules
-                .filter((m) => m.enabled)
-                .map((m) => (
-                  <span key={m.id} className="px-1.5 py-0.5 rounded bg-stone-100">
-                    {m.type}
-                  </span>
-                ))}
-            </div>
-          </div>
-        </aside>
+            <SelectTrigger className="mt-1 min-h-11">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="text">Texto</SelectItem>
+              <SelectItem value="soft">Suave</SelectItem>
+              <SelectItem value="pill">Cápsula</SelectItem>
+              <SelectItem value="underline">Subrayado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Cuántos se ven</Label>
+          <Select
+            value={String(theme.nav.max_items)}
+            onValueChange={(v) => patchTheme({ nav: { ...theme.nav, max_items: Number(v) } })}
+          >
+            <SelectTrigger className="mt-1 min-h-11">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[3, 4, 5, 6, 8, 10, 12].map((n) => (
+                <SelectItem key={n} value={String(n)}>
+                  {n}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="min-h-11"
+          onClick={() => {
+            const items = buildNavItemsFromCatalog(catalogCategorias, theme.nav.label_all || "Todo");
+            patchTheme({ nav: { ...theme.nav, items } });
+            toast.success(
+              catalogCategorias.length
+                ? `Menú con ${catalogCategorias.length} categorías`
+                : "Menú base creado"
+            );
+          }}
+        >
+          Armar desde mis categorías
+        </Button>
+        {theme.nav.items.length > 0 && (
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="min-h-11"
+            onClick={() => patchTheme({ nav: { ...theme.nav, items: [] } })}
+          >
+            Volver al automático
+          </Button>
+        )}
+      </div>
+      {theme.nav.items.length > 0 && (
+        <ul className="space-y-2">
+          {theme.nav.items.map((item, index) => (
+            <li key={item.id} className="rounded-lg border border-stone-200 p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={item.enabled !== false}
+                  onCheckedChange={(v) => {
+                    const items = theme.nav.items.map((it, i) => (i === index ? { ...it, enabled: v } : it));
+                    patchTheme({ nav: { ...theme.nav, items } });
+                  }}
+                />
+                <Input
+                  value={item.label}
+                  onChange={(e) => {
+                    const items = theme.nav.items.map((it, i) =>
+                      i === index ? { ...it, label: e.target.value.slice(0, 40) } : it
+                    );
+                    patchTheme({ nav: { ...theme.nav, items } });
+                  }}
+                  className="min-h-11 text-sm flex-1"
+                />
+              </div>
+              <div className="grid sm:grid-cols-2 gap-2">
+                <Select
+                  value={item.kind}
+                  onValueChange={(v) => {
+                    const kind = v as NavItemKind;
+                    const items = theme.nav.items.map((it, i) => {
+                      if (i !== index) return it;
+                      if (kind === "all") return { ...it, kind, category: null, href: null };
+                      if (kind === "link")
+                        return { ...it, kind, category: null, href: it.href || "#catalogo" };
+                      return {
+                        ...it,
+                        kind,
+                        category: it.category || catalogCategorias[0]?.nombre || "",
+                        href: null,
+                      };
+                    });
+                    patchTheme({ nav: { ...theme.nav, items } });
+                  }}
+                >
+                  <SelectTrigger className="min-h-11">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Ver todo</SelectItem>
+                    <SelectItem value="category">Categoría</SelectItem>
+                    <SelectItem value="link">Enlace</SelectItem>
+                  </SelectContent>
+                </Select>
+                {item.kind === "category" && catalogCategorias.length > 0 && (
+                  <Select
+                    value={item.category || catalogCategorias[0]?.nombre || ""}
+                    onValueChange={(v) => {
+                      const items = theme.nav.items.map((it, i) =>
+                        i === index ? { ...it, category: v } : it
+                      );
+                      patchTheme({ nav: { ...theme.nav, items } });
+                    }}
+                  >
+                    <SelectTrigger className="min-h-11">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {catalogCategorias.map((c) => (
+                        <SelectItem key={c.nombre} value={c.nombre}>
+                          {c.nombre}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {item.kind === "link" && (
+                  <Input
+                    className="min-h-11"
+                    value={item.href || ""}
+                    onChange={(e) => {
+                      const items = theme.nav.items.map((it, i) =>
+                        i === index ? { ...it, href: e.target.value } : it
+                      );
+                      patchTheme({ nav: { ...theme.nav, items } });
+                    }}
+                    placeholder="#catalogo o https://…"
+                  />
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

@@ -15,8 +15,9 @@ import {
   Tags,
   PackageCheck,
   ScanLine,
+  MessageCircle,
 } from "lucide-react";
-import { ecommerceDashboard, ecommerceMe, adminInventarioResumen, pickupDashboardKpis, adminEntregaKpis } from "../api/ecommerce";
+import { ecommerceDashboard, ecommerceMe, adminInventarioResumen, pickupDashboardKpis, adminEntregaKpis, adminDisponibilidadStats } from "../api/ecommerce";
 import { useEcommerceAuthStore } from "../store/useEcommerceAuthStore";
 import { Button } from "@/components/ui/button";
 
@@ -46,6 +47,11 @@ export default function EcommerceDashboardPage() {
   const entregaKpiQ = useQuery({
     queryKey: ["ecom-entrega-kpis", tid],
     queryFn: adminEntregaKpis,
+    enabled: Boolean(tid),
+  });
+  const dispQ = useQuery({
+    queryKey: ["ecom-disp-stats", tid],
+    queryFn: adminDisponibilidadStats,
     enabled: Boolean(tid),
   });
   const stats = data?.data?.stats;
@@ -135,6 +141,12 @@ export default function EcommerceDashboardPage() {
               value: stats?.stock_bajo ?? 0,
               icon: AlertTriangle,
               to: "/ecommerce-admin/productos",
+            },
+            {
+              label: "Consultas WA",
+              value: dispQ.data?.data?.total ?? 0,
+              icon: MessageCircle,
+              to: "/ecommerce-admin/configuracion",
             },
           ].map((c) => (
             <Link

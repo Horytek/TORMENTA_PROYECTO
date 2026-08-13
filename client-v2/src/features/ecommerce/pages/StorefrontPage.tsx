@@ -1,7 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { toast } from "sonner";
 import { getStore } from "../api/ecommerce";
 import { useEcommerceCartStore } from "../store/useEcommerceCartStore";
 import { useBranchStore } from "../store/useBranchStore";
@@ -15,6 +14,7 @@ import { BackToTop } from "../components/vitrina/quick/BackToTop";
 import { StoreSkeleton } from "../components/vitrina/detail/ProductSpecs";
 import { PickupBranchesBlock } from "../design/PickupBranchesBlock";
 import { StoreBottomNav } from "../design/StoreBottomNav";
+import { QuickAddSheet, useQuickAddGuard } from "../components/vitrina/QuickAddSheet";
 import { tiendaTheme, type StoreProducto, type StoreSucursal, type StoreTienda } from "../types/storefront";
 
 export default function StorefrontPage() {
@@ -32,8 +32,9 @@ export default function StorefrontPage() {
   });
 
   const setSlug = useEcommerceCartStore((s) => s.setSlug);
-  const add = useEcommerceCartStore((s) => s.add);
   const count = useEcommerceCartStore((s) => s.count());
+  const [pending, setPending] = useState<StoreProducto | null>(null);
+  const canAdd = useQuickAddGuard();
 
   useEffect(() => {
     if (slug) setSlug(slug);
@@ -56,17 +57,8 @@ export default function StorefrontPage() {
   const showFab = theme?.quick_actions?.cart_fab !== false;
 
   const onAdd = (p: StoreProducto) => {
-    if (!id_sucursal && sucursales.length) {
-      toast.error("Elige una sucursal de recojo primero");
-      return;
-    }
-    add({
-      id_producto: p.id_producto,
-      nombre: p.nombre,
-      precio: Number(p.precio),
-      imagen_url: p.imagen_url,
-    });
-    toast.success(`${p.nombre} agregado al carrito`);
+    if (!canAdd(p)) return;
+    setPending(p);
   };
 
   if (isLoading) return <StoreSkeleton />;
@@ -121,6 +113,7 @@ export default function StorefrontPage() {
       {showFab && <CartFab slug={slug} count={count} />}
       <BackToTop />
       <StoreBottomNav slug={slug} cartCount={count} />
+      <QuickAddSheet slug={slug} producto={pending} onClose={() => setPending(null)} />
       <div className="h-14 lg:hidden" aria-hidden />
     </StoreShell>
   );

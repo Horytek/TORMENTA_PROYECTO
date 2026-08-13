@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { formatPen, getCategoria, getMarca, type StoreProducto } from "../types/storefront";
 import { BranchAvailabilityBadge } from "./BranchAvailabilityBadge";
 import { WhatsAppAssist } from "./WhatsAppAssist";
+import { ConsultarWhatsAppButton } from "./ConsultarWhatsAppButton";
 import { VitrinaAttrsPreview } from "../components/vitrina/detail/VitrinaAttrsPreview";
 import type { StoreSucursal } from "../types/storefront";
 
@@ -55,7 +56,7 @@ export function ProductCardV2({
           {formatPen(Number(producto.precio))}
         </p>
         <div className="mt-auto flex items-center gap-2 pt-1">
-          {quickAdd && onAdd && producto.stock > 0 && (
+          {quickAdd && onAdd && producto.disponibilidad?.cta.allowAddToCart !== false && producto.stock > 0 && (
             <button
               type="button"
               onClick={() => onAdd(producto)}
@@ -66,14 +67,30 @@ export function ProductCardV2({
               Agregar
             </button>
           )}
-          <WhatsAppAssist
-            telefono={telefono}
-            tiendaNombre={tiendaNombre}
-            branch={branch}
-            product={producto}
-            label="Consultar"
-            className="text-xs"
-          />
+          {(producto.disponibilidad?.cta.showWhatsapp || !producto.disponibilidad) && (
+            producto.disponibilidad ? (
+              <ConsultarWhatsAppButton
+                slug={slug}
+                telefono={telefono}
+                tiendaNombre={tiendaNombre}
+                branch={branch}
+                product={producto}
+                origen="catalogo"
+                primary={producto.disponibilidad.cta.primary === "whatsapp"}
+                label={producto.disponibilidad.cta.primary === "whatsapp" ? "Consultar disponibilidad" : "Consultar"}
+                className="text-xs min-h-9 px-3"
+              />
+            ) : (
+              <WhatsAppAssist
+                telefono={telefono}
+                tiendaNombre={tiendaNombre}
+                branch={branch}
+                product={producto}
+                label="Consultar"
+                className="text-xs"
+              />
+            )
+          )}
         </div>
       </div>
     </article>

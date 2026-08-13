@@ -116,6 +116,19 @@ const MODULE_META: Record<string, ModuleMeta> = {
 
 export const SECTION_ORDER = ["General", "Logística", "Personas", "Reportes", "Plataforma", "Ajustes"];
 
+/**
+ * Productos Horytek con consola propia (PlatformShell / admin aparte).
+ * Siguen en MODULE_META para permisos y el panel Developer, pero no se
+ * mezclan en el sidebar ni en el buscador del ERP.
+ */
+export function isStandaloneProductNav(meta: Pick<ModuleMeta, "group" | "url">): boolean {
+  if (meta.group === "Plataforma") return true;
+  return (
+    meta.url.startsWith("/platform/") ||
+    meta.url.startsWith("/mayorista-admin")
+  );
+}
+
 export function normalizeSlug(ruta?: string | null): string {
   if (!ruta) return "";
   return ruta.toString().toLowerCase().replace(/^\/+/, "");
@@ -179,6 +192,7 @@ export function buildNavSections(catalog: RouteModule[]): NavSection[] {
   const seenUrls = new Set<string>(["/dashboard"]);
   const items = collectMappedItems(catalog).sort((a, b) => a.sortOrder - b.sortOrder);
   for (const { slug, nombre, meta } of items) {
+    if (isStandaloneProductNav(meta)) continue;
     if (seenUrls.has(meta.url)) continue; // un módulo puede tener 2 submódulos con la misma pantalla
     seenUrls.add(meta.url);
     const list = groups.get(meta.group) ?? [];
@@ -191,87 +205,6 @@ export function buildNavSections(catalog: RouteModule[]): NavSection[] {
       keywords: meta.keywords,
     });
     groups.set(meta.group, list);
-  }
-
-  // Oleadas A–E — visibles sin esperar seed en `modulo` (entitlement se valida en API).
-  const platformExtras: NavItem[] = [
-    {
-      title: "Sync Stock",
-      url: "/platform/sync",
-      icon: RefreshCw,
-      group: "Plataforma",
-      keywords: MODULE_META["stock-sync"].keywords,
-    },
-    {
-      title: "Taller",
-      url: "/platform/taller",
-      icon: Factory,
-      group: "Plataforma",
-      keywords: MODULE_META.taller.keywords,
-    },
-    {
-      title: "Preventa",
-      url: "/platform/preventa",
-      icon: CalendarClock,
-      group: "Plataforma",
-      keywords: MODULE_META.preventa.keywords,
-    },
-    {
-      title: "CRM",
-      url: "/platform/crm",
-      icon: Handshake,
-      group: "Plataforma",
-      keywords: MODULE_META.crm.keywords,
-    },
-    {
-      title: "Envíos",
-      url: "/platform/envios",
-      icon: Truck,
-      group: "Plataforma",
-      keywords: MODULE_META.envios.keywords,
-    },
-    {
-      title: "WMS",
-      url: "/platform/wms",
-      icon: PackageSearch,
-      group: "Plataforma",
-      keywords: MODULE_META.wms.keywords,
-    },
-    {
-      title: "Despacho",
-      url: "/platform/despacho",
-      icon: Route,
-      group: "Plataforma",
-      keywords: MODULE_META.despacho.keywords,
-    },
-    {
-      title: "Campo",
-      url: "/platform/campo",
-      icon: MapPin,
-      group: "Plataforma",
-      keywords: MODULE_META.campo.keywords,
-    },
-    {
-      title: "Mantenimiento",
-      url: "/platform/mantenimiento",
-      icon: Wrench,
-      group: "Plataforma",
-      keywords: MODULE_META.mantenimiento.keywords,
-    },
-    {
-      title: "Recluta",
-      url: "/platform/recluta",
-      icon: UserPlus,
-      group: "Plataforma",
-      keywords: MODULE_META.recluta.keywords,
-    },
-  ];
-  for (const item of platformExtras) {
-    if (seenUrls.has(item.url)) continue;
-    seenUrls.add(item.url);
-    const list = groups.get(item.group) ?? [];
-    list.push(item);
-    groups.set(item.group, list);
   }
 
   return SECTION_ORDER

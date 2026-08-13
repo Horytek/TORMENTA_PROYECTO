@@ -18,7 +18,7 @@ export function ProductSpecs({ producto }: { producto: StoreProducto }) {
     producto.sku ? { k: "SKU", v: producto.sku } : null,
     marca ? { k: "Marca", v: marca } : null,
     cat ? { k: "Categoría", v: cat } : null,
-    { k: "Stock", v: String(producto.stock) },
+    { k: "Stock registrado", v: String(producto.stock) },
     { k: "Precio", v: formatPen(Number(producto.precio)) },
   ].filter(Boolean) as { k: string; v: string }[];
 

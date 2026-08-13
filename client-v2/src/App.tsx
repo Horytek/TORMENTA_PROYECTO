@@ -153,6 +153,7 @@ const EcommerceAdminLayout = lazy(() =>
 const EcommerceDashboardPage = lazy(() => import("@/features/ecommerce/pages/EcommerceDashboardPage"));
 const EcommerceProductsPage = lazy(() => import("@/features/ecommerce/pages/EcommerceProductsPage"));
 const EcommerceAtributosPage = lazy(() => import("@/features/ecommerce/pages/EcommerceAtributosPage"));
+const EcommerceTaxonomiaPage = lazy(() => import("@/features/ecommerce/pages/EcommerceTaxonomiaPage"));
 const EcommerceOrdersPage = lazy(() => import("@/features/ecommerce/pages/EcommerceOrdersPage"));
 const EcommerceSettingsPage = lazy(() => import("@/features/ecommerce/pages/EcommerceSettingsPage"));
 const EcommerceSucursalesPage = lazy(() => import("@/features/ecommerce/pages/EcommerceSucursalesPage"));
@@ -181,6 +182,9 @@ const StoreMisReviewsPage = lazy(() => import("@/features/ecommerce/pages/StoreM
 const EcommercePedidosRetiroPage = lazy(() => import("@/features/ecommerce/pages/EcommercePedidosRetiroPage"));
 const EcommerceValidarRetiroPage = lazy(() => import("@/features/ecommerce/pages/EcommerceValidarRetiroPage"));
 const EcommerceReviewsPage = lazy(() => import("@/features/ecommerce/pages/EcommerceReviewsPage"));
+const EcommerceStockPage = lazy(() => import("@/features/ecommerce/pages/EcommerceStockPage"));
+const EcommerceUsuariosPage = lazy(() => import("@/features/ecommerce/pages/EcommerceUsuariosPage"));
+const EcommerceRolesPage = lazy(() => import("@/features/ecommerce/pages/EcommerceRolesPage"));
 
 const InventoryMovementsPage = lazy(() => import("@/features/inventory-movements/pages/InventoryMovementsPage"));
 
@@ -348,15 +352,19 @@ export default function App() {
                 <Route index element={<EcommerceDashboardPage />} />
                 <Route path="productos" element={<EcommerceProductsPage />} />
                 <Route path="atributos" element={<EcommerceAtributosPage />} />
+                <Route path="catalogo" element={<EcommerceTaxonomiaPage />} />
                 <Route path="sucursales" element={<EcommerceSucursalesPage />} />
                 <Route path="entregas" element={<EcommerceEntregasPage />} />
                 <Route path="inventario" element={<EcommerceInventarioPage />} />
+                <Route path="stock" element={<EcommerceStockPage />} />
                 <Route path="transferencias" element={<EcommerceTransferenciasPage />} />
                 <Route path="ordenes" element={<EcommerceOrdersPage />} />
                 <Route path="pedidos-retiro" element={<EcommercePedidosRetiroPage />} />
                 <Route path="validar-retiro" element={<EcommerceValidarRetiroPage />} />
                 <Route path="recojo" element={<EcommerceValidarRetiroPage />} />
                 <Route path="resenas" element={<EcommerceReviewsPage />} />
+                <Route path="usuarios" element={<EcommerceUsuariosPage />} />
+                <Route path="roles" element={<EcommerceRolesPage />} />
                 <Route path="configuracion" element={<EcommerceSettingsPage />} />
               </Route>
               {/* Pocket POS (Express) tiene su propio sistema de auth, independiente del ERP */}
@@ -397,7 +405,7 @@ export default function App() {
 
               {/* Protected Routes */}
               <Route element={<ProtectedRoute />}>
-                {/* Mayorista — consola de producto fuera del DashboardLayout ERP */}
+                {/* Consolas de producto Horytek — fuera del DashboardLayout ERP */}
                 <Route path="/mayorista-admin" element={<MayoristaPedidosPage />} />
                 <Route path="/mayorista-admin/portales" element={<MayoristaPortalesPage />} />
                 <Route path="/mayorista-admin/listas" element={<MayoristaListasPage />} />
@@ -405,6 +413,17 @@ export default function App() {
                   path="/mayorista-admin/compradores"
                   element={<MayoristaCompradoresPage />}
                 />
+                <Route path="/platform/sync" element={<SyncStockAdminPage />} />
+                <Route path="/platform/mayorista" element={<MayoristaAdminPage />} />
+                <Route path="/platform/taller" element={<TallerAdminPage />} />
+                <Route path="/platform/preventa" element={<PreventaAdminPage />} />
+                <Route path="/platform/crm" element={<CrmAdminPage />} />
+                <Route path="/platform/envios" element={<EnviosAdminPage />} />
+                <Route path="/platform/wms" element={<WmsAdminPage />} />
+                <Route path="/platform/despacho" element={<DespachoAdminPage />} />
+                <Route path="/platform/campo" element={<CampoAdminPage />} />
+                <Route path="/platform/mantenimiento" element={<MantenimientoAdminPage />} />
+                <Route path="/platform/recluta" element={<ReclutaAdminPage />} />
 
                 {/* Main Dashboard Layout */}
                 <Route element={<DashboardLayout />}>
@@ -418,17 +437,6 @@ export default function App() {
                     path="/catalog-express"
                     element={<CatalogExpressManagePage />}
                   />
-                  <Route path="/platform/sync" element={<SyncStockAdminPage />} />
-                  <Route path="/platform/mayorista" element={<MayoristaAdminPage />} />
-                  <Route path="/platform/taller" element={<TallerAdminPage />} />
-                  <Route path="/platform/preventa" element={<PreventaAdminPage />} />
-                  <Route path="/platform/crm" element={<CrmAdminPage />} />
-                  <Route path="/platform/envios" element={<EnviosAdminPage />} />
-                  <Route path="/platform/wms" element={<WmsAdminPage />} />
-                  <Route path="/platform/despacho" element={<DespachoAdminPage />} />
-                  <Route path="/platform/campo" element={<CampoAdminPage />} />
-                  <Route path="/platform/mantenimiento" element={<MantenimientoAdminPage />} />
-                  <Route path="/platform/recluta" element={<ReclutaAdminPage />} />
                   <Route
                     path="/products/costos"
                     element={<RequireCapability capability="productos.view"><CostosInicialesPage /></RequireCapability>}
