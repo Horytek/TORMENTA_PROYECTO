@@ -2,11 +2,14 @@ import api from "@/api/axios";
 import type { CatalogoPublico, Comprador, ProductoDetalle } from "../types";
 
 const normalizeProductos = (list: unknown[]) =>
-  (list ?? []).map((p: Record<string, unknown>) => ({
-    ...p,
-    precio: Number(p.precio),
-    stock: Number(p.stock ?? 0),
-  }));
+  (list ?? []).map((raw) => {
+    const p = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+    return {
+      ...p,
+      precio: Number(p.precio),
+      stock: Number(p.stock ?? 0),
+    };
+  });
 
 export const getCatalogoPublico = async (idTenant: string | number): Promise<CatalogoPublico | null> => {
   const response = await api.get(`/catalogo/${idTenant}`);

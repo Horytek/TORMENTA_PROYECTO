@@ -189,7 +189,7 @@ export default function StoreProductPage() {
       )
     : null;
   const disp = resolved?.disponibilidad
-    ? {
+    ? ({
         ...dispLegacy!,
         ...resolved.disponibilidad,
         cta: {
@@ -197,6 +197,9 @@ export default function StoreProductPage() {
           ...(resolved.disponibilidad.cta || {}),
           allowAddToCart: resolved.cta === "comprar",
           showCart: resolved.cta === "comprar",
+          showWhatsapp: Boolean(
+            resolved.disponibilidad.cta?.showWhatsapp ?? dispLegacy?.cta.showWhatsapp
+          ),
           showEnviarSolicitud: resolved.cta === "solicitar",
           requiresSolicitud: resolved.cta === "solicitar",
           primary:
@@ -204,10 +207,14 @@ export default function StoreProductPage() {
               ? "solicitud"
               : resolved.cta === "comprar"
                 ? "cart"
-                : dispLegacy?.cta.primary,
+                : dispLegacy?.cta.primary ?? null,
         },
-        label: resolved.label || resolved.disponibilidad.label,
-        hint: resolved.hint || resolved.disponibilidad.hint,
+        label: resolved.label || resolved.disponibilidad.label || dispLegacy!.label,
+        hint:
+          resolved.hint ||
+          resolved.disponibilidad.hint ||
+          dispLegacy?.hint ||
+          "",
         estado:
           resolved.cta === "comprar"
             ? "disponible"
@@ -216,7 +223,7 @@ export default function StoreProductPage() {
               : resolved.cta === "no_disponible"
                 ? "agotado"
                 : dispLegacy?.estado || "consultar",
-      }
+      } as NonNullable<typeof dispLegacy>)
     : dispLegacy;
 
   const ctaLabel =

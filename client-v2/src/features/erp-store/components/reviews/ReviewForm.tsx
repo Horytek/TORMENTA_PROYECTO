@@ -73,7 +73,10 @@ export function ReviewForm({
           file_name: file.name,
         });
         if (res?.data?.url) {
-          next.push({ url: res.data.url, file_id: res.data.file_id });
+          next.push({
+            url: res.data.url,
+            file_id: res.data.file_id ?? undefined,
+          });
         }
       }
       if (next.length) setMediaItems((prev) => [...prev, ...next]);

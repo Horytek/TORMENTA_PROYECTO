@@ -288,7 +288,7 @@ export async function getProductAvailability(slug: string, id: number) {
 }
 
 export async function validateCartStore(
-  slug: string,
+  _slug: string,
   body: {
     items: {
       id_producto: number;
@@ -588,13 +588,25 @@ export async function registrarConsultaDisponibilidad(
   return data;
 }
 
-export async function getProductReviews(slug: string, id_producto: number) {
+export async function getProductReviews(
+  slug: string,
+  id_producto: number,
+  _params?: { sort?: string; page?: number; limit?: number }
+) {
   const { data } = await api.get(`/catalogo/store/${slug}/productos/${id_producto}`);
-  return { success: true, data: { items: data?.data?.resenas || [], summary: null } };
+  const items = (data?.data?.resenas || []) as unknown[];
+  return {
+    success: true,
+    data: {
+      reviews: items,
+      items,
+      summary: null as null,
+    },
+  };
 }
 
 export async function getReviewEligibilidad(_slug: string, _opts: unknown) {
-  return { success: true, data: { elegible: false, motivo: null } };
+  return { success: true, data: { puede: false, elegible: false, motivo: null as string | null } };
 }
 
 export async function listMisReviews(_slug: string) {
@@ -602,7 +614,7 @@ export async function listMisReviews(_slug: string) {
 }
 
 export async function getOpinionesGenerales(_slug: string, _limit?: number) {
-  return { success: true, data: [] };
+  return { success: true as const, data: { reviews: [] as unknown[] } };
 }
 
 export async function createProductReview(
@@ -634,34 +646,83 @@ export async function uploadReviewMedia(
   _body: { data_base64: string; file_name?: string }
 ) {
   // ERP aún no guarda media de reseñas; no romper el formulario
-  return { success: true, data: { url: null } };
+  return { success: true, data: { url: null as string | null, file_id: null as string | null } };
 }
 
+export type BuyerNotificacion = {
+  id_notificacion: number;
+  tipo: string;
+  titulo: string;
+  cuerpo?: string | null;
+  ref_tipo: string;
+  ref_id: number;
+  payload?: {
+    codigo?: string | null;
+    estado?: string;
+    id_producto?: number | null;
+    expires_at?: string | null;
+    producto_nombre?: string | null;
+  } | null;
+  leida: boolean;
+  leida_at?: string | null;
+  created_at?: string;
+};
+
 /* Solicitudes / notificaciones: no existen en ERP store — stubs seguros */
-export async function buyerCrearSolicitud() {
-  return { success: false, message: "Solicitudes de stock no disponibles en Tienda web ERP" };
+export async function buyerCrearSolicitud(
+  _slug: string,
+  _body?: Record<string, unknown>
+) {
+  return {
+    success: false as const,
+    duplicated: false,
+    message: "Solicitudes de stock no disponibles en Tienda web ERP",
+  };
 }
-export async function buyerListSolicitudes() {
-  return { success: true, data: [] };
+
+export async function buyerListSolicitudes(_slug: string) {
+  return { success: true as const, data: [] as Record<string, unknown>[] };
 }
-export async function buyerGetSolicitud() {
-  return { success: false };
+
+export async function buyerGetSolicitud(_slug: string, _id: number) {
+  return { success: false as const, data: null };
 }
-export async function buyerCancelarSolicitud() {
-  return { success: false };
+
+export async function buyerCancelarSolicitud(_slug: string, _id: number, _motivo?: string) {
+  return { success: false as const };
 }
-export async function buyerComprarDesdeSolicitud() {
-  return { success: false };
+
+export async function buyerComprarDesdeSolicitud(_slug: string, _id: number) {
+  return {
+    success: false as const,
+    data: undefined as
+      | {
+          id_solicitud: number;
+          id_producto: number;
+          id_variante?: number | null;
+          id_sucursal: number;
+          cantidad: number;
+          attrs?: Record<string, unknown>;
+          precio?: number;
+          producto_nombre?: string;
+          expires_at?: string;
+        }
+      | undefined,
+  };
 }
-export async function buyerListNotificaciones() {
-  return { success: true, data: [] };
+
+export async function buyerListNotificaciones(_slug: string) {
+  return { success: true as const, data: [] as BuyerNotificacion[] };
 }
-export async function buyerUnreadNotificaciones() {
-  return { success: true, data: { count: 0 } };
+
+export async function buyerUnreadNotificaciones(_slug: string) {
+  return { success: true as const, data: { count: 0 } };
 }
-export async function buyerLeerNotificacion() {
-  return { success: true };
+
+export async function buyerLeerNotificacion(_slug: string, _id: number) {
+  return { success: true as const };
 }
-export async function buyerLeerTodasNotificaciones() {
-  return { success: true };
+
+export async function buyerLeerTodasNotificaciones(_slug: string) {
+  return { success: true as const };
 }

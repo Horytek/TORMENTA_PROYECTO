@@ -26,7 +26,6 @@ import {
   RotateCcw,
   HandCoins,
   ArrowLeftRight,
-  MessageCircle,
   Store,
   RefreshCw,
   Factory,
