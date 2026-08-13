@@ -29,7 +29,17 @@ export function ProductCover({
 }: Props) {
   const cat = getCategoria(producto);
   const marca = getMarca(producto);
-  const lowStock = producto.stock > 0 && producto.stock <= 3;
+  const estado = producto.disponibilidad?.estado;
+  const badge =
+    estado === "consultar"
+      ? "Consultar"
+      : estado === "agotado"
+        ? "Agotado"
+        : estado === "proximamente"
+          ? "Próximamente"
+          : producto.stock > 0 && producto.stock <= 3
+            ? "Últimas"
+            : null;
 
   return (
     <article className={`store-cover-hover group ${className}`}>
@@ -42,15 +52,15 @@ export function ProductCover({
         ) : (
           <div className="size-full flex items-center justify-center store-muted text-sm">Sin foto</div>
         )}
-        {lowStock && (
+        {badge && (
           <span className="store-badge absolute top-2 left-2 text-[10px] font-semibold px-2.5 py-1 bg-[var(--vitrina-ink)] text-[var(--vitrina-mist)]">
-            Últimas
+            {badge}
           </span>
         )}
         <div className="absolute top-2 right-2 z-10">
           <FavoriteHeartButton id_producto={producto.id_producto} />
         </div>
-        {quickAdd && onAdd && producto.stock > 0 && (
+        {quickAdd && onAdd && producto.disponibilidad?.cta.allowAddToCart !== false && producto.stock > 0 && (
           <button
             type="button"
             onClick={(e) => {

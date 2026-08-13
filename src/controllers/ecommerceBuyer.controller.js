@@ -8,6 +8,7 @@ import {
   getStockMapPorProductos,
 } from "../services/ecommerce/InventoryService.js";
 import { listSucursalesActivas } from "../services/ecommerce/BranchService.js";
+import { attachDisponibilidad, parseConfig } from "../services/ecommerce/DisponibilidadService.js";
 import { registrarHistFulfillment } from "../services/ecommerce/PickupService.js";
 
 const BUYER_TOKEN_OPTS = {
@@ -227,16 +228,23 @@ async function mapProductoFavorito(connection, id_tienda, row) {
   if (sucursales.length > 0) {
     stock = await getStockTotalProducto(connection, id_tienda, row.id_producto);
   }
-  return {
-    id_producto: row.id_producto,
-    nombre: row.nombre,
-    precio: Number(row.precio),
-    stock,
-    activo: Boolean(row.activo),
-    imagen_url: row.imagen_url,
-    attrs_json: row.attrs_json,
-    favorito_desde: row.created_at,
-  };
+  const [[tienda]] = await connection.query(
+    `SELECT theme_json FROM tienda WHERE id_tienda = ? LIMIT 1`,
+    [id_tienda]
+  );
+  return attachDisponibilidad(
+    {
+      id_producto: row.id_producto,
+      nombre: row.nombre,
+      precio: Number(row.precio),
+      stock,
+      activo: Boolean(row.activo),
+      imagen_url: row.imagen_url,
+      attrs_json: row.attrs_json,
+      favorito_desde: row.created_at,
+    },
+    parseConfig(tienda?.theme_json)
+  );
 }
 
 export const listFavoritos = async (req, res) => {
@@ -370,7 +378,7 @@ export const getMisPedido = async (req, res) => {
     }
 
     const [items] = await connection.query(
-      `SELECT id_producto, nombre_snapshot AS nombre, cantidad, precio_unitario
+      `SELECT id_producto, nombre_snapshot AS nombre, cantidad, precio_unitario, attrs_snapshot
        FROM orden_item WHERE id_orden = ? AND id_tienda = ?`,
       [id_orden, req.id_tienda]
     );

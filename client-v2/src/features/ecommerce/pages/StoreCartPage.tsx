@@ -22,6 +22,7 @@ import { StoreFooter } from "../components/vitrina/StoreFooter";
 import { useStorefrontCatalog } from "../components/vitrina/hooks/useStorefrontCatalog";
 import { BranchAddressCard } from "../design/BranchAddressCard";
 import { BranchSelector } from "../design/BranchSelector";
+import { ConsultarWhatsAppButton } from "../design/ConsultarWhatsAppButton";
 import { buildWaMessage, waLink } from "../design/buildWaMessage";
 import { formatPen, type StoreProducto, type StoreSucursal, type StoreTienda } from "../types/storefront";
 import { cn } from "@/lib/utils";
@@ -194,7 +195,13 @@ export default function StoreCartPage() {
 
   const totalFinal = Math.round((subtotal + costoEnvio) * 100) / 100;
 
+  const consultItems = items.filter((i) => {
+    const p = productos.find((x) => x.id_producto === i.id_producto);
+    return p?.disponibilidad && !p.disponibilidad.cta.allowAddToCart;
+  });
+
   const canPay = (() => {
+    if (consultItems.length) return false;
     if (!token) return false;
     if (quoteMsg && fulfillment !== "pickup") return false;
     if (fulfillment === "pickup") return Boolean(id_sucursal);
@@ -210,7 +217,12 @@ export default function StoreCartPage() {
     mutationFn: () => {
       if (!token) throw new Error("Inicia sesión para comprar");
       return checkoutStore(slug, {
-        items: items.map((i) => ({ id_producto: i.id_producto, cantidad: i.cantidad })),
+        items: items.map((i) => ({
+          id_producto: i.id_producto,
+          id_variante: i.id_variante,
+          cantidad: i.cantidad,
+          selecciones: i.selecciones,
+        })),
         id_sucursal: fulfillment === "pickup" ? id_sucursal : id_sucursal || undefined,
         fulfillment,
         telefono_comprador: telefono.trim() || undefined,
@@ -310,7 +322,7 @@ export default function StoreCartPage() {
             <ul className="mt-8 space-y-3">
               {items.map((i) => (
                 <li
-                  key={i.id_producto}
+                  key={i.line_key}
                   className="vitrina-card border store-hairline bg-[var(--vitrina-elevated)] p-4 flex gap-4"
                 >
                   <div className="store-thumb size-20 bg-[var(--vitrina-fog)] shrink-0">
@@ -318,6 +330,12 @@ export default function StoreCartPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold truncate">{i.nombre}</div>
+                    {i.attrs_label && (
+                      <div className="text-xs store-muted mt-0.5">{i.attrs_label}</div>
+                    )}
+                    {consultItems.some((c) => c.line_key === i.line_key) && (
+                      <p className="text-xs text-amber-800 mt-1">⚠ Requiere confirmar disponibilidad</p>
+                    )}
                     <div className="text-sm mt-0.5" style={{ color: "var(--vitrina-accent)" }}>
                       {formatPen(i.precio)}
                     </div>
@@ -327,9 +345,9 @@ export default function StoreCartPage() {
                         min={1}
                         className="w-20 h-8 rounded-full"
                         value={i.cantidad}
-                        onChange={(e) => setQty(i.id_producto, Number(e.target.value))}
+                        onChange={(e) => setQty(i.line_key, Number(e.target.value))}
                       />
-                      <Button variant="ghost" size="sm" onClick={() => remove(i.id_producto)}>
+                      <Button variant="ghost" size="sm" onClick={() => remove(i.line_key)}>
                         Quitar
                       </Button>
                     </div>
@@ -531,6 +549,31 @@ export default function StoreCartPage() {
                 </>
               )}
 
+              {consultItems.length > 0 && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 space-y-2">
+                  <p className="text-sm text-amber-900 font-medium">
+                    Uno de los productos requiere confirmar disponibilidad.
+                  </p>
+                  {consultItems.map((item) => {
+                    const prod = productos.find((p) => p.id_producto === item.id_producto);
+                    if (!prod) return null;
+                    return (
+                      <ConsultarWhatsAppButton
+                        key={item.line_key}
+                        slug={slug}
+                        telefono={tienda.telefono}
+                        tiendaNombre={tienda.nombre}
+                        branch={activeBranch}
+                        product={prod}
+                        qty={item.cantidad}
+                        origen="carrito"
+                        label={`Consultar ${prod.nombre}`}
+                        mensajeIntro={tienda.disponibilidad_config?.mensaje_intro}
+                      />
+                    );
+                  })}
+                </div>
+              )}
               <button
                 type="button"
                 className="vitrina-pill w-full py-3 text-sm font-semibold text-white disabled:opacity-50"

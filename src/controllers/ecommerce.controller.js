@@ -21,14 +21,26 @@ import {
 import {
   getStockTotalProducto,
   getStockMapPorProductos,
+  getStockPorProductoSucursal,
   ensureDefaultVariante,
   ensureInventarioProducto,
   reservarStock,
   liberarReserva,
   confirmarVenta,
+  devolverVenta,
 } from "../services/ecommerce/InventoryService.js";
 import { registrarHistFulfillment, registrarOrdenCreada } from "../services/ecommerce/PickupService.js";
 import { cotizarEntrega, getOrCreateEntregaConfig } from "../services/ecommerce/DeliveryQuoteService.js";
+import {
+  getStorefrontProductoAttrs,
+  resolveVarianteYSnapshot,
+} from "../services/ecommerce/AttributeService.js";
+import { loadUserAccess, resolveSucursalFilter, assertOrdenSucursal } from "../services/ecommerce/RbacService.js";
+import {
+  parseConfig,
+  attachDisponibilidad,
+  buildDisponibilidad,
+} from "../services/ecommerce/DisponibilidadService.js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FRONTEND = () => process.env.FRONTEND_URL || "http://localhost:5173";
@@ -61,6 +73,7 @@ function parseThemeJson(raw) {
 }
 
 function mapPublicTienda(tienda) {
+  const theme_json = parseThemeJson(tienda.theme_json);
   return {
     slug: tienda.slug,
     nombre: tienda.nombre,
@@ -68,7 +81,8 @@ function mapPublicTienda(tienda) {
     logo_url: tienda.logo_url,
     descripcion: tienda.descripcion,
     telefono: tienda.telefono,
-    theme_json: parseThemeJson(tienda.theme_json),
+    theme_json,
+    disponibilidad_config: parseConfig(theme_json),
   };
 }
 
@@ -493,10 +507,14 @@ export const meEcommerce = async (req, res) => {
       `SELECT public_key, modo, conectado_en FROM mp_cuenta WHERE id_tienda = ? LIMIT 1`,
       [req.id_tienda]
     );
+    const access =
+      req.ecomAccess ||
+      (await loadUserAccess(connection, req.id_tienda, req.ecommerceUser.id_usuario));
     return res.json({
       success: true,
       data: {
         ...req.ecommerceUser,
+        ...access,
         tienda,
         mp_conectado: Boolean(mp),
         mp_public_key: mp?.public_key || null,
@@ -871,7 +889,12 @@ export const uploadProductoImagen = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      data: { id_imagen: ins.insertId, url: uploaded.url, file_id: uploaded.fileId },
+      data: {
+        id_imagen: ins.insertId,
+        url: uploaded.url,
+        file_id: uploaded.fileId,
+        es_principal: Boolean(es_principal),
+      },
     });
   } catch (error) {
     console.error("[ecommerce.uploadImagen]", error);
@@ -881,15 +904,140 @@ export const uploadProductoImagen = async (req, res) => {
   }
 };
 
-export const listOrdenes = async (req, res) => {
+export const listProductoImagenes = async (req, res) => {
+  const id_producto = Number(req.params.id);
   let connection;
   try {
     connection = await getEcommerceConnection();
     const [rows] = await connection.query(
-      `SELECT id_orden, codigo, estado, estado_fulfillment, total, moneda, email_comprador, nombre_comprador, mp_payment_id, created_at
-       FROM orden WHERE id_tienda = ?
-       ORDER BY created_at DESC LIMIT 100`,
-      [req.id_tienda]
+      `SELECT id_imagen, url, file_id, orden, es_principal, id_variante
+       FROM producto_imagen WHERE id_producto = ? AND id_tienda = ?
+       ORDER BY es_principal DESC, orden ASC, id_imagen ASC`,
+      [id_producto, req.id_tienda]
+    );
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("[ecommerce.listImagenes]", error);
+    return res.status(500).json({ success: false, message: "Error." });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+export const setProductoImagenPrincipal = async (req, res) => {
+  const id_producto = Number(req.params.id);
+  const id_imagen = Number(req.params.idImagen);
+  let connection;
+  try {
+    connection = await getEcommerceConnection();
+    const [[img]] = await connection.query(
+      `SELECT id_imagen FROM producto_imagen
+       WHERE id_imagen = ? AND id_producto = ? AND id_tienda = ? LIMIT 1`,
+      [id_imagen, id_producto, req.id_tienda]
+    );
+    if (!img) return res.status(404).json({ success: false, message: "Imagen no encontrada." });
+    await connection.query(
+      `UPDATE producto_imagen SET es_principal = 0 WHERE id_producto = ? AND id_tienda = ?`,
+      [id_producto, req.id_tienda]
+    );
+    await connection.query(
+      `UPDATE producto_imagen SET es_principal = 1 WHERE id_imagen = ? AND id_tienda = ?`,
+      [id_imagen, req.id_tienda]
+    );
+    return res.json({ success: true });
+  } catch (error) {
+    console.error("[ecommerce.setPrincipal]", error);
+    return res.status(500).json({ success: false, message: "Error." });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+export const reorderProductoImagenes = async (req, res) => {
+  const id_producto = Number(req.params.id);
+  const ids = Array.isArray(req.body.ids) ? req.body.ids.map(Number) : [];
+  let connection;
+  try {
+    connection = await getEcommerceConnection();
+    let orden = 0;
+    for (const id_imagen of ids) {
+      await connection.query(
+        `UPDATE producto_imagen SET orden = ? WHERE id_imagen = ? AND id_producto = ? AND id_tienda = ?`,
+        [orden++, id_imagen, id_producto, req.id_tienda]
+      );
+    }
+    return res.json({ success: true });
+  } catch (error) {
+    console.error("[ecommerce.reorderImagenes]", error);
+    return res.status(500).json({ success: false, message: "Error." });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+export const deleteProductoImagen = async (req, res) => {
+  const id_producto = Number(req.params.id);
+  const id_imagen = Number(req.params.idImagen);
+  let connection;
+  try {
+    connection = await getEcommerceConnection();
+    const [[img]] = await connection.query(
+      `SELECT id_imagen, file_id, es_principal FROM producto_imagen
+       WHERE id_imagen = ? AND id_producto = ? AND id_tienda = ? LIMIT 1`,
+      [id_imagen, id_producto, req.id_tienda]
+    );
+    if (!img) return res.status(404).json({ success: false, message: "Imagen no encontrada." });
+    if (img.file_id) {
+      try {
+        await borrarDeImageKit(img.file_id);
+      } catch {
+        /* noop */
+      }
+    }
+    await connection.query(
+      `DELETE FROM producto_imagen WHERE id_imagen = ? AND id_tienda = ?`,
+      [id_imagen, req.id_tienda]
+    );
+    if (img.es_principal) {
+      const [[next]] = await connection.query(
+        `SELECT id_imagen FROM producto_imagen
+         WHERE id_producto = ? AND id_tienda = ? ORDER BY orden ASC, id_imagen ASC LIMIT 1`,
+        [id_producto, req.id_tienda]
+      );
+      if (next) {
+        await connection.query(
+          `UPDATE producto_imagen SET es_principal = 1 WHERE id_imagen = ? AND id_tienda = ?`,
+          [next.id_imagen, req.id_tienda]
+        );
+      }
+    }
+    return res.json({ success: true });
+  } catch (error) {
+    console.error("[ecommerce.deleteImagen]", error);
+    return res.status(500).json({ success: false, message: "Error." });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+export const listOrdenes = async (req, res) => {
+  const scope = resolveSucursalFilter(
+    req.ecomAccess,
+    req.query.id_sucursal || req.query.sucursal,
+    "o"
+  );
+  if (scope.forbidden) {
+    return res.status(403).json({ success: false, message: "Sucursal no permitida." });
+  }
+  let connection;
+  try {
+    connection = await getEcommerceConnection();
+    const [rows] = await connection.query(
+      `SELECT o.id_orden, o.codigo, o.estado, o.estado_fulfillment, o.total, o.moneda,
+              o.email_comprador, o.nombre_comprador, o.mp_payment_id, o.created_at, o.id_sucursal
+       FROM orden o WHERE o.id_tienda = ? ${scope.sql}
+       ORDER BY o.created_at DESC LIMIT 100`,
+      [req.id_tienda, ...scope.params]
     );
     return res.json({ success: true, data: rows });
   } catch (error) {
@@ -912,6 +1060,11 @@ export const getOrden = async (req, res) => {
     if (!orden) {
       return res.status(404).json({ success: false, message: "Orden no encontrada." });
     }
+    try {
+      assertOrdenSucursal(req.ecomAccess, orden.id_sucursal);
+    } catch (err) {
+      return res.status(403).json({ success: false, message: err.message });
+    }
     const [detalle] = await connection.query(
       `SELECT * FROM orden_item WHERE id_orden = ? AND id_tienda = ?`,
       [id, req.id_tienda]
@@ -920,6 +1073,103 @@ export const getOrden = async (req, res) => {
   } catch (error) {
     console.error("[ecommerce.getOrden]", error);
     return res.status(500).json({ success: false, message: "Error." });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
+async function revertirInventarioOrden(connection, orden) {
+  const pending = orden.estado === "pending";
+  const approved = orden.estado === "approved";
+  if (!pending && !approved) return;
+
+  const [detalle] = await connection.query(
+    `SELECT id_producto, id_variante, cantidad FROM orden_item WHERE id_orden = ? AND id_tienda = ?`,
+    [orden.id_orden, orden.id_tienda]
+  );
+
+  for (const d of detalle) {
+    if (orden.id_sucursal && d.id_variante) {
+      if (pending) {
+        await liberarReserva(connection, {
+          id_tienda: orden.id_tienda,
+          id_variante: d.id_variante,
+          id_sucursal: orden.id_sucursal,
+          cantidad: d.cantidad,
+          ref_tipo: "orden",
+          ref_id: orden.id_orden,
+        });
+      } else {
+        await devolverVenta(connection, {
+          id_tienda: orden.id_tienda,
+          id_variante: d.id_variante,
+          id_sucursal: orden.id_sucursal,
+          cantidad: d.cantidad,
+          ref_tipo: "orden",
+          ref_id: orden.id_orden,
+        });
+      }
+    } else if (approved) {
+      await connection.query(
+        `UPDATE producto SET stock = stock + ? WHERE id_producto = ? AND id_tienda = ?`,
+        [d.cantidad, d.id_producto, orden.id_tienda]
+      );
+    }
+  }
+}
+
+export const deleteOrdenes = async (req, res) => {
+  const ids = [...new Set((req.body?.ids || []).map(Number).filter((id) => Number.isInteger(id) && id > 0))];
+  const id_tienda = req.id_tienda;
+  let connection;
+  try {
+    if (!ids.length) {
+      return res.status(400).json({ success: false, message: "Indica al menos un pedido." });
+    }
+    connection = await getEcommerceConnection();
+    await connection.beginTransaction();
+
+    const placeholders = ids.map(() => "?").join(",");
+    const [ordenes] = await connection.query(
+      `SELECT * FROM orden WHERE id_tienda = ? AND id_orden IN (${placeholders}) FOR UPDATE`,
+      [id_tienda, ...ids]
+    );
+    if (!ordenes.length) {
+      await connection.rollback();
+      return res.status(404).json({ success: false, message: "No se encontraron pedidos de esta tienda." });
+    }
+
+    const foundIds = ordenes.map((o) => o.id_orden);
+    const foundPlaceholders = foundIds.map(() => "?").join(",");
+
+    for (const orden of ordenes) {
+      await revertirInventarioOrden(connection, orden);
+    }
+
+    try {
+      await connection.query(
+        `UPDATE ecom_review SET id_orden = NULL WHERE id_tienda = ? AND id_orden IN (${foundPlaceholders})`,
+        [id_tienda, ...foundIds]
+      );
+    } catch (err) {
+      if (err?.code !== "ER_NO_SUCH_TABLE") throw err;
+    }
+    await connection.query(
+      `DELETE FROM orden WHERE id_tienda = ? AND id_orden IN (${foundPlaceholders})`,
+      [id_tienda, ...foundIds]
+    );
+
+    await connection.commit();
+    return res.json({
+      success: true,
+      data: { deleted: foundIds.length, ids: foundIds },
+    });
+  } catch (error) {
+    if (connection) {
+      try { await connection.rollback(); } catch { /* noop */ }
+    }
+    console.error("[ecommerce.deleteOrdenes]", { id_tienda, ids, message: error.message });
+    return res.status(500).json({ success: false, message: "No se pudieron borrar los pedidos." });
   } finally {
     if (connection) connection.release();
   }
@@ -943,6 +1193,7 @@ export const getStoreBySlug = async (req, res) => {
     }
 
     const sucursales = await listSucursalesActivas(connection, tienda.id_tienda);
+    const dispCfg = parseConfig(tienda.theme_json);
 
     const [productosRaw] = await connection.query(
       `SELECT p.id_producto, p.nombre, p.descripcion, p.precio, p.stock, p.sku, p.categoria, p.attrs_json,
@@ -960,12 +1211,13 @@ export const getStoreBySlug = async (req, res) => {
       const stockMap = await getStockMapPorProductos(connection, tienda.id_tienda, id_sucursal);
       for (const p of productosRaw) {
         const stock = stockMap.get(p.id_producto) ?? 0;
-        if (stock > 0) productos.push({ ...p, stock });
+        const mapped = attachDisponibilidad({ ...p, stock }, dispCfg);
+        if (mapped.disponibilidad.estado !== "agotado") productos.push(mapped);
       }
     } else {
       for (const p of productosRaw) {
-        const stock = Number(p.stock);
-        if (stock > 0) productos.push({ ...p, stock });
+        const mapped = attachDisponibilidad({ ...p, stock: Number(p.stock) }, dispCfg);
+        if (mapped.disponibilidad.estado !== "agotado") productos.push(mapped);
       }
     }
 
@@ -1020,11 +1272,18 @@ export const getStoreProduct = async (req, res) => {
       id_sucursal
     );
     producto.stock = sucursales.length ? stockBranch : Number(producto.stock);
+    const dispCfg = parseConfig(tienda.theme_json);
+    Object.assign(producto, attachDisponibilidad(producto, dispCfg));
 
     const [imagenes] = await connection.query(
       `SELECT id_imagen, url, es_principal, orden FROM producto_imagen
        WHERE id_producto = ? AND id_tienda = ? ORDER BY es_principal DESC, orden ASC`,
       [producto.id_producto, tienda.id_tienda]
+    );
+    const attrPack = await getStorefrontProductoAttrs(
+      connection,
+      tienda.id_tienda,
+      producto.id_producto
     );
     return res.json({
       success: true,
@@ -1033,6 +1292,8 @@ export const getStoreProduct = async (req, res) => {
         producto,
         imagenes,
         sucursales: sucursales.map(mapPublicSucursal),
+        atributos: attrPack.atributos,
+        variantes: attrPack.variantes,
       },
     });
   } catch (error) {
@@ -1071,7 +1332,7 @@ export const checkoutStore = async (req, res) => {
     await connection.beginTransaction();
 
     const [[tienda]] = await connection.query(
-      `SELECT id_tienda, slug, nombre, estado FROM tienda WHERE slug = ? FOR UPDATE`,
+      `SELECT id_tienda, slug, nombre, estado, theme_json FROM tienda WHERE slug = ? FOR UPDATE`,
       [slug]
     );
     if (!tienda || tienda.estado !== "active") {
@@ -1101,7 +1362,7 @@ export const checkoutStore = async (req, res) => {
 
     for (const item of items) {
       const [[prod]] = await connection.query(
-        `SELECT id_producto, nombre, precio, stock FROM producto
+        `SELECT id_producto, nombre, precio, stock, attrs_json FROM producto
          WHERE id_producto = ? AND id_tienda = ? AND activo = 1 FOR UPDATE`,
         [item.id_producto, tienda.id_tienda]
       );
@@ -1109,11 +1370,53 @@ export const checkoutStore = async (req, res) => {
         await connection.rollback();
         return res.status(400).json({ success: false, message: `Producto ${item.id_producto} no disponible.` });
       }
+      let resolved;
+      try {
+        resolved = await resolveVarianteYSnapshot(
+          connection,
+          tienda.id_tienda,
+          prod.id_producto,
+          item.selecciones || []
+        );
+      } catch (err) {
+        await connection.rollback();
+        return res.status(err.status || 400).json({
+          success: false,
+          message: err.message || `No se pudo resolver ${prod.nombre}.`,
+        });
+      }
+      let stockForDisp = useBranchInv
+        ? await getStockTotalProducto(
+            connection,
+            tienda.id_tienda,
+            prod.id_producto,
+            idSucursalBody || null
+          )
+        : Number(prod.stock);
+      if (useBranchInv && resolved.id_variante && idSucursalBody) {
+        const rows = await getStockPorProductoSucursal(
+          connection,
+          tienda.id_tienda,
+          prod.id_producto,
+          idSucursalBody
+        );
+        const vRow = rows.find((r) => Number(r.id_variante) === Number(resolved.id_variante));
+        if (vRow) stockForDisp = Number(vRow.disponible) || 0;
+      }
+      const disp = buildDisponibilidad(stockForDisp, prod.attrs_json, parseConfig(tienda.theme_json));
+      if (!disp.cta.allowAddToCart) {
+        await connection.rollback();
+        return res.status(400).json({
+          success: false,
+          message: `Confirma la disponibilidad de ${prod.nombre} por WhatsApp antes de comprar.`,
+        });
+      }
       const sub = Number(prod.precio) * item.cantidad;
       subtotal += sub;
       lineItems.push({
         id_producto: prod.id_producto,
-        id_variante: item.id_variante || null,
+        id_variante: resolved.id_variante || item.id_variante || null,
+        attrs_snapshot: resolved.attrs_snapshot,
         nombre: prod.nombre,
         cantidad: item.cantidad,
         precio: Number(prod.precio),
@@ -1347,8 +1650,8 @@ export const checkoutStore = async (req, res) => {
     for (const li of lineItems) {
       await connection.query(
         `INSERT INTO orden_item
-          (id_orden, id_tienda, id_producto, id_variante, nombre_snapshot, cantidad, precio_unitario)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          (id_orden, id_tienda, id_producto, id_variante, nombre_snapshot, cantidad, precio_unitario, attrs_snapshot)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id_orden,
           tienda.id_tienda,
@@ -1357,6 +1660,7 @@ export const checkoutStore = async (req, res) => {
           li.nombre,
           li.cantidad,
           li.precio,
+          li.attrs_snapshot ? JSON.stringify(li.attrs_snapshot) : null,
         ]
       );
       if (useBranchInv && li.id_variante) {

@@ -6,6 +6,7 @@ import {
   parseQrPayload,
 } from "../services/ecommerce/PickupService.js";
 import { scheduleReviewInvite } from "../services/ecommerce/ReviewService.js";
+import { resolveSucursalFilter, assertOrdenSucursal } from "../services/ecommerce/RbacService.js";
 
 const ESTADOS_LABEL = {
   pendiente_confirmacion: "Pendiente",
@@ -59,6 +60,10 @@ function mapOrdenPickup(row) {
 export const listPickupOrdenes = async (req, res) => {
   const { q, estado_fulfillment, sucursal, fulfillment, desde, hasta, page = 1, limit = 30 } = req.query;
   const id_tienda = req.id_tienda;
+  const scope = resolveSucursalFilter(req.ecomAccess, sucursal || req.query.id_sucursal, "o");
+  if (scope.forbidden) {
+    return res.status(403).json({ success: false, message: "Sucursal no permitida." });
+  }
   let connection;
   try {
     connection = await getEcommerceConnection();
@@ -74,6 +79,8 @@ export const listPickupOrdenes = async (req, res) => {
       WHERE o.id_tienda = ?
     `;
     const params = [id_tienda];
+    sql += scope.sql;
+    params.push(...scope.params);
 
     if (fulfillment) {
       sql += ` AND o.fulfillment = ?`;
@@ -83,10 +90,6 @@ export const listPickupOrdenes = async (req, res) => {
     if (estado_fulfillment) {
       sql += ` AND o.estado_fulfillment = ?`;
       params.push(estado_fulfillment);
-    }
-    if (sucursal) {
-      sql += ` AND o.id_sucursal = ?`;
-      params.push(Number(sucursal));
     }
     if (desde) {
       sql += ` AND o.created_at >= ?`;
@@ -113,8 +116,8 @@ export const listPickupOrdenes = async (req, res) => {
 
     const [rows] = await connection.query(sql, params);
 
-    const kpiParams = [id_tienda];
-    let kpiWhere = `WHERE id_tienda = ?`;
+    const kpiParams = [id_tienda, ...scope.params];
+    let kpiWhere = `WHERE id_tienda = ?${scope.sql.replace(/\bo\./g, "")}`;
     if (fulfillment) {
       kpiWhere += ` AND fulfillment = ?`;
       kpiParams.push(String(fulfillment));
@@ -168,9 +171,14 @@ export const getPickupOrden = async (req, res) => {
     if (!orden) {
       return res.status(404).json({ success: false, message: "Pedido no encontrado." });
     }
+    try {
+      assertOrdenSucursal(req.ecomAccess, orden.id_sucursal);
+    } catch (err) {
+      return res.status(403).json({ success: false, message: err.message });
+    }
 
     const [items] = await connection.query(
-      `SELECT id_producto, nombre_snapshot AS nombre, cantidad, precio_unitario
+      `SELECT id_producto, nombre_snapshot AS nombre, cantidad, precio_unitario, attrs_snapshot
        FROM orden_item WHERE id_orden = ? AND id_tienda = ?`,
       [id_orden, id_tienda]
     );
@@ -213,6 +221,12 @@ export const patchPickupEstado = async (req, res) => {
     if (!orden) {
       await connection.rollback();
       return res.status(404).json({ success: false, message: "Pedido no encontrado." });
+    }
+    try {
+      assertOrdenSucursal(req.ecomAccess, orden.id_sucursal);
+    } catch (err) {
+      await connection.rollback();
+      return res.status(403).json({ success: false, message: err.message });
     }
 
     const desde = orden.estado_fulfillment || "pago_pendiente";
@@ -406,6 +420,12 @@ export const validarRetiro = async (req, res) => {
       });
     }
 
+    try {
+      assertOrdenSucursal(req.ecomAccess, orden.id_sucursal);
+    } catch (err) {
+      return res.status(403).json({ success: false, message: err.message });
+    }
+
     if (orden.fulfillment && orden.fulfillment !== "pickup") {
       return res.status(400).json({
         success: false,
@@ -442,7 +462,7 @@ export const validarRetiro = async (req, res) => {
     }
 
     const [items] = await connection.query(
-      `SELECT nombre_snapshot AS nombre, cantidad, precio_unitario
+      `SELECT nombre_snapshot AS nombre, cantidad, precio_unitario, attrs_snapshot
        FROM orden_item WHERE id_orden = ? AND id_tienda = ?`,
       [orden.id_orden, id_tienda]
     );
@@ -486,6 +506,12 @@ export const confirmarEntrega = async (req, res) => {
         code: "NOT_FOUND",
         message: "Este código no corresponde a un pedido válido.",
       });
+    }
+    try {
+      assertOrdenSucursal(req.ecomAccess, orden.id_sucursal);
+    } catch (err) {
+      await connection.rollback();
+      return res.status(403).json({ success: false, message: err.message });
     }
 
     if (orden.estado_fulfillment === "entregado") {
@@ -571,6 +597,10 @@ export const getPickupDashboardKpis = async (req, res) => {
   let connection;
   try {
     connection = await getEcommerceConnection();
+    const scope = resolveSucursalFilter(req.ecomAccess, req.query.id_sucursal || req.query.sucursal, "orden");
+    if (scope.forbidden) {
+      return res.status(403).json({ success: false, message: "Sucursal no permitida." });
+    }
     const [[kpis]] = await connection.query(
       `SELECT
          SUM(CASE WHEN estado_fulfillment = 'pago_confirmado' THEN 1 ELSE 0 END) AS pago_confirmado,
@@ -578,8 +608,8 @@ export const getPickupDashboardKpis = async (req, res) => {
          SUM(CASE WHEN estado_fulfillment = 'listo_recoger' THEN 1 ELSE 0 END) AS listos_retiro,
          SUM(CASE WHEN estado_fulfillment = 'entregado' AND DATE(delivered_at) = CURDATE() THEN 1 ELSE 0 END) AS entregados_hoy,
          SUM(CASE WHEN estado_fulfillment IN ('pago_pendiente','pago_confirmado','preparando','listo_recoger') THEN 1 ELSE 0 END) AS activos
-       FROM orden WHERE id_tienda = ? AND fulfillment = 'pickup'`,
-      [id_tienda]
+       FROM orden WHERE id_tienda = ? AND fulfillment = 'pickup' ${scope.sql}`,
+      [id_tienda, ...scope.params]
     );
     return res.json({ success: true, data: kpis });
   } catch (error) {

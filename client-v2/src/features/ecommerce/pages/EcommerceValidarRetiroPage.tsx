@@ -6,6 +6,8 @@ import { pickupValidar, pickupConfirmarEntrega } from "../api/ecommerce";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatPen } from "../types/storefront";
+import { AttrsSnapshotText } from "../components/AttrsSnapshotText";
+import { AdminBranchFilterBar, useScopedSucursalId } from "../components/admin/AdminBranchFilterBar";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +23,7 @@ type OrdenValidada = {
   sucursal_nombre?: string;
   delivery_method?: string;
   items_count?: number;
-  items?: { nombre: string; cantidad: number; precio_unitario: number }[];
+  items?: { nombre: string; cantidad: number; precio_unitario: number; attrs_snapshot?: unknown }[];
 };
 
 type DoneInfo = {
@@ -65,6 +67,7 @@ function messageFromError(err: unknown, fallback: string): { code?: string; mess
 }
 
 export default function EcommerceValidarRetiroPage() {
+  const id_sucursal = useScopedSucursalId();
   const [phase, setPhase] = useState<UiPhase>("idle");
   const [manualOpen, setManualOpen] = useState(false);
   const [codigoManual, setCodigoManual] = useState("");
@@ -136,7 +139,8 @@ export default function EcommerceValidarRetiroPage() {
   }, []);
 
   const validarMut = useMutation({
-    mutationFn: (body: { token?: string; codigo?: string }) => pickupValidar(body),
+    mutationFn: (body: { token?: string; codigo?: string }) =>
+      pickupValidar({ ...body, id_sucursal: id_sucursal || undefined }),
     onSuccess: (res) => {
       validarPendingRef.current = false;
       stopCamera();
@@ -271,11 +275,14 @@ export default function EcommerceValidarRetiroPage() {
 
   return (
     <div className="space-y-5 max-w-lg mx-auto w-full pb-[env(safe-area-inset-bottom)]">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-semibold">Recojo en tienda</h1>
-        <p className="text-stone-500 text-sm mt-1">
-          Escanea el QR del cliente y confirma la entrega
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-semibold">Recojo en tienda</h1>
+          <p className="text-stone-500 text-sm mt-1">
+            Escanea el QR del cliente y confirma la entrega
+          </p>
+        </div>
+        <AdminBranchFilterBar />
       </div>
 
       {phase === "idle" && (
@@ -381,6 +388,7 @@ export default function EcommerceValidarRetiroPage() {
               {orden.items!.map((it, i) => (
                 <li key={i}>
                   {it.nombre} × {it.cantidad}
+                  <AttrsSnapshotText snapshot={it.attrs_snapshot} />
                 </li>
               ))}
             </ul>

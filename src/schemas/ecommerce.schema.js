@@ -47,6 +47,16 @@ export const ecommerceCheckoutSchema = z.object({
         id_producto: z.number().int().positive(),
         id_variante: z.number().int().positive().optional().nullable(),
         cantidad: z.number().int().positive().max(99),
+        selecciones: z
+          .array(
+            z.object({
+              id_atributo: z.number().int().positive(),
+              id_valor: z.number().int().positive().optional().nullable(),
+              valor: z.union([z.string(), z.number()]).optional().nullable(),
+            })
+          )
+          .optional()
+          .nullable(),
       })
     )
     .min(1),
@@ -296,6 +306,19 @@ export const ecommerceThemeSchema = z
         whatsapp: z.boolean().optional(),
       })
       .optional(),
+    disponibilidad: z
+      .object({
+        consulta_activa: z.boolean().optional(),
+        metodo_default: z.enum(["auto", "directa", "consultar", "ambos"]).optional(),
+        umbral_consulta: z.number().int().min(0).max(999).optional(),
+        umbral_agotado: z.number().int().min(0).max(999).optional(),
+        mostrar_boton_producto: z.boolean().optional(),
+        mostrar_boton_variante: z.boolean().optional(),
+        mensaje_confianza: z.string().max(400).optional(),
+        mensaje_intro: z.string().max(400).optional(),
+        validez_confirmacion_min: z.number().int().min(15).max(10080).optional(),
+      })
+      .optional(),
     surfaces: z
       .object({
         ink: z.string().max(32).optional(),
@@ -384,4 +407,132 @@ export const ecommerceReviewEstadoSchema = z.object({
 
 export const ecommerceReviewReplySchema = z.object({
   cuerpo: z.string().min(1).max(4000),
+});
+
+export const ecommerceDeleteOrdenesSchema = z.object({
+  ids: z.array(z.number().int().positive()).min(1).max(100),
+});
+
+export const ecommerceDisponibilidadConfigSchema = z.object({
+  consulta_activa: z.boolean().optional(),
+  metodo_default: z.enum(["auto", "directa", "consultar", "ambos"]).optional(),
+  umbral_consulta: z.number().int().min(0).max(999).optional(),
+  umbral_agotado: z.number().int().min(0).max(999).optional(),
+  mostrar_boton_producto: z.boolean().optional(),
+  mostrar_boton_variante: z.boolean().optional(),
+  mensaje_confianza: z.string().max(400).optional(),
+  mensaje_intro: z.string().max(400).optional(),
+  validez_confirmacion_min: z.number().int().min(15).max(10080).optional(),
+});
+
+export const ecommerceConsultaDisponibilidadSchema = z.object({
+  id_producto: z.number().int().positive(),
+  id_variante: z.number().int().positive().optional().nullable(),
+  id_sucursal: z.number().int().positive().optional().nullable(),
+  cantidad: z.number().int().positive().max(99).optional(),
+  attrs_snapshot: z
+    .array(
+      z.object({
+        nombre: z.string().max(120),
+        valor: z.string().max(200),
+      })
+    )
+    .max(30)
+    .optional()
+    .nullable(),
+  origen: z.string().max(40).optional().nullable(),
+});
+
+export const ecommerceAtributoSchema = z.object({
+  nombre: z.string().min(1).max(120),
+  codigo: z.string().max(60).optional().nullable(),
+  tipo: z
+    .enum([
+      "texto",
+      "numero",
+      "seleccion",
+      "seleccion_multiple",
+      "booleano",
+      "rango",
+      "color",
+      "medida",
+    ])
+    .optional(),
+  es_variante: z.boolean().optional(),
+  activo: z.boolean().optional(),
+  orden: z.number().int().optional(),
+  valores: z
+    .array(
+      z.object({
+        valor: z.string().min(1).max(120).optional(),
+        nombre: z.string().min(1).max(120).optional(),
+        hex: z.string().max(16).optional().nullable(),
+      })
+    )
+    .optional(),
+});
+
+export const ecommerceAtributoValorSchema = z.object({
+  valor: z.string().min(1).max(120),
+  hex: z.string().max(16).optional().nullable(),
+  orden: z.number().int().optional(),
+  activo: z.boolean().optional(),
+});
+
+export const ecommerceProductoAtributosSchema = z.object({
+  atributos: z.array(
+    z.object({
+      id_atributo: z.number().int().positive(),
+      visible_storefront: z.boolean().optional(),
+      requiere_seleccion: z.boolean().optional(),
+      obligatorio: z.boolean().optional(),
+      valor_fijo: z.string().max(255).optional().nullable(),
+      orden: z.number().int().optional(),
+      id_valores: z.array(z.number().int().positive()).optional(),
+    })
+  ),
+});
+
+export const ecommerceImagenReorderSchema = z.object({
+  ids: z.array(z.number().int().positive()).min(1),
+});
+
+export const ecommerceRolPatchSchema = z.object({
+  nombre: z.string().min(1).max(80).optional(),
+  acceso_global: z.boolean().optional(),
+  permisos: z.array(z.string().max(80)).optional(),
+});
+
+export const ecommerceUsuarioCreateSchema = z.object({
+  usua: z.string().min(2).max(80),
+  email: z.string().email(),
+  nombre: z.string().max(160).optional().nullable(),
+  password: z.string().min(6).max(128),
+  id_rol: z.number().int().positive().optional().nullable(),
+  acceso_global: z.boolean().optional(),
+  sucursales: z.array(z.number().int().positive()).optional(),
+});
+
+export const ecommerceUsuarioUpdateSchema = z.object({
+  email: z.string().email().optional(),
+  nombre: z.string().max(160).optional().nullable(),
+  password: z.string().min(6).max(128).optional(),
+  id_rol: z.number().int().positive().optional().nullable(),
+  acceso_global: z.boolean().optional(),
+  estado: z.boolean().optional(),
+  sucursales: z.array(z.number().int().positive()).optional(),
+});
+
+export const ecommerceTaxonomiaSchema = z.object({
+  tipo: z.enum(["marca", "categoria", "tag"]),
+  nombre: z.string().min(1).max(80),
+  activo: z.boolean().optional(),
+  orden: z.number().int().optional(),
+  ensure: z.boolean().optional(),
+});
+
+export const ecommerceTaxonomiaPatchSchema = z.object({
+  nombre: z.string().min(1).max(80).optional(),
+  activo: z.boolean().optional(),
+  orden: z.number().int().optional(),
 });

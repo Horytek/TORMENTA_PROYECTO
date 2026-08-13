@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { PackagePlus, ImagePlus, Trash2, Star, Tags, Pencil, X } from "lucide-react";
+import { PackagePlus, ImagePlus, Trash2, Star, Tags, Pencil, X, Library } from "lucide-react";
 import {
   ecommerceCreateProducto,
   ecommerceDeleteProducto,
@@ -13,12 +13,16 @@ import {
   getProductoAtributos,
   parseProductoAttrs,
 } from "../utils/productoAttrs";
+import { parseProductoCompra, type DisponibilidadManual, type MetodoCompra } from "../utils/disponibilidad";
 import { getMarca } from "../types/storefront";
 import { useEcommerceAuthStore } from "../store/useEcommerceAuthStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { ProductGalleryEditor } from "../components/admin/ProductGalleryEditor";
+import { ProductAttrsEditor } from "../components/admin/ProductAttrsEditor";
+import { TaxonomySelect } from "../components/admin/TaxonomySelect";
 
 type Producto = {
   id_producto: number;
@@ -41,7 +45,9 @@ type ProductForm = {
   marca: string;
   destacado: boolean;
   story: boolean;
-  tags: string;
+  tags: string[];
+  metodo: MetodoCompra;
+  disponibilidad: DisponibilidadManual;
 };
 
 const emptyForm = (): ProductForm => ({
@@ -53,7 +59,9 @@ const emptyForm = (): ProductForm => ({
   marca: "",
   destacado: false,
   story: false,
-  tags: "",
+  tags: [],
+  metodo: "auto",
+  disponibilidad: "auto",
 });
 
 function buildAttrsFromForm(
@@ -69,22 +77,24 @@ function buildAttrsFromForm(
   if (marca) attrs_json.marca = marca;
   else delete attrs_json.marca;
 
-  if (form.tags.trim()) {
-    attrs_json.tags = form.tags
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
+  if (form.tags.length) {
+    attrs_json.tags = form.tags;
   } else {
     delete attrs_json.tags;
   }
+  attrs_json.compra = {
+    metodo: form.metodo,
+    disponibilidad: form.disponibilidad,
+  };
   return attrs_json;
 }
 
 function formFromProducto(p: Producto): ProductForm {
   const attrs = parseProductoAttrs(p.attrs_json);
   const tags = Array.isArray(attrs.tags)
-    ? attrs.tags.filter((t): t is string => typeof t === "string").join(", ")
-    : "";
+    ? attrs.tags.filter((t): t is string => typeof t === "string" && t.trim().length > 0)
+    : [];
+  const compra = parseProductoCompra(p.attrs_json);
   return {
     nombre: p.nombre || "",
     descripcion: p.descripcion || "",
@@ -95,6 +105,8 @@ function formFromProducto(p: Producto): ProductForm {
     destacado: Boolean(attrs.destacado),
     story: Boolean(attrs.story),
     tags,
+    metodo: compra.metodo,
+    disponibilidad: compra.disponibilidad,
   };
 }
 
@@ -119,6 +131,7 @@ export default function EcommerceProductsPage() {
   const tid = useEcommerceAuthStore((s) => s.user?.id_tienda);
   const [form, setForm] = useState<ProductForm>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [formNonce, setFormNonce] = useState(0);
 
   const { data, isLoading } = useQuery({
     queryKey: ["ecom-productos", tid],
@@ -130,11 +143,40 @@ export default function EcommerceProductsPage() {
   const resetForm = () => {
     setForm(emptyForm());
     setEditingId(null);
+    setFormNonce((n) => n + 1);
+  };
+
+  const payloadFromForm = (base: Record<string, unknown> = {}) => ({
+    nombre: form.nombre.trim(),
+    descripcion: form.descripcion.trim() || null,
+    precio: Number(form.precio) || 0,
+    stock: Number(form.stock) || 0,
+    categoria: form.categoria.trim() || null,
+    attrs_json: buildAttrsFromForm(form, base),
+  });
+
+  const ensureProducto = async (): Promise<number | null> => {
+    if (editingId) return editingId;
+    if (!form.nombre.trim()) {
+      toast.error("Pon un nombre al producto primero");
+      return null;
+    }
+    const res = await ecommerceCreateProducto(payloadFromForm());
+    const id = Number(res?.data?.id_producto);
+    if (!id) {
+      toast.error("No se pudo crear el producto");
+      return null;
+    }
+    setEditingId(id);
+    qc.invalidateQueries({ queryKey: ["ecom-productos", tid] });
+    toast.success("Producto creado. Ya puedes subir fotos y características.");
+    return id;
   };
 
   const startEdit = (p: Producto) => {
     setEditingId(p.id_producto);
     setForm(formFromProducto(p));
+    setFormNonce((n) => n + 1);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -143,27 +185,18 @@ export default function EcommerceProductsPage() {
       if (editingId) {
         const existing = productos.find((x) => x.id_producto === editingId);
         const base = parseProductoAttrs(existing?.attrs_json);
-        return ecommerceUpdateProducto(editingId, {
-          nombre: form.nombre.trim(),
-          descripcion: form.descripcion.trim() || null,
-          precio: Number(form.precio) || 0,
-          stock: Number(form.stock) || 0,
-          categoria: form.categoria.trim() || null,
-          attrs_json: buildAttrsFromForm(form, base),
-        });
+        return ecommerceUpdateProducto(editingId, payloadFromForm(base));
       }
-      return ecommerceCreateProducto({
-        nombre: form.nombre.trim(),
-        descripcion: form.descripcion.trim() || null,
-        precio: Number(form.precio) || 0,
-        stock: Number(form.stock) || 0,
-        categoria: form.categoria.trim() || null,
-        attrs_json: buildAttrsFromForm(form),
-      });
+      return ecommerceCreateProducto(payloadFromForm());
     },
-    onSuccess: () => {
-      toast.success(editingId ? "Producto actualizado" : "Producto creado");
-      resetForm();
+    onSuccess: (res) => {
+      const newId = Number(res?.data?.id_producto);
+      if (!editingId && newId) {
+        setEditingId(newId);
+        toast.success("Producto creado. Sube fotos y elige talla/color abajo.");
+      } else {
+        toast.success("Producto actualizado");
+      }
       qc.invalidateQueries({ queryKey: ["ecom-productos", tid] });
     },
     onError: (e: Error) => toast.error(e.message || "Error"),
@@ -211,23 +244,27 @@ export default function EcommerceProductsPage() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Productos</h1>
           <p className="text-stone-500 text-sm mt-1">
-            Catálogo de la tienda. Tallas/colores de vitrina →{" "}
-            <Link to="/ecommerce-admin/atributos" className="text-teal-700 hover:underline">
-              Atributos
-            </Link>
-            ; stock por sucursal → Inventario.
+            Catálogo de la tienda. Atributos (talla, color, etc.) se asignan por producto; stock por sucursal → Inventario.
           </p>
         </div>
-        <Button variant="outline" size="sm" asChild>
-          <Link to="/ecommerce-admin/atributos">
-            <Tags className="size-3.5 mr-1.5" />
-            Gestionar atributos
-          </Link>
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" className="min-h-11" asChild>
+            <Link to="/ecommerce-admin/catalogo">
+              <Library className="size-3.5 mr-1.5" />
+              Marcas y categorías
+            </Link>
+          </Button>
+          <Button variant="outline" size="sm" className="min-h-11" asChild>
+            <Link to="/ecommerce-admin/atributos">
+              <Tags className="size-3.5 mr-1.5" />
+              Gestionar atributos
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <form
-        className={`rounded-xl border bg-white p-4 grid md:grid-cols-2 gap-3 ${
+        className={`rounded-xl border bg-white p-4 grid grid-cols-1 md:grid-cols-2 gap-4 ${
           editingId ? "border-teal-300 shadow-sm shadow-teal-50" : "border-stone-200"
         }`}
         onSubmit={(e) => {
@@ -240,8 +277,8 @@ export default function EcommerceProductsPage() {
           <p className="text-sm font-medium text-stone-700">
             {editingId ? "Editar producto" : "Nuevo producto"}
           </p>
-          {editingId && (
-            <Button type="button" size="sm" variant="ghost" onClick={resetForm}>
+          {(editingId || form.nombre) && (
+            <Button type="button" size="sm" variant="ghost" className="min-h-11" onClick={resetForm}>
               <X className="size-3.5 mr-1" />
               Cancelar
             </Button>
@@ -249,67 +286,130 @@ export default function EcommerceProductsPage() {
         </div>
         <div className="md:col-span-2">
           <Label>Nombre</Label>
-          <Input value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
+          <Input
+            className="min-h-11"
+            value={form.nombre}
+            onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+          />
         </div>
         <div className="md:col-span-2">
           <Label>Descripción</Label>
           <Input
+            className="min-h-11"
             value={form.descripcion}
             onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
           />
         </div>
         <div>
           <Label>Precio (S/)</Label>
-          <Input value={form.precio} onChange={(e) => setForm({ ...form, precio: e.target.value })} />
+          <Input
+            className="min-h-11"
+            inputMode="decimal"
+            value={form.precio}
+            onChange={(e) => setForm({ ...form, precio: e.target.value })}
+          />
         </div>
         <div>
           <Label>{editingId ? "Stock (referencia)" : "Stock inicial"}</Label>
-          <Input value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} />
+          <Input
+            className="min-h-11"
+            inputMode="numeric"
+            value={form.stock}
+            onChange={(e) => setForm({ ...form, stock: e.target.value })}
+          />
         </div>
         <div>
           <Label>Marca</Label>
-          <Input
+          <TaxonomySelect
+            tipo="marca"
             value={form.marca}
-            onChange={(e) => setForm({ ...form, marca: e.target.value })}
-            placeholder="Ej. Levi's, Nike…"
+            onChange={(marca) => setForm({ ...form, marca })}
+            placeholder="Buscar o crear marca"
           />
         </div>
         <div>
           <Label>Categoría</Label>
-          <Input
+          <TaxonomySelect
+            tipo="categoria"
             value={form.categoria}
-            onChange={(e) => setForm({ ...form, categoria: e.target.value })}
-            placeholder="Pantalón jeans, Polos…"
+            onChange={(categoria) => setForm({ ...form, categoria })}
+            placeholder="Buscar o crear categoría"
           />
         </div>
         <div className="md:col-span-2">
-          <Label>Tags (coma)</Label>
-          <Input
+          <Label>Tags</Label>
+          <TaxonomySelect
+            tipo="tag"
+            multiple
             value={form.tags}
-            onChange={(e) => setForm({ ...form, tags: e.target.value })}
-            placeholder="nuevo, oferta…"
+            onChange={(tags) => setForm({ ...form, tags })}
+            placeholder="Buscar o crear tags"
           />
         </div>
-        <div className="md:col-span-2 flex flex-wrap gap-4 text-sm">
-          <label className="inline-flex items-center gap-2">
+        <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-1">
+          <label className="inline-flex items-center gap-2 min-h-11 text-sm">
             <input
               type="checkbox"
+              className="size-4"
               checked={form.destacado}
               onChange={(e) => setForm({ ...form, destacado: e.target.checked })}
             />
             Destacado
           </label>
-          <label className="inline-flex items-center gap-2">
+          <label className="inline-flex items-center gap-2 min-h-11 text-sm">
             <input
               type="checkbox"
+              className="size-4"
               checked={form.story}
               onChange={(e) => setForm({ ...form, story: e.target.checked })}
             />
             Story / Featured
           </label>
         </div>
-        <div className="md:col-span-2 flex flex-wrap gap-2">
-          <Button type="submit" disabled={saveMut.isPending}>
+        <div>
+          <Label>Método de compra</Label>
+          <select
+            className="mt-1 w-full min-h-11 rounded-md border border-stone-200 bg-white px-3 text-sm"
+            value={form.metodo}
+            onChange={(e) => setForm({ ...form, metodo: e.target.value as MetodoCompra })}
+          >
+            <option value="auto">Automático (según umbral de stock)</option>
+            <option value="directa">Compra directa — agregar al carrito</option>
+            <option value="consultar">Consultar disponibilidad — WhatsApp primero</option>
+            <option value="ambos">Ambos — comprar y consultar</option>
+          </select>
+        </div>
+        <div>
+          <Label>Estado de disponibilidad</Label>
+          <select
+            className="mt-1 w-full min-h-11 rounded-md border border-stone-200 bg-white px-3 text-sm"
+            value={form.disponibilidad}
+            onChange={(e) => setForm({ ...form, disponibilidad: e.target.value as DisponibilidadManual })}
+          >
+            <option value="auto">Automático (reglas de stock)</option>
+            <option value="disponible">🟢 Disponible para compra</option>
+            <option value="consultar">🟡 Consultar disponibilidad</option>
+            <option value="agotado">🔴 Agotado</option>
+            <option value="proximamente">⚪ Próximamente</option>
+          </select>
+          <p className="text-[11px] text-stone-400 mt-1">
+            El stock registrado no confirma disponibilidad física. Usa “Consultar” si el personal debe verificar.
+          </p>
+        </div>
+        <ProductGalleryEditor
+          key={`gal-${formNonce}`}
+          id_producto={editingId}
+          tid={tid}
+          ensureProducto={ensureProducto}
+        />
+        <ProductAttrsEditor
+          key={`attrs-${formNonce}`}
+          id_producto={editingId}
+          tid={tid}
+          ensureProducto={ensureProducto}
+        />
+        <div className="md:col-span-2">
+          <Button type="submit" className="w-full sm:w-auto min-h-11" disabled={saveMut.isPending}>
             {editingId ? (
               <>
                 <Pencil className="size-4 mr-1" />
@@ -363,6 +463,9 @@ export default function EcommerceProductsPage() {
                     {p.stock <= 3 && p.stock > 0 && (
                       <span className="text-[10px] bg-amber-600 text-white px-1.5 py-0.5">Stock bajo</span>
                     )}
+                    {parseProductoCompra(p.attrs_json).metodo === "consultar" && (
+                      <span className="text-[10px] bg-emerald-700 text-white px-1.5 py-0.5">Consulta WA</span>
+                    )}
                   </div>
                 </div>
                 <div className="p-3 space-y-2">
@@ -408,20 +511,32 @@ export default function EcommerceProductsPage() {
                       </div>
                     );
                   })()}
-                  <div className="flex flex-wrap gap-1">
-                    <Button type="button" size="sm" variant="outline" onClick={() => startEdit(p)}>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" size="sm" variant="outline" className="min-h-11" onClick={() => startEdit(p)}>
                       <Pencil className="size-3 mr-1" />
                       Editar
                     </Button>
-                    <Button type="button" size="sm" variant="outline" onClick={() => toggleFlag(p, "destacado")}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="min-h-11"
+                      onClick={() => toggleFlag(p, "destacado")}
+                    >
                       <Star className="size-3 mr-1" />
                       Destacado
                     </Button>
-                    <Button type="button" size="sm" variant="outline" onClick={() => toggleFlag(p, "story")}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="min-h-11"
+                      onClick={() => toggleFlag(p, "story")}
+                    >
                       Story
                     </Button>
                     <label className="inline-flex">
-                      <Button type="button" size="sm" variant="outline" asChild>
+                      <Button type="button" size="sm" variant="outline" className="min-h-11" asChild>
                         <span>
                           <ImagePlus className="size-3 mr-1" />
                           Foto
@@ -441,10 +556,10 @@ export default function EcommerceProductsPage() {
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className="text-red-600"
+                      className="text-red-600 min-h-11 min-w-11"
                       onClick={() => deleteMut.mutate(p.id_producto)}
                     >
-                      <Trash2 className="size-3" />
+                      <Trash2 className="size-4" />
                     </Button>
                   </div>
                 </div>

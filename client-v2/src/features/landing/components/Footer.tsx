@@ -55,7 +55,7 @@ const SOCIAL_ICONS = {
 
 export function Footer() {
   return (
-    <footer className="border-t border-border/60 bg-background">
+    <footer id="pie" className="border-t border-border/60 bg-background">
       <div className="mx-auto max-w-6xl px-6 py-14">
         <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
           {/* Brand */}

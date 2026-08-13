@@ -18,7 +18,15 @@ export type StoreSucursal = {
 export type BranchAvailability = {
   sucursal: StoreSucursal;
   disponible: number;
-  variantes?: { id_variante: number; sku?: string | null; talla?: string | null; color?: string | null; disponible: number }[];
+  disponibilidad?: import("../utils/disponibilidad").Disponibilidad;
+  variantes?: {
+    id_variante: number;
+    sku?: string | null;
+    talla?: string | null;
+    color?: string | null;
+    disponible: number;
+    disponibilidad?: import("../utils/disponibilidad").Disponibilidad;
+  }[];
 };
 
 export type StoreTienda = {
@@ -29,6 +37,7 @@ export type StoreTienda = {
   descripcion?: string | null;
   telefono?: string | null;
   theme_json?: Partial<StoreTheme> | null;
+  disponibilidad_config?: import("../utils/disponibilidad").DisponibilidadConfig | null;
 };
 
 export type StoreProducto = {
@@ -41,6 +50,7 @@ export type StoreProducto = {
   categoria?: string | null;
   attrs_json?: Record<string, unknown> | string | null;
   imagen_url?: string | null;
+  disponibilidad?: import("../utils/disponibilidad").Disponibilidad;
 };
 
 export type StoreProductoDetalle = StoreProducto & {
@@ -53,6 +63,42 @@ export type StoreImagen = {
   url: string;
   es_principal?: number;
   orden?: number;
+};
+
+export type StorefrontAttrValor = {
+  id_valor: number | null;
+  valor: string;
+  hex?: string | null;
+};
+
+export type StorefrontAttr = {
+  id_atributo: number;
+  nombre: string;
+  codigo: string;
+  tipo: string;
+  es_variante: boolean;
+  visible_storefront: boolean;
+  requiere_seleccion: boolean;
+  obligatorio: boolean;
+  valor_fijo?: string | null;
+  valores: StorefrontAttrValor[];
+};
+
+export type StorefrontVariante = {
+  id_variante: number;
+  sku?: string | null;
+  talla?: string | null;
+  color?: string | null;
+  attrs: Record<string, number> | null;
+  precio_override?: number | null;
+};
+
+export type AttrSnapshotItem = {
+  id_atributo: number;
+  nombre: string;
+  tipo?: string;
+  valor: string;
+  hex?: string | null;
 };
 
 export function parseAttrs(attrs: StoreProducto["attrs_json"]): Record<string, unknown> {

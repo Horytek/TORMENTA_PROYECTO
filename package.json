@@ -66,6 +66,10 @@
     "db:migrate:ecommerce-buyer-pickup": "node scripts/migrations/ecommerce_buyer_pickup.js",
     "db:migrate:ecommerce-delivery": "node scripts/migrations/ecommerce_delivery_methods.js",
     "db:migrate:ecommerce-reviews": "node scripts/migrations/ecommerce_reviews.js",
+    "db:migrate:ecommerce-attrs": "node scripts/migrations/ecommerce_tenant_attributes.js",
+    "db:migrate:ecommerce-rbac": "node scripts/migrations/ecommerce_rbac.js",
+    "db:migrate:ecommerce-disponibilidad": "node scripts/migrations/ecommerce_disponibilidad.js",
+    "db:migrate:ecommerce-taxonomia": "node scripts/migrations/ecommerce_taxonomia.js",
     "db:migrate:ecommerce-etl": "node src/scripts/migrate_ecommerce_to_dedicated_db.js",
     "db:migrate:ecommerce-drop-tormenta": "node src/scripts/drop_ecommerce_tables_from_tormenta.js",
     "db:migrate:orden-atributo": "node scripts/migrations/add_orden_atributo.js",
@@ -79,6 +83,7 @@
     "sync:empresa-ecommerce": "node src/scripts/sync_empresa_to_ecommerce.js",
     "seed:ecommerce-mp-prod": "node src/scripts/set_ecommerce_mp_prod.js",
     "seed:ecommerce-sucursales-erp": "node src/scripts/seed_ecommerce_sucursales_from_erp.js",
+    "seed:ecommerce-usuarios-tienda": "node src/scripts/seed_ecommerce_usuarios_por_tienda.js",
     "db:sanear:sku": "node scripts/migrations/sanear_producto_sku.js"
   },
   "engines": {

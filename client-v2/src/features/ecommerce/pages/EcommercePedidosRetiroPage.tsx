@@ -12,6 +12,7 @@ import {
   User,
   Mail,
   Phone,
+  Trash2,
 } from "lucide-react";
 import {
   pickupListOrdenes,
@@ -19,9 +20,14 @@ import {
   pickupGetOrden,
 } from "../api/ecommerce";
 import { useEcommerceAuthStore } from "../store/useEcommerceAuthStore";
+import { useBorrarOrdenes } from "../hooks/useBorrarOrdenes";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { formatPen } from "../types/storefront";
+import { AttrsSnapshotText } from "../components/AttrsSnapshotText";
+import { AdminBranchFilterBar, useScopedSucursalId } from "../components/admin/AdminBranchFilterBar";
 import {
   Sheet,
   SheetContent,
@@ -115,8 +121,12 @@ export default function EcommercePedidosRetiroPage() {
   const [qDebounced, setQDebounced] = useState("");
   const [estado, setEstado] = useState("");
   const [metodo, setMetodo] = useState("");
+  const id_sucursal = useScopedSucursalId();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const qc = useQueryClient();
+  const borrar = useBorrarOrdenes([["pickup-ordenes"], ["ecom-ordenes"]], (ids) => {
+    if (selectedId && ids.includes(selectedId)) setSelectedId(null);
+  });
 
   useEffect(() => {
     const t = window.setTimeout(() => setQDebounced(q.trim()), 280);
@@ -124,12 +134,13 @@ export default function EcommercePedidosRetiroPage() {
   }, [q]);
 
   const listQ = useQuery({
-    queryKey: ["pickup-ordenes", tid, qDebounced, estado, metodo],
+    queryKey: ["pickup-ordenes", tid, qDebounced, estado, metodo, id_sucursal],
     queryFn: () =>
       pickupListOrdenes({
         q: qDebounced || undefined,
         estado_fulfillment: estado || undefined,
         fulfillment: metodo || undefined,
+        sucursal: id_sucursal || undefined,
       }),
     enabled: Boolean(tid),
   });
@@ -230,12 +241,38 @@ export default function EcommercePedidosRetiroPage() {
             Retiro, delivery y envíos a provincia
           </p>
         </div>
-        <Button asChild className="w-full sm:w-auto min-h-11">
-          <Link to="/ecommerce-admin/validar-retiro">
-            <ScanLine className="size-4 mr-1.5" />
-            Recojo
-          </Link>
-        </Button>
+        <AdminBranchFilterBar />
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          {borrar.selected.length > 0 && (
+            <Button
+              variant="destructive"
+              className="w-full sm:w-auto min-h-11"
+              onClick={() => {
+                const byId = new Map(
+                  ordenes.map((o: Record<string, unknown>) => [
+                    Number(o.id_orden),
+                    String(o.codigo || ""),
+                  ])
+                );
+                borrar.askDelete(
+                  borrar.selected.map((id) => ({
+                    id_orden: id,
+                    codigo: byId.get(id) || `#${id}`,
+                  }))
+                );
+              }}
+            >
+              <Trash2 className="size-4 mr-1.5" />
+              Borrar ({borrar.selected.length})
+            </Button>
+          )}
+          <Button asChild className="w-full sm:w-auto min-h-11">
+            <Link to="/ecommerce-admin/validar-retiro">
+              <ScanLine className="size-4 mr-1.5" />
+              Recojo
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* KPIs */}
@@ -304,6 +341,22 @@ export default function EcommercePedidosRetiroPage() {
         </div>
       </div>
 
+      {!listQ.isLoading && ordenes.length > 0 && (
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            className="text-xs text-stone-500 hover:text-stone-800"
+            onClick={() => borrar.toggleAll(ordenes.map((o: Record<string, unknown>) => Number(o.id_orden)))}
+          >
+            {ordenes.every((o: Record<string, unknown>) =>
+              borrar.selected.includes(Number(o.id_orden))
+            )
+              ? "Quitar selección"
+              : "Seleccionar todos"}
+          </button>
+        </div>
+      )}
+
       {/* Lista */}
       {listQ.isLoading ? (
         <div className="grid gap-3 sm:grid-cols-2">
@@ -323,30 +376,68 @@ export default function EcommercePedidosRetiroPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           {ordenes.map((o: Record<string, unknown>) => {
             const ef = String(o.estado_fulfillment || "");
+            const id = Number(o.id_orden);
+            const isSelected = borrar.selected.includes(id);
             return (
-              <button
+              <article
                 key={String(o.id_orden)}
-                type="button"
-                onClick={() => setSelectedId(Number(o.id_orden))}
-                className="text-left bg-white border border-stone-200 rounded-xl p-4 hover:border-stone-400 active:scale-[0.99] transition-all"
+                className={cn(
+                  "text-left bg-white border rounded-xl p-4 transition-all",
+                  isSelected ? "border-stone-900 ring-1 ring-stone-900" : "border-stone-200 hover:border-stone-400"
+                )}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-semibold font-mono text-sm truncate">
-                      {String(o.codigo)}
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      <EstadoBadge estado={ef} />
-                      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium bg-stone-100 text-stone-600">
-                        {METODO_LABEL[String(o.fulfillment || "pickup")] || String(o.fulfillment)}
-                      </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => borrar.toggle(id)}
+                        aria-label={`Seleccionar ${String(o.codigo)}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setSelectedId(id)}
+                        className="font-semibold font-mono text-sm truncate text-left hover:underline"
+                      >
+                        {String(o.codigo)}
+                      </button>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(id)}
+                      className="mt-2 w-full text-left"
+                    >
+                      <div className="flex flex-wrap gap-1.5">
+                        <EstadoBadge estado={ef} />
+                        <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium bg-stone-100 text-stone-600">
+                          {METODO_LABEL[String(o.fulfillment || "pickup")] || String(o.fulfillment)}
+                        </span>
+                      </div>
+                    </button>
                   </div>
-                  <p className="text-sm font-semibold text-teal-700 shrink-0 tabular-nums">
-                    {formatPen(Number(o.total))}
-                  </p>
+                  <div className="flex items-start gap-1 shrink-0">
+                    <p className="text-sm font-semibold text-teal-700 tabular-nums pt-0.5">
+                      {formatPen(Number(o.total))}
+                    </p>
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      className="text-red-600 hover:text-red-700 -mt-1"
+                      aria-label={`Borrar ${String(o.codigo)}`}
+                      onClick={() =>
+                        borrar.askDelete([{ id_orden: id, codigo: String(o.codigo || "") }])
+                      }
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="mt-3 space-y-1 text-xs text-stone-500">
+                <button
+                  type="button"
+                  onClick={() => setSelectedId(id)}
+                  className="mt-3 w-full text-left space-y-1 text-xs text-stone-500"
+                >
                   <p className="truncate flex items-center gap-1.5">
                     <User className="size-3 shrink-0" />
                     {String(o.nombre_comprador || o.email_comprador || "—")}
@@ -365,8 +456,8 @@ export default function EcommercePedidosRetiroPage() {
                       minute: "2-digit",
                     })}
                   </p>
-                </div>
-              </button>
+                </button>
+              </article>
             );
           })}
         </div>
@@ -494,6 +585,7 @@ export default function EcommercePedidosRetiroPage() {
                           <span className="min-w-0">
                             <span className="font-medium">{String(it.nombre)}</span>
                             <span className="text-stone-400"> ×{Number(it.cantidad)}</span>
+                            <AttrsSnapshotText snapshot={it.attrs_snapshot} />
                           </span>
                           {it.precio_unitario != null && (
                             <span className="text-stone-500 shrink-0 tabular-nums">
@@ -589,10 +681,35 @@ export default function EcommercePedidosRetiroPage() {
                   </>
                 );
               })()}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full min-h-11 text-red-600 border-red-200 hover:bg-red-50"
+                onClick={() => {
+                  borrar.askDelete([
+                    { id_orden: detalle.id_orden, codigo: String(detalle.codigo || "") },
+                  ]);
+                  setSelectedId(null);
+                }}
+              >
+                <Trash2 className="size-4 mr-1.5" />
+                Borrar pedido
+              </Button>
             </div>
           )}
         </SheetContent>
       </Sheet>
+
+      <ConfirmDialog
+        open={borrar.dialog.open}
+        onClose={borrar.closeConfirm}
+        onConfirm={borrar.dialog.confirm}
+        title={borrar.dialog.title}
+        description={borrar.dialog.description}
+        confirmLabel="Sí, borrar"
+        variant="danger"
+        isPending={borrar.mut.isPending}
+      />
     </div>
   );
 }

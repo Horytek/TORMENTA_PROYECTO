@@ -32,7 +32,20 @@ import {
   ecommerceReviewMediaUploadSchema,
   ecommerceReviewEstadoSchema,
   ecommerceReviewReplySchema,
+  ecommerceDeleteOrdenesSchema,
+  ecommerceDisponibilidadConfigSchema,
+  ecommerceConsultaDisponibilidadSchema,
+  ecommerceAtributoSchema,
+  ecommerceAtributoValorSchema,
+  ecommerceProductoAtributosSchema,
+  ecommerceImagenReorderSchema,
+  ecommerceRolPatchSchema,
+  ecommerceUsuarioCreateSchema,
+  ecommerceUsuarioUpdateSchema,
+  ecommerceTaxonomiaSchema,
+  ecommerceTaxonomiaPatchSchema,
 } from "../schemas/ecommerce.schema.js";
+import { ecommerceAccess, requireEcommercePermiso } from "../middlewares/ecommerceRbac.middleware.js";
 import {
   registerEcommerce,
   createEcommerceSaasPreference,
@@ -49,8 +62,13 @@ import {
   updateProducto,
   deleteProducto,
   uploadProductoImagen,
+  listProductoImagenes,
+  setProductoImagenPrincipal,
+  reorderProductoImagenes,
+  deleteProductoImagen,
   listOrdenes,
   getOrden,
+  deleteOrdenes,
   getStoreBySlug,
   getStoreProduct,
   checkoutStore,
@@ -130,6 +148,39 @@ import {
   adminCreateTransferencia,
   adminUpdateTransferenciaEstado,
 } from "../controllers/ecommerceBranch.controller.js";
+import {
+  adminListAtributos,
+  adminGetAtributo,
+  adminCreateAtributo,
+  adminUpdateAtributo,
+  adminDeleteAtributo,
+  adminAddAtributoValor,
+  adminUpdateAtributoValor,
+  adminDeleteAtributoValor,
+  adminAtributoProductos,
+  adminGetProductoAtributos,
+  adminSetProductoAtributos,
+  adminListStock,
+} from "../controllers/ecommerceAttribute.controller.js";
+import {
+  adminListTaxonomia,
+  adminCreateTaxonomia,
+  adminUpdateTaxonomia,
+  adminDeleteTaxonomia,
+} from "../controllers/ecommerceTaxonomy.controller.js";
+import {
+  adminListRoles,
+  adminPatchRol,
+  adminListUsuarios,
+  adminCreateUsuario,
+  adminUpdateUsuario,
+} from "../controllers/ecommerceRbac.controller.js";
+import {
+  adminGetDisponibilidadConfig,
+  adminPatchDisponibilidadConfig,
+  adminDisponibilidadStats,
+  storeRegistrarConsulta,
+} from "../controllers/ecommerceDisponibilidad.controller.js";
 
 const router = Router();
 
@@ -149,6 +200,11 @@ router.get("/store/:slug/sucursales", listStoreSucursales);
 router.get("/store/:slug/search", searchStore);
 router.get("/store/:slug/products/:id", getStoreProduct);
 router.get("/store/:slug/products/:id/disponibilidad", getProductAvailability);
+router.post(
+  "/store/:slug/consultas-disponibilidad",
+  validateSchema(ecommerceConsultaDisponibilidadSchema),
+  storeRegistrarConsulta
+);
 router.get("/store/:slug/products/:id/reviews", getProductReviews);
 router.get("/store/:slug/reviews/summary", getReviewSummary);
 router.get("/store/:slug/sucursales/:id/reviews", getSucursalReviews);
@@ -220,132 +276,274 @@ router.get("/webhook", ecommerceStoreWebhook);
 router.get("/store/:slug/ordenes/:codigo/sync-pago", syncStoreOrderPayment);
 
 // Admin
-router.use("/admin", ecommerceAuth);
+const P = requireEcommercePermiso;
+router.use("/admin", ecommerceAuth, ecommerceAccess);
 router.get("/admin/me", meEcommerce);
-router.get("/admin/dashboard", getDashboard);
-router.get("/admin/pickup/kpis", getPickupDashboardKpis);
-router.get("/admin/entregas/kpis", getEntregaDashboardKpis);
-router.get("/admin/entregas/config", getEntregaConfig);
+router.get("/admin/dashboard", P("dashboard.ver"), getDashboard);
+router.get("/admin/pickup/kpis", P("pedidos.ver"), getPickupDashboardKpis);
+router.get("/admin/entregas/kpis", P("entregas.ver"), getEntregaDashboardKpis);
+router.get("/admin/entregas/config", P("entregas.ver"), getEntregaConfig);
 router.patch(
   "/admin/entregas/config",
+  P("entregas.editar"),
   validateSchema(ecommerceEntregaConfigSchema),
   patchEntregaConfig
 );
-router.get("/admin/entregas/zonas", listZonas);
+router.get("/admin/entregas/zonas", P("entregas.ver"), listZonas);
 router.post(
   "/admin/entregas/zonas",
+  P("entregas.editar"),
   validateSchema(ecommerceZonaSchema),
   createZona
 );
 router.put(
   "/admin/entregas/zonas/:id",
+  P("entregas.editar"),
   validateSchema(ecommerceZonaSchema.partial()),
   updateZona
 );
-router.delete("/admin/entregas/zonas/:id", deleteZona);
-router.get("/admin/entregas/destinos", listDestinos);
+router.delete("/admin/entregas/zonas/:id", P("entregas.editar"), deleteZona);
+router.get("/admin/entregas/destinos", P("entregas.ver"), listDestinos);
 router.post(
   "/admin/entregas/destinos",
+  P("entregas.editar"),
   validateSchema(ecommerceDestinoSchema),
   createDestino
 );
 router.put(
   "/admin/entregas/destinos/:id",
+  P("entregas.editar"),
   validateSchema(ecommerceDestinoSchema.partial()),
   updateDestino
 );
-router.delete("/admin/entregas/destinos/:id", deleteDestino);
-router.get("/admin/entregas/agencias", listAgencias);
+router.delete("/admin/entregas/destinos/:id", P("entregas.editar"), deleteDestino);
+router.get("/admin/entregas/agencias", P("entregas.ver"), listAgencias);
 router.post(
   "/admin/entregas/agencias",
+  P("entregas.editar"),
   validateSchema(ecommerceAgenciaSchema),
   createAgencia
 );
 router.put(
   "/admin/entregas/agencias/:id",
+  P("entregas.editar"),
   validateSchema(ecommerceAgenciaSchema.partial()),
   updateAgencia
 );
-router.delete("/admin/entregas/agencias/:id", deleteAgencia);
-router.patch("/admin/tienda", validateSchema(ecommerceTiendaUpdateSchema), updateTienda);
+router.delete("/admin/entregas/agencias/:id", P("entregas.editar"), deleteAgencia);
+router.patch(
+  "/admin/tienda",
+  P("configuracion.editar"),
+  validateSchema(ecommerceTiendaUpdateSchema),
+  updateTienda
+);
+router.get("/admin/disponibilidad/config", P("configuracion.ver"), adminGetDisponibilidadConfig);
+router.patch(
+  "/admin/disponibilidad/config",
+  P("configuracion.editar"),
+  validateSchema(ecommerceDisponibilidadConfigSchema),
+  adminPatchDisponibilidadConfig
+);
+router.get("/admin/disponibilidad/stats", P("dashboard.ver"), adminDisponibilidadStats);
 router.post(
   "/admin/tienda/logo",
+  P("configuracion.editar"),
   validateSchema(ecommerceBrandUploadSchema),
   uploadTiendaLogo
 );
 router.post(
   "/admin/tienda/banner",
+  P("configuracion.editar"),
   validateSchema(ecommerceBrandUploadSchema),
   uploadTiendaBanner
 );
 router.put(
   "/admin/mp-credentials",
+  P("configuracion.editar"),
   validateSchema(ecommerceMpCredentialsSchema),
   saveMpCredentials
 );
-router.get("/admin/productos", listProductos);
-router.post("/admin/productos", validateSchema(ecommerceProductoSchema), createProducto);
-router.put("/admin/productos/:id", validateSchema(ecommerceProductoSchema.partial()), updateProducto);
-router.delete("/admin/productos/:id", deleteProducto);
-router.post("/admin/productos/:id/imagenes", uploadProductoImagen);
-router.get("/admin/ordenes", listOrdenes);
-router.get("/admin/ordenes/:id", getOrden);
+router.get("/admin/productos", P("productos.ver"), listProductos);
+router.post("/admin/productos", P("productos.crear"), validateSchema(ecommerceProductoSchema), createProducto);
+router.put(
+  "/admin/productos/:id",
+  P("productos.editar"),
+  validateSchema(ecommerceProductoSchema.partial()),
+  updateProducto
+);
+router.delete("/admin/productos/:id", P("productos.eliminar"), deleteProducto);
+router.get("/admin/productos/:id/imagenes", P("productos.ver"), listProductoImagenes);
+router.post("/admin/productos/:id/imagenes", P("productos.editar"), uploadProductoImagen);
+router.patch(
+  "/admin/productos/:id/imagenes/reorder",
+  P("productos.editar"),
+  validateSchema(ecommerceImagenReorderSchema),
+  reorderProductoImagenes
+);
+router.patch(
+  "/admin/productos/:id/imagenes/:idImagen/principal",
+  P("productos.editar"),
+  setProductoImagenPrincipal
+);
+router.delete(
+  "/admin/productos/:id/imagenes/:idImagen",
+  P("productos.editar"),
+  deleteProductoImagen
+);
+router.get("/admin/productos/:id/atributos", P("productos.ver"), adminGetProductoAtributos);
+router.put(
+  "/admin/productos/:id/atributos",
+  P("productos.editar"),
+  validateSchema(ecommerceProductoAtributosSchema),
+  adminSetProductoAtributos
+);
 
-// Admin — pickup / retiro
-router.get("/admin/pickup/ordenes", listPickupOrdenes);
-router.get("/admin/pickup/ordenes/:id", getPickupOrden);
+router.get("/admin/atributos", P("atributos.ver"), adminListAtributos);
+router.post("/admin/atributos", P("atributos.crear"), validateSchema(ecommerceAtributoSchema), adminCreateAtributo);
+router.get("/admin/atributos/:id", P("atributos.ver"), adminGetAtributo);
+router.put(
+  "/admin/atributos/:id",
+  P("atributos.editar"),
+  validateSchema(ecommerceAtributoSchema.partial()),
+  adminUpdateAtributo
+);
+router.delete("/admin/atributos/:id", P("atributos.eliminar"), adminDeleteAtributo);
+router.get("/admin/atributos/:id/productos", P("atributos.ver"), adminAtributoProductos);
+router.post(
+  "/admin/atributos/:id/valores",
+  P("atributos.editar"),
+  validateSchema(ecommerceAtributoValorSchema),
+  adminAddAtributoValor
+);
+router.put(
+  "/admin/atributos/:id/valores/:idValor",
+  P("atributos.editar"),
+  validateSchema(ecommerceAtributoValorSchema.partial()),
+  adminUpdateAtributoValor
+);
+router.delete("/admin/atributos/:id/valores/:idValor", P("atributos.editar"), adminDeleteAtributoValor);
+
+router.get("/admin/taxonomia", P("productos.ver"), adminListTaxonomia);
+router.post(
+  "/admin/taxonomia",
+  P("productos.editar"),
+  validateSchema(ecommerceTaxonomiaSchema),
+  adminCreateTaxonomia
+);
+router.put(
+  "/admin/taxonomia/:id",
+  P("productos.editar"),
+  validateSchema(ecommerceTaxonomiaPatchSchema),
+  adminUpdateTaxonomia
+);
+router.delete("/admin/taxonomia/:id", P("productos.editar"), adminDeleteTaxonomia);
+
+router.get("/admin/stock", P("stock.ver"), adminListStock);
+
+router.get("/admin/ordenes", P("ordenes.ver"), listOrdenes);
+router.post(
+  "/admin/ordenes/eliminar",
+  P("ordenes.editar"),
+  validateSchema(ecommerceDeleteOrdenesSchema),
+  deleteOrdenes
+);
+router.get("/admin/ordenes/:id", P("ordenes.ver"), getOrden);
+
+router.get("/admin/pickup/ordenes", P("pedidos.ver"), listPickupOrdenes);
+router.get("/admin/pickup/ordenes/:id", P("pedidos.ver"), getPickupOrden);
 router.patch(
   "/admin/pickup/ordenes/:id/estado",
+  P("pedidos.editar"),
   validateSchema(ecommercePickupEstadoSchema),
   patchPickupEstado
 );
 router.post(
   "/admin/pickup/validar",
+  P("recojo.escanear"),
   validateSchema(ecommercePickupValidarSchema),
   validarRetiro
 );
 router.post(
   "/admin/pickup/confirmar-entrega/:id_orden",
+  P("recojo.confirmar"),
   validateSchema(ecommercePickupConfirmarSchema),
   confirmarEntrega
 );
 
-// Admin — reseñas
-router.get("/admin/reviews/config", getReviewConfig);
+router.get("/admin/reviews/config", P("resenas.ver"), getReviewConfig);
 router.patch(
   "/admin/reviews/config",
+  P("resenas.editar"),
   validateSchema(ecommerceReviewConfigSchema),
   patchReviewConfig
 );
-router.get("/admin/reviews/stats", adminReviewStats);
-router.get("/admin/reviews", adminListReviews);
+router.get("/admin/reviews/stats", P("resenas.ver"), adminReviewStats);
+router.get("/admin/reviews", P("resenas.ver"), adminListReviews);
 router.patch(
   "/admin/reviews/:id/estado",
+  P("resenas.editar"),
   validateSchema(ecommerceReviewEstadoSchema),
   adminPatchReviewEstado
 );
 router.post(
   "/admin/reviews/:id/reply",
+  P("resenas.editar"),
   validateSchema(ecommerceReviewReplySchema),
   adminReplyReview
 );
 
-// Admin — sucursales e inventario multisucursal
-router.get("/admin/sucursales", adminListSucursales);
-router.post("/admin/sucursales", validateSchema(ecommerceSucursalSchema), adminCreateSucursal);
-router.put("/admin/sucursales/:id", validateSchema(ecommerceSucursalSchema.partial()), adminUpdateSucursal);
-router.delete("/admin/sucursales/:id", adminDeleteSucursal);
-router.get("/admin/inventario/resumen", adminInventarioResumen);
-router.get("/admin/inventario/matriz", adminInventarioMatriz);
-router.post("/admin/inventario/ajuste", validateSchema(ecommerceInventarioAjusteSchema), adminAjustarInventario);
-router.get("/admin/inventario/movimientos", adminListMovimientos);
-router.get("/admin/variantes/search", adminSearchVariantes);
-router.get("/admin/transferencias", adminListTransferencias);
-router.post("/admin/transferencias", validateSchema(ecommerceTransferenciaSchema), adminCreateTransferencia);
+router.get("/admin/sucursales", P("sucursales.ver"), adminListSucursales);
+router.post("/admin/sucursales", P("sucursales.crear"), validateSchema(ecommerceSucursalSchema), adminCreateSucursal);
+router.put(
+  "/admin/sucursales/:id",
+  P("sucursales.editar"),
+  validateSchema(ecommerceSucursalSchema.partial()),
+  adminUpdateSucursal
+);
+router.delete("/admin/sucursales/:id", P("sucursales.eliminar"), adminDeleteSucursal);
+router.get("/admin/inventario/resumen", P("inventario.ver"), adminInventarioResumen);
+router.get("/admin/inventario/matriz", P("inventario.ver"), adminInventarioMatriz);
+router.post(
+  "/admin/inventario/ajuste",
+  P("inventario.editar"),
+  validateSchema(ecommerceInventarioAjusteSchema),
+  adminAjustarInventario
+);
+router.get("/admin/inventario/movimientos", P("inventario.ver"), adminListMovimientos);
+router.get("/admin/variantes/search", P("inventario.ver"), adminSearchVariantes);
+router.get("/admin/transferencias", P("transferencias.ver"), adminListTransferencias);
+router.post(
+  "/admin/transferencias",
+  P("transferencias.crear"),
+  validateSchema(ecommerceTransferenciaSchema),
+  adminCreateTransferencia
+);
 router.patch(
   "/admin/transferencias/:id/estado",
+  P("transferencias.editar"),
   validateSchema(ecommerceTransferenciaEstadoSchema),
   adminUpdateTransferenciaEstado
+);
+
+router.get("/admin/roles", P("roles.ver"), adminListRoles);
+router.patch(
+  "/admin/roles/:id",
+  P("roles.editar"),
+  validateSchema(ecommerceRolPatchSchema),
+  adminPatchRol
+);
+router.get("/admin/usuarios", P("usuarios.ver"), adminListUsuarios);
+router.post(
+  "/admin/usuarios",
+  P("usuarios.crear"),
+  validateSchema(ecommerceUsuarioCreateSchema),
+  adminCreateUsuario
+);
+router.patch(
+  "/admin/usuarios/:id",
+  P("usuarios.editar"),
+  validateSchema(ecommerceUsuarioUpdateSchema),
+  adminUpdateUsuario
 );
 
 export default router;
