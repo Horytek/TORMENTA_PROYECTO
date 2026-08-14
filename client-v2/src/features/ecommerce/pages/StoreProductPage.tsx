@@ -589,9 +589,9 @@ export default function StoreProductPage() {
                 <div className="space-y-1">
                   <span
                     className={`inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                      resolved.cta === "comprar"
+                      canComprarCta
                         ? "bg-emerald-100 text-emerald-900"
-                        : resolved.cta === "solicitar"
+                        : needsSolicitudCta
                           ? "bg-amber-100 text-amber-900"
                           : "bg-stone-100 text-stone-700"
                     }`}
