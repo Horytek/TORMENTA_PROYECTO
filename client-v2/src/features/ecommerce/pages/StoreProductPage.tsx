@@ -29,7 +29,7 @@ import { addProductToCart, QuickAddSheet, useQuickAddGuard } from "../components
 import { AvailabilityStatus } from "../design/AvailabilityStatus";
 import { ConsultarWhatsAppButton } from "../design/ConsultarWhatsAppButton";
 import { StockWhatsAppLeyenda } from "../components/vitrina/StockWhatsAppLeyenda";
-import { resolveDisponibilidad } from "../utils/disponibilidad";
+import { resolveDisponibilidad, applyResolvedFulfillment, labelCtaPrincipal } from "../utils/disponibilidad";
 import { buildDisponibilidadWaMessage, waLink } from "../design/buildWaMessage";
 import {
   formatPen,
@@ -188,52 +188,9 @@ export default function StoreProductPage() {
         { hasSeleccionAttrs }
       )
     : null;
-  const disp = resolved?.disponibilidad
-    ? ({
-        ...dispLegacy!,
-        ...resolved.disponibilidad,
-        cta: {
-          ...(dispLegacy?.cta || {}),
-          ...(resolved.disponibilidad.cta || {}),
-          allowAddToCart: resolved.cta === "comprar",
-          showCart: resolved.cta === "comprar",
-          showWhatsapp: Boolean(
-            resolved.disponibilidad.cta?.showWhatsapp ?? dispLegacy?.cta.showWhatsapp
-          ),
-          showEnviarSolicitud: resolved.cta === "solicitar",
-          requiresSolicitud: resolved.cta === "solicitar",
-          primary:
-            resolved.cta === "solicitar"
-              ? "solicitud"
-              : resolved.cta === "comprar"
-                ? "cart"
-                : dispLegacy?.cta.primary ?? null,
-        },
-        label: resolved.label || resolved.disponibilidad.label || dispLegacy!.label,
-        hint:
-          resolved.hint ||
-          resolved.disponibilidad.hint ||
-          dispLegacy?.hint ||
-          "",
-        estado:
-          resolved.cta === "comprar"
-            ? "disponible"
-            : resolved.cta === "solicitar"
-              ? "consultar"
-              : resolved.cta === "no_disponible"
-                ? "agotado"
-                : dispLegacy?.estado || "consultar",
-      } as NonNullable<typeof dispLegacy>)
-    : dispLegacy;
+  const disp = applyResolvedFulfillment(resolved, dispLegacy);
 
-  const ctaLabel =
-    resolved?.cta === "solicitar"
-      ? "Solicitar disponibilidad"
-      : resolved?.cta === "no_disponible"
-        ? "No disponible"
-        : resolved?.cta === "incomplete"
-          ? "Elige cómo recibirlo"
-          : "Comprar ahora";
+  const ctaLabel = labelCtaPrincipal(resolved, disp);
 
   const deliveryZonas = useMemo(() => {
     const raw = entregaOpcionesQ.data?.data as Record<string, unknown> | unknown[] | undefined;

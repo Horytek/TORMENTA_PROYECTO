@@ -1474,8 +1474,13 @@ export const validateCartStore = async (req, res) => {
             tieneAutorizacionVigente: true,
             hasSeleccionAttrs: hasSeleccion,
           });
-        } else if (modo === "otra_ubicacion") {
+        } else if (
+          modo === "otra_ubicacion" ||
+          modo === "consultar" ||
+          disp?.cta?.requiresSolicitud
+        ) {
           hasSolicitud = true;
+          badge = "solicitud";
         } else if (modo === "inmediata") {
           hasInmediata = true;
         }
