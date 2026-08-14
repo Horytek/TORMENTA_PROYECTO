@@ -1,0 +1,19 @@
+{
+  "name": "Horytek ERP (Tormenta)",
+  "install": "bash scripts/dev/cloud_install.sh",
+  "start": "bash scripts/dev/cloud_start.sh",
+  "terminals": [
+    {
+      "name": "backend",
+      "command": "npm run dev"
+    },
+    {
+      "name": "frontend",
+      "command": "npm run client"
+    }
+  ],
+  "ports": [
+    4000,
+    5173
+  ]
+}
