@@ -1,0 +1,24 @@
+{
+  "name": "Horytek ERP (Tormenta)",
+  "install": "bash scripts/dev/cloud_install.sh",
+  "start": "bash scripts/dev/cloud_start.sh",
+  "terminals": [
+    {
+      "name": "backend",
+      "command": "npm run dev"
+    },
+    {
+      "name": "client (ERP legacy)",
+      "command": "npm run client"
+    },
+    {
+      "name": "client-v2 (plataforma)",
+      "command": "npm --prefix client-v2 run dev -- --port 5174 --strictPort"
+    }
+  ],
+  "ports": [
+    4000,
+    5173,
+    5174
+  ]
+}
