@@ -190,6 +190,8 @@ export default function StoreProductPage() {
       )
     : null;
   const disp = applyResolvedFulfillment(resolved, dispLegacy);
+  const needsSolicitudCta = Boolean(disp?.cta.showEnviarSolicitud || disp?.cta.requiresSolicitud);
+  const canComprarCta = Boolean(disp?.cta.allowAddToCart);
 
   const ctaLabel = labelCtaPrincipal(resolved, disp);
 

@@ -292,14 +292,21 @@ export function resolveDisponibilidad(
 }
 
 export type ResolvedFulfillmentCta = {
-  cta: "comprar" | "solicitar" | "no_disponible" | "incomplete" | string;
+  cta?: "comprar" | "solicitar" | "no_disponible" | "incomplete" | string;
   label?: string;
   hint?: string | null;
   disponibilidad?: {
     estado?: string;
     label?: string;
     hint?: string;
-    cta?: Partial<DisponibilidadCta>;
+    cta?: {
+      allowAddToCart?: boolean;
+      requiresSolicitud?: boolean;
+      showEnviarSolicitud?: boolean;
+      showCart?: boolean;
+      showWhatsapp?: boolean;
+      primary?: string | null;
+    };
   } | null;
 };
 
@@ -332,11 +339,11 @@ export function applyResolvedFulfillment(
       showWhatsapp: Boolean(nested.showWhatsapp ?? fallback.cta.showWhatsapp),
       showEnviarSolicitud: needsSolicitud,
       requiresSolicitud: needsSolicitud,
-      primary: needsSolicitud
+      primary: (needsSolicitud
         ? "solicitud"
         : canBuy
           ? "cart"
-          : fallback.cta.primary,
+          : fallback.cta.primary) as DisponibilidadCta["primary"],
     },
     label: needsSolicitud
       ? resolved.disponibilidad.label || fallback.label
