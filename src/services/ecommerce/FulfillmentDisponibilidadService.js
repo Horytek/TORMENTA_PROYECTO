@@ -200,10 +200,28 @@ export async function resolveDisponibilidadFulfillment(connection, {
     id_sucursal: sid,
   });
 
-  const extras = { hasSeleccionAttrs };
+  const sucursalRequiereConfirmacion = Boolean(atencion.sucursal?.requiere_confirmacion);
+  const extras = { hasSeleccionAttrs, sucursalRequiereConfirmacion };
   const dispLocal = buildDisponibilidad(stockLocal, attrs_json, cfg, extras);
 
   if (stockLocal >= qty) {
+    const needsSolicitud = Boolean(dispLocal?.cta?.requiresSolicitud);
+    if (needsSolicitud) {
+      return {
+        modo: "inmediata",
+        cta: "solicitar",
+        label: dispLocal.label || "Confirmar disponibilidad",
+        hint: dispLocal.hint || "Confirma la disponibilidad antes de comprar.",
+        cantidad: qty,
+        fulfillment: mode,
+        id_sucursal: sid,
+        id_sucursal_origen: null,
+        stock_local: stockLocal,
+        otras_ubicaciones: [],
+        disponibilidad: dispLocal,
+        quote: atencion.quote || null,
+      };
+    }
     return {
       modo: "inmediata",
       cta: "comprar",

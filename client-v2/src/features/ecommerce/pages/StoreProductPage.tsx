@@ -188,6 +188,14 @@ export default function StoreProductPage() {
         { hasSeleccionAttrs }
       )
     : null;
+  const resolvedDispCta = resolved?.disponibilidad?.cta;
+  const needsSolicitudCta =
+    resolved?.cta === "solicitar" ||
+    Boolean(resolvedDispCta?.requiresSolicitud || resolvedDispCta?.showEnviarSolicitud);
+  const canComprarCta =
+    resolved?.cta === "comprar" &&
+    !needsSolicitudCta &&
+    Boolean(resolvedDispCta?.allowAddToCart ?? false);
   const disp = resolved?.disponibilidad
     ? ({
         ...dispLegacy!,
@@ -195,18 +203,19 @@ export default function StoreProductPage() {
         cta: {
           ...(dispLegacy?.cta || {}),
           ...(resolved.disponibilidad.cta || {}),
-          allowAddToCart: resolved.cta === "comprar",
-          showCart: resolved.cta === "comprar",
+          allowAddToCart: canComprarCta,
+          showCart: canComprarCta,
           showWhatsapp: Boolean(
             resolved.disponibilidad.cta?.showWhatsapp ?? dispLegacy?.cta.showWhatsapp
           ),
-          showEnviarSolicitud: resolved.cta === "solicitar",
-          requiresSolicitud: resolved.cta === "solicitar",
-          primary:
-            resolved.cta === "solicitar"
-              ? "solicitud"
-              : resolved.cta === "comprar"
-                ? "cart"
+          showEnviarSolicitud: needsSolicitudCta,
+          requiresSolicitud: needsSolicitudCta,
+          primary: needsSolicitudCta
+            ? "solicitud"
+            : canComprarCta
+              ? "cart"
+              : resolved.cta === "no_disponible"
+                ? null
                 : dispLegacy?.cta.primary ?? null,
         },
         label: resolved.label || resolved.disponibilidad.label || dispLegacy!.label,
@@ -216,9 +225,9 @@ export default function StoreProductPage() {
           dispLegacy?.hint ||
           "",
         estado:
-          resolved.cta === "comprar"
+          canComprarCta
             ? "disponible"
-            : resolved.cta === "solicitar"
+            : needsSolicitudCta
               ? "consultar"
               : resolved.cta === "no_disponible"
                 ? "agotado"
@@ -226,14 +235,17 @@ export default function StoreProductPage() {
       } as NonNullable<typeof dispLegacy>)
     : dispLegacy;
 
-  const ctaLabel =
-    resolved?.cta === "solicitar"
-      ? "Solicitar disponibilidad"
-      : resolved?.cta === "no_disponible"
-        ? "No disponible"
-        : resolved?.cta === "incomplete"
-          ? "Elige cómo recibirlo"
-          : "Comprar ahora";
+  const ctaLabel = needsSolicitudCta
+    ? "Solicitar disponibilidad"
+    : resolved?.cta === "no_disponible"
+      ? "No disponible"
+      : resolved?.cta === "incomplete"
+        ? "Elige cómo recibirlo"
+        : canComprarCta
+          ? "Comprar ahora"
+          : disp?.cta.showEnviarSolicitud
+            ? "Solicitar disponibilidad"
+            : "Comprar ahora";
 
   const deliveryZonas = useMemo(() => {
     const raw = entregaOpcionesQ.data?.data as Record<string, unknown> | unknown[] | undefined;
@@ -271,8 +283,12 @@ export default function StoreProductPage() {
 
   const onAdd = async (p: StoreProducto, cantidad = 1) => {
     const isCurrent = p.id_producto === producto?.id_producto;
-    if (isCurrent && resolved && resolved.cta !== "comprar") {
-      toast.error(resolved.hint || "No puedes comprar este producto todavía.");
+    if (isCurrent && resolved && !canComprarCta) {
+      toast.error(
+        needsSolicitudCta
+          ? resolved.hint || "Solicita disponibilidad antes de comprar."
+          : resolved.hint || "No puedes comprar este producto todavía."
+      );
       return;
     }
     const stockGate = isCurrent
