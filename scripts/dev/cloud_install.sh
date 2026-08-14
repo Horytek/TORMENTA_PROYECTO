@@ -17,9 +17,12 @@ else
   echo "    MySQL ya instalado"
 fi
 
-echo "==> [install 2/4] Dependencias npm (backend + client)"
+echo "==> [install 2/4] Dependencias npm (backend + client + client-v2)"
 npm install --no-audit --no-fund
 npm --prefix client install --no-audit --no-fund
+# client-v2 es el frontend nuevo (TypeScript) donde viven los módulos de plataforma
+# (Taxi, Delivery, Mayorista, Atelier, ...) y la landing. Es el frontend demostrable.
+npm --prefix client-v2 install --no-audit --no-fund
 
 echo "==> [install 3/4] Arranque de MySQL + bootstrap de bases"
 bash scripts/dev/cloud_start.sh
