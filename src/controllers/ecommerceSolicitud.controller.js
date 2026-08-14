@@ -104,7 +104,13 @@ export const storeCrearSolicitud = async (req, res) => {
           attrs_json: producto.attrs_json,
           hasSeleccionAttrs: hasSeleccion,
         });
-        if (resolved.cta === "comprar") {
+        const needsConfirmacion = Boolean(
+          resolved.disponibilidad?.cta?.requiresSolicitud ||
+            resolved.disponibilidad?.cta?.showEnviarSolicitud ||
+            resolved.modo === "consultar" ||
+            resolved.modo === "otra_ubicacion"
+        );
+        if (resolved.cta === "comprar" && !needsConfirmacion) {
           return res.status(400).json({
             success: false,
             message: "Hay stock disponible. Puedes comprar ahora sin solicitud.",
@@ -113,7 +119,10 @@ export const storeCrearSolicitud = async (req, res) => {
         if (resolved.modo === "otra_ubicacion" && resolved.id_sucursal_origen) {
           id_sucursal_origen = resolved.id_sucursal_origen;
         }
-        if (resolved.cta === "no_disponible" || resolved.modo === "agotado") {
+        if (
+          (resolved.cta === "no_disponible" || resolved.modo === "agotado") &&
+          !needsConfirmacion
+        ) {
           return res.status(400).json({
             success: false,
             message: "Producto no disponible actualmente.",

@@ -30,6 +30,7 @@ import { AvailabilityStatus } from "../design/AvailabilityStatus";
 import { ConsultarWhatsAppButton } from "../design/ConsultarWhatsAppButton";
 import { StockWhatsAppLeyenda } from "../components/vitrina/StockWhatsAppLeyenda";
 import { resolveDisponibilidad, applyResolvedFulfillment, labelCtaPrincipal } from "../utils/disponibilidad";
+import { apiErrorMessage } from "../utils/apiErrorMessage";
 import { buildDisponibilidadWaMessage, waLink } from "../design/buildWaMessage";
 import {
   formatPen,
@@ -293,7 +294,7 @@ export default function StoreProductPage() {
       });
       toast.success(`${p.nombre} agregado al carrito`);
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error(apiErrorMessage(e, "No se pudo agregar al carrito"));
     }
   };
 
@@ -333,7 +334,7 @@ export default function StoreProductPage() {
       }
       navigate(`/tienda/${slug}/cuenta/solicitudes`);
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error(apiErrorMessage(e, "No se pudo enviar la solicitud de disponibilidad"));
     }
   };
 
