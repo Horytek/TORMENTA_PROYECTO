@@ -6,6 +6,7 @@ import { getStockPorProductoSucursal } from "./InventoryService.js";
 import { listSucursalesActivas, getSucursal } from "./BranchService.js";
 import { cotizarEntrega } from "./DeliveryQuoteService.js";
 import { buildDisponibilidad, parseConfig } from "./DisponibilidadService.js";
+import { resultadoStockLocal } from "./fulfillmentCta.js";
 
 function calcDisp(row) {
   if (!row) return 0;
@@ -142,7 +143,7 @@ export async function resolveSucursalAtencion(connection, {
 
 /**
  * Resultado orientado a vitrina (sin jerga de almacén).
- * modo: inmediata | otra_ubicacion | agotado | incompleto
+ * modo: inmediata | consultar | otra_ubicacion | agotado | incompleto
  */
 export async function resolveDisponibilidadFulfillment(connection, {
   id_tienda,
@@ -205,35 +206,15 @@ export async function resolveDisponibilidadFulfillment(connection, {
   const dispLocal = buildDisponibilidad(stockLocal, attrs_json, cfg, extras);
 
   if (stockLocal >= qty) {
-    const needsSolicitud = Boolean(dispLocal?.cta?.requiresSolicitud);
-    if (needsSolicitud) {
-      return {
-        modo: "inmediata",
-        cta: "solicitar",
-        label: dispLocal.label || "Confirmar disponibilidad",
-        hint: dispLocal.hint || "Confirma la disponibilidad antes de comprar.",
-        cantidad: qty,
-        fulfillment: mode,
-        id_sucursal: sid,
-        id_sucursal_origen: null,
-        stock_local: stockLocal,
-        otras_ubicaciones: [],
-        disponibilidad: dispLocal,
-        quote: atencion.quote || null,
-      };
-    }
+    const local = resultadoStockLocal({ dispLocal, fulfillment: mode });
     return {
-      modo: "inmediata",
-      cta: "comprar",
-      label: mode === "pickup" ? "Disponible para recoger" : "Disponible para delivery",
-      hint: "Disponible para entrega inmediata",
+      ...local,
       cantidad: qty,
       fulfillment: mode,
       id_sucursal: sid,
       id_sucursal_origen: null,
       stock_local: stockLocal,
       otras_ubicaciones: [],
-      disponibilidad: dispLocal,
       quote: atencion.quote || null,
     };
   }
@@ -301,12 +282,5 @@ export async function resolveDisponibilidadFulfillment(connection, {
   };
 }
 
-/** Badge de línea de carrito */
-export function badgeFromModo(modo) {
-  if (modo === "inmediata") return "inmediata";
-  if (modo === "otra_ubicacion") return "solicitud";
-  if (modo === "incompleto") return "pendiente";
-  return "no_disponible";
-}
-
-export { calcDisp };
+export { calcDisp, resultadoStockLocal };
+export { badgeFromModo } from "./fulfillmentCta.js";

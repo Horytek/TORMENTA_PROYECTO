@@ -290,3 +290,79 @@ export function resolveDisponibilidad(
     cta,
   };
 }
+
+export type ResolvedFulfillmentCta = {
+  cta: "comprar" | "solicitar" | "no_disponible" | "incomplete" | string;
+  label?: string;
+  hint?: string | null;
+  disponibilidad?: {
+    estado?: string;
+    label?: string;
+    hint?: string;
+    cta?: Partial<DisponibilidadCta>;
+  } | null;
+};
+
+/**
+ * El resolver de fulfillment puede devolver cta "comprar" por stock local
+ * aunque disponibilidad.cta ya exija solicitud (talla/color). El PDP no debe
+ * pisar esa solicitud con "Comprar ahora".
+ */
+export function applyResolvedFulfillment(
+  resolved: ResolvedFulfillmentCta | undefined,
+  fallback: Disponibilidad | null
+): Disponibilidad | null {
+  if (!resolved?.disponibilidad || !fallback) return fallback;
+  const nested = resolved.disponibilidad.cta || {};
+  const needsSolicitud =
+    resolved.cta === "solicitar" ||
+    Boolean(nested.requiresSolicitud) ||
+    Boolean(nested.showEnviarSolicitud);
+  const canBuy = resolved.cta === "comprar" && !needsSolicitud;
+  const noDisponible = resolved.cta === "no_disponible";
+
+  return {
+    ...fallback,
+    ...resolved.disponibilidad,
+    cta: {
+      ...fallback.cta,
+      ...nested,
+      allowAddToCart: canBuy,
+      showCart: canBuy,
+      showWhatsapp: Boolean(nested.showWhatsapp ?? fallback.cta.showWhatsapp),
+      showEnviarSolicitud: needsSolicitud,
+      requiresSolicitud: needsSolicitud,
+      primary: needsSolicitud
+        ? "solicitud"
+        : canBuy
+          ? "cart"
+          : fallback.cta.primary,
+    },
+    label: needsSolicitud
+      ? resolved.disponibilidad.label || fallback.label
+      : resolved.label || resolved.disponibilidad.label || fallback.label,
+    hint:
+      (needsSolicitud
+        ? resolved.disponibilidad.hint || fallback.hint
+        : resolved.hint || resolved.disponibilidad.hint || fallback.hint) || "",
+    estado: canBuy
+      ? "disponible"
+      : needsSolicitud
+        ? "consultar"
+        : noDisponible
+          ? "agotado"
+          : (resolved.disponibilidad.estado as EstadoDisponibilidad) || fallback.estado,
+  };
+}
+
+export function labelCtaPrincipal(
+  resolved: ResolvedFulfillmentCta | undefined,
+  disp: Disponibilidad | null
+): string {
+  if (disp?.cta.showEnviarSolicitud || resolved?.cta === "solicitar") {
+    return "Solicitar disponibilidad";
+  }
+  if (resolved?.cta === "no_disponible") return "No disponible";
+  if (resolved?.cta === "incomplete") return "Elige cómo recibirlo";
+  return "Comprar ahora";
+}

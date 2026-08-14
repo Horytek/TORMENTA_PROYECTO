@@ -472,6 +472,11 @@ export const ecommerceSolicitudCreateSchema = z.object({
   cantidad: z.number().int().positive().max(99).optional(),
   attrs: z.record(z.string(), z.unknown()).optional().nullable(),
   attrs_json: z.record(z.string(), z.unknown()).optional().nullable(),
+  fulfillment: z.enum(["pickup", "delivery", "provincia", "retiro"]).optional(),
+  id_sucursal_origen: z.number().int().positive().optional().nullable(),
+  id_zona: z.number().int().positive().optional().nullable(),
+  direccion_entrega: z.string().max(500).optional().nullable(),
+  entrega_json: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 
 export const ecommerceSolicitudAprobarSchema = z.object({

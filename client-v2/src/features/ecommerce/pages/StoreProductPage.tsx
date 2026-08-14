@@ -29,7 +29,8 @@ import { addProductToCart, QuickAddSheet, useQuickAddGuard } from "../components
 import { AvailabilityStatus } from "../design/AvailabilityStatus";
 import { ConsultarWhatsAppButton } from "../design/ConsultarWhatsAppButton";
 import { StockWhatsAppLeyenda } from "../components/vitrina/StockWhatsAppLeyenda";
-import { resolveDisponibilidad } from "../utils/disponibilidad";
+import { resolveDisponibilidad, applyResolvedFulfillment, labelCtaPrincipal } from "../utils/disponibilidad";
+import { apiErrorMessage } from "../utils/apiErrorMessage";
 import { buildDisponibilidadWaMessage, waLink } from "../design/buildWaMessage";
 import {
   formatPen,
@@ -188,64 +189,9 @@ export default function StoreProductPage() {
         { hasSeleccionAttrs }
       )
     : null;
-  const resolvedDispCta = resolved?.disponibilidad?.cta;
-  const needsSolicitudCta =
-    resolved?.cta === "solicitar" ||
-    Boolean(resolvedDispCta?.requiresSolicitud || resolvedDispCta?.showEnviarSolicitud);
-  const canComprarCta =
-    resolved?.cta === "comprar" &&
-    !needsSolicitudCta &&
-    Boolean(resolvedDispCta?.allowAddToCart ?? false);
-  const disp = resolved?.disponibilidad
-    ? ({
-        ...dispLegacy!,
-        ...resolved.disponibilidad,
-        cta: {
-          ...(dispLegacy?.cta || {}),
-          ...(resolved.disponibilidad.cta || {}),
-          allowAddToCart: canComprarCta,
-          showCart: canComprarCta,
-          showWhatsapp: Boolean(
-            resolved.disponibilidad.cta?.showWhatsapp ?? dispLegacy?.cta.showWhatsapp
-          ),
-          showEnviarSolicitud: needsSolicitudCta,
-          requiresSolicitud: needsSolicitudCta,
-          primary: needsSolicitudCta
-            ? "solicitud"
-            : canComprarCta
-              ? "cart"
-              : resolved.cta === "no_disponible"
-                ? null
-                : dispLegacy?.cta.primary ?? null,
-        },
-        label: resolved.label || resolved.disponibilidad.label || dispLegacy!.label,
-        hint:
-          resolved.hint ||
-          resolved.disponibilidad.hint ||
-          dispLegacy?.hint ||
-          "",
-        estado:
-          canComprarCta
-            ? "disponible"
-            : needsSolicitudCta
-              ? "consultar"
-              : resolved.cta === "no_disponible"
-                ? "agotado"
-                : dispLegacy?.estado || "consultar",
-      } as NonNullable<typeof dispLegacy>)
-    : dispLegacy;
+  const disp = applyResolvedFulfillment(resolved, dispLegacy);
 
-  const ctaLabel = needsSolicitudCta
-    ? "Solicitar disponibilidad"
-    : resolved?.cta === "no_disponible"
-      ? "No disponible"
-      : resolved?.cta === "incomplete"
-        ? "Elige cómo recibirlo"
-        : canComprarCta
-          ? "Comprar ahora"
-          : disp?.cta.showEnviarSolicitud
-            ? "Solicitar disponibilidad"
-            : "Comprar ahora";
+  const ctaLabel = labelCtaPrincipal(resolved, disp);
 
   const deliveryZonas = useMemo(() => {
     const raw = entregaOpcionesQ.data?.data as Record<string, unknown> | unknown[] | undefined;
@@ -352,7 +298,7 @@ export default function StoreProductPage() {
       });
       toast.success(`${p.nombre} agregado al carrito`);
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error(apiErrorMessage(e, "No se pudo agregar al carrito"));
     }
   };
 
@@ -392,7 +338,7 @@ export default function StoreProductPage() {
       }
       navigate(`/tienda/${slug}/cuenta/solicitudes`);
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error(apiErrorMessage(e, "No se pudo enviar la solicitud de disponibilidad"));
     }
   };
 

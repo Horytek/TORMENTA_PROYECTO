@@ -1,6 +1,6 @@
 import { getEcommerceConnection } from "../database/database_ecommerce.js";
 import { resolveTiendaBySlug } from "../middlewares/storefrontAuth.middleware.js";
-import { parseConfig, parseJsonSafe, buildDisponibilidad } from "../services/ecommerce/DisponibilidadService.js";
+import { parseConfig, parseJsonSafe, buildDisponibilidad, productHasSeleccionAttrs } from "../services/ecommerce/DisponibilidadService.js";
 import { ensureDefaultVariante } from "../services/ecommerce/InventoryService.js";
 import { resolveSucursalFilter, assertSucursal } from "../services/ecommerce/RbacService.js";
 import {
@@ -87,6 +87,7 @@ export const storeCrearSolicitud = async (req, res) => {
 
     if (!id_sucursal_origen && id_variante) {
       try {
+        const hasSeleccion = await productHasSeleccionAttrs(connection, id_tienda, id_producto);
         const resolved = await resolveDisponibilidadFulfillment(connection, {
           id_tienda,
           id_producto,
@@ -101,17 +102,27 @@ export const storeCrearSolicitud = async (req, res) => {
           subtotal: Number(producto.precio || 0) * cantidad,
           theme_json: tienda.theme_json,
           attrs_json: producto.attrs_json,
+          hasSeleccionAttrs: hasSeleccion,
         });
-        if (resolved.modo === "otra_ubicacion" && resolved.id_sucursal_origen) {
-          id_sucursal_origen = resolved.id_sucursal_origen;
-        }
-        if (resolved.modo === "inmediata") {
+        const needsConfirmacion = Boolean(
+          resolved.disponibilidad?.cta?.requiresSolicitud ||
+            resolved.disponibilidad?.cta?.showEnviarSolicitud ||
+            resolved.modo === "consultar" ||
+            resolved.modo === "otra_ubicacion"
+        );
+        if (resolved.cta === "comprar" && !needsConfirmacion) {
           return res.status(400).json({
             success: false,
             message: "Hay stock disponible. Puedes comprar ahora sin solicitud.",
           });
         }
-        if (resolved.modo === "agotado") {
+        if (resolved.modo === "otra_ubicacion" && resolved.id_sucursal_origen) {
+          id_sucursal_origen = resolved.id_sucursal_origen;
+        }
+        if (
+          (resolved.cta === "no_disponible" || resolved.modo === "agotado") &&
+          !needsConfirmacion
+        ) {
           return res.status(400).json({
             success: false,
             message: "Producto no disponible actualmente.",

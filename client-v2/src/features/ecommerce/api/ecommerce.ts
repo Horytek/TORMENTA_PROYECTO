@@ -188,7 +188,7 @@ export async function getProductAvailability(slug: string, id: number) {
 }
 
 export type ResolveDisponibilidadResult = {
-  modo: "inmediata" | "otra_ubicacion" | "agotado" | "incompleto";
+  modo: "inmediata" | "consultar" | "otra_ubicacion" | "agotado" | "incompleto";
   cta: "comprar" | "solicitar" | "no_disponible" | "incomplete";
   label: string;
   hint?: string | null;
