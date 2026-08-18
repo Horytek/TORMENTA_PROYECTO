@@ -30,8 +30,8 @@ export function ModuleWall() {
             const Icon = m.icon;
             return (
               <li key={`${m.label}-${i}`} className="lp-tile">
-                <span className="lp-tile-icon">
-                  <Icon className="h-[15px] w-[15px]" aria-hidden />
+                <span className={`lp-tile-icon lp-tono-${m.tono}`}>
+                  <Icon className="h-[17px] w-[17px]" aria-hidden />
                 </span>
                 <span className="lp-tile-label">{m.label}</span>
               </li>

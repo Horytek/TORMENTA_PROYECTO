@@ -232,3 +232,27 @@
   color: #fff;
 }
 .lp-cta-accent:hover { background: hsl(var(--lp-accent) / 0.9); }
+
+/* Tonos de las baldosas.
+ *
+ * La referencia tiene 102 iconos ilustrados de 64x64, uno propio por modulo.
+ * No puedo producir eso, pero el efecto que consigue -una cuadricula que se lee
+ * variada en vez de repetida- si se aproxima dando a cada baldosa su icono y su
+ * tono. Antes 22 baldosas compartian 11 iconos: `Wallet` iba cuatro veces. */
+.lp-tono-0 { background: hsl(205 78% 42% / 0.12); color: hsl(205 78% 38%); }
+.lp-tono-1 { background: hsl(168 62% 36% / 0.13); color: hsl(168 62% 30%); }
+.lp-tono-2 { background: hsl(258 62% 55% / 0.12); color: hsl(258 55% 52%); }
+.lp-tono-3 { background: hsl(28 82% 50% / 0.13); color: hsl(28 72% 42%); }
+.lp-tono-4 { background: hsl(340 62% 52% / 0.11); color: hsl(340 58% 48%); }
+.lp-tono-5 { background: hsl(212 40% 30% / 0.11); color: hsl(212 40% 32%); }
+
+.dark .lp-tono-0 { background: hsl(205 78% 55% / 0.16); color: hsl(205 80% 68%); }
+.dark .lp-tono-1 { background: hsl(168 62% 50% / 0.16); color: hsl(168 60% 62%); }
+.dark .lp-tono-2 { background: hsl(258 62% 68% / 0.16); color: hsl(258 70% 76%); }
+.dark .lp-tono-3 { background: hsl(28 82% 60% / 0.16); color: hsl(28 85% 68%); }
+.dark .lp-tono-4 { background: hsl(340 62% 65% / 0.16); color: hsl(340 70% 74%); }
+.dark .lp-tono-5 { background: hsl(210 25% 70% / 0.14); color: hsl(210 25% 78%); }
+
+/* Baldosa mas alta: el icono a 15px se perdia. */
+.lp-tile { padding: 0.9rem 1rem; }
+.lp-tile-icon { height: 2.35rem; width: 2.35rem; border-radius: 9px; }
