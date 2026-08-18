@@ -14,6 +14,7 @@ import { BenefitPillars } from "../components/BenefitPillars";
 import { FeatureMatrix } from "../components/FeatureMatrix";
 import { ProductFacts } from "../components/ProductFacts";
 import { ModuleWall } from "../components/ModuleWall";
+import { ProductShowcase } from "../components/ProductShowcase";
 import { BlueprintSection } from "../components/BlueprintSection";
 import { CaseStudy } from "../components/CaseStudy";
 import { SolutionsBridge } from "../components/SolutionsBridge";
@@ -30,6 +31,7 @@ const LEGACY_SECTION_IDS = [
   "cifras",
   "confianza",
   "beneficios",
+  "producto-real",
   "capacidades",
   "modulos",
   "producto",
@@ -88,6 +90,7 @@ export default function LandingPage() {
                 <ProductFacts />
                 <TrustStrip />
                 <BenefitPillars />
+                <ProductShowcase />
                 <FeatureMatrix />
                 <ModuleWall />
                 <SolutionsBridge />
