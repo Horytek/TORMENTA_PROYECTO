@@ -34,7 +34,9 @@ export function ProductShowcase() {
       <div className="lp-container">
         <div className="lp-head-center">
           <span className="lp-eyebrow">Así se ve por dentro</span>
-          <h2 className="lp-h2">La caja sabe de tallas y colores.</h2>
+          <h2 className="lp-h2">
+            La caja sabe de <span className="lp-acento">tallas y colores.</span>
+          </h2>
           <p className="lp-lead">
             No es un ERP genérico con un campo de texto para la talla. La variante
             es parte de la venta, del stock y del comprobante.

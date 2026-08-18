@@ -17,7 +17,7 @@ export function ModuleWall() {
         <div className="lp-head-center">
           <span className="lp-eyebrow">Todo incluido</span>
           <h2 className="lp-h2">
-            {MODULE_TILES.length} módulos, un solo sistema.
+            {MODULE_TILES.length} módulos, <span className="lp-acento">un solo sistema.</span>
           </h2>
           <p className="lp-lead">
             No se compran por separado ni se integran después. Vienen juntos y
@@ -25,13 +25,13 @@ export function ModuleWall() {
           </p>
         </div>
 
-        <ul className="mt-12 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {MODULE_TILES.map((m, i) => {
+        <ul className="mt-14 grid grid-cols-3 gap-x-4 gap-y-9 sm:grid-cols-4 lg:grid-cols-6">
+          {MODULE_TILES.map((m) => {
             const Icon = m.icon;
             return (
-              <li key={`${m.label}-${i}`} className="lp-tile">
+              <li key={m.label} className="lp-tile">
                 <span className={`lp-tile-icon lp-tono-${m.tono}`}>
-                  <Icon className="h-[17px] w-[17px]" aria-hidden />
+                  <Icon className="h-7 w-7" strokeWidth={1.6} aria-hidden />
                 </span>
                 <span className="lp-tile-label">{m.label}</span>
               </li>

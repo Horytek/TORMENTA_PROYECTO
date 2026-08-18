@@ -14,7 +14,8 @@ export function BenefitPillars() {
         <div className="lp-head-center">
           <span className="lp-eyebrow">Qué ganas</span>
           <h2 className="lp-h2">
-            Controla inventario, vende y factura desde un solo sistema.
+            Controla inventario, vende y factura{" "}
+            <span className="lp-acento">desde un solo sistema.</span>
           </h2>
           <p className="lp-lead">
             Pensado para dueños de negocio que necesitan orden diario — no un ERP

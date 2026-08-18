@@ -17,7 +17,7 @@ export function FeatureMatrix() {
         <div className="lp-head-center">
           <span className="lp-eyebrow">Todo lo que incluye</span>
           <h2 className="lp-h2">
-            Un sistema para vender, operar y decidir.
+            Un sistema para <span className="lp-acento">vender, operar y decidir.</span>
           </h2>
           <p className="lp-lead">
             No son módulos sueltos que compras aparte: es la misma información
