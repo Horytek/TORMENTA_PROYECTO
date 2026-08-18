@@ -685,13 +685,12 @@ const getVentas = async (req, res) => {
     const offset = (page - 1) * limit;
     const id_tenant = req.id_tenant;
 
-    let where = [];
-    let params = [];
-
-    if (id_tenant) {
-      where.push("v.id_tenant = ?");
-      params.push(id_tenant);
+    if (!id_tenant) {
+      return res.status(401).json({ code: 0, message: "Tenant no identificado" });
     }
+
+    const where = ["v.id_tenant = ?"];
+    const params = [id_tenant];
 
     if (req.query.fecha_inicio) {
       where.push("v.f_venta >= ?");
@@ -721,8 +720,18 @@ const getVentas = async (req, res) => {
     // Armar cláusula WHERE
     let whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
 
-    // Consulta principal con detalles agregados
+    // Paginar primero las ventas evita agregar todos sus detalles antes del LIMIT.
+    // El LIMIT dentro del CTE fuerza a MySQL a materializar solo la pagina solicitada.
     const ventasQuery = `
+      WITH ventas_paginadas AS (
+        SELECT v.id_venta
+        FROM venta v
+          INNER JOIN comprobante com ON com.id_comprobante = v.id_comprobante
+          INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante = com.id_tipocomprobante
+        ${whereClause}
+        ORDER BY v.id_venta DESC
+        LIMIT ? OFFSET ?
+      )
       SELECT
         v.id_venta AS id,
         SUBSTRING(com.num_comprobante, 2, 3) AS serieNum,
@@ -754,7 +763,7 @@ const getVentas = async (req, res) => {
         v.observacion,
         v.hora_creacion,
         v.fecha_anulacion,
-        (SELECT usu.usua FROM usuario usu WHERE usu.id_usuario = v.u_modifica) AS u_modifica,
+        usu_modifica.usua AS u_modifica,
         JSON_ARRAYAGG(
           JSON_OBJECT(
             'codigo', dv.id_detalle,
@@ -774,7 +783,10 @@ const getVentas = async (req, res) => {
             'attributes', ps.attributes_json
           )
         ) AS detalles
-      FROM venta v
+      FROM ventas_paginadas vp
+        INNER JOIN venta v
+          ON v.id_venta = vp.id_venta
+         AND v.id_tenant = ?
         INNER JOIN comprobante com ON com.id_comprobante = v.id_comprobante
         INNER JOIN tipo_comprobante tp ON tp.id_tipocomprobante = com.id_tipocomprobante
         LEFT JOIN cliente cl ON cl.id_cliente = v.id_cliente AND cl.id_tenant = v.id_tenant
@@ -787,13 +799,14 @@ const getVentas = async (req, res) => {
         INNER JOIN sucursal s ON s.id_sucursal = v.id_sucursal AND s.id_tenant = v.id_tenant
         INNER JOIN vendedor ve ON ve.dni = s.dni AND ve.id_tenant = v.id_tenant
         INNER JOIN usuario usu ON usu.id_usuario = ve.id_usuario AND usu.id_tenant = v.id_tenant
-      ${whereClause}
+        LEFT JOIN usuario usu_modifica
+          ON usu_modifica.id_usuario = v.u_modifica
+         AND usu_modifica.id_tenant = v.id_tenant
       GROUP BY v.id_venta
       ORDER BY v.id_venta DESC
-      LIMIT ? OFFSET ?
     `;
 
-    const finalParams = [...params, limit, offset];
+    const finalParams = [...params, limit, offset, id_tenant];
     const [ventasResult] = await connection.query(ventasQuery, finalParams);
 
     // Parsear detalles JSON

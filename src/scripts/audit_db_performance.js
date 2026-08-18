@@ -98,6 +98,8 @@ const consultarDigests = async (connection) => {
       FROM performance_schema.events_statements_summary_by_digest
       WHERE SCHEMA_NAME = ?
         AND DIGEST_TEXT IS NOT NULL
+        AND DIGEST_TEXT REGEXP '^(SELECT|INSERT|UPDATE|DELETE)'
+        AND DIGEST_TEXT NOT LIKE '%BENCHMARK%'
         AND DIGEST_TEXT NOT LIKE 'EXPLAIN %'
         AND DIGEST_TEXT NOT LIKE 'SHOW %'
         AND DIGEST_TEXT NOT LIKE 'SELECT %performance_schema%'

@@ -244,39 +244,52 @@ const getTotalVentas = async (req, res) => {
     const fechaInicioAnteriorISO = format(fechaInicioAnterior, 'yyyy-MM-dd HH:mm:ss');
     const fechaFinAnteriorISO = format(fechaFinAnterior, 'yyyy-MM-dd HH:mm:ss');
 
-    const queryBase = `
-      SELECT SUM(dv.total) AS total, COUNT(v.id_venta) AS totalClientes
+    const isAdmin = rol.toLowerCase() === "administrador";
+    const idSucursalFiltro = isAdmin
+      ? (sucursal || null)
+      : await getSucursalIdForUser(usuarioQuery, connection, id_tenant);
+
+    let query = `
+      SELECT
+        COALESCE(SUM(CASE
+          WHEN v.f_venta BETWEEN ? AND ? THEN dv.total
+          ELSE 0
+        END), 0) AS total_actual,
+        COALESCE(SUM(CASE
+          WHEN v.f_venta BETWEEN ? AND ? THEN dv.total
+          ELSE 0
+        END), 0) AS total_anterior,
+        COUNT(DISTINCT CASE
+          WHEN v.f_venta BETWEEN ? AND ? THEN v.id_venta
+          ELSE NULL
+        END) AS total_ventas
       FROM detalle_venta dv
-      JOIN venta v ON dv.id_venta = v.id_venta
-      WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0 AND v.id_tenant = ?
+      INNER JOIN venta v ON dv.id_venta = v.id_venta
+      WHERE v.f_venta BETWEEN ? AND ?
+        AND v.estado_venta != 0
+        AND v.id_tenant = ?
     `;
+    const params = [
+      fechaInicioISO,
+      fechaFinISO,
+      fechaInicioAnteriorISO,
+      fechaFinAnteriorISO,
+      fechaInicioISO,
+      fechaFinISO,
+      fechaInicioAnteriorISO,
+      fechaFinISO,
+      id_tenant,
+    ];
 
-    const extraSucursal = " AND v.id_sucursal = ?";
-    let actual, anterior;
-    const paramsActual = [fechaInicioISO, fechaFinISO, id_tenant];
-    const paramsAnterior = [fechaInicioAnteriorISO, fechaFinAnteriorISO, id_tenant];
-
-    if (rol.toLowerCase() === "administrador") {
-      if (sucursal) {
-        paramsActual.push(sucursal);
-        paramsAnterior.push(sucursal);
-        actual = await connection.query(queryBase + extraSucursal, paramsActual);
-        anterior = await connection.query(queryBase + extraSucursal, paramsAnterior);
-      } else {
-        actual = await connection.query(queryBase, paramsActual);
-        anterior = await connection.query(queryBase, paramsAnterior);
-      }
-    } else {
-      const id_sucursal = await getSucursalIdForUser(usuarioQuery, connection, id_tenant);
-      paramsActual.push(id_sucursal);
-      paramsAnterior.push(id_sucursal);
-      actual = await connection.query(queryBase + extraSucursal, paramsActual);
-      anterior = await connection.query(queryBase + extraSucursal, paramsAnterior);
+    if (idSucursalFiltro) {
+      query += " AND v.id_sucursal = ?";
+      params.push(idSucursalFiltro);
     }
 
-    const valorActual = actual[0][0].total || 0;
-    const valorAnterior = anterior[0][0].total || 0;
-    const totalClientesActual = actual[0][0].totalClientes || 0;
+    const [[totales]] = await connection.query(query, params);
+    const valorActual = totales.total_actual || 0;
+    const valorAnterior = totales.total_anterior || 0;
+    const totalClientesActual = totales.total_ventas || 0;
 
     const porcentajeCambio = valorAnterior > 0
       ? ((valorActual - valorAnterior) / valorAnterior) * 100
@@ -351,39 +364,45 @@ const getTotalProductosVendidos = async (req, res) => {
     const fechaComparacionInicioISO = format(fechaComparacionInicio, 'yyyy-MM-dd HH:mm:ss');
     const fechaComparacionFinISO = format(fechaComparacionFin, 'yyyy-MM-dd HH:mm:ss');
 
-    let baseQuery = `
-      SELECT SUM(dv.cantidad) AS total_productos_vendidos
-      FROM detalle_venta dv
-      JOIN venta v ON dv.id_venta = v.id_venta
-      WHERE v.f_venta BETWEEN ? AND ? AND v.estado_venta != 0 AND v.id_tenant = ?
-    `;
-
     const isAdmin = rol.toLowerCase() === "administrador";
-    const id_sucursal = !isAdmin ? await getSucursalIdForUser(usuarioQuery, connection, id_tenant) : null;
+    const idSucursalFiltro = isAdmin
+      ? (sucursal || null)
+      : await getSucursalIdForUser(usuarioQuery, connection, id_tenant);
 
-    const buildQuery = (inicio, fin) => {
-      let query = baseQuery;
-      const params = [inicio, fin, id_tenant];
-      if (isAdmin) {
-        if (sucursal) {
-          query += " AND v.id_sucursal = ?";
-          params.push(sucursal);
-        }
-      } else {
-        query += " AND v.id_sucursal = ?";
-        params.push(id_sucursal);
-      }
-      return { query, params };
-    };
+    let query = `
+      SELECT
+        COALESCE(SUM(CASE
+          WHEN v.f_venta BETWEEN ? AND ? THEN dv.cantidad
+          ELSE 0
+        END), 0) AS total_actual,
+        COALESCE(SUM(CASE
+          WHEN v.f_venta BETWEEN ? AND ? THEN dv.cantidad
+          ELSE 0
+        END), 0) AS total_anterior
+      FROM detalle_venta dv
+      INNER JOIN venta v ON dv.id_venta = v.id_venta
+      WHERE v.f_venta BETWEEN ? AND ?
+        AND v.estado_venta != 0
+        AND v.id_tenant = ?
+    `;
+    const params = [
+      fechaInicioISO,
+      fechaFinISO,
+      fechaComparacionInicioISO,
+      fechaComparacionFinISO,
+      fechaComparacionInicioISO,
+      fechaFinISO,
+      id_tenant,
+    ];
 
-    const { query: actualQuery, params: actualParams } = buildQuery(fechaInicioISO, fechaFinISO);
-    const { query: anteriorQuery, params: anteriorParams } = buildQuery(fechaComparacionInicioISO, fechaComparacionFinISO);
+    if (idSucursalFiltro) {
+      query += " AND v.id_sucursal = ?";
+      params.push(idSucursalFiltro);
+    }
 
-    const [[actualResult]] = await connection.query(actualQuery, actualParams);
-    const [[anteriorResult]] = await connection.query(anteriorQuery, anteriorParams);
-
-    const actual = actualResult.total_productos_vendidos || 0;
-    const anterior = anteriorResult.total_productos_vendidos || 0;
+    const [[totales]] = await connection.query(query, params);
+    const actual = totales.total_actual || 0;
+    const anterior = totales.total_anterior || 0;
 
     let porcentajeCambio = null;
     if (anterior === 0) {
@@ -584,8 +603,12 @@ export const getNotasPendientes = async (req, res) => {
         `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
                 dn.id_producto, dn.cantidad, n.hora_creacion, n.id_destinatario, n.estado_espera
          FROM nota n
-         INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
-         INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
+         INNER JOIN comprobante c
+           ON n.id_comprobante = c.id_comprobante
+          AND c.id_tenant = n.id_tenant
+         INNER JOIN detalle_nota dn
+           ON n.id_nota = dn.id_nota
+          AND dn.id_tenant = n.id_tenant
          WHERE n.id_tiponota = 1
            AND n.id_almacenD IN (?)
            AND n.estado_nota = 0
@@ -607,8 +630,12 @@ export const getNotasPendientes = async (req, res) => {
         `SELECT n.id_nota, n.fecha, c.num_comprobante AS documento, n.id_almacenO, n.id_almacenD, n.glosa AS concepto,
                 dn.id_producto, dn.cantidad, n.hora_creacion, n.id_destinatario, n.estado_espera
          FROM nota n
-         INNER JOIN comprobante c ON n.id_comprobante = c.id_comprobante
-         INNER JOIN detalle_nota dn ON n.id_nota = dn.id_nota
+         INNER JOIN comprobante c
+           ON n.id_comprobante = c.id_comprobante
+          AND c.id_tenant = n.id_tenant
+         INNER JOIN detalle_nota dn
+           ON n.id_nota = dn.id_nota
+          AND dn.id_tenant = n.id_tenant
          WHERE n.id_tiponota = 2
            AND n.id_almacenO IN (?)
            AND n.estado_nota = 0
@@ -646,40 +673,48 @@ export const getNotasPendientes = async (req, res) => {
     }
 
     const getDetalles = (id_nota) => detallesPorNota.get(id_nota) || [];
+    const claveContraparte = (nota) => [
+      nota.id_almacenO,
+      nota.id_almacenD,
+      nota.documento,
+      nota.id_producto,
+      Number(nota.cantidad),
+    ].join("\u001F");
+
+    // Evitar el cruce O(ingresos * salidas) que antes ejecutaba Array.some
+    // por cada detalle de cada nota.
+    const clavesIngreso = new Set(ingresos.map(claveContraparte));
+    const clavesSalida = new Set(salidas.map(claveContraparte));
 
     const pendientesIngreso = ingresos.filter(ing =>
       ing.estado_espera === 0 &&
       (ing.id_almacenO !== null && ing.id_almacenO !== 0) &&
-      !salidas.some(sal =>
-        sal.id_almacenO === ing.id_almacenO &&
-        sal.id_almacenD === ing.id_almacenD &&
-        sal.documento === ing.documento &&
-        sal.id_producto === ing.id_producto &&
-        Number(sal.cantidad) === Number(ing.cantidad)
-      )
+      !clavesSalida.has(claveContraparte(ing))
     );
     const pendientesSalida = salidas.filter(sal =>
       sal.estado_espera === 0 &&
-      !ingresos.some(ing =>
-        ing.id_almacenO === sal.id_almacenO &&
-        ing.id_almacenD === sal.id_almacenD &&
-        ing.documento === sal.documento &&
-        ing.id_producto === sal.id_producto &&
-        Number(ing.cantidad) === Number(sal.cantidad)
-      )
+      !clavesIngreso.has(claveContraparte(sal))
     );
 
+    const agruparPorNota = (filas, tipo) => {
+      const notas = new Map();
+
+      for (const nota of filas) {
+        if (!notas.has(nota.id_nota)) {
+          notas.set(nota.id_nota, {
+            ...nota,
+            tipo,
+            detalles: getDetalles(nota.id_nota),
+          });
+        }
+      }
+
+      return [...notas.values()];
+    };
+
     const pendientes = [
-      ...pendientesIngreso.map(n => ({
-        ...n,
-        tipo: "Falta salida",
-        detalles: getDetalles(n.id_nota)
-      })),
-      ...pendientesSalida.map(n => ({
-        ...n,
-        tipo: "Falta ingreso",
-        detalles: getDetalles(n.id_nota)
-      })),
+      ...agruparPorNota(pendientesIngreso, "Falta salida"),
+      ...agruparPorNota(pendientesSalida, "Falta ingreso"),
     ];
 
     res.json({ code: 1, data: pendientes, message: "Notas pendientes obtenidas correctamente" });
@@ -805,41 +840,40 @@ const getNuevosClientes = async (req, res) => {
     const fechaInicioAnteriorISO = format(fechaInicioAnterior, 'yyyy-MM-dd HH:mm:ss');
     const fechaFinAnteriorISO = format(fechaFinAnterior, 'yyyy-MM-dd HH:mm:ss');
 
-    // Query para contar clientes nuevos: clientes cuya primera compra fue en el período
-    // Usa subquery para encontrar la fecha de primera compra de cada cliente
-    let queryActual = `
-      SELECT COUNT(DISTINCT c.id_cliente) AS nuevos_clientes
+    let query = `
+      SELECT
+        COUNT(DISTINCT CASE
+          WHEN c.f_creacion BETWEEN ? AND ? THEN c.id_cliente
+          ELSE NULL
+        END) AS nuevos_actual,
+        COUNT(DISTINCT CASE
+          WHEN c.f_creacion BETWEEN ? AND ? THEN c.id_cliente
+          ELSE NULL
+        END) AS nuevos_anterior
       FROM cliente c
       INNER JOIN venta v ON c.id_cliente = v.id_cliente
       WHERE v.id_tenant = ?
         AND v.estado_venta != 0
         AND c.f_creacion BETWEEN ? AND ?
     `;
-
-    let queryAnterior = `
-      SELECT COUNT(DISTINCT c.id_cliente) AS nuevos_clientes
-      FROM cliente c
-      INNER JOIN venta v ON c.id_cliente = v.id_cliente
-      WHERE v.id_tenant = ?
-        AND v.estado_venta != 0
-        AND c.f_creacion BETWEEN ? AND ?
-    `;
-
-    const paramsActual = [id_tenant, fechaInicioISO, fechaFinISO];
-    const paramsAnterior = [id_tenant, fechaInicioAnteriorISO, fechaFinAnteriorISO];
+    const params = [
+      fechaInicioISO,
+      fechaFinISO,
+      fechaInicioAnteriorISO,
+      fechaFinAnteriorISO,
+      id_tenant,
+      fechaInicioAnteriorISO,
+      fechaFinISO,
+    ];
 
     if (sucursal) {
-      queryActual += " AND v.id_sucursal = ?";
-      queryAnterior += " AND v.id_sucursal = ?";
-      paramsActual.push(sucursal);
-      paramsAnterior.push(sucursal);
+      query += " AND v.id_sucursal = ?";
+      params.push(sucursal);
     }
 
-    const [[resultActual]] = await connection.query(queryActual, paramsActual);
-    const [[resultAnterior]] = await connection.query(queryAnterior, paramsAnterior);
-
-    const actual = resultActual?.nuevos_clientes || 0;
-    const anterior = resultAnterior?.nuevos_clientes || 0;
+    const [[resultados]] = await connection.query(query, params);
+    const actual = resultados?.nuevos_actual || 0;
+    const anterior = resultados?.nuevos_anterior || 0;
 
     const porcentajeCambio = anterior > 0
       ? ((actual - anterior) / anterior) * 100
