@@ -1589,7 +1589,7 @@ export const EXPERIENCE_MODULES: LandingProductModule[] = [
     "atelier",
     "commerce-wa",
     tone("#DB2777", "#FDF2F8", "#BE185D", "warm"),
-    ["hero", "trust", "flow", "proof", "pricing", "faq", "cta"],
+    ["hero", "trust", "job", "flow", "proof", "pricing", "faq", "cta"],
     {
       badge: "Atelier",
       title: "Dibujo por encargo.",
@@ -1597,6 +1597,7 @@ export const EXPERIENCE_MODULES: LandingProductModule[] = [
       body: "Marketplace de ilustración: descubre creadores, cotiza, paga con Mercado Pago y sigue el pedido hasta la reseña.",
       trust: ["Portafolio", "Cotización", "Escrow lógico"],
       sectionTitles: {
+        job: "Descubre al creador",
         flow: "Del brief al archivo final",
         proof: "Pedido demo",
         faq: "Atelier vs catálogo",

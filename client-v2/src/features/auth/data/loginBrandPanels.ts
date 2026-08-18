@@ -70,6 +70,11 @@ const EXTRA_METRICS: Record<string, LoginBrandMetric[]> = {
     { label: "Cierres OK", value: "12" },
     { label: "Incidencias", value: "2" },
   ],
+  atelier: [
+    { label: "Roles", value: "3" },
+    { label: "Fee", value: "10%" },
+    { label: "Checkout", value: "Mercado Pago" },
+  ],
   taxi: [
     { label: "Superficies", value: "3" },
     { label: "ETA demo", value: "~4 min" },

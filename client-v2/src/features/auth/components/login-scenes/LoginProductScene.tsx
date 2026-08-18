@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import { resolveProductThemeId } from "@/features/platform/ui/productThemes";
 import {
+  SceneAtelier,
   SceneCatalogoWa,
   SceneEcommerce,
   SceneErp,
@@ -30,6 +31,7 @@ const SCENE_BY_PRODUCT: Record<string, ComponentType> = {
   sync: SceneSync,
   mayorista: SceneMayorista,
   preventa: ScenePreventa,
+  atelier: SceneAtelier,
   taller: SceneTaller,
   wms: SceneWms,
   envios: SceneEnvios,

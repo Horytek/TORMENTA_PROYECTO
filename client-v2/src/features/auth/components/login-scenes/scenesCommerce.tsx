@@ -256,3 +256,35 @@ export function ScenePreventa() {
     </SceneCard>
   );
 }
+
+export function SceneAtelier() {
+  return (
+    <SceneCard accent="#DB2777">
+      <div className="flex items-center justify-between gap-2">
+        <SceneLabel>Encargo #AT-184</SceneLabel>
+        <SceneChip color="#DB2777">Pagado</SceneChip>
+      </div>
+      <p className="mt-2 text-lg font-semibold leading-snug">Retrato de mascota</p>
+      <p className="text-[12px] text-black/45">Acuarela · A4 · Luna Ink</p>
+      <ul className="mt-4 space-y-2 border-y border-dashed border-black/15 py-3 text-[12px]">
+        <li className="flex justify-between gap-2">
+          <span>Brief aprobado</span>
+          <span className="font-medium text-emerald-700">listo</span>
+        </li>
+        <li className="flex justify-between gap-2">
+          <span>Cotización</span>
+          <span className="tabular-nums font-medium">S/ 180.00</span>
+        </li>
+        <li className="flex justify-between gap-2">
+          <span>Mercado Pago</span>
+          <span className="font-medium text-emerald-700">escrow</span>
+        </li>
+      </ul>
+      <div className="mt-4">
+        <SceneLabel>Entrega</SceneLabel>
+        <SceneProgress value={72} color="#DB2777" />
+        <p className="mt-2 text-[11px] text-black/45">Borrador en revisión · 1 ajuste restante</p>
+      </div>
+    </SceneCard>
+  );
+}
