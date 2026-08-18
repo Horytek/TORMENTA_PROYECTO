@@ -80,7 +80,7 @@ export function InkCatLine({ progress = 1 }: { progress?: number }) {
           from={0}
           to={0.2}
           length={1500}
-          strokeWidth="1.4"
+          strokeWidth={1.4}
           opacity={0.8}
         />
         <Drawn
@@ -89,7 +89,7 @@ export function InkCatLine({ progress = 1 }: { progress?: number }) {
           from={0.06}
           to={0.24}
           length={380}
-          strokeWidth="1.25"
+          strokeWidth={1.25}
         />
         <Drawn
           d="M196 430 C176 400 182 352 214 328 C236 312 268 318 284 346 C300 376 292 418 266 440"
@@ -97,7 +97,7 @@ export function InkCatLine({ progress = 1 }: { progress?: number }) {
           from={0.18}
           to={0.48}
           length={480}
-          strokeWidth="1.85"
+          strokeWidth={1.85}
         />
         <Drawn
           d="M226 338 L214 292 L248 324"
@@ -105,7 +105,7 @@ export function InkCatLine({ progress = 1 }: { progress?: number }) {
           from={0.36}
           to={0.52}
           length={130}
-          strokeWidth="1.6"
+          strokeWidth={1.6}
         />
         <Drawn
           d="M258 328 L292 286 L280 340"
@@ -113,7 +113,7 @@ export function InkCatLine({ progress = 1 }: { progress?: number }) {
           from={0.4}
           to={0.56}
           length={140}
-          strokeWidth="1.6"
+          strokeWidth={1.6}
         />
         <Drawn
           d="M176 520 A 62 96 0 1 1 300 520 A 62 96 0 1 1 176 520"
@@ -121,7 +121,7 @@ export function InkCatLine({ progress = 1 }: { progress?: number }) {
           from={0.46}
           to={0.78}
           length={700}
-          strokeWidth="1.85"
+          strokeWidth={1.85}
         />
         <Drawn
           d="M174 500 C108 478 92 398 142 358 C172 336 196 368 176 404 C160 438 172 472 200 492"
@@ -129,7 +129,7 @@ export function InkCatLine({ progress = 1 }: { progress?: number }) {
           from={0.62}
           to={0.86}
           length={600}
-          strokeWidth="1.65"
+          strokeWidth={1.65}
         />
         <Drawn
           d="M204 598 L204 616 M248 602 L248 616"
@@ -137,7 +137,7 @@ export function InkCatLine({ progress = 1 }: { progress?: number }) {
           from={0.74}
           to={0.88}
           length={80}
-          strokeWidth="1.5"
+          strokeWidth={1.5}
         />
         <Drawn
           d="M256 352 C266 348 278 350 284 358"
@@ -145,7 +145,7 @@ export function InkCatLine({ progress = 1 }: { progress?: number }) {
           from={0.82}
           to={0.92}
           length={70}
-          strokeWidth="1.35"
+          strokeWidth={1.35}
           opacity={0.75}
         />
         <Drawn
@@ -154,7 +154,7 @@ export function InkCatLine({ progress = 1 }: { progress?: number }) {
           from={0.86}
           to={0.96}
           length={90}
-          strokeWidth="1.3"
+          strokeWidth={1.3}
           opacity={0.7}
         />
         <Drawn
@@ -163,7 +163,7 @@ export function InkCatLine({ progress = 1 }: { progress?: number }) {
           from={0.9}
           to={1}
           length={220}
-          strokeWidth="0.95"
+          strokeWidth={0.95}
           opacity={0.42}
         />
       </g>
