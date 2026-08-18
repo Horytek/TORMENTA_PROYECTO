@@ -14,7 +14,7 @@ export function FeatureMatrix() {
   return (
     <section id="capacidades" className="lp-section lp-band-b">
       <div className="lp-container">
-        <div className="max-w-2xl">
+        <div className="lp-head-center">
           <span className="lp-eyebrow">Todo lo que incluye</span>
           <h2 className="lp-h2">
             Un sistema para vender, operar y decidir.

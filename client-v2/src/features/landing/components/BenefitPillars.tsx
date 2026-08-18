@@ -11,7 +11,7 @@ export function BenefitPillars() {
   return (
     <section id="beneficios" className="lp-section lp-band-a">
       <div className="lp-container">
-        <div className="max-w-2xl">
+        <div className="lp-head-center">
           <span className="lp-eyebrow">Qué ganas</span>
           <h2 className="lp-h2">
             Controla inventario, vende y factura desde un solo sistema.

@@ -104,6 +104,47 @@ export const BENEFIT_PILLARS = [
   },
 ] as const;
 
+// Cifras del hero. Son hechos del PRODUCTO, verificables en el codigo o la base
+// -no prueba social. Horytek no tiene clientes pagando todavia, asi que aca no
+// van conteos de usuarios, anios de trayectoria ni paises: eso seria inventado.
+//
+//  7 tipos de comprobante  -> tabla `tipo_comprobante` en db_tormenta
+//  3 planes / S/85         -> src/config/plans.config.js
+export const PRODUCT_FACTS = [
+  { valor: "7", label: "Tipos de comprobante, de boleta a guia de remision." },
+  { valor: "2", label: "Canales de venta -local e internet- sobre un solo stock." },
+  { valor: "3", label: "Planes en soles, desde S/85 al mes." },
+  { valor: "0", label: "Hojas de calculo para cerrar el dia." },
+] as const;
+
+// Inventario de modulos del ERP. Solo los que existen y funcionan: quedan fuera
+// a proposito los productos de plataforma nuevos (catalogo-wa, sync, mayorista,
+// taller, crm...) porque todavia no tienen motor detras.
+export const MODULE_TILES = [
+  { icon: ShoppingCart, label: "Punto de venta" },
+  { icon: Package, label: "Inventario y kardex" },
+  { icon: Truck, label: "Comprobantes SUNAT" },
+  { icon: Globe, label: "Tienda online" },
+  { icon: Tags, label: "Productos y variantes" },
+  { icon: ClipboardList, label: "Notas de almacen" },
+  { icon: Truck, label: "Guias de remision" },
+  { icon: Layers, label: "Multi-almacen" },
+  { icon: Layers, label: "Sucursales" },
+  { icon: ShoppingCart, label: "Devoluciones y cambios" },
+  { icon: ClipboardList, label: "Ordenes de compra" },
+  { icon: Wallet, label: "Facturas de compra" },
+  { icon: Wallet, label: "Cuentas por pagar" },
+  { icon: Wallet, label: "Anticipos a proveedor" },
+  { icon: Users, label: "Clientes" },
+  { icon: Users, label: "Proveedores" },
+  { icon: Users, label: "Empleados" },
+  { icon: BarChart3, label: "Margen por prenda" },
+  { icon: BarChart3, label: "Historial de ventas" },
+  { icon: Wallet, label: "Contabilidad" },
+  { icon: ShieldCheck, label: "Roles y permisos" },
+  { icon: ShieldCheck, label: "Usuarios y accesos" },
+] as const;
+
 export const HERO_BADGES = ["Vende en tu local", "Vende online", "Recibe pagos", "Emite comprobantes"] as const;
 
 export const HERO_VALUE_POINTS = [

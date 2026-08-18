@@ -12,6 +12,8 @@ import { Hero } from "../components/Hero";
 import { TrustStrip } from "../components/TrustStrip";
 import { BenefitPillars } from "../components/BenefitPillars";
 import { FeatureMatrix } from "../components/FeatureMatrix";
+import { ProductFacts } from "../components/ProductFacts";
+import { ModuleWall } from "../components/ModuleWall";
 import { BlueprintSection } from "../components/BlueprintSection";
 import { CaseStudy } from "../components/CaseStudy";
 import { SolutionsBridge } from "../components/SolutionsBridge";
@@ -25,9 +27,11 @@ import "../styles/landing-system.css";
 
 const LEGACY_SECTION_IDS = [
   "hero",
+  "cifras",
   "confianza",
   "beneficios",
   "capacidades",
+  "modulos",
   "producto",
   "rendimiento",
   "soluciones-puente",
@@ -81,9 +85,11 @@ export default function LandingPage() {
             <Hero mode={legacyMode} />
             {legacyMode === "standard" ? (
               <>
+                <ProductFacts />
                 <TrustStrip />
                 <BenefitPillars />
                 <FeatureMatrix />
+                <ModuleWall />
                 <SolutionsBridge />
                 <BlueprintSection mode={legacyMode} />
                 <CaseStudy mode={legacyMode} />
