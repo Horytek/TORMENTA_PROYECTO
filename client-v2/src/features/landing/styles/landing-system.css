@@ -293,3 +293,29 @@
    colores en la misma frase; el titular monocromo se lee plano al lado. */
 .lp-acento { color: hsl(var(--lp-accent)); }
 .lp-fill-ink .lp-acento { color: hsl(205 90% 68%); }
+
+/* Marca de agua geometrica.
+ *
+ * El hero era blanco plano. Una retícula de rombos apenas visible le quita esa
+ * sensación sin competir con el contenido: a 0.045 de opacidad no se "ve", se
+ * nota. Se desvanece hacia abajo con una máscara para que no corte la sección
+ * en seco.
+ */
+.lp-watermark { position: relative; isolation: isolate; }
+.lp-watermark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    repeating-linear-gradient(45deg, hsl(var(--lp-ink) / 0.045) 0 1px, transparent 1px 42px),
+    repeating-linear-gradient(-45deg, hsl(var(--lp-ink) / 0.045) 0 1px, transparent 1px 42px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+  pointer-events: none;
+}
+.dark .lp-watermark::before {
+  background-image:
+    repeating-linear-gradient(45deg, hsl(0 0% 100% / 0.05) 0 1px, transparent 1px 42px),
+    repeating-linear-gradient(-45deg, hsl(0 0% 100% / 0.05) 0 1px, transparent 1px 42px);
+}

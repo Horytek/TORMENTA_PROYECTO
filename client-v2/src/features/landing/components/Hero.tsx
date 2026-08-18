@@ -27,7 +27,7 @@ export function Hero({ mode }: HeroProps) {
     <section
       id="hero"
       className={cn(
-        "relative overflow-hidden border-b border-border/60 transition-colors",
+        "lp-watermark relative overflow-hidden border-b border-border/60 transition-colors",
         mode === "pocket"
           ? "bg-amber-500/[0.04]"
           : mode === "ecommerce"

@@ -7,6 +7,7 @@ import { SALES_WHATSAPP_URL, type Mode } from "../data/landing.data";
 import { useLandingProduct } from "../hooks/useLandingProduct";
 import { getLandingModule } from "../modules/landingModules.registry";
 import { InventoryRail } from "../components/InventoryRail";
+import { TopBar } from "../components/TopBar";
 import { Header } from "../components/Header";
 import { Hero } from "../components/Hero";
 import { TrustStrip } from "../components/TrustStrip";
@@ -79,6 +80,7 @@ export default function LandingPage() {
         Saltar al contenido
       </a>
 
+      <TopBar />
       <Header productId={productId} onProductChange={setProductId} />
 
       <main key={productId} className="transition-opacity duration-300">
