@@ -591,6 +591,18 @@ export default function LoginPage() {
               setSurfaceTab("admin");
               setProductError("");
               setError("");
+              setEcomError("");
+              setExpressError("");
+              setUsuario("");
+              setPassword("");
+              setProductEmail("");
+              setProductPassword("");
+              setPortalSlug("");
+              setMayoristaSlug("");
+              setEcomUser("");
+              setEcomPassword("");
+              setExpressEmail("");
+              setExpressPassword("");
             }}
           />
 
@@ -615,14 +627,6 @@ export default function LoginPage() {
           {ERP_SESSION_LOGIN_MODES.has(mode) &&
           (!PORTAL_SLUG_LOGIN_MODES.has(mode) || surfaceTab === "admin") ? (
             <form onSubmit={handleLogin} className="space-y-5">
-              {demoBundle ? (
-                <DemoAccessCard
-                  bundle={demoBundle}
-                  accent={loginAccent}
-                  onApply={applyLoginDemo}
-                  onEnter={() => void enterLoginDemo()}
-                />
-              ) : null}
               {mode === "mayorista" ? (
                 <LoginRoleTabs
                   tabs={[
@@ -695,17 +699,17 @@ export default function LoginPage() {
                 <Check className="h-4 w-4" />
                 Ingresar
               </AccentSubmitButton>
-            </form>
-          ) : mode === "express" ? (
-            <form onSubmit={handleExpressSubmit} className="space-y-5">
               {demoBundle ? (
                 <DemoAccessCard
                   bundle={demoBundle}
                   accent={loginAccent}
                   onApply={applyLoginDemo}
-                  onEnter={enterLoginDemo}
+                  onEnter={() => void enterLoginDemo()}
                 />
               ) : null}
+            </form>
+          ) : mode === "express" ? (
+            <form onSubmit={handleExpressSubmit} className="space-y-5">
               {expressError && (
                 <div role="alert" className="rounded-md border border-destructive/25 bg-destructive/10 px-3 py-2.5 text-sm font-medium text-destructive">
                   {expressError}
@@ -805,6 +809,15 @@ export default function LoginPage() {
                 )}
               </Button>
 
+              {!expressIsRegistering && demoBundle ? (
+                <DemoAccessCard
+                  bundle={demoBundle}
+                  accent={loginAccent}
+                  onApply={applyLoginDemo}
+                  onEnter={() => void enterLoginDemo()}
+                />
+              ) : null}
+
               <button
                 type="button"
                 onClick={() => { setExpressIsRegistering((v) => !v); setExpressError(""); setExpressPendingMessage(""); }}
@@ -815,14 +828,6 @@ export default function LoginPage() {
             </form>
           ) : mode === "ecommerce" ? (
             <form onSubmit={handleEcommerceSubmit} className="space-y-5">
-              {demoBundle ? (
-                <DemoAccessCard
-                  bundle={demoBundle}
-                  accent={loginAccent}
-                  onApply={applyLoginDemo}
-                  onEnter={() => void enterLoginDemo()}
-                />
-              ) : null}
               {ecomError && (
                 <div
                   role="alert"
@@ -872,6 +877,14 @@ export default function LoginPage() {
               >
                 {ecomLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar al admin"}
               </Button>
+              {demoBundle ? (
+                <DemoAccessCard
+                  bundle={demoBundle}
+                  accent={loginAccent}
+                  onApply={applyLoginDemo}
+                  onEnter={() => void enterLoginDemo()}
+                />
+              ) : null}
               <p className="text-center text-xs text-muted-foreground">
                 ¿Nuevo?{" "}
                 <Link
@@ -933,14 +946,6 @@ export default function LoginPage() {
                 accent={loginAccent}
                 onChange={setSurfaceTab}
               />
-              {demoBundle ? (
-                <DemoAccessCard
-                  bundle={demoBundle}
-                  accent={loginAccent}
-                  onApply={applyLoginDemo}
-                  onEnter={() => void enterLoginDemo()}
-                />
-              ) : null}
               {productError ? (
                 <div
                   role="alert"
@@ -956,7 +961,7 @@ export default function LoginPage() {
                   className={portalInputClass}
                   value={mayoristaSlug}
                   onChange={(e) => setMayoristaSlug(e.target.value)}
-                  placeholder="demo"
+                  placeholder="mi-portal"
                   required
                 />
               </div>
@@ -968,7 +973,7 @@ export default function LoginPage() {
                   className={portalInputClass}
                   value={productEmail}
                   onChange={(e) => setProductEmail(e.target.value)}
-                  placeholder="comprador@demo.local"
+                  placeholder="correo@empresa.com"
                   required
                 />
               </div>
@@ -986,16 +991,6 @@ export default function LoginPage() {
               <AccentSubmitButton accent={loginAccent} loading={productLoading}>
                 Entrar al portal B2B
               </AccentSubmitButton>
-              <p className="text-center text-xs text-muted-foreground">
-                Demo seed: slug <span className="font-mono">demo</span>,{" "}
-                <span className="font-mono">comprador@demo.local</span>.{" "}
-                <Link to="/?product=mayorista" className="underline-offset-4 hover:underline">
-                  Ver producto
-                </Link>
-              </p>
-            </form>
-          ) : mode === "taxi" || mode === "delivery" || mode === "atelier" ? null : PRODUCT_AUTH_LOGIN_MODES.has(mode) && surfaceTab === "admin" ? (
-            <form onSubmit={handleProductAdminLogin} className="space-y-5">
               {demoBundle ? (
                 <DemoAccessCard
                   bundle={demoBundle}
@@ -1004,6 +999,14 @@ export default function LoginPage() {
                   onEnter={() => void enterLoginDemo()}
                 />
               ) : null}
+              <p className="text-center text-xs text-muted-foreground">
+                <Link to="/?product=mayorista" className="underline-offset-4 hover:underline">
+                  Ver producto
+                </Link>
+              </p>
+            </form>
+          ) : mode === "taxi" || mode === "delivery" || mode === "atelier" ? null : PRODUCT_AUTH_LOGIN_MODES.has(mode) && surfaceTab === "admin" ? (
+            <form onSubmit={handleProductAdminLogin} className="space-y-5">
               {productError && (
                 <div
                   role="alert"
@@ -1051,6 +1054,14 @@ export default function LoginPage() {
                 <Check className="h-4 w-4" />
                 Ingresar
               </AccentSubmitButton>
+              {demoBundle ? (
+                <DemoAccessCard
+                  bundle={demoBundle}
+                  accent={loginAccent}
+                  onApply={applyLoginDemo}
+                  onEnter={() => void enterLoginDemo()}
+                />
+              ) : null}
               <p className="text-center text-xs text-muted-foreground">
                 ¿Primera vez?{" "}
                 <Link
@@ -1086,6 +1097,18 @@ export default function LoginPage() {
                 navigate(path.startsWith("/") ? path : `/${path}`);
               }}
             >
+              <div className="space-y-2">
+                <Label htmlFor="portal_slug">Slug / código</Label>
+                <Input
+                  id="portal_slug"
+                  className={portalInputClass}
+                  value={portalSlug}
+                  onChange={(e) => setPortalSlug(e.target.value)}
+                  placeholder="mi-portal"
+                  required
+                />
+              </div>
+              <AccentSubmitButton accent={loginAccent}>Ir al portal / ops</AccentSubmitButton>
               {demoBundle ? (
                 <DemoAccessCard
                   bundle={demoBundle}
@@ -1094,18 +1117,6 @@ export default function LoginPage() {
                   onEnter={() => void enterLoginDemo()}
                 />
               ) : null}
-              <div className="space-y-2">
-                <Label htmlFor="portal_slug">Slug / código</Label>
-                <Input
-                  id="portal_slug"
-                  className={portalInputClass}
-                  value={portalSlug}
-                  onChange={(e) => setPortalSlug(e.target.value)}
-                  placeholder="demo"
-                  required
-                />
-              </div>
-              <AccentSubmitButton accent={loginAccent}>Ir al portal / ops</AccentSubmitButton>
               <p className="text-center text-xs text-muted-foreground">
                 También puedes{" "}
                 <Link

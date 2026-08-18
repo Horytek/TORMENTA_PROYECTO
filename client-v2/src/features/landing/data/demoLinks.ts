@@ -65,6 +65,12 @@ export const DEMO_LINKS: Record<
   ],
   erp: [{ label: "Ingresar ERP", href: "/login?mode=erp", kind: "admin" }],
   "catalogo-wa": [{ label: "Catálogo demo", href: "/catalogo/1", kind: "portal" }],
+  atelier: [
+    { label: "Login Atelier", href: "/login?mode=atelier", kind: "portal" },
+    { label: "Descubrir", href: "/atelier", kind: "portal" },
+    { label: "Estudio creador", href: "/atelier/creador", kind: "ops" },
+    { label: "Admin Atelier", href: "/atelier-admin", kind: "admin" },
+  ],
 };
 
 export function demoLinksForProduct(productId: string) {

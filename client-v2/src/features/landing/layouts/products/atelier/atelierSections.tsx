@@ -1,276 +1,218 @@
-import { useState } from "react";
-import { Check, Palette, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
-import type { LandingProductModule } from "../../../modules/landingModule.types";
-import { useLayoutChrome } from "../../layoutShared";
+import { Link } from "react-router-dom";
+import {
+  AtelierButton,
+  ATELIER_COPY,
+  ATELIER_ROUTES,
+  ArtistSignature,
+} from "@/features/atelier";
+import { PEN_PER_USD, formatFromPrice, formatMoneyPair } from "@/features/atelier/helpers";
+import { creatorName, type AtelierCreator } from "@/features/atelier/types";
+import type { LandingPricingPlan, LandingProductModule } from "../../../modules/landingModule.types";
+import { AtelierVideoSection } from "@/features/atelier/video/AtelierVideoSection";
 
-const ESTILOS = ["Acuarela", "Digital", "Cómic", "Lettering"] as const;
-
-const CREADORES = [
-  {
-    id: "luna",
-    nombre: "Luna Ink",
-    estilo: "Acuarela",
-    pieza: "Retrato de mascota",
-    tarifa: "S/ 180",
-    disponible: true,
-  },
-  {
-    id: "nodo",
-    nombre: "Nodo Studio",
-    estilo: "Digital",
-    pieza: "Personaje de juego",
-    tarifa: "S/ 240",
-    disponible: true,
-  },
-  {
-    id: "tinta",
-    nombre: "Tinta Norte",
-    estilo: "Cómic",
-    pieza: "Splash page",
-    tarifa: "S/ 320",
-    disponible: false,
-  },
-  {
-    id: "letra",
-    nombre: "Letra Viva",
-    estilo: "Lettering",
-    pieza: "Logo manuscrito",
-    tarifa: "S/ 150",
-    disponible: true,
-  },
-];
-
-export function AtelierHeroMedia({ accent }: { accent: string }) {
-  return (
-    <div className="relative overflow-hidden rounded-3xl border border-black/8 bg-white p-5 shadow-[0_28px_70px_-40px_var(--lp-accent)] md:p-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Portafolio · Luna Ink
-          </p>
-          <p className="mt-1 text-lg font-semibold">Retrato de mascota</p>
-          <p className="text-sm text-muted-foreground">Acuarela · A4 · 1 ajuste incluido</p>
-        </div>
-        <span
-          className="rounded-full px-2.5 py-1 text-[11px] font-semibold text-white"
-          style={{ backgroundColor: accent }}
-        >
-          Disponible
+/** Nunca pintar S/ {plan.price} si unit es fee: esa cifra no es el precio de la card. */
+function AtelierPlanAmount({ plan }: { plan: LandingPricingPlan }) {
+  const unitIsFee = /fee/i.test(plan.unit);
+  const isCreator = plan.id === "creador" || unitIsFee;
+  if (isCreator) {
+    const usd = plan.price > 0 && !unitIsFee ? plan.price : 9;
+    const pen = Math.round(usd * PEN_PER_USD);
+    return (
+      <p className="at-price-amount">
+        <span className="at-display">US$ {usd}</span>
+        <span className="at-ui">/mes</span>
+        <span className="at-ui mt-1 block text-[13px] text-[var(--at-stone)]">
+          ~S/ {pen} · Polar
         </span>
-      </div>
-
-      <div className="mt-5 grid grid-cols-3 gap-2">
-        {["#FDF2F8", "#FBCFE8", "#DB2777"].map((tone, i) => (
-          <div
-            key={tone}
-            className="aspect-[4/5] rounded-2xl border border-black/5"
-            style={{
-              background: `linear-gradient(160deg, ${tone} 0%, ${i === 2 ? "#9D174D" : "#FCE7F3"} 100%)`,
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="mt-5 rounded-2xl border border-dashed border-black/10 bg-[#FDF2F8] p-4">
-        <div className="flex items-center justify-between text-sm">
-          <span className="font-medium">Encargo #AT-184</span>
-          <span className="tabular-nums font-semibold" style={{ color: accent }}>
-            S/ 180.00
-          </span>
-        </div>
-        <p className="mt-1 text-[12px] text-muted-foreground">Mercado Pago · escrow lógico</p>
-        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-black/8">
-          <div className="h-full w-[72%] rounded-full" style={{ backgroundColor: accent }} />
-        </div>
-        <p className="mt-2 text-[11px] text-muted-foreground">Borrador en revisión · 1 ajuste restante</p>
-      </div>
-    </div>
+      </p>
+    );
+  }
+  if (plan.id === "cliente" || plan.price === 0 || plan.unit === "gratis") {
+    return (
+      <p className="at-price-amount">
+        <span className="at-display">Gratis</span>
+      </p>
+    );
+  }
+  return (
+    <p className="at-price-amount">
+      <span className="at-display">{formatMoneyPair(plan.price)}</span>
+      {plan.unit ? <span className="at-ui">/{plan.unit}</span> : null}
+    </p>
   );
 }
 
-export function AtelierDiscovery({ module }: { module: LandingProductModule }) {
-  const { accent, displayClass } = useLayoutChrome(module);
-  const [estilo, setEstilo] = useState<(typeof ESTILOS)[number]>("Acuarela");
-  const [elegido, setElegido] = useState("luna");
-  const visibles = CREADORES.filter((c) => c.estilo === estilo);
-
+export function AtelierEditorialHero() {
   return (
-    <section id="job" className="border-b border-black/5 py-16 md:py-20" style={{ background: accent.sectionTint }}>
-      <div className="mx-auto max-w-6xl px-6">
-        <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Discovery</p>
-        <h2 className={cn(displayClass, "mt-3 max-w-2xl text-[clamp(1.8rem,3.4vw,2.6rem)]")}>
-          Filtra el estilo y elige al creador.
-        </h2>
-        <div className="mt-6 flex flex-wrap gap-2">
-          {ESTILOS.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => {
-                setEstilo(item);
-                const primero = CREADORES.find((c) => c.estilo === item);
-                if (primero) setElegido(primero.id);
-              }}
-              className={cn(
-                "rounded-full px-4 py-2 text-xs font-semibold",
-                estilo === item ? "text-white" : "bg-white text-foreground shadow-sm",
-              )}
-              style={estilo === item ? { backgroundColor: accent.accent } : undefined}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-        <div className="mt-8 grid gap-3 md:grid-cols-2">
-          {visibles.map((creador) => {
-            const activo = elegido === creador.id;
-            return (
-              <button
-                key={creador.id}
-                type="button"
-                onClick={() => setElegido(creador.id)}
-                className={cn(
-                  "rounded-2xl border bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5",
-                  activo ? "border-transparent" : "border-black/8",
-                )}
-                style={activo ? { boxShadow: `inset 3px 0 0 ${accent.accent}` } : undefined}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold">{creador.nombre}</p>
-                    <p className="mt-1 text-[13px] text-muted-foreground">{creador.pieza}</p>
-                  </div>
-                  <span className="font-mono text-sm font-semibold" style={{ color: accent.accent }}>
-                    {creador.tarifa}
-                  </span>
-                </div>
-                <p className="mt-4 flex items-center gap-1.5 text-[11px] font-medium" style={{ color: accent.accent }}>
-                  {activo ? <Check className="h-3.5 w-3.5" /> : <Palette className="h-3.5 w-3.5" />}
-                  {activo ? "Creador elegido" : creador.disponible ? "Disponible esta semana" : "Agenda llena"}
-                </p>
-              </button>
-            );
-          })}
+    <section id="hero" className="at-land-hero">
+      <div className="at-land-wrap">
+        <h1 className="at-display at-hero-title">
+          <span className="at-hero-line">{ATELIER_COPY.tagline}</span>
+        </h1>
+        <p className="at-ui at-hero-lead">{ATELIER_COPY.conceptLead}</p>
+        <div className="at-hero-cta">
+          <AtelierButton size="lg" asChild>
+            <Link to={ATELIER_ROUTES.commission}>{ATELIER_COPY.ctaCommission}</Link>
+          </AtelierButton>
+          <AtelierButton variant="tertiary" size="lg" asChild>
+            <Link to={ATELIER_ROUTES.discover}>{ATELIER_COPY.ctaDiscover}</Link>
+          </AtelierButton>
         </div>
       </div>
     </section>
   );
 }
 
-const COTIZACION = [
-  { id: "brief", label: "Brief", detalle: "Retrato acuarela A4 · mascota Coco" },
-  { id: "cotizar", label: "Cotizar", detalle: "Luna Ink envía S/ 180 · 7 días" },
-  { id: "aceptar", label: "Aceptar", detalle: "Cliente acepta y abre Mercado Pago" },
+export function AtelierConcept() {
+  return (
+    <section id="concepto" className="at-land-concept">
+      <div className="at-land-wrap at-land-concept-grid">
+        <p className="at-display at-concept-quote">{ATELIER_COPY.conceptBody}</p>
+        <p className="at-ui at-concept-aside">
+          Un artista, un brief, un encargo. Mercado Pago cobra el dibujo. El archivo original
+          llega cuando la obra está lista.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+export function AtelierVideoBlock() {
+  return (
+    <section id="video" className="at-land-video">
+      <div className="at-land-wrap">
+        <h2 className="at-display at-land-h2">{ATELIER_COPY.seeIdeaBecome}</h2>
+        <p className="at-ui at-land-dek">Sin sonido. El trazo cuenta la historia.</p>
+        <div className="mt-10 md:mt-14">
+          <AtelierVideoSection />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+const STEPS = [
+  {
+    n: "01",
+    title: "Cuentas la idea",
+    body: "Estilo, referencias privadas, presupuesto. El brief queda en el tablero o se dirige a un artista.",
+  },
+  {
+    n: "02",
+    title: "El artista propone",
+    body: "Precio, plazos y revisiones. Tú aceptas una propuesta. El encargo se confirma.",
+  },
+  {
+    n: "03",
+    title: "Llega la obra",
+    body: "Boceto, ajustes, entrega. Descargas el original. El artista firma el trabajo.",
+  },
 ] as const;
 
-type PasoCotizacion = (typeof COTIZACION)[number]["id"];
-
-export function AtelierQuote({ module }: { module: LandingProductModule }) {
-  const { accent, displayClass } = useLayoutChrome(module);
-  const [paso, setPaso] = useState<PasoCotizacion>("brief");
-  const indice = COTIZACION.findIndex((p) => p.id === paso);
-
+export function AtelierHowItWorks() {
   return (
-    <section id="flow" className="border-b border-black/5 bg-background py-16 md:py-20">
-      <div className="mx-auto max-w-6xl px-6">
-        <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Cotización</p>
-        <h2 className={cn(displayClass, "mt-3 max-w-2xl text-[clamp(1.8rem,3.4vw,2.6rem)]")}>
-          Del brief al precio aceptado.
-        </h2>
-        <div className="mt-8 grid gap-3 md:grid-cols-3">
-          {COTIZACION.map((item, i) => {
-            const activo = item.id === paso;
-            const hecho = i < indice;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setPaso(item.id)}
-                className={cn(
-                  "rounded-2xl border p-5 text-left transition",
-                  activo ? "text-white" : "border-black/8 bg-white",
-                )}
-                style={activo ? { backgroundColor: accent.accent, borderColor: accent.accent } : undefined}
-              >
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] opacity-70">
-                  0{i + 1} {hecho ? "· listo" : ""}
-                </p>
-                <p className="mt-2 text-lg font-semibold">{item.label}</p>
-                <p className={cn("mt-2 text-sm", activo ? "text-white/80" : "text-muted-foreground")}>
-                  {item.detalle}
-                </p>
-              </button>
-            );
-          })}
+    <section id="como" className="at-land-how">
+      <div className="at-land-wrap">
+        <h2 className="at-display at-land-h2">De la idea a la obra</h2>
+        <ol className="at-how-list">
+          {STEPS.map((step) => (
+            <li key={step.n} className="at-how-item">
+              <span className="at-display at-how-n">{step.n}</span>
+              <div>
+                <h3 className="at-display at-how-title">{step.title}</h3>
+                <p className="at-ui at-how-body">{step.body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
+export function AtelierArtistsStrip({ creators }: { creators: AtelierCreator[] }) {
+  const list = creators.slice(0, 6);
+  return (
+    <section id="artistas" className="at-land-artists">
+      <div className="at-land-wrap">
+        <div className="at-land-artists-head">
+          <h2 className="at-display at-land-h2">Artistas que toman encargos</h2>
+          <AtelierButton variant="tertiary" asChild>
+            <Link to={ATELIER_ROUTES.artists}>{ATELIER_COPY.artists}</Link>
+          </AtelierButton>
         </div>
-        <div className="mt-6 rounded-2xl border border-black/8 bg-white p-5">
-          <p className="text-sm font-semibold">
-            {paso === "brief" && "El cliente describe el encargo y adjunta referencias."}
-            {paso === "cotizar" && "La creadora responde con precio, plazos y ajustes incluidos."}
-            {paso === "aceptar" && "Al aceptar se abre el checkout de Mercado Pago. El fee 10% se calcula en backend."}
-          </p>
+        {list.length ? (
+          <ul className="at-artist-row">
+            {list.map((c) => (
+              <li key={c.slug}>
+                <Link to={ATELIER_ROUTES.artist(c.slug)} className="at-focus at-artist-link">
+                  <ArtistSignature
+                    name={creatorName(c)}
+                    mark={formatFromPrice(c.precio_desde) ?? c.estilos ?? undefined}
+                    avatarSrc={c.avatar_url || undefined}
+                    available={c.disponible == null ? undefined : Boolean(c.disponible)}
+                  />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="at-ui at-land-dek">Los artistas aparecen aquí cuando publican su estudio.</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+export function AtelierPricingTwo({ module }: { module: LandingProductModule }) {
+  const { pricing } = module;
+  return (
+    <section id="planes" className="at-land-pricing">
+      <div className="at-land-wrap">
+        <h2 className="at-display at-land-h2">{pricing.title}</h2>
+        <p className="at-ui at-land-dek">{pricing.body}</p>
+        <div className="at-price-grid">
+          {pricing.plans.map((plan) => (
+            <article
+              key={plan.id}
+              className={plan.highlight ? "at-price-card at-price-card-ink" : "at-price-card"}
+            >
+              <h3 className="at-display at-price-name">{plan.name}</h3>
+              <p className="at-ui at-price-desc">{plan.description}</p>
+              <AtelierPlanAmount plan={plan} />
+              <ul className="at-price-features">
+                {plan.features.map((f) => (
+                  <li key={f}>{f}</li>
+                ))}
+              </ul>
+              <AtelierButton
+                variant={plan.highlight ? "primary" : "secondary"}
+                asChild
+                className="mt-8 w-full"
+              >
+                <Link to={plan.cta.href}>{plan.cta.label}</Link>
+              </AtelierButton>
+            </article>
+          ))}
         </div>
       </div>
     </section>
   );
 }
 
-const PEDIDO = ["enviada", "pagada", "en entrega", "reseña"] as const;
-type PasoPedido = (typeof PEDIDO)[number];
-
-export function AtelierOrderTracker({ module }: { module: LandingProductModule }) {
-  const { accent, displayClass } = useLayoutChrome(module);
-  const [paso, setPaso] = useState<PasoPedido>("pagada");
-  const indice = PEDIDO.indexOf(paso);
-
+export function AtelierCtaBand() {
   return (
-    <section id="proof" className="border-b border-black/5 py-16 md:py-20" style={{ background: accent.surface }}>
-      <div className="mx-auto max-w-6xl px-6">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Pedido demo</p>
-            <h2 className={cn(displayClass, "mt-3 text-[clamp(1.8rem,3.4vw,2.6rem)]")}>
-              Cada estado se ve en el tracker.
-            </h2>
-          </div>
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold"
-            style={{ color: accent.accent, backgroundColor: `${accent.accent}14` }}
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            Encargo #AT-184
-          </span>
+    <section id="cta" className="at-land-cta">
+      <div className="at-land-wrap at-land-cta-inner">
+        <h2 className="at-display at-land-h2">{ATELIER_COPY.taglineFull}</h2>
+        <div className="at-hero-cta mt-8">
+          <AtelierButton size="lg" asChild>
+            <Link to={ATELIER_ROUTES.commission}>{ATELIER_COPY.ctaCommission}</Link>
+          </AtelierButton>
+          <AtelierButton variant="tertiary" size="lg" asChild>
+            <Link to={ATELIER_ROUTES.login}>{ATELIER_COPY.login}</Link>
+          </AtelierButton>
         </div>
-
-        <ol className="mt-8 grid gap-2 sm:grid-cols-4">
-          {PEDIDO.map((item, i) => {
-            const activo = item === paso;
-            const hecho = i <= indice;
-            return (
-              <li key={item}>
-                <button
-                  type="button"
-                  onClick={() => setPaso(item)}
-                  className={cn(
-                    "w-full rounded-2xl border px-4 py-4 text-left text-sm font-semibold capitalize",
-                    activo ? "text-white" : hecho ? "bg-white" : "border-dashed border-black/15 bg-white/50 text-muted-foreground",
-                  )}
-                  style={activo ? { backgroundColor: accent.accent, borderColor: accent.accent } : undefined}
-                >
-                  <span className="block font-mono text-[11px] opacity-70">0{i + 1}</span>
-                  {item}
-                </button>
-              </li>
-            );
-          })}
-        </ol>
-        <p className="mt-5 text-sm text-muted-foreground">
-          {paso === "enviada" && "El cliente mandó el brief. Luna Ink aún no cotiza."}
-          {paso === "pagada" && "Mercado Pago confirmó. El monto queda en escrow lógico hasta la entrega."}
-          {paso === "en entrega" && "Hay un borrador en revisión. Queda 1 ajuste antes del archivo final."}
-          {paso === "reseña" && "El cliente aprueba, deja reseña y el wallet del creador pasa a available."}
-        </p>
       </div>
     </section>
   );

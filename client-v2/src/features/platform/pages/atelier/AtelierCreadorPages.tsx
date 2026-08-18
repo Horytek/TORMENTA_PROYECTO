@@ -1,228 +1,174 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { AtelierCreadorShell } from "./AtelierShells";
+import { AtelierButton } from "@/features/atelier/components/AtelierButton";
+import { EmptyState } from "@/features/atelier/components/EmptyState";
+import { AtelierProductFrame } from "@/features/atelier/components/ProductFrame";
+import { ATELIER_COPY } from "@/features/atelier/copy";
+import { atelierApiError, formatMoneyPair } from "@/features/atelier/helpers";
+import { ATELIER_ROUTES } from "@/features/atelier/tokens";
+import ArtistBoardPage from "@/features/atelier/pages/ArtistBoardPage";
+import CreatorOrdersPage from "@/features/atelier/pages/CreatorOrdersPage";
+import StudioHomePage from "@/features/atelier/pages/StudioHomePage";
+import AccountProfilePage from "@/features/atelier/pages/AccountProfilePage";
+import WorkspacePage from "@/features/atelier/pages/WorkspacePage";
 import {
-  addAtelierAttachment,
   createAtelierPortfolio,
   createAtelierService,
-  getAtelierOrder,
   getAtelierWallet,
-  listAtelierCreatorOrders,
   listAtelierCreatorPortfolio,
-  listAtelierCreatorRequests,
   listAtelierCreatorServices,
-  listAtelierOrderMessages,
-  sendAtelierMessage,
-  sendAtelierQuote,
-  startAtelierOrder,
-  transitionAtelierOrder,
 } from "@/features/platform/api/atelier";
 
-export default function AtelierCreadorPages() {
-  const location = useLocation();
-  const { id } = useParams();
-  const [items, setItems] = useState<any[]>([]);
-  const [order, setOrder] = useState<any>(null);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [message, setMessage] = useState("");
-  const [previewUrl, setPreviewUrl] = useState("");
-  const detail = Boolean(id);
-  const page = location.pathname.includes("solicitudes")
-    ? "Solicitudes"
-    : location.pathname.includes("pedidos")
-      ? "Pedidos"
-      : location.pathname.includes("servicios")
-        ? "Servicios"
-        : location.pathname.includes("portafolio")
-          ? "Portafolio"
-          : location.pathname.includes("ganancias")
-            ? "Ganancias"
-            : "Resumen";
+function StudioExtras({ page }: { page: "servicios" | "portafolio" | "ganancias" }) {
+  const [items, setItems] = useState<Record<string, unknown>[]>([]);
+  const [error, setError] = useState("");
 
   const load = () => {
-    if (detail) {
-      void Promise.all([getAtelierOrder(Number(id), "creador"), listAtelierOrderMessages(Number(id), "creador")])
-        .then(([o, m]) => {
-          setOrder(o.data);
-          setMessages(m.data || []);
-          setItems([o.data]);
-        })
-        .catch(() => {
-          setOrder(null);
-          setItems([]);
-        });
-      return;
-    }
     const fn =
-      page === "Solicitudes"
-        ? listAtelierCreatorRequests
-        : page === "Pedidos" || page === "Resumen"
-          ? listAtelierCreatorOrders
-          : page === "Servicios"
-            ? listAtelierCreatorServices
-            : page === "Portafolio"
-              ? listAtelierCreatorPortfolio
-              : getAtelierWallet;
+      page === "servicios"
+        ? listAtelierCreatorServices
+        : page === "portafolio"
+          ? listAtelierCreatorPortfolio
+          : getAtelierWallet;
     void fn()
-      .then((r: any) => setItems(page === "Ganancias" ? [r.data] : r.data || []))
-      .catch(() => setItems([]));
+      .then((r) => {
+        setItems(page === "ganancias" ? [r.data || {}] : r.data || []);
+        setError("");
+      })
+      .catch((e) => setError(atelierApiError(e, ATELIER_COPY.processInterrupted)));
   };
 
   useEffect(() => {
     load();
-  }, [detail, id, page]);
-
-  const create = (kind: "service" | "portfolio") => (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const raw = Object.fromEntries(new FormData(e.currentTarget));
-    const body =
-      kind === "service"
-        ? { nombre: String(raw.nombre), precio_base: Number(raw.precio_base) }
-        : { titulo: String(raw.titulo), image_url: String(raw.image_url) };
-    void (kind === "service" ? createAtelierService(body) : createAtelierPortfolio(body)).then(() => {
-      e.currentTarget.reset();
-      load();
-    });
-  };
-
-  const quote = (id_request: number, presupuesto?: number) => {
-    void sendAtelierQuote(id_request, {
-      precio_base: Number(presupuesto) || 150,
-      dias_entrega: 5,
-      revisiones: 2,
-      condiciones: "Entrega digital en alta resolución.",
-    }).then(load);
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   return (
-    <AtelierCreadorShell title={detail ? `Pedido #${id}` : page} subtitle={page === "Resumen" ? "Tu estudio creativo, sin perder el hilo." : undefined}>
-      {page === "Servicios" ? (
-        <form className="rounded-xl bg-white p-4 shadow-sm" onSubmit={create("service")}>
-          <h2 className="font-semibold">Nuevo servicio</h2>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Input name="nombre" placeholder="Nombre" required />
-            <Input name="precio_base" type="number" placeholder="Precio desde" required />
-            <Button className="bg-[#DB2777] hover:bg-[#BE185D]">Guardar</Button>
-          </div>
-        </form>
-      ) : null}
-      {page === "Portafolio" ? (
-        <form className="rounded-xl bg-white p-4 shadow-sm" onSubmit={create("portfolio")}>
-          <h2 className="font-semibold">Agregar al portafolio</h2>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Input name="titulo" placeholder="Título" required />
-            <Input name="image_url" placeholder="URL de imagen" required />
-            <Button className="bg-[#DB2777] hover:bg-[#BE185D]">Publicar</Button>
-          </div>
-        </form>
-      ) : null}
-      {detail && order ? (
-        <section className="space-y-4 rounded-xl bg-white p-5 shadow-sm">
-          <div>
-            <p className="font-semibold">{order.titulo}</p>
-            <p className="mt-1 text-sm text-stone-500">Estado: {order.estado}</p>
-            <p className="mt-1 text-sm text-stone-500">Cliente: {order.cliente}</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {order.estado === "paid" ? (
-              <Button onClick={() => void startAtelierOrder(Number(id)).then(load)}>Iniciar trabajo</Button>
-            ) : null}
-            {order.estado === "in_progress" || order.estado === "revision" ? (
-              <Button
-                variant="outline"
-                onClick={() => void transitionAtelierOrder(Number(id), { estado: "preview" }).then(load)}
+    <AtelierProductFrame requireRole="creador">
+      <main className="at-desk-wrap">
+        <p className="at-eyebrow">{ATELIER_COPY.yourStudio}</p>
+        <h1 className="at-display mt-3 text-4xl">
+          {page === "servicios" ? "Servicios" : page === "portafolio" ? "Portafolio" : "Ganancias"}
+        </h1>
+        <p className="mt-4">
+          <AtelierButton variant="tertiary" asChild>
+            <Link to={ATELIER_ROUTES.studio}>Volver al estudio</Link>
+          </AtelierButton>
+        </p>
+
+        {error ? <EmptyState tone="error" body={error} className="px-0" /> : null}
+
+        {page === "ganancias" && items[0] ? (
+          <article className="at-gain-stack">
+            <div>
+              <p className="at-eyebrow">Disponible</p>
+              <p className="at-display at-gain-n">{formatMoneyPair((items[0] as { available?: number }).available)}</p>
+            </div>
+            <div>
+              <p className="at-eyebrow">Pendiente</p>
+              <p className="at-display text-3xl">{formatMoneyPair((items[0] as { pending?: number }).pending)}</p>
+            </div>
+            <p className="at-ui text-[14px] text-[var(--at-stone)]">
+              Ganado {formatMoneyPair((items[0] as { total_earned?: number }).total_earned)}
+            </p>
+          </article>
+        ) : null}
+
+        {page === "servicios" ? (
+          <form
+            className="mt-10 space-y-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const fd = new FormData(e.currentTarget);
+              void createAtelierService({
+                nombre: String(fd.get("nombre")),
+                precio_base: Number(fd.get("precio_base")),
+              }).then(() => {
+                e.currentTarget.reset();
+                load();
+              });
+            }}
+          >
+            <input
+              name="nombre"
+              required
+              placeholder="Nombre del servicio"
+              className="at-ui at-focus w-full border-b border-[var(--at-hairline)] bg-transparent py-2 outline-none"
+            />
+            <input
+              name="precio_base"
+              type="number"
+              required
+              min={1}
+              placeholder="Precio desde"
+              className="at-ui at-focus w-full border-b border-[var(--at-hairline)] bg-transparent py-2 outline-none"
+            />
+            <AtelierButton type="submit">Guardar servicio</AtelierButton>
+          </form>
+        ) : null}
+
+        {page === "portafolio" ? (
+          <form
+            className="mt-10 space-y-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const fd = new FormData(e.currentTarget);
+              void createAtelierPortfolio({
+                titulo: String(fd.get("titulo")),
+                image_url: String(fd.get("image_url")),
+              }).then(() => {
+                e.currentTarget.reset();
+                load();
+              });
+            }}
+          >
+            <input
+              name="titulo"
+              required
+              placeholder="Título de la pieza"
+              className="at-ui at-focus w-full border-b border-[var(--at-hairline)] bg-transparent py-2 outline-none"
+            />
+            <input
+              name="image_url"
+              required
+              type="url"
+              placeholder="URL pública de portfolio (no de un encargo)"
+              className="at-ui at-focus w-full border-b border-[var(--at-hairline)] bg-transparent py-2 outline-none"
+            />
+            <AtelierButton type="submit">Publicar en el portafolio</AtelierButton>
+          </form>
+        ) : null}
+
+        {page !== "ganancias" ? (
+          <ul className="mt-8 space-y-3">
+            {items.map((x) => (
+              <li
+                key={String(x.id_service || x.id_item || x.nombre || x.titulo)}
+                className="border border-[var(--at-hairline)] bg-[var(--at-offwhite)] px-4 py-3"
               >
-                Subir avance (preview)
-              </Button>
-            ) : null}
-            {order.estado === "preview" ? (
-              <Button
-                variant="outline"
-                onClick={() => void transitionAtelierOrder(Number(id), { estado: "final_delivery" }).then(load)}
-              >
-                Entrega final
-              </Button>
-            ) : null}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Input value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} placeholder="URL preview/final (ImageKit)" />
-            <Button
-              variant="outline"
-              disabled={!previewUrl}
-              onClick={() =>
-                void addAtelierAttachment(Number(id), {
-                  kind: order.estado === "final_delivery" || order.estado === "preview" ? "final" : "preview",
-                  url: previewUrl,
-                }).then(() => setPreviewUrl(""))
-              }
-            >
-              Guardar adjunto
-            </Button>
-          </div>
-          <div className="space-y-2 border-t pt-4">
-            <h3 className="text-sm font-semibold">Mensajes</h3>
-            {messages.map((m) => (
-              <p key={m.id_message} className="text-sm text-stone-600">
-                <span className="font-medium">{m.nombre}:</span> {m.body}
-              </p>
+                <p className="at-display text-lg">{String(x.nombre || x.titulo)}</p>
+                {x.precio_base != null ? (
+                  <p className="at-ui text-[13px] text-[var(--at-stone)]">{formatMoneyPair(x.precio_base as number)}</p>
+                ) : null}
+              </li>
             ))}
-            <div className="flex gap-2">
-              <Input value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Escribe un mensaje…" />
-              <Button
-                onClick={() =>
-                  void sendAtelierMessage(Number(id), { body: message }, "creador").then(() => {
-                    setMessage("");
-                    load();
-                  })
-                }
-              >
-                Enviar
-              </Button>
-            </div>
-          </div>
-        </section>
-      ) : (
-        <section className="mt-4 grid gap-3">
-          {page === "Resumen" ? (
-            <div className="rounded-xl bg-white p-5 shadow-sm">
-              <p className="text-sm text-stone-500">Pedidos por atender</p>
-              <p className="text-3xl font-semibold">{items.length}</p>
-            </div>
-          ) : page === "Ganancias" ? (
-            items.map((w, i) => (
-              <article key={i} className="rounded-xl bg-white p-5 shadow-sm">
-                <p className="text-sm text-stone-500">Saldo pendiente / disponible</p>
-                <p className="mt-2 text-2xl font-semibold">
-                  S/ {Number(w?.pending || 0).toFixed(2)} · S/ {Number(w?.available || 0).toFixed(2)}
-                </p>
-                <p className="mt-1 text-sm text-stone-500">Ganado total: S/ {Number(w?.total_earned || 0).toFixed(2)}</p>
-              </article>
-            ))
-          ) : (
-            items.map((x) => (
-              <article
-                key={x.id_request || x.id_order || x.id_service || x.id_item}
-                className="rounded-xl bg-white p-4 shadow-sm"
-              >
-                <p className="font-medium">{x.titulo || x.nombre || `Pedido #${x.id_order}`}</p>
-                <p className="mt-1 text-sm text-stone-500">{x.estado || (x.image_url ? "Publicado" : "Activo")}</p>
-                {page === "Solicitudes" && x.estado === "submitted" ? (
-                  <Button size="sm" className="mt-3" onClick={() => quote(x.id_request, x.presupuesto)}>
-                    Enviar cotización
-                  </Button>
-                ) : null}
-                {page === "Pedidos" ? (
-                  <Link className="mt-3 inline-block text-sm text-[#DB2777]" to={`/atelier/creador/pedidos/${x.id_order}`}>
-                    Abrir pedido
-                  </Link>
-                ) : null}
-              </article>
-            ))
-          )}
-        </section>
-      )}
-    </AtelierCreadorShell>
+          </ul>
+        ) : null}
+      </main>
+    </AtelierProductFrame>
   );
+}
+
+export default function AtelierCreadorPages() {
+  const location = useLocation();
+  const { id } = useParams();
+  if (id && location.pathname.includes("/pedidos/")) return <WorkspacePage role="creador" />;
+  if (location.pathname.includes("/perfil/editar")) return <AccountProfilePage role="creador" mode="edit" />;
+  if (location.pathname.includes("/perfil")) return <AccountProfilePage role="creador" mode="view" />;
+  if (location.pathname.includes("/solicitudes")) return <ArtistBoardPage />;
+  if (location.pathname.includes("/pedidos")) return <CreatorOrdersPage />;
+  if (location.pathname.includes("/servicios")) return <StudioExtras page="servicios" />;
+  if (location.pathname.includes("/portafolio")) return <StudioExtras page="portafolio" />;
+  if (location.pathname.includes("/ganancias")) return <StudioExtras page="ganancias" />;
+  return <StudioHomePage />;
 }

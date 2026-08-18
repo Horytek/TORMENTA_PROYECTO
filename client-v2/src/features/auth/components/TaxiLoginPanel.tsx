@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,7 +42,7 @@ export function TaxiLoginPanel() {
   const accent = getLoginAccent("taxi");
   const navigate = useNavigate();
   const [role, setRole] = useState<TaxiRole>("operador");
-  const [codigo, setCodigo] = useState(DEMO_SLUG);
+  const [codigo, setCodigo] = useState("");
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
   const [password, setPassword] = useState("");
@@ -67,11 +67,6 @@ export function TaxiLoginPanel() {
     setPassword(creds.password || "");
     setNombre(creds.nombre || "");
   };
-
-  useEffect(() => {
-    applyDemoForRole("operador");
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar
-  }, []);
 
   const doLogin = async () => {
     setError("");
@@ -142,71 +137,10 @@ export function TaxiLoginPanel() {
         onChange={(id) => {
           setRole(id);
           setError("");
-          applyDemoForRole(id);
         }}
       />
 
       <p className="text-sm text-muted-foreground">{roleMeta.hint}</p>
-
-      {demoBundle ? (
-        <DemoAccessCard
-          bundle={demoBundle}
-          accent={accent}
-          onApply={() => applyDemoForRole(role)}
-          onEnter={async () => {
-            applyDemoForRole(role);
-            const creds = getDemoPortalCreds("taxi", demoRoleKey(role));
-            if (!creds) return;
-            setCodigo(creds.slug || DEMO_SLUG);
-            setEmail(creds.email || "");
-            setTelefono(creds.telefono || "");
-            setPassword(creds.password || "");
-            setNombre(creds.nombre || "");
-            // defer login to next tick so state is applied
-            await Promise.resolve();
-            setCodigo(creds.slug || DEMO_SLUG);
-            setEmail(creds.email || "");
-            setTelefono(creds.telefono || "");
-            setPassword(creds.password || "");
-            setLoading(true);
-            setError("");
-            try {
-              const slug = (creds.slug || DEMO_SLUG).toLowerCase();
-              if (role === "operador") {
-                const res = await loginTaxiAdmin({
-                  slug,
-                  email: creds.email || "",
-                  password: creds.password || "",
-                });
-                if (!res.success) throw new Error(res.message);
-                navigate("/taxi-admin");
-                return;
-              }
-              if (role === "pasajero") {
-                const res = await loginTaxiPasajero({
-                  slug,
-                  telefono: creds.telefono || "",
-                  password: creds.password || "",
-                });
-                if (!res.success) throw new Error(res.message);
-                navigate(`/taxi/${slug}`);
-                return;
-              }
-              const res = await loginTaxiConductor({
-                slug,
-                telefono: creds.telefono || "",
-                password: creds.password || "",
-              });
-              if (!res.success) throw new Error(res.message);
-              navigate(`/taxi/${slug}/conductor`);
-            } catch (err: unknown) {
-              setError(errMsg(err, "Error al iniciar sesión."));
-            } finally {
-              setLoading(false);
-            }
-          }}
-        />
-      ) : null}
 
       {error ? (
         <div
@@ -224,7 +158,7 @@ export function TaxiLoginPanel() {
           className={portalInputClass}
           value={codigo}
           onChange={(e) => setCodigo(e.target.value)}
-          placeholder="ej. demo"
+          placeholder="mi-operador"
           autoComplete="organization"
           required
         />
@@ -239,7 +173,7 @@ export function TaxiLoginPanel() {
             className={portalInputClass}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="admin@demo.local"
+            placeholder="correo@empresa.com"
             autoComplete="username"
             required
           />
@@ -253,7 +187,7 @@ export function TaxiLoginPanel() {
             className={portalInputClass}
             value={telefono}
             onChange={(e) => setTelefono(e.target.value)}
-            placeholder={role === "pasajero" ? "999111222" : "999333444"}
+            placeholder="900 000 000"
             autoComplete="tel"
             required
           />
@@ -323,6 +257,57 @@ export function TaxiLoginPanel() {
           </>
         )}
       </Button>
+
+      {role !== "pasajero" || pasajeroMode !== "registro" ? (
+        demoBundle ? (
+          <DemoAccessCard
+            bundle={demoBundle}
+            accent={accent}
+            onApply={() => applyDemoForRole(role)}
+            onEnter={async () => {
+              const creds = getDemoPortalCreds("taxi", demoRoleKey(role));
+              if (!creds) return;
+              applyDemoForRole(role);
+              setLoading(true);
+              setError("");
+              try {
+                const slug = (creds.slug || DEMO_SLUG).toLowerCase();
+                if (role === "operador") {
+                  const res = await loginTaxiAdmin({
+                    slug,
+                    email: creds.email || "",
+                    password: creds.password || "",
+                  });
+                  if (!res.success) throw new Error(res.message);
+                  navigate("/taxi-admin");
+                  return;
+                }
+                if (role === "pasajero") {
+                  const res = await loginTaxiPasajero({
+                    slug,
+                    telefono: creds.telefono || "",
+                    password: creds.password || "",
+                  });
+                  if (!res.success) throw new Error(res.message);
+                  navigate(`/taxi/${slug}`);
+                  return;
+                }
+                const res = await loginTaxiConductor({
+                  slug,
+                  telefono: creds.telefono || "",
+                  password: creds.password || "",
+                });
+                if (!res.success) throw new Error(res.message);
+                navigate(`/taxi/${slug}/conductor`);
+              } catch (err: unknown) {
+                setError(errMsg(err, "Error al iniciar sesión."));
+              } finally {
+                setLoading(false);
+              }
+            }}
+          />
+        ) : null
+      ) : null}
 
       <p className="text-center text-xs text-muted-foreground">
         {role === "operador" ? (

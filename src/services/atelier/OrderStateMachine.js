@@ -39,7 +39,8 @@ const ORDER_TRANSITIONS = {
 
 export function canTransition(map, from, to, role) {
   const opts = map[from] || [];
-  return opts.some((o) => o.to === to && (o.roles.includes(role) || o.roles.includes("system")));
+  // `system` solo aplica si el caller es webhook/sistema (role === "system"), nunca un JWT.
+  return opts.some((o) => o.to === to && o.roles.includes(role));
 }
 
 export function assertRequestTransition(from, to, role) {

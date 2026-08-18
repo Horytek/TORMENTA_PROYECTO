@@ -51,7 +51,7 @@ export default defineConfig({
   // maplibre-gl v6 es ESM puro (sin default export); evita interop roto en deps prebundle
   // @zxing/browser se pre-bundlea para evitar 504 Outdated Optimize Dep al escanear QR
   optimizeDeps: {
-    include: ['maplibre-gl', '@zxing/browser', '@zxing/library'],
+    include: ['maplibre-gl', '@zxing/browser', '@zxing/library', '@remotion/player'],
   },
   assetsInclude: ['**/*.ogg', '**/*.mp3', '**/*.wav'],
   build: {
@@ -69,6 +69,7 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes('node_modules')) return
           // React + react-dom + scheduler + router SIEMPRE juntos (interdependientes).
+          if (/[\\/]node_modules[\\/](@remotion|remotion)[\\/]/.test(id)) return 'remotion-vendor'
           if (/[\\/]node_modules[\\/](react-dom|react-router-dom|react-router|scheduler|react)[\\/]/.test(id)) return 'react-vendor'
           if (/[\\/]node_modules[\\/](@tanstack[\\/]react-query|axios)[\\/]/.test(id)) return 'query-vendor'
           if (/[\\/]node_modules[\\/](framer-motion|lucide-react)[\\/]/.test(id)) return 'ui-vendor'

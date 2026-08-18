@@ -1,5 +1,7 @@
 /**
  * Schema Atelier — marketplace de dibujos por encargo (MVP).
+ * Instalaciones nuevas: CREATE TABLE IF NOT EXISTS (p.ej. seed_atelier_demo.js).
+ * Bases ya creadas: correr `node src/scripts/alter_atelier_marketplace.js` en local/dev.
  */
 export const ATELIER_SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS atelier_user (
@@ -107,11 +109,12 @@ CREATE TABLE IF NOT EXISTS atelier_commission_rule (
 CREATE TABLE IF NOT EXISTS atelier_request (
   id_request INT AUTO_INCREMENT PRIMARY KEY,
   id_client INT NOT NULL,
-  id_creator INT NOT NULL,
+  id_creator INT NULL,
   id_service INT NULL,
   titulo VARCHAR(200) NOT NULL,
   descripcion TEXT NOT NULL,
   refs_json JSON NULL,
+  brief_json JSON NULL,
   presupuesto DECIMAL(12,2) NULL,
   fecha_limite DATE NULL,
   estado ENUM(
@@ -122,6 +125,7 @@ CREATE TABLE IF NOT EXISTS atelier_request (
   creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   KEY idx_atelier_req_client (id_client),
   KEY idx_atelier_req_creator (id_creator),
+  KEY idx_atelier_req_board (id_creator, estado),
   CONSTRAINT fk_atelier_req_client FOREIGN KEY (id_client) REFERENCES atelier_user(id_user),
   CONSTRAINT fk_atelier_req_creator FOREIGN KEY (id_creator) REFERENCES atelier_creator_profile(id_user)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -129,6 +133,7 @@ CREATE TABLE IF NOT EXISTS atelier_request (
 CREATE TABLE IF NOT EXISTS atelier_quote (
   id_quote INT AUTO_INCREMENT PRIMARY KEY,
   id_request INT NOT NULL,
+  id_creator INT NOT NULL,
   precio_base DECIMAL(12,2) NOT NULL,
   extras_total DECIMAL(12,2) NOT NULL DEFAULT 0,
   descuento DECIMAL(12,2) NOT NULL DEFAULT 0,
@@ -141,7 +146,10 @@ CREATE TABLE IF NOT EXISTS atelier_quote (
   expira_en DATETIME NULL,
   estado ENUM('sent','accepted','rejected','expired') NOT NULL DEFAULT 'sent',
   creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_atelier_quote_req FOREIGN KEY (id_request) REFERENCES atelier_request(id_request)
+  UNIQUE KEY uq_atelier_quote_request_creator (id_request, id_creator),
+  KEY idx_atelier_quote_creator (id_creator),
+  CONSTRAINT fk_atelier_quote_req FOREIGN KEY (id_request) REFERENCES atelier_request(id_request),
+  CONSTRAINT fk_atelier_quote_creator FOREIGN KEY (id_creator) REFERENCES atelier_creator_profile(id_user)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS atelier_quote_item (
@@ -219,6 +227,28 @@ CREATE TABLE IF NOT EXISTS atelier_attachment (
   filename VARCHAR(200) NULL,
   creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_atelier_att_order FOREIGN KEY (id_order) REFERENCES atelier_order(id_order) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS atelier_file (
+  id_file CHAR(36) NOT NULL PRIMARY KEY,
+  id_request INT NULL,
+  id_order INT NULL,
+  id_uploader INT NOT NULL,
+  category ENUM('reference','sketch','progress','delivery') NOT NULL,
+  file_name VARCHAR(200) NOT NULL,
+  mime VARCHAR(80) NOT NULL,
+  byte_size INT UNSIGNED NOT NULL,
+  storage_key VARCHAR(500) NOT NULL,
+  provider_file_id VARCHAR(120) NOT NULL,
+  creado_en DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expires_at DATETIME NULL,
+  deleted_at DATETIME NULL,
+  KEY idx_atelier_file_request (id_request),
+  KEY idx_atelier_file_order (id_order),
+  KEY idx_atelier_file_uploader (id_uploader),
+  CONSTRAINT fk_atelier_file_request FOREIGN KEY (id_request) REFERENCES atelier_request(id_request),
+  CONSTRAINT fk_atelier_file_order FOREIGN KEY (id_order) REFERENCES atelier_order(id_order),
+  CONSTRAINT fk_atelier_file_uploader FOREIGN KEY (id_uploader) REFERENCES atelier_user(id_user)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS atelier_payment (

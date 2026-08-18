@@ -44,7 +44,19 @@ export async function loginAtelier(body: { email: string; password: string }) {
   return { ...data, data: { ...data?.data, role, token } };
 }
 
-export const registerAtelier = (body: Body) => req(clienteApi, "post", "/auth/register", body);
+export async function registerAtelier(body: Body) {
+  const data = await req(clienteApi, "post", "/auth/register", body);
+  const token = data?.data?.token;
+  const role = data?.data?.user?.role || data?.data?.role;
+  if (data?.success && token) {
+    setAtelierClienteToken(null);
+    setAtelierCreadorToken(null);
+    setAtelierAdminToken(null);
+    if (role === "creador") setAtelierCreadorToken(token);
+    else setAtelierClienteToken(token);
+  }
+  return { ...data, data: { ...data?.data, role, token } };
+}
 export const atelierMe = (role: "cliente" | "creador" | "admin") =>
   req(apiForRole(role), "get", "/auth/me");
 
@@ -61,6 +73,8 @@ export const listAtelierCreatorPublicPortfolio = (slug: string) =>
   req(clienteApi, "get", `/creators/${encodeURIComponent(slug)}/portfolio`);
 export const listAtelierCategories = () => req(clienteApi, "get", "/categories");
 
+export const updateAtelierClientProfile = (body: Body) =>
+  req(clienteApi, "patch", "/auth/profile", body);
 export const updateAtelierCreatorProfile = (body: Body) =>
   req(creadorApi, "patch", "/creator/profile", body);
 export const listAtelierCreatorServices = () => req(creadorApi, "get", "/creator/services");
@@ -75,6 +89,11 @@ export const createAtelierPortfolio = (body: Body) =>
 export const deleteAtelierPortfolio = (id: number) =>
   req(creadorApi, "delete", `/creator/portfolio/${id}`);
 export const listAtelierCreatorRequests = () => req(creadorApi, "get", "/creator/requests");
+export const listAtelierCreatorBoard = () => req(creadorApi, "get", "/creator/board");
+export const getAtelierCreatorRequest = (id: number) =>
+  req(creadorApi, "get", `/creator/requests/${id}`);
+export const listAtelierCreatorRequestQuotes = (id: number) =>
+  req(creadorApi, "get", `/creator/requests/${id}/quotes`);
 export const sendAtelierQuote = (id: number, body: Body) =>
   req(creadorApi, "post", `/creator/requests/${id}/quotes`, body);
 export const startAtelierOrder = (id: number) =>
@@ -83,13 +102,17 @@ export const listAtelierCreatorOrders = () => req(creadorApi, "get", "/creator/o
 export const getAtelierWallet = () => req(creadorApi, "get", "/creator/wallet");
 
 export const listAtelierClientRequests = () => req(clienteApi, "get", "/client/requests");
+export const getAtelierClientRequest = (id: number) =>
+  req(clienteApi, "get", `/client/requests/${id}`);
+export const listAtelierClientRequestQuotes = (id: number) =>
+  req(clienteApi, "get", `/client/requests/${id}/quotes`);
 export const createAtelierRequest = (body: Body) =>
   req(clienteApi, "post", "/client/requests", body);
 export const listAtelierClientOrders = () => req(clienteApi, "get", "/client/orders");
 export const acceptAtelierQuote = (id: number) =>
   req(clienteApi, "post", `/client/quotes/${id}/accept`);
-export const rejectAtelierQuote = (id: number) =>
-  req(clienteApi, "post", `/client/quotes/${id}/reject`);
+export const rejectAtelierQuote = (id: number, body?: Body) =>
+  req(clienteApi, "post", `/client/quotes/${id}/reject`, body);
 export const checkoutAtelierOrder = (id: number) =>
   req(clienteApi, "post", `/orders/${id}/checkout`);
 
@@ -117,6 +140,23 @@ export const transitionAtelierOrder = (
   role: "cliente" | "creador" = "creador"
 ) =>
   req(role === "creador" ? creadorApi : clienteApi, "patch", `/orders/${id}/transition`, body);
+
+export const requestAtelierFileAuth = (
+  body: Body,
+  role: "cliente" | "creador" = "cliente"
+) => req(role === "creador" ? creadorApi : clienteApi, "post", "/files/auth", body);
+export const confirmAtelierFile = (
+  body: Body,
+  role: "cliente" | "creador" = "cliente"
+) => req(role === "creador" ? creadorApi : clienteApi, "post", "/files", body);
+export const getAtelierFilePreviewUrl = (
+  uuid: string,
+  role: "cliente" | "creador" = "cliente"
+) => req(role === "creador" ? creadorApi : clienteApi, "get", `/files/${uuid}/preview-url`);
+export const getAtelierFileDownloadUrl = (
+  uuid: string,
+  role: "cliente" | "creador" = "cliente"
+) => req(role === "creador" ? creadorApi : clienteApi, "get", `/files/${uuid}/download-url`);
 
 export const getAtelierAdminDashboard = () => req(adminApi, "get", "/admin/kpis");
 export const listAtelierAdminOrders = () => req(adminApi, "get", "/admin/orders");

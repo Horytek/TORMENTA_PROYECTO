@@ -151,8 +151,10 @@ const DeliveryOperadorPage = lazy(
 );
 const DeliveryClientePage = lazy(() => import("@/features/platform/pages/DeliveryClientePage"));
 const DeliveryRepartidorPage = lazy(() => import("@/features/platform/pages/DeliveryRepartidorPage"));
-const AtelierHomePage = lazy(() => import("@/features/platform/pages/AtelierHomePage"));
-const AtelierCreatorPublicPage = lazy(() => import("@/features/platform/pages/AtelierCreatorPublicPage"));
+const AtelierHomePage = lazy(() => import("@/features/atelier/pages/DiscoverPage"));
+const AtelierCreatorPublicPage = lazy(() => import("@/features/atelier/pages/ArtistPage"));
+const AtelierArtistsPage = lazy(() => import("@/features/atelier/pages/ArtistsPage"));
+const AtelierCommissionPage = lazy(() => import("@/features/atelier/pages/CommissionComposerPage"));
 const AtelierClientePages = lazy(() => import("@/features/platform/pages/atelier/AtelierClientePages"));
 const AtelierCreadorPages = lazy(() => import("@/features/platform/pages/atelier/AtelierCreadorPages"));
 const AtelierAdminPages = lazy(() => import("@/features/platform/pages/atelier/AtelierAdminPages"));
@@ -364,16 +366,24 @@ export default function App() {
               <Route path="/delivery/:slug" element={<DeliveryClientePage />} />
               <Route path="/delivery/:slug/repartidor" element={<DeliveryRepartidorPage />} />
               <Route path="/atelier" element={<AtelierHomePage />} />
+              <Route path="/atelier/artistas" element={<AtelierArtistsPage />} />
+              <Route path="/atelier/encargar" element={<AtelierCommissionPage />} />
               <Route path="/atelier/c/:slug" element={<AtelierCreatorPublicPage />} />
               <Route path="/atelier/cliente" element={<AtelierClientePages />} />
               <Route path="/atelier/cliente/solicitudes" element={<AtelierClientePages />} />
+              <Route path="/atelier/cliente/solicitudes/:id" element={<AtelierClientePages />} />
               <Route path="/atelier/cliente/pedidos" element={<AtelierClientePages />} />
               <Route path="/atelier/cliente/pedidos/:id" element={<AtelierClientePages />} />
+              <Route path="/atelier/cliente/perfil" element={<AtelierClientePages />} />
+              <Route path="/atelier/cliente/perfil/editar" element={<AtelierClientePages />} />
               <Route path="/atelier/cliente/favoritos" element={<AtelierClientePages />} />
               <Route path="/atelier/creador" element={<AtelierCreadorPages />} />
               <Route path="/atelier/creador/solicitudes" element={<AtelierCreadorPages />} />
+              <Route path="/atelier/creador/solicitudes/:id" element={<AtelierCreadorPages />} />
               <Route path="/atelier/creador/pedidos" element={<AtelierCreadorPages />} />
               <Route path="/atelier/creador/pedidos/:id" element={<AtelierCreadorPages />} />
+              <Route path="/atelier/creador/perfil" element={<AtelierCreadorPages />} />
+              <Route path="/atelier/creador/perfil/editar" element={<AtelierCreadorPages />} />
               <Route path="/atelier/creador/servicios" element={<AtelierCreadorPages />} />
               <Route path="/atelier/creador/portafolio" element={<AtelierCreadorPages />} />
               <Route path="/atelier/creador/ganancias" element={<AtelierCreadorPages />} />
