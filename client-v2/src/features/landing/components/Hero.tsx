@@ -196,7 +196,7 @@ function HeroVisualStandard() {
     <div className="relative mx-auto w-full max-w-[470px] pb-12 lg:ml-auto lg:mr-0 lg:pt-5">
       <div aria-hidden className="absolute inset-6 rounded-[2rem] bg-brand/10 blur-3xl" />
 
-      <article className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-[0_24px_70px_-28px_hsl(var(--foreground)/0.35)]">
+      <article className="relative overflow-hidden rounded-xl border border-border bg-card shadow-[0_24px_70px_-28px_hsl(var(--foreground)/0.35)]">
         <header className="flex items-center justify-between border-b border-border bg-secondary/40 px-5 py-3.5">
           <div className="flex items-center gap-2">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
@@ -416,7 +416,7 @@ function HeroEcommerce() {
         </ul>
       </div>
       <div className="relative">
-        <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
           <div className="flex justify-between text-[10px] uppercase tracking-widest text-stone-400">
             <span>Horytek · Tag</span>
             <span>POL-0432</span>

@@ -72,7 +72,7 @@ export function EcommerceSection() {
           <StorefrontPreview />
         </div>
 
-        <div className="mt-20 grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-20 grid gap-px overflow-hidden rounded-xl border border-white/10 bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
           {ECOMMERCE_BENEFITS.map(({ icon: Icon, title, body }) => (
             <article key={title} className="bg-[#0c2728] p-6 lg:p-7">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-emerald-200">
@@ -91,7 +91,7 @@ export function EcommerceSection() {
 function StorefrontPreview() {
   return (
     <div className="relative mx-auto w-full max-w-[580px] pb-10 sm:px-8">
-      <div className="overflow-hidden rounded-2xl border border-white/15 bg-white shadow-2xl shadow-black/25">
+      <div className="overflow-hidden rounded-xl border border-white/15 bg-white shadow-2xl shadow-black/25">
         <div className="flex h-11 items-center gap-2 border-b border-slate-200 bg-slate-50 px-4">
           <span className="h-2.5 w-2.5 rounded-full bg-rose-300" />
           <span className="h-2.5 w-2.5 rounded-full bg-amber-300" />

@@ -1,39 +1,37 @@
 import { BENEFIT_PILLARS } from "../data/landing.data";
 
-/** Cuatro pilares de valor (inventario, POS, reportes, SUNAT). */
+/**
+ * Cuatro pilares de valor (inventario, POS, reportes, SUNAT).
+ *
+ * Los tamanos y radios vienen de `landing-system.css`: la seccion no elige
+ * ninguno propio. Los pilares pasaron de lista suelta a tarjetas porque en una
+ * pagina larga el texto sin contenedor se lee como relleno, no como producto.
+ */
 export function BenefitPillars() {
   return (
-    <section
-      id="beneficios"
-      className="border-b border-border/60 bg-background py-20 md:py-28"
-    >
-      <div className="mx-auto max-w-6xl px-6">
+    <section id="beneficios" className="lp-section lp-band-a">
+      <div className="lp-container">
         <div className="max-w-2xl">
-          <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
-            Qué ganas
-          </span>
-          <h2 className="mt-3 text-balance text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-foreground">
+          <span className="lp-eyebrow">Qué ganas</span>
+          <h2 className="lp-h2">
             Controla inventario, vende y factura desde un solo sistema.
           </h2>
-          <p className="mt-4 text-[15px] leading-relaxed text-muted-foreground">
-            Pensado para dueños de negocio que necesitan orden diario — no un ERP eterno de implementación.
+          <p className="lp-lead">
+            Pensado para dueños de negocio que necesitan orden diario — no un ERP
+            eterno de implementación.
           </p>
         </div>
 
-        <ul className="mt-14 grid gap-10 sm:grid-cols-2">
+        <ul className="mt-12 grid gap-4 sm:grid-cols-2">
           {BENEFIT_PILLARS.map((pillar) => {
             const Icon = pillar.icon;
             return (
-              <li key={pillar.title} className="relative">
-                <span className="flex h-10 w-10 items-center justify-center rounded-md border border-border bg-secondary text-foreground">
-                  <Icon className="h-5 w-5" aria-hidden />
+              <li key={pillar.title} className="lp-card p-6">
+                <span className="lp-icon">
+                  <Icon className="h-[18px] w-[18px]" aria-hidden />
                 </span>
-                <h3 className="mt-4 text-[17px] font-semibold tracking-tight text-foreground">
-                  {pillar.title}
-                </h3>
-                <p className="mt-2 max-w-md text-[14px] leading-relaxed text-muted-foreground">
-                  {pillar.body}
-                </p>
+                <h3 className="lp-h3 mt-4">{pillar.title}</h3>
+                <p className="lp-body mt-2">{pillar.body}</p>
               </li>
             );
           })}

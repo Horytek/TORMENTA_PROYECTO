@@ -23,10 +23,10 @@ export function SolutionsBridge() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="max-w-lg">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            <span className="lp-eyebrow">
               Catálogo de productos
             </span>
-            <h2 className="mt-2 text-balance text-[clamp(1.45rem,3vw,2rem)] font-semibold leading-[1.15] tracking-[-0.02em] text-foreground">
+            <h2 className="lp-h2">
               Un job, un producto. Elige y prueba con datos demo.
             </h2>
             <p className="mt-2 text-[14px] text-muted-foreground">
@@ -48,7 +48,7 @@ export function SolutionsBridge() {
               <Link
                 key={p.id}
                 to={`/?product=${p.id}`}
-                className="group flex min-w-[9.5rem] flex-col justify-between rounded-2xl border border-black/8 bg-white/90 px-4 py-4 shadow-sm transition-transform hover:-translate-y-0.5"
+                className="group flex min-w-[9.5rem] flex-col justify-between rounded-xl border border-black/8 bg-white/90 px-4 py-4 shadow-sm transition-transform hover:-translate-y-0.5"
                 style={{ borderTopWidth: 3, borderTopColor: theme.accent }}
               >
                 <p className="text-[14px] font-semibold" style={{ color: theme.ink }}>

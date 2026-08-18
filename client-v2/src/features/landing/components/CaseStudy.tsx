@@ -51,7 +51,7 @@ export function CaseStudy({ mode }: Props) {
               />
               {isPocket ? POCKET_CASE_STUDY.eyebrow : "Rendimiento Comprobado"}
             </div>
-            <h2 className="text-balance text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-foreground">
+            <h2 className="lp-h2">
               {isPocket ? POCKET_CASE_STUDY.title : "Arquitectura diseñada para velocidad y escala."}
             </h2>
             <p className="mt-5 max-w-md text-[15px] leading-relaxed text-muted-foreground">
@@ -69,7 +69,7 @@ export function CaseStudy({ mode }: Props) {
             ]).map((stat) => (
               <div
                 key={stat.label}
-                className="rounded-2xl border border-border bg-card p-5 transition-colors hover:border-brand/40"
+                className="rounded-xl border border-border bg-card p-5 transition-colors hover:border-brand/40"
               >
                 <p className="num text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                   {stat.label}
@@ -98,7 +98,7 @@ export function CaseStudy({ mode }: Props) {
           </div>
         </div>
 
-        <div className="relative overflow-hidden rounded-3xl border border-border bg-secondary/20 p-6 md:p-8">
+        <div className="relative overflow-hidden rounded-xl border border-border bg-secondary/20 p-6 md:p-8">
           <div
             aria-hidden
             className="absolute inset-0 opacity-[0.05]"
@@ -152,7 +152,7 @@ function StackCard({ tech }: { tech: StackTech }) {
   const Icon = tone.icon;
 
   return (
-    <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 shadow-[0_1px_0_0_hsl(var(--border))]">
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-[0_1px_0_0_hsl(var(--border))]">
       <span
         className={cn(
           "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border",
@@ -185,10 +185,10 @@ function BusinessValueSection() {
     <section id="rendimiento" className="border-b border-border/60 bg-background py-24 md:py-32">
       <div className="mx-auto grid max-w-6xl gap-14 px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-20">
         <div>
-          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand">
+          <span className="lp-eyebrow">
             Valor para tu negocio
           </span>
-          <h2 className="mt-3 text-balance text-[clamp(1.9rem,3.8vw,2.8rem)] font-semibold leading-[1.06] tracking-[-0.025em] text-foreground">
+          <h2 className="lp-h2">
             Vende en más lugares sin trabajar el doble.
           </h2>
           <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-muted-foreground">
@@ -220,7 +220,7 @@ function BusinessValueSection() {
 
 function ConnectedBusinessDiagram() {
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-border bg-secondary/30 p-6 sm:p-8">
+    <div className="relative overflow-hidden rounded-xl border border-border bg-secondary/30 p-6 sm:p-8">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-[0.035]"
@@ -232,11 +232,11 @@ function ConnectedBusinessDiagram() {
       />
 
       <div className="relative">
-        <p className="text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+        <p className="lp-eyebrow text-center">
           Una operación conectada
         </p>
 
-        <div className="mx-auto mt-6 max-w-xs rounded-2xl border border-primary/30 bg-card p-5 text-center shadow-sm">
+        <div className="mx-auto mt-6 max-w-xs rounded-xl border border-primary/30 bg-card p-5 text-center shadow-sm">
           <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <Database className="h-5 w-5" aria-hidden />
           </span>

@@ -33,14 +33,14 @@ export function FAQ({ mode }: Props) {
     >
       <div className="mx-auto max-w-3xl px-6">
         <div className="text-center">
-          <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <span className="lp-eyebrow">
             {isPocket
               ? "Dudas Frecuentes · Pocket"
               : isEcommerce
                 ? "Dudas · Ecommerce"
                 : "Preguntas frecuentes"}
           </span>
-          <h2 className="mt-3 text-balance text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-foreground">
+          <h2 className="lp-h2">
             {isPocket
               ? "Resolvemos tus dudas en segundos."
               : isEcommerce

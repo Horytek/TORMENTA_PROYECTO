@@ -11,6 +11,7 @@ import { Header } from "../components/Header";
 import { Hero } from "../components/Hero";
 import { TrustStrip } from "../components/TrustStrip";
 import { BenefitPillars } from "../components/BenefitPillars";
+import { FeatureMatrix } from "../components/FeatureMatrix";
 import { BlueprintSection } from "../components/BlueprintSection";
 import { CaseStudy } from "../components/CaseStudy";
 import { SolutionsBridge } from "../components/SolutionsBridge";
@@ -20,11 +21,13 @@ import { ExperienceLanding } from "../components/ExperienceLanding";
 import { Footer } from "../components/Footer";
 import { ScrollUpButton } from "../components/ScrollUpButton";
 import { cn } from "@/lib/utils";
+import "../styles/landing-system.css";
 
 const LEGACY_SECTION_IDS = [
   "hero",
   "confianza",
   "beneficios",
+  "capacidades",
   "producto",
   "rendimiento",
   "soluciones-puente",
@@ -58,7 +61,7 @@ export default function LandingPage() {
   }, [isAuthenticated, navigate, search]);
 
   return (
-    <div className="min-h-screen w-full bg-background">
+    <div className="lp min-h-screen w-full bg-background">
       <InventoryRail
         checkpoints={isLegacy ? LEGACY_SECTION_IDS : experienceCheckpoints}
       />
@@ -80,6 +83,7 @@ export default function LandingPage() {
               <>
                 <TrustStrip />
                 <BenefitPillars />
+                <FeatureMatrix />
                 <SolutionsBridge />
                 <BlueprintSection mode={legacyMode} />
                 <CaseStudy mode={legacyMode} />
@@ -119,7 +123,7 @@ function CTA({ mode }: { mode: Mode }) {
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid gap-10 md:grid-cols-[1.4fr_1fr] md:items-end">
           <div>
-            <h2 className="text-balance text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em]">
+            <h2 className="lp-h2">
               {isPocket
                 ? "Lleva tu tienda en el bolsillo."
                 : isEcommerce

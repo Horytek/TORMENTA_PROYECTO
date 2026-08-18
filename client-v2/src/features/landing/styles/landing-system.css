@@ -1,0 +1,138 @@
+/**
+ * Sistema visual de la landing.
+ *
+ * Existe porque la landing habia acumulado siete radios distintos (pill, 32, 24,
+ * 16, 12, 8 y 6 px) y una escala de titulares sin ratio: 61.6 / 48 / 44.8 / 40 /
+ * 32 px, donde cada seccion invento su propio tamano. Eso es lo que hacia que la
+ * pagina se leyera menos "disenada" que la competencia, no la tipografia — que
+ * de hecho es mejor.
+ *
+ * La regla es una sola: las secciones no eligen tamanos ni radios, los toman de
+ * aca. Si una seccion necesita un valor nuevo, se agrega al sistema, no al
+ * componente.
+ */
+
+.lp {
+  /* Tres radios. Nada mas. `full` queda solo para pills y avatares. */
+  --lp-r-sm: 6px;
+  --lp-r-md: 10px;
+  --lp-r-lg: 12px;   /* alineado a `rounded-xl` de Tailwind, el radio ya dominante en el repo */
+
+  /* Ritmo vertical. Antes iba de 80 a 128 px sin criterio; 128 dejaba la pagina
+     tan aireada que el contenido parecia escaso. */
+  --lp-pad-y: 5.5rem;
+  --lp-pad-y-lg: 7rem;
+
+  /* Bandas. Las tres tintas anteriores (alpha .4 / .25 / .2 sobre el mismo
+     color) eran indistinguibles entre si, asi que las secciones no se separaban
+     visualmente. Estas tres si contrastan. */
+  --lp-band-a: hsl(var(--background));
+  --lp-band-b: hsl(210 25% 97.5%);
+  --lp-band-c: hsl(205 45% 96%);
+}
+
+.dark .lp {
+  --lp-band-b: hsl(212 28% 12%);
+  --lp-band-c: hsl(205 35% 14%);
+}
+
+/* ---------- Bloques de seccion ---------- */
+
+.lp-section {
+  padding-top: var(--lp-pad-y);
+  padding-bottom: var(--lp-pad-y);
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+}
+@media (min-width: 768px) {
+  .lp-section {
+    padding-top: var(--lp-pad-y-lg);
+    padding-bottom: var(--lp-pad-y-lg);
+  }
+}
+
+.lp-band-a { background: var(--lp-band-a); }
+.lp-band-b { background: var(--lp-band-b); }
+.lp-band-c { background: var(--lp-band-c); }
+
+.lp-container {
+  margin-inline: auto;
+  max-width: 72rem;
+  padding-inline: 1.5rem;
+}
+
+/* ---------- Escala tipografica ---------- */
+
+/* El ojo de la seccion: mismo tamano en toda la pagina, en color de marca.
+   Antes era gris y se perdia; el acento es justo lo que le faltaba color. */
+.lp-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: hsl(var(--brand));
+}
+
+/* Un solo tamano de H2 para todas las secciones. */
+.lp-h2 {
+  margin-top: 0.75rem;
+  font-size: clamp(1.75rem, 3vw, 2.375rem);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  color: hsl(var(--foreground));
+}
+
+.lp-lead {
+  margin-top: 1rem;
+  max-width: 42rem;
+  font-size: 15px;
+  line-height: 1.7;
+  color: hsl(var(--muted-foreground));
+}
+
+.lp-h3 {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: hsl(var(--foreground));
+}
+
+.lp-body {
+  font-size: 14px;
+  line-height: 1.65;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ---------- Piezas ---------- */
+
+.lp-card {
+  border-radius: var(--lp-r-lg);
+  border: 1px solid hsl(var(--border) / 0.7);
+  background: hsl(var(--card));
+  /* Sombra corta y de poca opacidad: da relieve sin el look "plantilla". */
+  box-shadow: 0 1px 2px hsl(212 30% 16% / 0.05), 0 2px 8px hsl(212 30% 16% / 0.04);
+  transition: box-shadow 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+.lp-card:hover {
+  border-color: hsl(var(--brand) / 0.35);
+  box-shadow: 0 2px 4px hsl(212 30% 16% / 0.06), 0 8px 20px hsl(212 30% 16% / 0.07);
+}
+
+/* Contenedor de icono. El acento entra aca, que es donde mas se nota y menos
+   compite con el texto. */
+.lp-icon {
+  display: inline-flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--lp-r-md);
+  background: hsl(var(--brand) / 0.1);
+  color: hsl(var(--brand));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-card { transition: none; }
+  .lp-card:hover { transform: none; }
+}
