@@ -52,4 +52,9 @@ const closeInactiveConnections = async () => {
 
 setInterval(closeInactiveConnections, 60000);
 
-export { getConnection };
+// `pool` se exporta para los casos que necesitan consultas REALMENTE paralelas:
+// mysql2 encola las queries de una misma conexion, asi que un Promise.all sobre
+// el objeto que devuelve getConnection() las correria igual en serie. Contra el
+// pool cada query toma su propia conexion. Usar solo para lecturas independientes;
+// para transacciones sigue haciendo falta getConnection().
+export { getConnection, pool };

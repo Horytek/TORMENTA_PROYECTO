@@ -1,4 +1,4 @@
-import { getConnection } from "./../database/database.js";
+import { getConnection, pool } from "./../database/database.js";
 import { getExpressConnection } from "./../database/express_db.js";
 import { createAccessToken } from "../libs/jwt.js";
 import jwt from "jsonwebtoken";
@@ -67,87 +67,125 @@ const login = async (req, res) => {
         }
 
         // ---------------------------------------------------------
+        // CONSULTAS INDEPENDIENTES, EN PARALELO
+        // ---------------------------------------------------------
+        // Las cuatro dependen unicamente de campos de `userbd`, que ya tenemos
+        // de la consulta anterior, y ninguna necesita el resultado de otra. Antes
+        // salian encadenadas: con la base local eso ya costaba, y en produccion
+        // -backend en Azure, MySQL en Railway- cada ida y vuelta suma latencia de
+        // red, asi que cuatro seguidas se notan mas que el propio bcrypt.
+        //
+        // Van contra `pool` y no contra `connection` a proposito: mysql2 encola
+        // las queries de una misma conexion, de modo que un Promise.all sobre
+        // `connection` las volveria a correr en serie sin que se note el error.
+        //
+        // Efecto colateral aceptado: si el tenant esta suspendido, antes se
+        // cortaba con 403 sin llegar a pedir sucursal ni plan. Ahora esas dos
+        // salen igual. Son SELECT sin efectos y su resultado se descarta.
+        const cacheKey = `route_${userbd.id_rol}`;
+        const rutaCacheada = (() => {
+            const cached = routeCache.get(cacheKey);
+            if (!cached) return null;
+            if (Date.now() - cached.timestamp < CACHE_TTL) return cached.route;
+            routeCache.delete(cacheKey);
+            return null;
+        })();
+
+        const vacio = [[]];
+        const [
+            [tenantRows],
+            [extra],
+            [tenantPlan],
+            [rolData],
+        ] = await Promise.all([
+            userbd.id_tenant
+                ? pool.query(
+                    "SELECT tenant_status, grace_until, perm_version FROM empresa WHERE id_empresa = ? LIMIT 1",
+                    [userbd.id_tenant]
+                )
+                : Promise.resolve(vacio),
+
+            user.usuario !== "desarrollador"
+                ? pool.query(
+                    `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal, su.id_sucursal, usu.id_tenant, usu.plan_pago
+                     FROM usuario usu
+                     LEFT JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
+                     LEFT JOIN sucursal su ON su.dni = ven.dni
+                     WHERE usu.id_usuario = ? LIMIT 1`,
+                    [userbd.id_usuario]
+                )
+                : Promise.resolve(vacio),
+
+            // Mantiene la tolerancia que tenia con su try/catch: que falle la
+            // consistencia de plan no debe tumbar el login.
+            userbd.id_tenant
+                ? pool.query(
+                    "SELECT plan_pago FROM usuario WHERE id_tenant = ? AND id_rol = 1 ORDER BY id_usuario ASC LIMIT 1",
+                    [userbd.id_tenant]
+                ).catch((ePlan) => {
+                    console.warn("Error fetching tenant plan", ePlan);
+                    return vacio;
+                })
+                : Promise.resolve(vacio),
+
+            // Solo si la cache de rutas no sirve: con cache valida no se pide.
+            rutaCacheada === null
+                ? pool.query(
+                    "SELECT id_modulo, id_submodulo FROM rol WHERE id_rol = ? LIMIT 1",
+                    [userbd.id_rol]
+                )
+                : Promise.resolve(vacio),
+        ]);
+
+        // ---------------------------------------------------------
         // VALIDACIÓN DE SUSCRIPCIÓN (NUEVA ARQUITECTURA E1)
         // ---------------------------------------------------------
 
         let tenantStatus = 'ACTIVE'; // Default para devs o usuarios sin tenant
         let permVersion = 1;
 
-        if (userbd.id_tenant) {
-            // Consultar estado del tenant
-            const [tenantRows] = await connection.query(
-                "SELECT tenant_status, grace_until, perm_version FROM empresa WHERE id_empresa = ? LIMIT 1",
-                [userbd.id_tenant]
-            );
+        if (userbd.id_tenant && tenantRows.length > 0) {
+            const tenantInfo = tenantRows[0];
+            tenantStatus = tenantInfo.tenant_status;
+            permVersion = tenantInfo.perm_version || 1;
 
-            if (tenantRows.length > 0) {
-                const tenantInfo = tenantRows[0];
-                tenantStatus = tenantInfo.tenant_status;
-                permVersion = tenantInfo.perm_version || 1;
+            // Lógica de Bloqueo por Status
+            if (tenantInfo.tenant_status === 'SUSPENDED') {
+                recordFailedAttempt(req);
+                return res.status(403).json({
+                    success: false,
+                    message: "La suscripción de la empresa está suspendida. Contacte al administrador."
+                });
+            }
 
-                // Lógica de Bloqueo por Status
-                if (tenantInfo.tenant_status === 'SUSPENDED') {
-                    const ip = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || null;
-                    recordFailedAttempt(req);
+            if (tenantInfo.tenant_status === 'GRACE') {
+                // Validar si venció el periodo de gracia
+                if (tenantInfo.grace_until && new Date(tenantInfo.grace_until) < new Date()) {
                     return res.status(403).json({
                         success: false,
-                        message: "La suscripción de la empresa está suspendida. Contacte al administrador."
+                        message: "El periodo de gracia de la suscripción ha terminado."
                     });
-                }
-
-                if (tenantInfo.tenant_status === 'GRACE') {
-                    // Validar si venció el periodo de gracia
-                    if (tenantInfo.grace_until && new Date(tenantInfo.grace_until) < new Date()) {
-                        // Opcional: Auto-suspender aquí o simplemente negar acceso
-                        // Por ahora negamos acceso
-                        return res.status(403).json({
-                            success: false,
-                            message: "El periodo de gracia de la suscripción ha terminado."
-                        });
-                    }
                 }
             }
         }
 
         // El usuario individual debe estar activo
         if (userbd.estado_usuario !== 1) {
-            const ip = req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || null;
             recordFailedAttempt(req);
             return res.status(403).json({ success: false, message: "Tu cuenta está desactivada." });
         }
 
-        // Traer datos de sucursal
-        if (user.usuario !== "desarrollador") {
-            const [extra] = await connection.query(
-                `SELECT usu.id_usuario, usu.id_rol, usu.usua, usu.contra, usu.estado_usuario, su.nombre_sucursal, su.id_sucursal, usu.id_tenant, usu.plan_pago
-                 FROM usuario usu
-                 LEFT JOIN vendedor ven ON ven.id_usuario = usu.id_usuario
-                 LEFT JOIN sucursal su ON su.dni = ven.dni
-                 WHERE usu.id_usuario = ? LIMIT 1`,
-                [userbd.id_usuario]
-            );
-            if (extra.length > 0) userbd = { ...userbd, ...extra[0] };
-        }
+        // Datos de sucursal
+        if (extra.length > 0) userbd = { ...userbd, ...extra[0] };
 
         // FIX: Ensure Plan Consistency for Enterprise/Tenant Users
-        if (userbd.id_tenant) {
-            try {
-                const [tenantPlan] = await connection.query(
-                    "SELECT plan_pago FROM usuario WHERE id_tenant = ? AND id_rol = 1 ORDER BY id_usuario ASC LIMIT 1",
-                    [userbd.id_tenant]
-                );
-                if (tenantPlan.length > 0 && tenantPlan[0].plan_pago) {
-                    userbd.plan_pago = tenantPlan[0].plan_pago;
-                }
-            } catch (ePlan) {
-                console.warn("Error fetching tenant plan", ePlan);
-            }
+        if (tenantPlan.length > 0 && tenantPlan[0].plan_pago) {
+            userbd.plan_pago = tenantPlan[0].plan_pago;
         }
 
         // Login exitoso
         clearAttempts(req);
 
-        // Crear token JWT seguro
         // Crear token JWT seguro
         const token = await createAccessToken({
             nameUser: user.usuario,
@@ -159,27 +197,13 @@ const login = async (req, res) => {
             pv: permVersion // perm_version corta para payload de JWT
         });
 
-        // Resolver ruta por defecto usando caché
-        let defaultRedirect = "/inicio";
-        const cacheKey = `route_${userbd.id_rol}`;
+        // Resolver ruta por defecto. `rolData` ya vino del lote de arriba; lo que
+        // sigue si depende de su resultado, asi que se queda secuencial.
+        let defaultRedirect = rutaCacheada ?? "/inicio";
 
-        if (routeCache.has(cacheKey)) {
-            const cached = routeCache.get(cacheKey);
-            if (Date.now() - cached.timestamp < CACHE_TTL) {
-                defaultRedirect = cached.route;
-            } else {
-                routeCache.delete(cacheKey);
-            }
-        }
-
-        if (defaultRedirect === "/inicio") {
-            const [rolData] = await connection.query(
-                "SELECT id_modulo, id_submodulo FROM rol WHERE id_rol = ? LIMIT 1",
-                [userbd.id_rol]
-            );
-
+        if (rutaCacheada === null) {
             if (rolData[0]?.id_submodulo) {
-                const [submoduleData] = await connection.query(
+                const [submoduleData] = await pool.query(
                     "SELECT ruta FROM submodulos WHERE id_submodulo = ? LIMIT 1",
                     [rolData[0].id_submodulo]
                 );
@@ -189,7 +213,7 @@ const login = async (req, res) => {
             }
 
             if (defaultRedirect === "/inicio" && rolData[0]?.id_modulo) {
-                const [moduleData] = await connection.query(
+                const [moduleData] = await pool.query(
                     "SELECT ruta FROM modulo WHERE id_modulo = ? LIMIT 1",
                     [rolData[0].id_modulo]
                 );
