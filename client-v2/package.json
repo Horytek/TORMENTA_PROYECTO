@@ -11,7 +11,9 @@
     "test": "vitest run",
     "remotion:preview": "remotion studio src/features/atelier/video/index.ts",
     "remotion:render": "remotion render src/features/atelier/video/index.ts HorytekAd out/atelier-ad.mp4",
-    "remotion:render:tiktok": "remotion render src/features/atelier/video/index.ts HorytekTiktok out/atelier-tiktok.mp4"
+    "remotion:render:tiktok": "remotion render src/features/atelier/video/index.ts HorytekTiktok out/atelier-tiktok.mp4",
+    "remotion:render:creando-moda": "remotion render src/features/atelier/video/index.ts CreandoModaTiktok out/creando-moda-tiktok.mp4",
+    "remotion:render:creando-moda-v2": "remotion render src/features/atelier/video/index.ts CreandoModaTiktokV2 out/creando-moda-tiktok-v2.mp4"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
