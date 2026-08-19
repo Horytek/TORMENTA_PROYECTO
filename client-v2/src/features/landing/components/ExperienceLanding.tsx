@@ -20,7 +20,7 @@ export function ExperienceLanding({ module }: ExperienceLandingProps) {
   return (
     <>
       <Layout module={module} />
-      <ExperienceDemoCta productId={module.productId} />
+      {module.productId === "atelier" ? null : <ExperienceDemoCta productId={module.productId} />}
     </>
   );
 }

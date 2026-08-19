@@ -1619,9 +1619,26 @@ export const EXPERIENCE_MODULES: LandingProductModule[] = [
         { value: "MP", label: "Checkout" },
       ],
       faqs: [
-        { q: "¿Es multi-tenant SaaS?", a: "MVP es un marketplace único; schema listo para communities." },
-        { q: "¿Dónde se calcula la comisión?", a: "Solo en backend (SettlementService)." },
-        { q: "¿Stripe Connect?", a: "Fase 2; hoy escrow lógico + retiro manual." },
+        {
+          q: "¿Qué es Atelier?",
+          a: "Un marketplace de ilustración: descubres artistas, encargas un dibujo, pagas con Mercado Pago y descargas el original cuando la obra está lista.",
+        },
+        {
+          q: "¿Cómo encargo un dibujo?",
+          a: "Escribes un brief (idea, estilo, referencias, presupuesto) y lo dejas abierto al tablero o lo diriges a un artista. El artista responde con una propuesta; tú aceptas una.",
+        },
+        {
+          q: "¿Cómo pago?",
+          a: "Cuando aceptas la propuesta, pagas el dibujo con Mercado Pago. El cobro confirma el encargo. Atelier no añade una comisión extra en la pantalla: el asiento lo hace el servidor.",
+        },
+        {
+          q: "¿Cuánto cuesta ser artista?",
+          a: "Publicar y tomar encargos es el plan Creador: US$ 9 al mes (~S/ 33, Polar). Encargar como cliente es gratis; pagas solo la obra.",
+        },
+        {
+          q: "¿Qué recibo al terminar?",
+          a: "El archivo original de la obra, con descarga privada. El artista firma el trabajo. Las referencias del brief no se publican.",
+        },
       ],
       notIncludes: ["disputas avanzadas", "payouts automáticos"],
     },

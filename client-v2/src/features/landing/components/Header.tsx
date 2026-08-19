@@ -47,7 +47,10 @@ export function Header({ productId, onProductChange }: HeaderProps) {
       className="sticky top-0 z-40 border-b backdrop-blur-md transition-colors"
       style={{
         borderColor: module.accent.headerBorder || undefined,
-        backgroundColor: module.renderer === "legacy" ? undefined : `${module.accent.surface}cc`,
+        backgroundColor:
+          module.renderer === "legacy" || productId === "atelier"
+            ? undefined
+            : `${module.accent.surface}cc`,
       }}
     >
       <div
@@ -70,8 +73,9 @@ export function Header({ productId, onProductChange }: HeaderProps) {
           <HorytekIcon
             size={22}
             className={cn(
-              isPocket ? "text-amber-600" : isEcommerce ? "text-teal-700" : "text-primary",
+              isPocket ? "text-amber-600" : isEcommerce ? "text-teal-700" : productId === "atelier" ? "" : "text-primary",
             )}
+            style={productId === "atelier" ? { color: module.accent.accent } : undefined}
           />
           <span className="text-[15px] font-semibold tracking-tight">
             Horytek

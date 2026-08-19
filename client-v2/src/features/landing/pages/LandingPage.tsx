@@ -32,6 +32,17 @@ const LEGACY_SECTION_IDS = [
   "preguntas",
 ] as const;
 
+const ATELIER_SECTION_IDS = [
+  "hero",
+  "confianza",
+  "beneficios",
+  "producto",
+  "rendimiento",
+  "planes",
+  "preguntas",
+  "cta",
+] as const;
+
 export default function LandingPage() {
   const isAuthenticated = useUserStore((s) => s.isAuthenticated);
   const navigate = useNavigate();
@@ -60,7 +71,13 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen w-full bg-background">
       <InventoryRail
-        checkpoints={isLegacy ? LEGACY_SECTION_IDS : experienceCheckpoints}
+        checkpoints={
+          productId === "atelier"
+            ? ATELIER_SECTION_IDS
+            : isLegacy
+              ? LEGACY_SECTION_IDS
+              : experienceCheckpoints
+        }
       />
 
       <a

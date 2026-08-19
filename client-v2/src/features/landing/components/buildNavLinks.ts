@@ -33,6 +33,15 @@ export function buildNavLinks(
     ];
   }
 
+  if (productId === "atelier") {
+    return [
+      { label: "Beneficios", href: "#beneficios" },
+      { label: "Producto", href: "#producto" },
+      { label: "Planes", href: "#planes" },
+      { label: "Preguntas", href: "#preguntas" },
+    ];
+  }
+
   // Experience — ids reales del body compuesto
   void module;
   return [

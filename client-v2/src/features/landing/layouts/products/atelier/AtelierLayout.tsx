@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
-import { AtelierRoot } from "@/features/atelier";
 import { listAtelierCreators } from "@/features/platform/api/atelier";
 import type { AtelierCreator } from "@/features/atelier/types";
 import type { LandingProductModule } from "../../../modules/landingModule.types";
 import {
   AtelierArtistsStrip,
-  AtelierConcept,
   AtelierCtaBand,
   AtelierEditorialHero,
+  AtelierFaq,
   AtelierHowItWorks,
+  AtelierPillars,
   AtelierPricingTwo,
-  AtelierVideoBlock,
+  AtelierProof,
+  AtelierTrust,
 } from "./atelierSections";
 
 export function AtelierLayout({ module }: { module: LandingProductModule }) {
@@ -23,14 +24,16 @@ export function AtelierLayout({ module }: { module: LandingProductModule }) {
   }, []);
 
   return (
-    <AtelierRoot>
+    <>
       <AtelierEditorialHero />
-      <AtelierConcept />
-      <AtelierVideoBlock />
-      <AtelierHowItWorks />
+      <AtelierTrust />
+      <AtelierPillars />
       <AtelierArtistsStrip creators={creators} />
+      <AtelierHowItWorks />
+      <AtelierProof />
       <AtelierPricingTwo module={module} />
+      <AtelierFaq module={module} />
       <AtelierCtaBand />
-    </AtelierRoot>
+    </>
   );
 }
