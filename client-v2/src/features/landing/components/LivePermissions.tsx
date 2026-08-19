@@ -153,7 +153,7 @@ export function LivePermissions() {
         </aside>
 
         {/* Matriz de acceso */}
-        <div className="rounded-2xl border border-dashed border-border bg-card/60 p-5 backdrop-blur-sm lg:col-span-8">
+        <div className="rounded-xl border border-dashed border-border bg-card/60 p-5 backdrop-blur-sm lg:col-span-8">
           <div className="mb-5 flex items-center justify-between">
             <h3 className="text-[14px] font-semibold tracking-tight text-foreground">
               Matriz de Acceso

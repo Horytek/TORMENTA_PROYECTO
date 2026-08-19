@@ -7,6 +7,10 @@ const TONE: Record<string, string> = {
   entregado: "bg-emerald-100 text-emerald-900",
   cancelado: "bg-rose-100 text-rose-900",
   pendiente: "bg-amber-100 text-amber-900",
+  // `sync_job.estado` es un ENUM en inglés; sin estas dos claves el chip
+  // caería al gris neutro y un job encolado se vería igual que uno sin estado.
+  pending: "bg-amber-100 text-amber-900",
+  running: "bg-blue-100 text-blue-900",
   ok: "bg-emerald-100 text-emerald-900",
   error: "bg-rose-100 text-rose-900",
   abierta: "bg-amber-100 text-amber-900",

@@ -206,19 +206,25 @@ export async function enqueueJob(req, res) {
       }
     }
 
+    // El job queda encolado, no ejecutado: todavía no hay worker ni llamada al
+    // canal que lo procese. Guardarlo como 'ok' con `iniciado_en`/`finalizado_en`
+    // en NOW() afirmaba que la sincronización corrió y terminó bien, y dejaba en
+    // la bitácora filas que nadie podía distinguir de una sincronización real.
+    // Se usa 'pending' —el DEFAULT de la columna— y las fechas quedan NULL hasta
+    // que exista quien las complete.
     const [result] = await connection.query(
-      `INSERT INTO sync_job (id_tenant, id_canal, tipo, estado, mensaje, iniciado_en, finalizado_en)
-       VALUES (?, ?, ?, 'ok', ?, NOW(), NOW())`,
+      `INSERT INTO sync_job (id_tenant, id_canal, tipo, estado, mensaje)
+       VALUES (?, ?, ?, 'pending', ?)`,
       [
         id_tenant,
         id_canal ?? null,
         tipo,
-        "Job registrado. La sincronización de cantidades se dispara por API de canal (sin JOIN cross-DB).",
+        "Job encolado. Falta el proceso que ejecuta la sincronización con el canal.",
       ]
     );
     return res.status(201).json({
       success: true,
-      data: { id_job: result.insertId, tipo, estado: "ok" },
+      data: { id_job: result.insertId, tipo, estado: "pending" },
     });
   } catch (error) {
     console.error("stockSync.enqueueJob", error.message);

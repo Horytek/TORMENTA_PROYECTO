@@ -7,10 +7,15 @@ import { SALES_WHATSAPP_URL, type Mode } from "../data/landing.data";
 import { useLandingProduct } from "../hooks/useLandingProduct";
 import { getLandingModule } from "../modules/landingModules.registry";
 import { InventoryRail } from "../components/InventoryRail";
+import { TopBar } from "../components/TopBar";
 import { Header } from "../components/Header";
 import { Hero } from "../components/Hero";
 import { TrustStrip } from "../components/TrustStrip";
 import { BenefitPillars } from "../components/BenefitPillars";
+import { FeatureMatrix } from "../components/FeatureMatrix";
+import { ProductFacts } from "../components/ProductFacts";
+import { ModuleWall } from "../components/ModuleWall";
+import { ProductShowcase } from "../components/ProductShowcase";
 import { BlueprintSection } from "../components/BlueprintSection";
 import { CaseStudy } from "../components/CaseStudy";
 import { SolutionsBridge } from "../components/SolutionsBridge";
@@ -20,11 +25,16 @@ import { ExperienceLanding } from "../components/ExperienceLanding";
 import { Footer } from "../components/Footer";
 import { ScrollUpButton } from "../components/ScrollUpButton";
 import { cn } from "@/lib/utils";
+import "../styles/landing-system.css";
 
 const LEGACY_SECTION_IDS = [
   "hero",
+  "cifras",
   "confianza",
   "beneficios",
+  "producto-real",
+  "capacidades",
+  "modulos",
   "producto",
   "rendimiento",
   "soluciones-puente",
@@ -69,7 +79,7 @@ export default function LandingPage() {
   }, [isAuthenticated, navigate, search]);
 
   return (
-    <div className="min-h-screen w-full bg-background">
+    <div className="lp min-h-screen w-full bg-background">
       <InventoryRail
         checkpoints={
           productId === "atelier"
@@ -87,6 +97,7 @@ export default function LandingPage() {
         Saltar al contenido
       </a>
 
+      <TopBar productId={productId} />
       <Header productId={productId} onProductChange={setProductId} />
 
       <main key={productId} className="transition-opacity duration-300">
@@ -95,8 +106,12 @@ export default function LandingPage() {
             <Hero mode={legacyMode} />
             {legacyMode === "standard" ? (
               <>
+                <ProductFacts />
                 <TrustStrip />
                 <BenefitPillars />
+                <ProductShowcase />
+                <FeatureMatrix />
+                <ModuleWall />
                 <SolutionsBridge />
                 <BlueprintSection mode={legacyMode} />
                 <CaseStudy mode={legacyMode} />
@@ -136,7 +151,7 @@ function CTA({ mode }: { mode: Mode }) {
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid gap-10 md:grid-cols-[1.4fr_1fr] md:items-end">
           <div>
-            <h2 className="text-balance text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em]">
+            <h2 className="lp-h2">
               {isPocket
                 ? "Lleva tu tienda en el bolsillo."
                 : isEcommerce

@@ -36,10 +36,10 @@ export function Pricing({ mode }: Props) {
     >
       <div className="mx-auto max-w-6xl px-6">
         <div className="mx-auto max-w-2xl text-center">
-          <span className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+          <span className="lp-eyebrow">
             Planes · {isPocket ? "Pocket" : isEcommerce ? "Ecommerce" : "ERP"}
           </span>
-          <h2 className="mt-3 text-balance text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-foreground">
+          <h2 className="lp-h2">
             {isPocket
               ? "Elige cómo quieres empezar."
               : isEcommerce
@@ -311,7 +311,7 @@ function EcommercePlanCard({ plan }: { plan: EcommercePlan }) {
 
 function EcommerceAddOn() {
   return (
-    <div className="mt-8 grid gap-6 rounded-2xl border border-brand/25 bg-card p-6 shadow-[0_1px_0_0_hsl(var(--border))] md:grid-cols-[1fr_auto] md:items-center md:p-8">
+    <div className="mt-8 grid gap-6 rounded-xl border border-brand/25 bg-card p-6 shadow-[0_1px_0_0_hsl(var(--border))] md:grid-cols-[1fr_auto] md:items-center md:p-8">
       <div>
         <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-brand">
           Un nuevo canal de ventas para tu negocio

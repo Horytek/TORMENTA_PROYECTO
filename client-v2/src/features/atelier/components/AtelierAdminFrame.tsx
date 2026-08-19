@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { NavLink, Navigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { ATELIER_COPY } from "../copy";
@@ -54,25 +54,7 @@ type AtelierAdminFrameProps = {
   children: ReactNode;
 };
 
-function MenuGlyph({ open }: { open: boolean }) {
-  return (
-    <svg viewBox="0 0 24 24" className="at-admin-ico" aria-hidden>
-      {open ? (
-        <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      ) : (
-        <path d="M5 7h14M5 12h14M5 17h14" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      )}
-    </svg>
-  );
-}
-
-function SidebarLinks({
-  collapsed,
-  onNavigate,
-}: {
-  collapsed: boolean;
-  onNavigate?: () => void;
-}) {
+function SidebarLinks({ collapsed }: { collapsed: boolean }) {
   return (
     <nav className="at-admin-nav" aria-label="Mesa">
       {adminNavItems().map((item, i) => {
@@ -83,7 +65,6 @@ function SidebarLinks({
             to={item.to}
             end={item.end}
             title={collapsed ? item.label : undefined}
-            onClick={onNavigate}
             className={({ isActive }) => cn("at-admin-link at-focus", isActive && "is-on")}
           >
             {Icon ? <Icon /> : null}
@@ -95,10 +76,41 @@ function SidebarLinks({
   );
 }
 
-/** Chrome de la mesa: mismo papel/tinta; sidebar solo aquí. */
+/** Tabs horizontales para móvil/tablet — mismo estilo que AtelierPlatformNav. */
+function AdminMobileTabs() {
+  const items = adminNavItems();
+  return (
+    <nav
+      className="flex flex-wrap gap-1 border-b px-4 pb-2 pt-1 lg:hidden"
+      style={{ borderColor: "var(--at-hairline)" }}
+    >
+      {items.map((item) => (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          end={item.end}
+          className={({ isActive }) =>
+            cn(
+              "rounded-lg px-3 py-2 text-[13px] font-medium transition-colors",
+              isActive ? "" : "hover:bg-black/5",
+            )
+          }
+          style={({ isActive }) =>
+            isActive
+              ? { backgroundColor: "var(--at-accent)", color: "var(--at-accent-ink)" }
+              : { color: "var(--at-stone)" }
+          }
+        >
+          {item.label}
+        </NavLink>
+      ))}
+    </nav>
+  );
+}
+
+/** Chrome de la mesa: sidebar en ≥1024px con acento rosa activo; tabs móvil bajo el header. */
 export function AtelierAdminFrame({ title, subtitle, children }: AtelierAdminFrameProps) {
   const session = getAtelierSession();
-  const drawerTitleId = useId();
   const [collapsed, setCollapsed] = useState(() => {
     try {
       return localStorage.getItem(SIDEBAR_KEY) === "collapsed";
@@ -106,7 +118,6 @@ export function AtelierAdminFrame({ title, subtitle, children }: AtelierAdminFra
       return false;
     }
   });
-  const [drawer, setDrawer] = useState(false);
 
   useEffect(() => {
     try {
@@ -116,36 +127,19 @@ export function AtelierAdminFrame({ title, subtitle, children }: AtelierAdminFra
     }
   }, [collapsed]);
 
-  useEffect(() => {
-    if (!drawer) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setDrawer(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [drawer]);
-
   if (!session || session.role !== "admin") {
     return <Navigate to={ATELIER_ROUTES.login} replace />;
   }
 
   return (
     <AtelierRoot className={cn("at-admin-root", collapsed && "is-collapsed")} padNav={false}>
-      <AtelierHeader
-        leading={
-          <button
-            type="button"
-            className="at-admin-burger at-focus lg:hidden"
-            aria-label={ATELIER_COPY.openMenu}
-            aria-expanded={drawer}
-            onClick={() => setDrawer(true)}
-          >
-            <MenuGlyph open={false} />
-          </button>
-        }
-      />
+      <AtelierHeader />
+
+      {/* Tabs horizontales solo en móvil/tablet */}
+      <AdminMobileTabs />
 
       <div className="at-admin-body">
+        {/* Sidebar visible solo en ≥1024px */}
         <aside className={cn("at-admin-sidebar", collapsed && "is-collapsed")}>
           <p className="at-eyebrow at-admin-kicker">{ATELIER_COPY.brandLockup}</p>
           <SidebarLinks collapsed={collapsed} />
@@ -164,31 +158,11 @@ export function AtelierAdminFrame({ title, subtitle, children }: AtelierAdminFra
                 strokeWidth="1.5"
               />
             </svg>
-            <span className="at-admin-link-label">{collapsed ? ATELIER_COPY.expandMenu : ATELIER_COPY.collapseMenu}</span>
+            <span className="at-admin-link-label">
+              {collapsed ? ATELIER_COPY.expandMenu : ATELIER_COPY.collapseMenu}
+            </span>
           </button>
         </aside>
-
-        {drawer ? (
-          <div className="at-admin-drawer lg:hidden" role="presentation">
-            <button type="button" className="at-admin-drawer-scrim" aria-label="Cerrar" onClick={() => setDrawer(false)} />
-            <div className="at-admin-drawer-panel" role="dialog" aria-modal="true" aria-labelledby={drawerTitleId}>
-              <div className="at-admin-drawer-head">
-                <p id={drawerTitleId} className="at-display text-2xl">
-                  {ATELIER_COPY.mesa}
-                </p>
-                <button
-                  type="button"
-                  className="at-admin-burger at-focus"
-                  aria-label="Cerrar"
-                  onClick={() => setDrawer(false)}
-                >
-                  <MenuGlyph open />
-                </button>
-              </div>
-              <SidebarLinks collapsed={false} onNavigate={() => setDrawer(false)} />
-            </div>
-          </div>
-        ) : null}
 
         <main className="at-admin-main">
           <header className="at-admin-pagehead">

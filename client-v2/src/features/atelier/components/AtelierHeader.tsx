@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { HorytekIcon } from "@/components/brand/HorytekIcon";
 import { useAtelierAccount } from "../account";
 import { ATELIER_COPY } from "../copy";
 import { destForAtelierRole, desktopNavForAtelierRole } from "../session";
-import { ATELIER_ROUTES } from "../tokens";
+import { ATELIER_ACCENT, ATELIER_ROUTES } from "../tokens";
 import { AccountColophon } from "./AccountColophon";
 import { AtelierButton } from "./AtelierButton";
 
@@ -24,24 +25,33 @@ export function AtelierHeader({ trailing, leading, className }: AtelierHeaderPro
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 border-b border-[var(--at-hairline)] bg-[color-mix(in_srgb,var(--at-offwhite)_78%,transparent)] backdrop-blur-md",
+        "sticky top-0 z-50 border-b border-[var(--at-hairline)] bg-[color-mix(in_srgb,var(--at-offwhite)_92%,transparent)] backdrop-blur-md",
         className,
       )}
     >
       <div className="at-header-inner">
-        {leading ? <div className="at-header-leading lg:hidden">{leading}</div> : null}
+        {/* Zona izquierda — leading slot (hamburguesa admin) */}
+        {leading ? <div className="at-header-leading">{leading}</div> : null}
 
-        {role ? (
-          <div className="at-header-account md:hidden">
-            <AccountColophon role={role} me={me} />
-          </div>
-        ) : null}
-
-        <Link to={homeTo} className="at-header-mark at-focus truncate text-[var(--at-ink)]" aria-label={ATELIER_COPY.brandLockup}>
-          <span className="at-ui at-brand-horytek">{ATELIER_COPY.brand}</span>
-          <span className="at-display at-brand-atelier">{ATELIER_COPY.wordmark}</span>
+        {/* Logo — mismo patrón ProductAppBar: icono + texto compacto */}
+        <Link
+          to={homeTo}
+          className="at-focus flex shrink-0 items-center gap-1.5 text-[var(--at-ink)]"
+          aria-label={ATELIER_COPY.brandLockup}
+        >
+          <HorytekIcon size={20} style={{ color: ATELIER_ACCENT }} className="shrink-0" />
+          <span className="truncate text-[13px] font-semibold tracking-tight sm:text-[14px]">
+            {ATELIER_COPY.brand}{" "}
+            <span
+              className="font-[550] tracking-[-0.02em]"
+              style={{ fontFamily: "var(--at-serif)", color: ATELIER_ACCENT }}
+            >
+              {ATELIER_COPY.wordmark}
+            </span>
+          </span>
         </Link>
 
+        {/* Zona central — nav de escritorio (oculto en móvil via CSS) */}
         {links.length ? (
           <nav className="at-header-nav" aria-label="Atelier">
             {links.map((item) => (
@@ -59,12 +69,11 @@ export function AtelierHeader({ trailing, leading, className }: AtelierHeaderPro
           <div className="at-header-nav-spacer" aria-hidden />
         )}
 
+        {/* Zona derecha — trailing + cuenta (siempre visible) */}
         <div className="at-header-end">
           {trailing}
           {role ? (
-            <div className="hidden md:block">
-              <AccountColophon role={role} me={me} />
-            </div>
+            <AccountColophon role={role} me={me} />
           ) : !trailing ? (
             <AtelierButton variant="tertiary" size="sm" asChild>
               <Link to={ATELIER_ROUTES.login}>{ATELIER_COPY.login}</Link>

@@ -3,10 +3,6 @@ import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
   CheckCircle2,
-  CreditCard,
-  Globe2,
-  PackageCheck,
-  ShoppingBag,
   TrendingUp,
   AlertTriangle,
 } from "lucide-react";
@@ -20,6 +16,7 @@ import {
   type Mode,
 } from "../data/landing.data";
 import { cn } from "@/lib/utils";
+import { HeroOrbit } from "./HeroOrbit";
 
 interface HeroProps {
   mode: Mode;
@@ -30,7 +27,7 @@ export function Hero({ mode }: HeroProps) {
     <section
       id="hero"
       className={cn(
-        "relative overflow-hidden border-b border-border/60 transition-colors",
+        "lp-watermark relative overflow-hidden border-b border-border/60 transition-colors",
         mode === "pocket"
           ? "bg-amber-500/[0.04]"
           : mode === "ecommerce"
@@ -65,8 +62,12 @@ function HeroStandard() {
           Horytek
         </p>
 
-        <h1 className="mt-3 text-balance text-[clamp(2.4rem,5.2vw,3.85rem)] font-semibold leading-[0.98] tracking-[-0.035em] text-foreground">
-          Controla tu inventario y vende con un sistema hecho para PYMES del Perú.
+        <h1 className="mt-3 text-[clamp(2.3rem,5vw,3.6rem)] leading-[1.02] tracking-[-0.035em] text-foreground">
+          <span className="block font-semibold">Controla tu inventario</span>
+          <span className="block font-bold text-[hsl(var(--lp-accent))]">
+            y vende por talla y color
+          </span>
+          <span className="block font-semibold">sin llevar dos sistemas.</span>
         </h1>
 
         <p className="mt-6 max-w-xl text-balance text-[16px] leading-relaxed text-muted-foreground">
@@ -94,7 +95,7 @@ function HeroStandard() {
         </p>
       </div>
 
-      <HeroVisualStandard />
+      <HeroOrbit />
     </div>
   );
 }
@@ -190,124 +191,6 @@ function HeroPocket() {
 }
 
 // ─── Visuales ──────────────────────────────────────────────────────────────
-
-function HeroVisualStandard() {
-  return (
-    <div className="relative mx-auto w-full max-w-[470px] pb-12 lg:ml-auto lg:mr-0 lg:pt-5">
-      <div aria-hidden className="absolute inset-6 rounded-[2rem] bg-brand/10 blur-3xl" />
-
-      <article className="relative overflow-hidden rounded-2xl border border-border bg-card shadow-[0_24px_70px_-28px_hsl(var(--foreground)/0.35)]">
-        <header className="flex items-center justify-between border-b border-border bg-secondary/40 px-5 py-3.5">
-          <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <ShoppingBag className="h-3.5 w-3.5" aria-hidden />
-            </span>
-            <div>
-              <p className="text-[11px] font-semibold text-foreground">Mi negocio</p>
-              <p className="text-[9px] text-muted-foreground">Vista general · ejemplo</p>
-            </div>
-          </div>
-          <span className="flex items-center gap-1.5 text-[10px] font-medium text-emerald-600">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            Todo conectado
-          </span>
-        </header>
-
-        <div className="p-5 sm:p-6">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Tus canales de venta
-          </p>
-
-          <div className="mt-4 grid grid-cols-2 gap-3">
-            <ChannelCard icon={ShoppingBag} label="Tienda física" detail="Caja + comprobantes" tone="brand" />
-            <ChannelCard icon={Globe2} label="Tienda online" detail="Catálogo + cobro" tone="emerald" />
-          </div>
-
-          <div className="my-5 flex items-center gap-3">
-            <span className="h-px flex-1 bg-border" />
-            <span className="rounded-full border border-border bg-secondary px-3 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              Un solo inventario
-            </span>
-            <span className="h-px flex-1 bg-border" />
-          </div>
-
-          <div className="space-y-2.5">
-            <OperationRow
-              icon={CreditCard}
-              title="Compra por internet confirmada"
-              detail="Pago recibido · pedido listo para preparar"
-              chip="Online"
-            />
-            <OperationRow
-              icon={PackageCheck}
-              title="Producto reservado"
-              detail="La cantidad disponible se actualizó"
-              chip="Listo"
-            />
-          </div>
-        </div>
-      </article>
-
-      <div className="absolute -bottom-1 left-2 rounded-xl border border-border bg-card px-4 py-3 shadow-lg sm:-left-7">
-        <div className="flex items-center gap-3">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
-            <CheckCircle2 className="h-4 w-4" aria-hidden />
-          </span>
-          <div>
-            <p className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground">Venta completada</p>
-            <p className="text-[12px] font-semibold text-foreground">Sin duplicar trabajo</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-function ChannelCard({
-  icon: Icon,
-  label,
-  detail,
-  tone,
-}: {
-  icon: typeof ShoppingBag;
-  label: string;
-  detail: string;
-  tone: "brand" | "emerald";
-}) {
-  return (
-    <div className="rounded-xl border border-border bg-secondary/35 p-3.5">
-      <Icon className={cn("h-4 w-4", tone === "brand" ? "text-brand" : "text-emerald-600")} aria-hidden />
-      <p className="mt-3 text-[12px] font-semibold text-foreground">{label}</p>
-      <p className="mt-0.5 text-[10px] text-muted-foreground">{detail}</p>
-    </div>
-  );
-}
-
-function OperationRow({
-  icon: Icon,
-  title,
-  detail,
-  chip,
-}: {
-  icon: typeof CreditCard;
-  title: string;
-  detail: string;
-  chip: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-border p-3">
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-foreground">
-        <Icon className="h-4 w-4" aria-hidden />
-      </span>
-      <div className="min-w-0">
-        <p className="text-[11px] font-semibold text-foreground">{title}</p>
-        <p className="truncate text-[9px] text-muted-foreground">{detail}</p>
-      </div>
-      <span className="ml-auto hidden rounded-full bg-emerald-500/10 px-2 py-1 text-[8px] font-semibold uppercase tracking-[0.1em] text-emerald-700 sm:inline-flex">
-        {chip}
-      </span>
-    </div>
-  );
-}
 
 function HeroVisualPocket() {
   return (
@@ -416,7 +299,7 @@ function HeroEcommerce() {
         </ul>
       </div>
       <div className="relative">
-        <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+        <div className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm">
           <div className="flex justify-between text-[10px] uppercase tracking-widest text-stone-400">
             <span>Horytek · Tag</span>
             <span>POL-0432</span>

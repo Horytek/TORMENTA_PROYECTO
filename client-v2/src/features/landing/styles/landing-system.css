@@ -1,0 +1,321 @@
+/**
+ * Sistema visual de la landing.
+ *
+ * Existe porque la landing habia acumulado siete radios distintos (pill, 32, 24,
+ * 16, 12, 8 y 6 px) y una escala de titulares sin ratio: 61.6 / 48 / 44.8 / 40 /
+ * 32 px, donde cada seccion invento su propio tamano. Eso es lo que hacia que la
+ * pagina se leyera menos "disenada" que la competencia, no la tipografia — que
+ * de hecho es mejor.
+ *
+ * La regla es una sola: las secciones no eligen tamanos ni radios, los toman de
+ * aca. Si una seccion necesita un valor nuevo, se agrega al sistema, no al
+ * componente.
+ */
+
+.lp {
+  /* Tres radios. Nada mas. `full` queda solo para pills y avatares. */
+  --lp-r-sm: 6px;
+  --lp-r-md: 10px;
+  --lp-r-lg: 12px;   /* alineado a `rounded-xl` de Tailwind, el radio ya dominante en el repo */
+
+  /* Ritmo vertical. Antes iba de 80 a 128 px sin criterio; 128 dejaba la pagina
+     tan aireada que el contenido parecia escaso. */
+  --lp-pad-y: 5.5rem;
+  --lp-pad-y-lg: 7rem;
+
+  /* Bandas. Las tres tintas anteriores (alpha .4 / .25 / .2 sobre el mismo
+     color) eran indistinguibles entre si, asi que las secciones no se separaban
+     visualmente. Estas tres si contrastan. */
+  --lp-band-a: hsl(var(--background));
+  --lp-band-b: hsl(210 28% 95.2%);
+  --lp-band-c: hsl(205 52% 94%);
+}
+
+.dark .lp {
+  --lp-band-b: hsl(212 28% 12%);
+  --lp-band-c: hsl(205 35% 14%);
+}
+
+/* ---------- Bloques de seccion ---------- */
+
+.lp-section {
+  padding-top: var(--lp-pad-y);
+  padding-bottom: var(--lp-pad-y);
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+}
+@media (min-width: 768px) {
+  .lp-section {
+    padding-top: var(--lp-pad-y-lg);
+    padding-bottom: var(--lp-pad-y-lg);
+  }
+}
+
+.lp-band-a { background: var(--lp-band-a); }
+.lp-band-b { background: var(--lp-band-b); }
+.lp-band-c { background: var(--lp-band-c); }
+
+.lp-container {
+  margin-inline: auto;
+  max-width: 72rem;
+  padding-inline: 1.5rem;
+}
+
+/* ---------- Escala tipografica ---------- */
+
+/* El ojo de la seccion: mismo tamano en toda la pagina, en color de marca.
+   Antes era gris y se perdia; el acento es justo lo que le faltaba color. */
+.lp-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: hsl(var(--brand));
+}
+
+/* Un solo tamano de H2 para todas las secciones. */
+.lp-h2 {
+  margin-top: 0.75rem;
+  font-size: clamp(1.75rem, 3vw, 2.375rem);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  color: hsl(var(--foreground));
+}
+
+.lp-lead {
+  margin-top: 1rem;
+  max-width: 42rem;
+  font-size: 15px;
+  line-height: 1.7;
+  color: hsl(var(--muted-foreground));
+}
+
+.lp-h3 {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: hsl(var(--foreground));
+}
+
+.lp-body {
+  font-size: 14px;
+  line-height: 1.65;
+  color: hsl(var(--muted-foreground));
+}
+
+/* ---------- Piezas ---------- */
+
+.lp-card {
+  border-radius: var(--lp-r-lg);
+  border: 1px solid hsl(var(--border) / 0.7);
+  background: hsl(var(--card));
+  /* Sombra corta y de poca opacidad: da relieve sin el look "plantilla". */
+  box-shadow: 0 1px 2px hsl(212 30% 16% / 0.05), 0 2px 8px hsl(212 30% 16% / 0.04);
+  transition: box-shadow 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+.lp-card:hover {
+  border-color: hsl(var(--brand) / 0.35);
+  box-shadow: 0 2px 4px hsl(212 30% 16% / 0.06), 0 8px 20px hsl(212 30% 16% / 0.07);
+}
+
+/* Contenedor de icono. El acento entra aca, que es donde mas se nota y menos
+   compite con el texto. */
+.lp-icon {
+  display: inline-flex;
+  height: 2.25rem;
+  width: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--lp-r-md);
+  background: hsl(var(--brand) / 0.1);
+  color: hsl(var(--brand));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-card { transition: none; }
+  .lp-card:hover { transform: none; }
+}
+
+/* ---------- Superficies con color ---------- */
+
+/*
+ * El problema real de la landing no eran los radios: era que el acento vivia
+ * siempre en tintes al 10%, y un tinte no "suena". Las referencias del rubro
+ * usan el color en superficies RELLENAS y a gran escala. Estas clases existen
+ * para eso.
+ */
+
+/* Azul de marca saturado, solo para la landing. El --brand global (205 55% 40%)
+   esta calibrado para la app, donde compite con datos; en una pagina de venta
+   se lee apagado. */
+.lp {
+  --lp-accent: 205 78% 42%;
+  --lp-ink: 212 40% 17%;
+}
+
+/* Banda oscura de pleno color: corta la pagina y hace que lo que va adentro
+   se lea como afirmacion, no como parrafo. */
+.lp-fill-ink {
+  background:
+    radial-gradient(120% 140% at 12% 0%, hsl(var(--lp-accent) / 0.34) 0%, transparent 55%),
+    hsl(var(--lp-ink));
+  color: hsl(0 0% 100%);
+}
+.lp-fill-ink .lp-eyebrow { color: hsl(var(--lp-accent) / 0.95); }
+.lp-fill-ink .lp-h2 { color: hsl(0 0% 100%); }
+.lp-fill-ink .lp-lead,
+.lp-fill-ink .lp-body { color: hsl(210 25% 82%); }
+
+/* Cifra grande. El tamano es el mensaje: una cifra a 15px es un dato, a 56px
+   es un argumento. */
+.lp-stat {
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  color: hsl(0 0% 100%);
+}
+.lp-stat-label {
+  margin-top: 0.6rem;
+  font-size: 13px;
+  line-height: 1.5;
+  color: hsl(210 25% 78%);
+}
+
+/* Encabezado centrado, para las secciones de venta. */
+.lp-head-center {
+  margin-inline: auto;
+  max-width: 44rem;
+  text-align: center;
+}
+.lp-head-center .lp-lead { margin-inline: auto; }
+
+/* Baldosa de modulo: densa, con el icono en color. La cuadricula completa es lo
+   que comunica "alcanza para mi negocio" de una sola pasada. */
+.lp-tile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: var(--lp-r-md);
+  border: 1px solid hsl(var(--border) / 0.7);
+  background: hsl(var(--card));
+  padding: 0.75rem 0.9rem;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.lp-tile:hover {
+  border-color: hsl(var(--lp-accent) / 0.45);
+  box-shadow: 0 2px 10px hsl(var(--lp-ink) / 0.07);
+}
+.lp-tile-icon {
+  display: inline-flex;
+  height: 1.9rem;
+  width: 1.9rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: hsl(var(--lp-accent) / 0.12);
+  color: hsl(var(--lp-accent));
+}
+.lp-tile-label {
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: hsl(var(--foreground));
+}
+
+/* Boton principal en el acento saturado. */
+.lp-cta-accent {
+  background: hsl(var(--lp-accent));
+  color: #fff;
+}
+.lp-cta-accent:hover { background: hsl(var(--lp-accent) / 0.9); }
+
+/* Baldosa de modulo: cuadrado de color SOLIDO con el icono en blanco.
+ *
+ * Antes eran lavados al 12% con el icono en color y la etiqueta al costado.
+ * El patron del rubro es el contrario -relleno saturado, icono blanco,
+ * etiqueta centrada debajo- y es lo que hace que la cuadricula se lea vibrante
+ * en vez de apagada. Cada modulo lleva su propio color. */
+.lp-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  text-align: center;
+  padding: 0.25rem;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.lp-tile:hover { box-shadow: none; }
+.lp-tile:hover .lp-tile-icon {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px -6px currentColor;
+}
+
+.lp-tile-icon {
+  display: inline-flex;
+  height: 4.25rem;
+  width: 4.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  color: #fff;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.lp-tile-label {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.005em;
+  color: hsl(var(--foreground));
+}
+
+/* Seis colores saturados, rotando. */
+.lp-tono-0 { background: #3b82f6; }
+.lp-tono-1 { background: #14b8a6; }
+.lp-tono-2 { background: #8b5cf6; }
+.lp-tono-3 { background: #f59e0b; }
+.lp-tono-4 { background: #ec4899; }
+.lp-tono-5 { background: #64748b; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-tile:hover .lp-tile-icon { transform: none; }
+}
+
+/* Palabra acentuada dentro de un titular. Los titulares del rubro mezclan dos
+   colores en la misma frase; el titular monocromo se lee plano al lado. */
+.lp-acento { color: hsl(var(--lp-accent)); }
+.lp-fill-ink .lp-acento { color: hsl(205 90% 68%); }
+
+/* Marca de agua geometrica.
+ *
+ * El hero era blanco plano. Una retícula de rombos apenas visible le quita esa
+ * sensación sin competir con el contenido: a 0.045 de opacidad no se "ve", se
+ * nota. Se desvanece hacia abajo con una máscara para que no corte la sección
+ * en seco.
+ */
+.lp-watermark { position: relative; isolation: isolate; }
+.lp-watermark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    repeating-linear-gradient(45deg, hsl(var(--lp-ink) / 0.045) 0 1px, transparent 1px 42px),
+    repeating-linear-gradient(-45deg, hsl(var(--lp-ink) / 0.045) 0 1px, transparent 1px 42px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 55%, transparent 100%);
+  pointer-events: none;
+}
+.dark .lp-watermark::before {
+  background-image:
+    repeating-linear-gradient(45deg, hsl(0 0% 100% / 0.05) 0 1px, transparent 1px 42px),
+    repeating-linear-gradient(-45deg, hsl(0 0% 100% / 0.05) 0 1px, transparent 1px 42px);
+}

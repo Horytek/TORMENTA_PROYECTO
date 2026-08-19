@@ -29,7 +29,7 @@ export function BlueprintSection({ mode }: Props) {
           <span className="inline-flex rounded-full border border-amber-500/30 bg-amber-500/5 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.16em] text-amber-700 dark:text-amber-400">
             Simple y rápido
           </span>
-          <h2 className="mt-4 text-balance text-[clamp(1.75rem,3.5vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-foreground">
+          <h2 className="lp-h2">
             Todo lo que necesitas.
             <br />
             <span className="text-amber-600">Nada que te sobre.</span>
@@ -56,10 +56,10 @@ function CustomerJourney() {
 
       <div className="relative mx-auto max-w-6xl px-6">
         <div className="mx-auto max-w-3xl text-center">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand">
+          <span className="lp-eyebrow">
             Así compra tu cliente
           </span>
-          <h2 className="mt-3 text-balance text-[clamp(2rem,4vw,3rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-foreground">
+          <h2 className="lp-h2">
             Compartes un enlace. Tu cliente elige. El pago llega a ti.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-[15px] leading-relaxed text-muted-foreground">
@@ -93,7 +93,7 @@ function CustomerJourney() {
           <CheckoutPreview />
         </div>
 
-        <div className="mt-16 grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-3">
+        <div className="mt-16 grid gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-3">
           <SimpleBenefit
             icon={Link2}
             title="Un enlace fácil de recordar"
@@ -127,7 +127,7 @@ function JourneyStep({
   body: string;
 }) {
   return (
-    <li className="group flex gap-4 rounded-2xl border border-transparent p-4 transition-colors hover:border-border hover:bg-card">
+    <li className="group flex gap-4 rounded-xl border border-transparent p-4 transition-colors hover:border-border hover:bg-card">
       <span className="num mt-1 text-[11px] font-semibold text-brand">{n}</span>
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand/10 text-brand">
         <Icon className="h-4.5 w-4.5" aria-hidden />
@@ -220,7 +220,7 @@ function PocketCards() {
         return (
           <article
             key={card.title}
-            className="group flex flex-col items-center rounded-2xl border border-border bg-card p-8 text-center transition-colors hover:border-amber-500/40"
+            className="group flex flex-col items-center rounded-xl border border-border bg-card p-8 text-center transition-colors hover:border-amber-500/40"
           >
             <span className="mb-6 flex h-14 w-14 items-center justify-center rounded-full border border-border bg-amber-500/10 text-amber-600 transition-transform group-hover:scale-110">
               <Icon className="h-6 w-6" aria-hidden />
