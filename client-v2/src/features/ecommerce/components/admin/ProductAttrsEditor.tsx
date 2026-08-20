@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 type CatalogAttr = {
   id_atributo: number;
   nombre: string;
+  codigo?: string;
   tipo: string;
   es_variante: boolean;
   valores: { id_valor: number; valor: string; hex?: string | null }[];
@@ -22,6 +23,7 @@ type Assigned = {
   visible_storefront: boolean;
   requiere_seleccion: boolean;
   obligatorio: boolean;
+  controla_inventario: boolean;
   id_valores: number[];
 };
 
@@ -36,12 +38,17 @@ const TIPO_BADGE: Record<string, string> = {
   rango: "Rango",
 };
 
+function defaultControlaInventario(cat: CatalogAttr): boolean {
+  return false;
+}
+
 function defaultRow(cat: CatalogAttr, id_valores: number[] = []): Assigned {
   return {
     id_atributo: cat.id_atributo,
     visible_storefront: true,
     requiere_seleccion: Boolean(cat.es_variante),
     obligatorio: Boolean(cat.es_variante),
+    controla_inventario: defaultControlaInventario(cat),
     id_valores,
   };
 }
@@ -84,15 +91,24 @@ export function ProductAttrsEditor({
       visible_storefront: boolean;
       requiere_seleccion: boolean;
       obligatorio: boolean;
+      controla_inventario?: boolean;
+      es_variante?: boolean;
+      codigo?: string;
       valores: { id_valor: number | null }[];
     }[];
-    const mapped: Assigned[] = assigned.map((a) => ({
-      id_atributo: a.id_atributo,
-      visible_storefront: a.visible_storefront,
-      requiere_seleccion: a.requiere_seleccion,
-      obligatorio: a.obligatorio,
-      id_valores: a.valores.map((v) => Number(v.id_valor)).filter(Boolean),
-    }));
+    const mapped: Assigned[] = assigned.map((a) => {
+      const cat = catalog.find((c) => c.id_atributo === a.id_atributo);
+      return {
+        id_atributo: a.id_atributo,
+        visible_storefront: a.visible_storefront,
+        requiere_seleccion: a.requiere_seleccion,
+        obligatorio: a.obligatorio,
+        controla_inventario:
+          a.controla_inventario ??
+          (cat ? defaultControlaInventario(cat) : Boolean(a.es_variante)),
+        id_valores: a.valores.map((v) => Number(v.id_valor)).filter(Boolean),
+      };
+    });
 
     // Producto recién creado: no pisar el borrador local con un GET vacío
     if (hydratedId.current === null && mapped.length === 0) {
@@ -141,6 +157,9 @@ export function ProductAttrsEditor({
       toast.success("Características guardadas");
       qc.invalidateQueries({ queryKey: ["ecom-prod-attrs", tid] });
       qc.invalidateQueries({ queryKey: ["ecom-atributos", tid] });
+      qc.invalidateQueries({ queryKey: ["ecom-productos", tid] });
+      qc.invalidateQueries({ queryKey: ["ecom-inv-matriz", tid] });
+      qc.invalidateQueries({ queryKey: ["ecom-inv-resumen", tid] });
     },
     onError: (e: Error) => toast.error(e.message || "Error"),
   });
@@ -174,10 +193,11 @@ export function ProductAttrsEditor({
                     </span>
                   )}
                 </div>
-                {c.es_variante && assigned && (
+                {c.es_variante && assigned && row?.controla_inventario && (
                   <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-md px-2 py-1.5">
-                    Este atributo controla inventario por combinación. Al guardar se generan variantes con
-                    stock 0; carga cantidades en Inventario. No afirma stock de opciones solo informativas.
+                    Este atributo separa filas en Inventario (una por opción × sucursal). Al guardar se
+                    generan variantes con stock 0; carga cantidades después. La talla suele ser solo elección
+                    del cliente sin stock propio.
                   </p>
                 )}
                 {c.valores.length === 0 && (
@@ -198,7 +218,7 @@ export function ProductAttrsEditor({
                   </label>
                 )}
                 {assigned && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
                     {(
                       [
                         ["visible_storefront", "Visible en la tienda"],
@@ -222,6 +242,20 @@ export function ProductAttrsEditor({
                         {label}
                       </label>
                     ))}
+                    {c.es_variante && (
+                      <label className="inline-flex items-center gap-2 min-h-11 px-2 rounded-lg hover:bg-stone-50 text-sm text-stone-600 touch-manipulation sm:col-span-2">
+                        <input
+                          type="checkbox"
+                          className="size-4 shrink-0"
+                          checked={Boolean(row?.controla_inventario)}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            upsert(c.id_atributo, (r) => ({ ...r, controla_inventario: checked }));
+                          }}
+                        />
+                        Separa stock por cada opción (inventario)
+                      </label>
+                    )}
                   </div>
                 )}
                 {c.valores.length > 0 && (

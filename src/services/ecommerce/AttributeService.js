@@ -40,6 +40,74 @@ function parseJson(v) {
   }
 }
 
+const HEX_LEGACY_FALLBACK = "#94a3b8";
+
+function normalizeHex(hex, fallback = HEX_LEGACY_FALLBACK) {
+  if (typeof hex !== "string") return fallback;
+  const t = hex.trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(t)) return t.toLowerCase();
+  if (/^[0-9a-fA-F]{6}$/.test(t)) return `#${t.toLowerCase()}`;
+  if (/^#[0-9a-fA-F]{3}$/.test(t)) {
+    const r = t[1];
+    const g = t[2];
+    const b = t[3];
+    return `#${r}${r}${g}${g}${b}${b}`.toLowerCase();
+  }
+  return fallback;
+}
+
+function codigoEsTalla(codigo, nombre) {
+  const c = String(codigo || "").toLowerCase();
+  const n = String(nombre || "").toLowerCase();
+  return c === "talla" || n === "talla";
+}
+
+function codigoEsTonalidad(codigo, nombre, tipo) {
+  const c = String(codigo || "").toLowerCase();
+  const n = String(nombre || "").toLowerCase();
+  return (
+    c === "tonalidad" ||
+    c === "color" ||
+    n === "tonalidad" ||
+    n === "color" ||
+    tipo === "color"
+  );
+}
+
+/** Atributos del producto que generan filas de inventario (cartesianas). */
+async function readInventarioAtributoIds(connection, id_tienda, id_producto, attrs) {
+  const [[row]] = await connection.query(
+    `SELECT attrs_json FROM producto WHERE id_producto = ? AND id_tienda = ? LIMIT 1`,
+    [id_producto, id_tienda]
+  );
+  const current = parseJson(row?.attrs_json) || {};
+  if (Array.isArray(current.inventario_atributos)) {
+    return current.inventario_atributos.map(Number).filter(Boolean);
+  }
+  return [];
+}
+
+function resolveControlaInventario(item, attr) {
+  if (item.controla_inventario !== undefined) return Boolean(item.controla_inventario);
+  return false;
+}
+
+async function persistInventarioAtributos(connection, id_tienda, id_producto, inventarioAtributos) {
+  const [[row]] = await connection.query(
+    `SELECT attrs_json FROM producto WHERE id_producto = ? AND id_tienda = ? LIMIT 1`,
+    [id_producto, id_tienda]
+  );
+  const current = parseJson(row?.attrs_json) || {};
+  const next = {
+    ...current,
+    inventario_atributos: inventarioAtributos,
+  };
+  await connection.query(
+    `UPDATE producto SET attrs_json = ? WHERE id_producto = ? AND id_tienda = ?`,
+    [JSON.stringify(next), id_producto, id_tienda]
+  );
+}
+
 export function mapAtributo(row, valores = []) {
   if (!row) return null;
   return {
@@ -275,6 +343,13 @@ export async function listProductosDeAtributo(connection, id_tienda, id_atributo
 }
 
 export async function getProductoAtributos(connection, id_tienda, id_producto) {
+  const [[prodRow]] = await connection.query(
+    `SELECT attrs_json FROM producto WHERE id_producto = ? AND id_tienda = ? LIMIT 1`,
+    [id_producto, id_tienda]
+  );
+  const attrsJson = parseJson(prodRow?.attrs_json) || {};
+  const inventarioExplicito = Array.isArray(attrsJson.inventario_atributos);
+
   const [pas] = await connection.query(
     `SELECT pa.*, a.nombre, a.codigo, a.tipo, a.es_variante, a.activo AS attr_activo
      FROM ecom_producto_atributo pa
@@ -302,6 +377,10 @@ export async function getProductoAtributos(connection, id_tienda, id_producto) {
       valor_texto: v.valor_texto,
     });
   }
+  const inventarioIds = inventarioExplicito
+    ? attrsJson.inventario_atributos.map(Number).filter(Boolean)
+    : [];
+
   return pas.map((pa) => ({
     id_prod_attr: pa.id_prod_attr,
     id_atributo: pa.id_atributo,
@@ -309,6 +388,7 @@ export async function getProductoAtributos(connection, id_tienda, id_producto) {
     codigo: pa.codigo,
     tipo: pa.tipo,
     es_variante: Boolean(pa.es_variante),
+    controla_inventario: inventarioIds.includes(pa.id_atributo),
     visible_storefront: Boolean(pa.visible_storefront),
     requiere_seleccion: Boolean(pa.requiere_seleccion),
     obligatorio: Boolean(pa.obligatorio),
@@ -330,16 +410,18 @@ export async function setProductoAtributos(connection, id_tienda, id_producto, i
     [id_producto, id_tienda]
   );
 
+  const attrMeta = new Map();
   let orden = 0;
   for (const item of items || []) {
     const id_atributo = Number(item.id_atributo);
     if (!id_atributo) continue;
     const [[attr]] = await connection.query(
-      `SELECT id_atributo, tipo, es_variante FROM ecom_atributo
+      `SELECT id_atributo, codigo, nombre, tipo, es_variante FROM ecom_atributo
        WHERE id_atributo = ? AND id_tienda = ? LIMIT 1`,
       [id_atributo, id_tienda]
     );
     if (!attr) continue;
+    attrMeta.set(id_atributo, attr);
     const requiere = item.requiere_seleccion ? 1 : attr.es_variante ? 1 : 0;
     const obligatorio = item.obligatorio != null ? (item.obligatorio ? 1 : 0) : requiere;
     const [ins] = await connection.query(
@@ -368,14 +450,79 @@ export async function setProductoAtributos(connection, id_tienda, id_producto, i
     }
   }
 
+  const inventarioAtributos = [];
+  for (const item of items || []) {
+    const id_atributo = Number(item.id_atributo);
+    const attr = attrMeta.get(id_atributo);
+    if (!attr?.es_variante) continue;
+    if (resolveControlaInventario(item, attr)) inventarioAtributos.push(id_atributo);
+  }
+  await persistInventarioAtributos(connection, id_tienda, id_producto, inventarioAtributos);
+
   await syncVariantesProducto(connection, id_tienda, id_producto);
+  await syncProductoAttrsJsonFromEcom(connection, id_tienda, id_producto);
   return getProductoAtributos(connection, id_tienda, id_producto);
+}
+
+/** Mantiene producto.attrs_json.atributos alineado con ecom_producto_atributo (vitrina admin). */
+export async function syncProductoAttrsJsonFromEcom(connection, id_tienda, id_producto) {
+  const attrs = await getProductoAtributos(connection, id_tienda, id_producto);
+  const [[row]] = await connection.query(
+    `SELECT attrs_json FROM producto WHERE id_producto = ? AND id_tienda = ? LIMIT 1`,
+    [id_producto, id_tienda]
+  );
+  const current = parseJson(row?.attrs_json) || {};
+
+  let talla = [];
+  let tonalidad = [];
+  for (const a of attrs) {
+    if (!a.visible_storefront) continue;
+    if (codigoEsTalla(a.codigo, a.nombre)) {
+      talla = (a.valores || [])
+        .map((v) => String(v.valor || "").trim())
+        .filter(Boolean);
+    } else if (codigoEsTonalidad(a.codigo, a.nombre, a.tipo)) {
+      tonalidad = (a.valores || [])
+        .map((v) => ({
+          nombre: String(v.valor || "").trim(),
+          hex: normalizeHex(v.hex),
+        }))
+        .filter((t) => t.nombre);
+    }
+  }
+
+  const prev =
+    current.atributos && typeof current.atributos === "object"
+      ? { ...current.atributos }
+      : {};
+  delete prev.color;
+
+  const next = {
+    ...current,
+    atributos: {
+      ...prev,
+      talla,
+      tonalidad,
+    },
+  };
+  if (Array.isArray(current.inventario_atributos)) {
+    next.inventario_atributos = current.inventario_atributos;
+  }
+
+  await connection.query(
+    `UPDATE producto SET attrs_json = ? WHERE id_producto = ? AND id_tienda = ?`,
+    [JSON.stringify(next), id_producto, id_tienda]
+  );
 }
 
 export async function syncVariantesProducto(connection, id_tienda, id_producto) {
   const attrs = await getProductoAtributos(connection, id_tienda, id_producto);
+  const inventarioIds = await readInventarioAtributoIds(connection, id_tienda, id_producto, attrs);
   const variantAttrs = attrs.filter(
-    (a) => a.es_variante && (a.tipo === "seleccion" || a.tipo === "color") && a.valores.length
+    (a) =>
+      inventarioIds.includes(a.id_atributo) &&
+      (a.tipo === "seleccion" || a.tipo === "color") &&
+      a.valores.length
   );
 
   const [[prod]] = await connection.query(
@@ -390,19 +537,39 @@ export async function syncVariantesProducto(connection, id_tienda, id_producto) 
   );
 
   if (!variantAttrs.length) {
-    const [[def]] = await connection.query(
-      `SELECT id_variante FROM ecom_variante
-       WHERE id_producto = ? AND id_tienda = ? AND activo = 1
-       ORDER BY id_variante ASC LIMIT 1`,
+    const [existing] = await connection.query(
+      `SELECT id_variante, attrs_json, activo FROM ecom_variante
+       WHERE id_producto = ? AND id_tienda = ?`,
       [id_producto, id_tienda]
     );
-    if (!def) {
+    let defaultId = null;
+    for (const v of existing) {
+      const json = parseJson(v.attrs_json);
+      if (!json || !Object.keys(json).length) {
+        defaultId = v.id_variante;
+        if (!v.activo) {
+          await connection.query(
+            `UPDATE ecom_variante SET activo = 1, talla = NULL, color = NULL, attrs_json = NULL
+             WHERE id_variante = ? AND id_tienda = ?`,
+            [v.id_variante, id_tienda]
+          );
+        }
+        continue;
+      }
       await connection.query(
+        `UPDATE ecom_variante SET activo = 0 WHERE id_variante = ? AND id_tienda = ?`,
+        [v.id_variante, id_tienda]
+      );
+    }
+    if (!defaultId) {
+      const [ins] = await connection.query(
         `INSERT INTO ecom_variante (id_tienda, id_producto, sku, attrs_json, activo)
          VALUES (?, ?, ?, NULL, 1)`,
         [id_tienda, id_producto, baseSku]
       );
+      defaultId = ins.insertId;
     }
+    await ensureInvForVariante(connection, id_tienda, defaultId, sucursales);
     return;
   }
 
@@ -550,7 +717,8 @@ export async function resolveVarianteYSnapshot(connection, id_tienda, id_product
     }
   }
 
-  const variantDefs = defs.filter((d) => d.es_variante);
+  const inventarioIds = await readInventarioAtributoIds(connection, id_tienda, id_producto, defs);
+  const variantDefs = defs.filter((d) => inventarioIds.includes(d.id_atributo));
   let id_variante = null;
   if (variantDefs.length) {
     const wanted = {};

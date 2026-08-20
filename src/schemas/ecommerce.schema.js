@@ -567,6 +567,7 @@ export const ecommerceProductoAtributosSchema = z.object({
       visible_storefront: z.boolean().optional(),
       requiere_seleccion: z.boolean().optional(),
       obligatorio: z.boolean().optional(),
+      controla_inventario: z.boolean().optional(),
       valor_fijo: z.string().max(255).optional().nullable(),
       orden: z.number().int().optional(),
       id_valores: z.array(z.number().int().positive()).optional(),

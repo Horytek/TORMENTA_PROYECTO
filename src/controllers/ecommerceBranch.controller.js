@@ -393,7 +393,7 @@ export const adminInventarioResumen = async (req, res) => {
          COALESCE(SUM(i.reservado), 0) AS reservado_total,
          COALESCE(SUM(i.en_transito), 0) AS en_transito_total
        FROM ecom_inventario i
-       JOIN ecom_variante v ON v.id_variante = i.id_variante
+       JOIN ecom_variante v ON v.id_variante = i.id_variante AND v.activo = 1
        WHERE i.id_tienda = ?`,
       [req.id_tienda]
     );
@@ -425,7 +425,7 @@ export const adminInventarioMatriz = async (req, res) => {
     connection = await getEcommerceConnection();
     // No backfill en lectura: ensureInventarioProducto/Sucursal al crear; matriz solo consulta.
 
-    let where = ` WHERE p.id_tienda = ? AND p.activo = 1 AND s.activo = 1`;
+    let where = ` WHERE p.id_tienda = ? AND p.activo = 1 AND s.activo = 1 AND v.activo = 1`;
     const params = [req.id_tienda];
     if (id_sucursal) {
       where += ` AND s.id_sucursal = ?`;
@@ -475,7 +475,7 @@ export const adminInventarioMatriz = async (req, res) => {
        JOIN ecom_variante v ON v.id_producto = p.id_producto AND v.id_tienda = p.id_tienda
        JOIN ecom_inventario i ON i.id_variante = v.id_variante AND i.id_tienda = p.id_tienda
        JOIN ecom_sucursal s ON s.id_sucursal = i.id_sucursal AND s.id_tienda = p.id_tienda
-       WHERE p.id_tienda = ? AND p.id_producto IN (${placeholders}) AND s.activo = 1
+       WHERE p.id_tienda = ? AND p.id_producto IN (${placeholders}) AND s.activo = 1 AND v.activo = 1
          ${id_sucursal ? "AND s.id_sucursal = ?" : ""}
        ORDER BY p.nombre, s.nombre, v.id_variante`,
       id_sucursal ? [req.id_tienda, ...ids, id_sucursal] : [req.id_tienda, ...ids]
