@@ -38,17 +38,13 @@ const TIPO_BADGE: Record<string, string> = {
   rango: "Rango",
 };
 
-function defaultControlaInventario(cat: CatalogAttr): boolean {
-  return false;
-}
-
 function defaultRow(cat: CatalogAttr, id_valores: number[] = []): Assigned {
   return {
     id_atributo: cat.id_atributo,
     visible_storefront: true,
     requiere_seleccion: Boolean(cat.es_variante),
     obligatorio: Boolean(cat.es_variante),
-    controla_inventario: defaultControlaInventario(cat),
+    controla_inventario: false,
     id_valores,
   };
 }
@@ -96,19 +92,14 @@ export function ProductAttrsEditor({
       codigo?: string;
       valores: { id_valor: number | null }[];
     }[];
-    const mapped: Assigned[] = assigned.map((a) => {
-      const cat = catalog.find((c) => c.id_atributo === a.id_atributo);
-      return {
-        id_atributo: a.id_atributo,
-        visible_storefront: a.visible_storefront,
-        requiere_seleccion: a.requiere_seleccion,
-        obligatorio: a.obligatorio,
-        controla_inventario:
-          a.controla_inventario ??
-          (cat ? defaultControlaInventario(cat) : Boolean(a.es_variante)),
-        id_valores: a.valores.map((v) => Number(v.id_valor)).filter(Boolean),
-      };
-    });
+    const mapped: Assigned[] = assigned.map((a) => ({
+      id_atributo: a.id_atributo,
+      visible_storefront: a.visible_storefront,
+      requiere_seleccion: a.requiere_seleccion,
+      obligatorio: a.obligatorio,
+      controla_inventario: a.controla_inventario ?? false,
+      id_valores: a.valores.map((v) => Number(v.id_valor)).filter(Boolean),
+    }));
 
     // Producto recién creado: no pisar el borrador local con un GET vacío
     if (hydratedId.current === null && mapped.length === 0) {
