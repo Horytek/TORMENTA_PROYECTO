@@ -1,0 +1,56 @@
+name: Deploy VPS
+
+# Despliegue al VPS de Vultr. Reemplaza a master_horytek.yml (Azure), que ya no
+# tiene destino, y a Vercel, donde los crons nunca corrieron porque el proceso
+# no sobrevive entre requests.
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  # Dos despliegues simultáneos correrían migraciones a la vez sobre la misma
+  # base. Se encolan.
+  group: deploy-vps
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Desplegar por SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script_stop: true          # corta al primer comando que falle
+          command_timeout: 20m       # el build del frontend tarda
+          script: |
+            set -euo pipefail
+            cd /opt/horytek
+
+            echo "── Código ──────────────────────────────"
+            git fetch --all
+            git reset --hard origin/${{ github.ref_name }}
+
+            echo "── Migraciones ─────────────────────────"
+            # Antes de levantar la app nueva y SIN `|| true`: si una falla, el
+            # despliegue se detiene acá y la versión anterior sigue viva. Todo
+            # el sentido del paso es ese.
+            npm ci
+            npm run db:migrate:all
+
+            echo "── Contenedores ────────────────────────"
+            docker compose up -d --build
+            docker compose ps
+
+            echo "── Salud ───────────────────────────────"
+            # El healthcheck de la imagen tarda hasta 20s en dar el primer veredicto.
+            sleep 25
+            curl -fsS http://127.0.0.1:4000/api/health | head -c 200
+            echo
+
+            # Las imágenes viejas se acumulan y llenan el disco.
+            docker image prune -f --filter "until=168h" >/dev/null || true
