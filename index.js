@@ -1,76 +1,26 @@
 import app from './src/app.js';
 import { createServer } from 'http';
-import { Server as SocketIOServer } from 'socket.io';
 
+/**
+ * Punto de entrada del proceso web.
+ *
+ * Antes montaba un servidor de Socket.IO con la señalización de llamadas
+ * (`call:offer`, `call:answer`, `call:candidate`, `call:end`) y un mapa de
+ * presencia en memoria. Se removió: ningún frontend lo consumía —`client-v2` ni
+ * siquiera tenía `socket.io-client` instalado, y en `client` el módulo que abría
+ * la conexión no lo importaba nadie—, y en producción `/socket.io/` respondía
+ * 404. Era plomería sin grifo.
+ *
+ * La consecuencia importante es de arquitectura: al no haber estado en memoria,
+ * este proceso pasó a ser apto para correr en varias instancias. Lo único que
+ * todavía lo ata a una sola son los crons, que arrancan desde `app.js` y deberían
+ * mudarse a un worker aparte.
+ */
 const main = () => {
   let server;
-  let io;
 
   try {
     server = createServer(app);
-
-    // Socket.IO signaling server
-    io = new SocketIOServer(server, {
-      cors: {
-        origin: true,
-        credentials: true,
-      },
-    });
-
-    // In-memory presence map
-    const userSockets = new Map(); // userId -> Set(socketId)
-    const socketUsers = new Map(); // socketId -> userId
-
-    const addUserSocket = (userId, socketId) => {
-      if (!userId) return;
-      const set = userSockets.get(userId) || new Set();
-      set.add(socketId);
-      userSockets.set(userId, set);
-      socketUsers.set(socketId, userId);
-    };
-
-    const removeSocket = (socketId) => {
-      const userId = socketUsers.get(socketId);
-      if (!userId) return;
-      const set = userSockets.get(userId);
-      if (set) {
-        set.delete(socketId);
-        if (set.size === 0) userSockets.delete(userId);
-      }
-      socketUsers.delete(socketId);
-    };
-
-    const emitToUser = (userId, event, payload) => {
-      const set = userSockets.get(userId);
-      if (!set) return;
-      for (const sid of set) io.to(sid).emit(event, payload);
-    };
-
-    io.on('connection', (socket) => {
-      socket.on('register', (userId) => {
-        addUserSocket(String(userId), socket.id);
-      });
-
-      socket.on('disconnect', () => {
-        removeSocket(socket.id);
-      });
-
-      socket.on('call:offer', ({ to, from, sdp, callType }) => {
-        emitToUser(String(to), 'call:offer', { from: String(from), sdp, callType });
-      });
-
-      socket.on('call:answer', ({ to, from, sdp }) => {
-        emitToUser(String(to), 'call:answer', { from: String(from), sdp });
-      });
-
-      socket.on('call:candidate', ({ to, from, candidate }) => {
-        emitToUser(String(to), 'call:candidate', { from: String(from), candidate });
-      });
-
-      socket.on('call:end', ({ to, from }) => {
-        emitToUser(String(to), 'call:end', { from: String(from) });
-      });
-    });
 
     server.listen(app.get('port'), '0.0.0.0', () => {
       console.log(`Servidor corriendo en http://0.0.0.0:${app.get('port')}`);
@@ -111,4 +61,3 @@ const main = () => {
 };
 
 main();
-
