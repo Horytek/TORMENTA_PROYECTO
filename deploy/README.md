@@ -170,10 +170,18 @@ Dejarlo andando hasta que el VPS lleve unos días estable. Es el respaldo.
 ## 5 · La aplicación
 
 ```bash
-mkdir -p /opt/horytek && cd /opt/horytek
-git clone <REPO> .
-mkdir -p uploads certificados
+cd /opt/horytek
+git init
+git remote add origin https://github.com/Horytek/TORMENTA_PROYECTO.git
+git fetch origin feature/frontend-v2
+git checkout -b feature/frontend-v2 origin/feature/frontend-v2
 ```
+
+`git init` y no `git clone`: bootstrap.sh ya creó `uploads/` y `certificados/`
+en ese directorio, y git se niega a clonar sobre una carpeta con contenido.
+
+Si el repositorio es privado, el `fetch` pide credenciales — hace falta un token
+de acceso personal de GitHub, no la contraseña de la cuenta.
 
 Subir el `.env` **por separado**, nunca por git:
 
