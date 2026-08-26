@@ -47,7 +47,6 @@ import chatRoutes from "./routes/chat.routes.js";
 import helpRoutes from "./routes/help.routes.js";
 import functionShortcutsRoutes from "./routes/functionShortcuts.routes.js";
 import { auditLog } from "./middlewares/audit.middleware.js";
-import { startLogMaintenance } from "./services/logMaintenance.service.js";
 import { getConnection } from "./database/database.js";
 import attributesRoutes from "./routes/attributes.routes.js";
 import emailRoutes from "./routes/email.routes.js";
@@ -369,35 +368,28 @@ app.use(
   })
 );
 
-// Servir archivos estáticos de Vite/React
-app.use(express.static(path.join(__dirname, "../client/dist")));
+// Frontend estatico. La ruta es configurable porque hay dos clientes en el
+// repo: `client` (legado) y `client-v2` (donde esta el trabajo actual). El
+// default preserva el comportamiento historico; el despliegue en VPS define
+// FRONTEND_DIST=client-v2/dist. Vercel no pasa por aca: sirve client-v2 con su
+// propio enrutamiento y solo manda /api a la funcion.
+const FRONTEND_DIST = path.join(__dirname, "..", process.env.FRONTEND_DIST || "client/dist");
+
+app.use(express.static(FRONTEND_DIST));
 
 // Redirigir todas las rutas no API al frontend (SPA)
 app.get(/.*/, (req, res, next) => {
   if (req.path.startsWith("/api")) return next();
-  res.sendFile(path.join(__dirname, "../client/dist/index.html"));
+  res.sendFile(path.join(FRONTEND_DIST, "index.html"));
 });
-// Inicializar servicio de mantenimiento de logs
-try {
-  startLogMaintenance();
-  //console.log('🔧 Servicio de mantenimiento de logs iniciado correctamente');
-} catch (error) {
-  console.error('❌ Error iniciando servicio de mantenimiento de logs:', error);
-}
-
-// Inicializar cron job de suscripciones Express
-import { initSubscriptionCron } from "./cron/subscriptionCron.js";
-try {
-  initSubscriptionCron();
-} catch (error) {
-  console.error('❌ Error iniciando cron de suscripciones:', error);
-}
-
-import { initEcommerceInventoryCron } from "./cron/ecommerceInventoryCron.js";
-try {
-  initEcommerceInventoryCron();
-} catch (error) {
-  console.error('❌ Error iniciando cron de inventario ecommerce:', error);
-}
+// Las tareas programadas (mantenimiento de logs, suscripciones e inventario
+// ecommerce) se movieron a `worker.js`, que corre como proceso aparte.
+//
+// Vivian aca, o sea que arrancaban junto con Express. Eso las dejaba muertas en
+// produccion —Vercel es serverless y el proceso no sobrevive entre requests— y
+// ataba el tier web a una sola instancia, porque con dos replicas cada cron
+// correria dos veces. Uno de ellos cobra suscripciones.
+//
+// Levantar el worker con:  npm run worker
 
 export default app;
