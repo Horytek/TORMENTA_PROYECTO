@@ -142,6 +142,10 @@ install -d /var/www/certbot /var/backups/horytek
 echo "  $APP_DIR listo"
 
 # ── Resumen ────────────────────────────────────────────────────────────────
+# La IP se resuelve aca y no dentro del heredoc: alli el \$1 de awk llegaba
+# escapado y awk fallaba con 'backslash not last character on line'.
+IP_PUBLICA=$(hostname -I | awk '{print $1}')
+
 cat <<FIN
 
 ════════════════════════════════════════════════════════════════
@@ -155,7 +159,7 @@ cat <<FIN
      que podés entrar como '$USUARIO'. Si la llave falla y ya
      cerraste root, te quedás afuera del servidor.
 
-       ssh $USUARIO@$(hostname -I | awk '{print \$1}')
+       ssh $USUARIO@$IP_PUBLICA
 
      Recién con eso funcionando:
 
