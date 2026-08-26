@@ -31,7 +31,13 @@ if id "$USUARIO" &>/dev/null; then
 else
   adduser --disabled-password --gecos "" "$USUARIO"
   usermod -aG sudo "$USUARIO"
-  echo "  creado '$USUARIO' (sin contraseña: solo entra por llave SSH)"
+
+  # Contrasena para sudo. El login por SSH sigue siendo solo por llave —
+  # PasswordAuthentication se apaga despues—, pero sin contrasena el usuario
+  # queda en un limbo: entra al servidor y no puede usar sudo para nada.
+  CLAVE_SUDO=$(openssl rand -base64 18 | tr -d '/+=' | head -c 20)
+  echo "$USUARIO:$CLAVE_SUDO" | chpasswd
+  echo "  creado '$USUARIO' · entra por llave SSH · contrasena de sudo generada"
 fi
 
 install -d -m 700 -o "$USUARIO" -g "$USUARIO" "/home/$USUARIO/.ssh"
@@ -132,6 +138,9 @@ cat > "$CRED_FILE" <<EOF
 DB_HOST=host.docker.internal
 DB_USERNAME=horytek_app
 DB_PASSWORD=$DB_PASS
+
+# Contrasena de sudo del usuario $USUARIO (solo para sudo; el SSH va por llave).
+SUDO_PASSWORD=${CLAVE_SUDO:-<ya existia, sin cambios>}
 EOF
 chmod 600 "$CRED_FILE"
 
