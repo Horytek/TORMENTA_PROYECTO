@@ -1,0 +1,70 @@
+# Despliegue en el VPS: dos procesos desde la misma imagen.
+#
+# MySQL y Nginx corren NATIVOS en el host, no acá. MySQL porque un `compose
+# down -v` distraído se lleva facturas y datos de clientes sin deshacer; Nginx
+# porque certbot renueva el certificado con mucha menos fricción.
+#
+#   docker compose up -d --build
+#   docker compose logs -f web
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_DEMO_ERP_USER: ${VITE_DEMO_ERP_USER}
+        VITE_DEMO_ERP_PASSWORD: ${VITE_DEMO_ERP_PASSWORD}
+    image: horytek:latest
+    restart: unless-stopped
+    # Solo escucha en loopback: quien entra desde afuera pasa por Nginx.
+    ports:
+      - "127.0.0.1:4000:4000"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      FRONTEND_DIST: client-v2/dist
+      # El contenedor alcanza el MySQL del host por esta ruta.
+      DB_HOST: host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      # Imágenes subidas por los usuarios: fuera de la imagen para que
+      # sobrevivan a cada despliegue.
+      - ./uploads:/app/uploads
+      # Certificado .p12 de SUNAT, en solo lectura. Nunca va dentro de la imagen.
+      - ./certificados:/app/certificados:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:4000/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+  worker:
+    build:
+      context: .
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_DEMO_ERP_USER: ${VITE_DEMO_ERP_USER}
+        VITE_DEMO_ERP_PASSWORD: ${VITE_DEMO_ERP_PASSWORD}
+    image: horytek:latest
+    restart: unless-stopped
+    command: ["node", "worker.js"]
+    # 🔴 UNA SOLA INSTANCIA, SIEMPRE. Dos workers cobran las suscripciones dos
+    # veces. El proceso web sí puede replicarse; este no.
+    deploy:
+      replicas: 1
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DB_HOST: host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./certificados:/app/certificados:ro
+    depends_on:
+      - web

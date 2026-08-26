@@ -1,0 +1,36 @@
+# Todo lo que no debe entrar a la imagen.
+# Regla de oro: secretos y certificados se montan en runtime, nunca se copian.
+
+.env
+.env.*
+*.p12
+*.pfx
+*.base64.txt
+certificados/
+scripts/sunat/
+
+node_modules
+client/node_modules
+client-v2/node_modules
+client-v2/dist
+client/dist
+
+.git
+.github
+.vscode
+.claude
+*.log
+tmp*.json
+outputs/
+dist/
+coverage/
+
+# Scripts sueltos de depuracion en la raiz (ver CLAUDE.md seccion 11)
+check_*.js
+fix_*.js
+test_*.js
+
+# Documentacion: no aporta a la imagen
+docs/
+*.md
+!package.json
