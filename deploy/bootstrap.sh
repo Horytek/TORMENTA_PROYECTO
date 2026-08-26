@@ -79,6 +79,19 @@ fi
 usermod -aG docker "$USUARIO"
 systemctl enable --now docker >/dev/null
 
+# ── 3b · Node ──────────────────────────────────────────────────────────────
+# Hace falta en el HOST, no solo dentro del contenedor: las migraciones corren
+# con `npm run db:migrate:all` antes de levantar la app, y el workflow de
+# despliegue hace lo mismo. Version 22 para igualar la del Dockerfile.
+log "Node"
+if command -v node &>/dev/null && [[ "$(node -v)" == v22* ]]; then
+  skip "ya instalado ($(node -v))"
+else
+  curl -fsSL https://deb.nodesource.com/setup_22.x | bash - >/dev/null 2>&1
+  apt-get install -y -qq nodejs
+  echo "  instalado ($(node -v))"
+fi
+
 # ── 4 · MySQL ──────────────────────────────────────────────────────────────
 log "MySQL"
 if command -v mysqld &>/dev/null; then
