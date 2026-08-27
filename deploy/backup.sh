@@ -20,9 +20,15 @@ respaldar() {
   local base="$1"
   local archivo="$DEST/${base}_${FECHA}.sql.gz"
 
+  # --protocol=SOCKET no es cosmetico: fuerza la conexion al MySQL LOCAL.
+  # Durante la migracion desde Railway quedo un ~/.my.cnf apuntando al
+  # servidor remoto, y sin esto un archivo asi redirige el dump en silencio:
+  # el respaldo sale bien, pesa lo esperado, y contiene la base equivocada.
+  # Es el peor modo de falla posible en un backup — parece correcto.
+  #
   # --single-transaction no bloquea la base mientras copia.
   mysqldump --single-transaction --routines --triggers --events \
-    --default-character-set=utf8mb4 "$base" | gzip > "$archivo"
+    --default-character-set=utf8mb4 --protocol=SOCKET "$base" | gzip > "$archivo"
 
   local tam
   tam=$(du -h "$archivo" | cut -f1)
