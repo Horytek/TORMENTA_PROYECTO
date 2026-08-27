@@ -334,21 +334,53 @@ sudo mkdir -p /var/www/certbot
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-La aplicación ya responde por HTTP. Comprobalo antes de seguir:
+Nginx ya sirve la app por HTTP. Comprobalo contra **loopback**: en este punto el
+dominio todavía puede estar apuntando al despliegue viejo.
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" http://horycore.online/api/health
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1/api/health
 ```
 
-### El DNS tiene que resolver primero
+### El DNS tiene que apuntar al VPS — y hay que comprobarlo, no suponerlo
+
+El dominio está en **Cloudflare** y venía apuntando a Vercel. Los registros `@`
+y `www` van a la IP del VPS, en **DNS only** (nube gris).
+
+La nube gris no es opcional durante el corte. Con el proxy encendido Cloudflare
+termina el TLS él mismo y el modo SSL decide todo: en *Flexible* choca con la
+redirección 80→443 de `nginx.conf` y genera un bucle infinito de redirecciones;
+en *Full (strict)* no puede conectar al origen porque el certificado todavía no
+existe. Emitido el certificado, el proxy se puede encender con **Full (strict)**.
+
+Consultar al nameserver autoritativo, no a un resolver con caché:
 
 ```bash
-dig +short horycore.online; dig +short www.horycore.online
+dig +short horycore.online     @elma.ns.cloudflare.com
+dig +short www.horycore.online @elma.ns.cloudflare.com
 ```
 
-Ambos deben devolver la IP del VPS. **Pedir el certificado antes de que propague
-gasta intentos contra el límite de Let's Encrypt** (5 fallos por hora, por
-dominio) y te deja esperando.
+### Probar el desafío a mano antes de llamar a certbot
+
+Un `dig` correcto no alcanza: si el `location /.well-known/` no sirve el webroot,
+certbot falla igual y **cada fallo cuenta** contra el límite de Let's Encrypt
+(5 por hora y por dominio). La prueba cuesta nada:
+
+```bash
+sudo mkdir -p /var/www/certbot/.well-known/acme-challenge
+echo "ok-horytek" | sudo tee /var/www/certbot/.well-known/acme-challenge/prueba.txt
+curl -s http://horycore.online/.well-known/acme-challenge/prueba.txt
+curl -s http://www.horycore.online/.well-known/acme-challenge/prueba.txt
+```
+
+Las **dos** deben imprimir `ok-horytek`. Certbot valida todos los dominios del
+pedido: si `www` falla, falla el certificado entero.
+
+Cuando fallamos la primera vez, el error de Let's Encrypt traía la pista exacta
+—`216.198.79.1: Invalid response ... 404`, una IP de Vercel y no la del VPS—.
+Ese detalle dice si el problema es de DNS o de configuración de nginx: una IP
+ajena es DNS; la IP correcta con 404 es el `location`.
+
+Borrar el archivo de prueba antes de seguir.
 
 ### Fase 2 — el certificado
 
