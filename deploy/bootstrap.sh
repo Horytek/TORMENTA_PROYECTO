@@ -103,13 +103,23 @@ fi
 
 # Ajustes para 8 GB de RAM. Archivo propio: sobrevive a las actualizaciones del
 # paquete, que reescriben mysqld.cnf.
-cat > /etc/mysql/mysql.conf.d/horytek.cnf <<'CNF'
+#
+# El prefijo zz- NO es decorativo: MySQL lee conf.d en orden ALFABETICO y se
+# queda con el ultimo valor que encuentra. El mysqld.cnf que trae Ubuntu ya
+# define `bind-address = 127.0.0.1`, y con el nombre `horytek.cnf` (h < m) ese
+# archivo pisaba al nuestro: MySQL quedaba escuchando solo en loopback y los
+# contenedores nunca llegaban. El sintoma es ETIMEDOUT, no ECONNREFUSED: el
+# paquete muere en el firewall antes de descubrir que nadie escucha.
+rm -f /etc/mysql/mysql.conf.d/horytek.cnf   # nombre viejo de una corrida previa
+cat > /etc/mysql/mysql.conf.d/zz-horytek.cnf <<'CNF'
 [mysqld]
 # 127.0.0.1 para el host; 172.17.0.1 es la interfaz de Docker, por donde llegan
 # los contenedores. Nunca desde afuera: el 3306 está cerrado en el firewall.
 bind-address = 127.0.0.1,172.17.0.1
 
-# ~2.5 GB deja el resto de los 8 para Node, el worker y el sistema.
+# ~2.5 GB deja el resto de los 8 para Node, el worker y el sistema. MySQL redondea
+# hacia arriba a multiplos de chunk_size x instances (128 MB x 8 = 1 GB), asi que
+# el valor real termina siendo 3 GB. Es a proposito: el margen sigue alcanzando.
 innodb_buffer_pool_size = 2560M
 innodb_log_file_size    = 512M
 innodb_flush_method     = O_DIRECT
@@ -121,7 +131,15 @@ character-set-server = utf8mb4
 collation-server     = utf8mb4_unicode_ci
 CNF
 systemctl restart mysql
-echo "  configurado para 8 GB · reiniciado"
+
+# El 3306 sigue cerrado a internet. Se abre SOLO al rango privado donde Docker
+# crea sus redes bridge (172.16.0.0/12 abarca de 172.16.x a 172.31.x). Sin esta
+# regla ufw descarta en silencio los paquetes que salen del contenedor y la app
+# arranca con la base en 'down'. Se usa el rango entero y no la subred exacta
+# porque compose recrea su red con otro /16 en cada `down`.
+ufw allow from 172.16.0.0/12 to any port 3306 proto tcp \
+    comment 'MySQL desde contenedores' >/dev/null
+echo "  configurado para 8 GB · 3306 abierto solo a las redes de Docker"
 
 # ── 5 · Bases y usuario de aplicación ──────────────────────────────────────
 log "Bases de datos"

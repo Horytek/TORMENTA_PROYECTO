@@ -68,5 +68,13 @@ services:
     volumes:
       - ./uploads:/app/uploads
       - ./certificados:/app/certificados:ro
+    # El worker hereda el healthcheck de la imagen, que golpea
+    # http://127.0.0.1:4000/api/health — y este proceso no levanta servidor HTTP.
+    # Sin esto, `docker compose ps` lo muestra (unhealthy) de forma permanente
+    # aunque las tres tareas esten corriendo, y un operador aprende a ignorar la
+    # columna justo donde deberia mirarla. Si el proceso muere, `restart:
+    # unless-stopped` ya lo levanta.
+    healthcheck:
+      disable: true
     depends_on:
       - web

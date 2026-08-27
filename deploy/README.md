@@ -92,6 +92,45 @@ por producto y hay que dejar margen para conexiones administrativas.
 
 ```bash
 systemctl restart mysql
+
+
+### 🔴 Dos trampas que dejan la base inalcanzable desde los contenedores
+
+Ambas se manifiestan igual —la app arranca pero `/api/health` responde
+`degraded` con `database: down` y `connect ETIMEDOUT`— y `bootstrap.sh` ya las
+cubre. Están acá porque si alguien configura MySQL a mano las va a pisar.
+
+**El nombre del archivo importa.** MySQL lee `/etc/mysql/mysql.conf.d/` en orden
+**alfabético** y se queda con el último valor. El `mysqld.cnf` que trae Ubuntu ya
+define `bind-address = 127.0.0.1`, así que un archivo llamado `horytek.cnf`
+(h < m) queda pisado y MySQL escucha solo en loopback. Por eso el nuestro se
+llama **`zz-horytek.cnf`**. Verificar con:
+
+```bash
+sudo ss -lntp | grep 3306        # deben salir DOS: 127.0.0.1 y 172.17.0.1
+sudo mysql -e "SHOW VARIABLES LIKE 'bind_address'"
+```
+
+**ufw descarta el tráfico del contenedor.** El paquete sale del contenedor hacia
+`172.17.0.1:3306`, llega a la cadena INPUT del host y el `default deny` lo tira
+en silencio:
+
+```bash
+sudo ufw allow from 172.16.0.0/12 to any port 3306 proto tcp
+```
+
+Se abre el rango privado entero (`172.16.x`–`172.31.x`) y no la subred exacta
+porque compose recrea su red con otro `/16` en cada `down`. El 3306 sigue
+cerrado desde internet.
+
+**Cómo distinguirlas del síntoma:** `ECONNREFUSED` es inmediato y significa que
+nadie escucha en esa IP → es el `bind-address`. `ETIMEDOUT` significa que el
+paquete sale y nadie contesta → es el firewall. Si están las dos, se ve
+`ETIMEDOUT` primero, porque el firewall actúa antes.
+
+**El buffer pool real es 3 GB, no 2.5.** MySQL redondea hacia arriba a múltiplos
+de `chunk_size × instances` (128 MB × 8 = 1 GB). No es un error; tenerlo en
+cuenta antes de sumar procesos a los 8 GB.
 ```
 
 ### Bases y usuario de aplicación
