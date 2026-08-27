@@ -25,7 +25,9 @@ services:
     environment:
       NODE_ENV: production
       FRONTEND_DIST: client-v2/dist
-      # El contenedor alcanza el MySQL del host por esta ruta.
+      # El contenedor alcanza el MySQL del host por esta ruta. Pisa lo que diga
+      # el .env, que lleva 127.0.0.1 porque las migraciones corren en el host y
+      # ahi `host.docker.internal` no resuelve.
       DB_HOST: host.docker.internal
     extra_hosts:
       - "host.docker.internal:host-gateway"

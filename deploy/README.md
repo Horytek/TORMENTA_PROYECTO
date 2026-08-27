@@ -193,11 +193,21 @@ chmod 600 /opt/horytek/.env
 Ajustar en el `.env` del servidor:
 
 ```
-DB_HOST=host.docker.internal
+DB_HOST=127.0.0.1
 DB_USERNAME=horytek_app
 DB_PASSWORD=<la clave del paso 3>
 NODE_ENV=production
 ```
+
+🔴 **`DB_HOST` va en `127.0.0.1`, no en `host.docker.internal`.** Ese nombre solo
+existe dentro de un contenedor —lo crea el `extra_hosts: host-gateway` del
+compose— y las migraciones corren en el HOST. Con el valor equivocado fallan las
+53 con `getaddrinfo ENOTFOUND`, y las de ecommerce ademas rechazan por
+`esHostLocal()` pidiendo `ALLOW_REMOTE_MIGRATE`.
+
+No hay que tocar el compose: su bloque `environment:` ya define
+`DB_HOST: host.docker.internal` y tiene precedencia sobre el `env_file`. Asi el
+host usa la IP local y los contenedores el nombre de Docker.
 
 ### Migraciones antes de levantar
 
