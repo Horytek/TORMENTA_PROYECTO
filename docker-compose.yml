@@ -13,8 +13,8 @@ services:
       context: .
       args:
         VITE_API_URL: ${VITE_API_URL}
-        VITE_DEMO_ERP_USER: ${VITE_DEMO_ERP_USER}
-        VITE_DEMO_ERP_PASSWORD: ${VITE_DEMO_ERP_PASSWORD}
+        VITE_DEMO_ERP_USER: ${VITE_DEMO_ERP_USER:-}
+        VITE_DEMO_ERP_PASSWORD: ${VITE_DEMO_ERP_PASSWORD:-}
     image: horytek:latest
     restart: unless-stopped
     # Solo escucha en loopback: quien entra desde afuera pasa por Nginx.
@@ -49,8 +49,8 @@ services:
       context: .
       args:
         VITE_API_URL: ${VITE_API_URL}
-        VITE_DEMO_ERP_USER: ${VITE_DEMO_ERP_USER}
-        VITE_DEMO_ERP_PASSWORD: ${VITE_DEMO_ERP_PASSWORD}
+        VITE_DEMO_ERP_USER: ${VITE_DEMO_ERP_USER:-}
+        VITE_DEMO_ERP_PASSWORD: ${VITE_DEMO_ERP_PASSWORD:-}
     image: horytek:latest
     restart: unless-stopped
     command: ["node", "worker.js"]

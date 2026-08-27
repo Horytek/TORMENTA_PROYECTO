@@ -209,6 +209,41 @@ No hay que tocar el compose: su bloque `environment:` ya define
 `DB_HOST: host.docker.internal` y tiene precedencia sobre el `env_file`. Asi el
 host usa la IP local y los contenedores el nombre de Docker.
 
+### 🔴 El parser de `.env` de Compose es más estricto que el de Node
+
+`dotenv` (el que usa Node para las migraciones) tolera basura que Docker Compose
+rechaza. El `.env` heredado traía ocho líneas con restos de un objeto JS pegado:
+
+```
+VITE_direccion_1= "",
+```
+
+Compose lee las comillas, encuentra la coma suelta y aborta antes de construir:
+
+```
+failed to read /opt/horytek/.env: line 34: unexpected character "," in variable name ","
+```
+
+Node nunca se quejó, así que las 53 migraciones pasaron y el `compose up` falló.
+Buscar y limpiar:
+
+```bash
+grep -nE '^[A-Za-z_][A-Za-z0-9_]*[[:space:]]*=[[:space:]]*"",[[:space:]]*$' .env
+sed -i -E 's/^([A-Za-z_][A-Za-z0-9_]*)[[:space:]]*=[[:space:]]*"",[[:space:]]*$/\1=/' .env
+```
+
+Validar el archivo sin construir nada:
+
+```bash
+docker compose config --quiet
+```
+
+`--quiet` no es opcional: sin él, `docker compose config` imprime el `.env`
+resuelto en pantalla —claves de SUNAT y MercadoPago incluidas.
+
+Otras formas que rompen a Compose y a `dotenv` no: valores multilínea sin
+comillas, y comillas sin cerrar.
+
 ### Migraciones antes de levantar
 
 Las migraciones son idempotentes —cada una verifica antes de escribir—, así que
