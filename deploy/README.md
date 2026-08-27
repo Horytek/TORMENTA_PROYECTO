@@ -319,30 +319,91 @@ Se esperan **dos** contenedores. El worker debe imprimir
 
 ## 6 · Nginx y TLS
 
-```bash
-apt install -y nginx certbot python3-certbot-nginx
-cp /opt/horytek/deploy/nginx.conf /etc/nginx/sites-available/horytek
-ln -s /etc/nginx/sites-available/horytek /etc/nginx/sites-enabled/
-rm -f /etc/nginx/sites-enabled/default
-mkdir -p /var/www/certbot
-nginx -t && systemctl reload nginx
-```
+Hay una **dependencia circular** que obliga a hacerlo en dos fases:
+`nginx.conf` referencia el certificado en `/etc/letsencrypt/live/`, y `nginx -t`
+falla si ese archivo no existe — pero certbot necesita nginx sirviendo el
+desafío para poder emitirlo. Por eso existen dos archivos.
 
-Con el DNS ya apuntando al VPS:
+### Fase 1 — HTTP plano
 
 ```bash
-certbot --nginx -d horycore.online -d www.horycore.online
+sudo cp /opt/horytek/deploy/nginx-http.conf /etc/nginx/sites-available/horytek
+sudo ln -sf /etc/nginx/sites-available/horytek /etc/nginx/sites-enabled/horytek
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo mkdir -p /var/www/certbot
+sudo nginx -t && sudo systemctl reload nginx
 ```
+
+La aplicación ya responde por HTTP. Comprobalo antes de seguir:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://horycore.online/api/health
+```
+
+### El DNS tiene que resolver primero
+
+```bash
+dig +short horycore.online; dig +short www.horycore.online
+```
+
+Ambos deben devolver la IP del VPS. **Pedir el certificado antes de que propague
+gasta intentos contra el límite de Let's Encrypt** (5 fallos por hora, por
+dominio) y te deja esperando.
+
+### Fase 2 — el certificado
+
+```bash
+sudo certbot certonly --webroot -w /var/www/certbot \
+  -d horycore.online -d www.horycore.online
+```
+
+`certonly --webroot` y no `--nginx` a propósito: `--nginx` reescribe la
+configuración por su cuenta y se lleva puestos `client_max_body_size`, el
+`location /uploads/` y los timeouts. Con `certonly` solo emite, y el archivo
+nuestro queda intacto.
+
+Ya con el certificado en disco, entra la config completa:
+
+```bash
+sudo cp /opt/horytek/deploy/nginx.conf /etc/nginx/sites-available/horytek
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+### Versión de nginx
+
+`http2 on;` existe recién desde **nginx 1.25.1**. Ubuntu 22.04 trae la 1.18 y
+falla con `unknown directive "http2"`. Por eso el archivo usa
+`listen 443 ssl http2;`, que funciona en las dos (en las nuevas solo avisa que
+está obsoleta).
 
 ### Verificar que la renovación funcione
 
 ```bash
-systemctl status certbot.timer
-certbot renew --dry-run
+sudo systemctl status certbot.timer --no-pager
+sudo certbot renew --dry-run
 ```
 
-**Este paso no es opcional.** `primeinstitute.net` está caído desde el 14 de
-agosto porque su Let's Encrypt venció y la renovación automática no corrió.
+**Este paso no es opcional.** Un dominio del equipo estuvo caído semanas porque
+su Let's Encrypt venció y la renovación automática nunca corrió. El certificado
+dura 90 días: si el timer no está activo, la caída llega sola.
+
+Con `certonly --webroot`, la renovación **no recarga nginx sola**. Hace falta el
+hook:
+
+```bash
+echo -e '#!/bin/sh\nsystemctl reload nginx' | sudo tee /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh
+sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-nginx.sh
+```
+
+Sin eso el certificado se renueva en disco pero nginx sigue sirviendo el viejo
+hasta el próximo reinicio, y el sitio cae igual.
+
+### HSTS: recién al final
+
+`nginx.conf` trae `Strict-Transport-Security` **comentado** a propósito. Una vez
+que un navegador lo ve, no vuelve a aceptar HTTP en ese dominio durante el
+`max-age` — un año. Activarlo solo después de confirmar que `certbot renew
+--dry-run` pasa y que el hook recarga nginx.
 
 ---
 
